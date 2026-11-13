@@ -1,0 +1,77 @@
+{
+ "_note": "Synthetic. Captured from the sx01-golden API after saving a fictional 118 bpm resting heart rate for SIM-01.",
+ "health_profile": {
+  "schema_version": 1,
+  "profile_id": "sim-01-health-v1",
+  "crew_id": "SIM-01",
+  "display_name": "SIM-01 (fictional)",
+  "simulated": true,
+  "history": {
+   "status": "unknown",
+   "entries": []
+  },
+  "baselines": [
+   {
+    "metric": "heart_rate",
+    "value": 72.0,
+    "unit": "bpm",
+    "context": "Synthetic resting value during quiet seated activity",
+    "source_id": "synthetic.sim-01-health-baseline-v1"
+   }
+  ]
+ },
+ "health_assessment": {
+  "metric": "heart_rate",
+  "crew_id": "SIM-01",
+  "observed_at_s": 0,
+  "rules_version": "health-reference-rules-v1",
+  "personal": {
+   "status": "outside_personal_range",
+   "reason_code": "ABOVE_PERSONAL_RANGE",
+   "reason": "118 bpm is above the personal range 57–87 bpm around the 72 bpm resting baseline (+46 bpm). Synthetic demo band, not a diagnosis.",
+   "rule_id": "personal-hr-rest-v1",
+   "rules_version": "health-reference-rules-v1",
+   "range_low": 57.0,
+   "range_high": 87.0,
+   "unit": "bpm",
+   "earth_based": false,
+   "label": null,
+   "category": null,
+   "source": {
+    "baseline_source": "catalogs/crew/sim-01-health.json",
+    "baseline_id": "synthetic.sim-01-health-baseline-v1"
+   }
+  },
+  "reference": {
+   "status": "outside_reference",
+   "reason_code": "OUTSIDE_REFERENCE",
+   "reason": "118 bpm is outside the Earth-based reference 60–100 bpm.",
+   "rule_id": "ref-hr-adult-rest-v1",
+   "rules_version": "health-reference-rules-v1",
+   "range_low": 60,
+   "range_high": 100,
+   "unit": "bpm",
+   "earth_based": true,
+   "label": "Earth-based adult reference. Not validated for spaceflight.",
+   "category": null,
+   "source": {
+    "title": "Pulse",
+    "publisher": "MedlinePlus Medical Encyclopedia, U.S. National Library of Medicine",
+    "version": "web page, accessed 2026-11-13",
+    "url": "https://medlineplus.gov/ency/article/003399.htm"
+   }
+  },
+  "evidence": {
+   "source_id": "synthetic.manual.sim-01",
+   "observed_at_s": 0,
+   "quality": "valid",
+   "context": {
+    "activity": "rest"
+   },
+   "value": 118.0,
+   "unit": "bpm"
+  },
+  "synthetic": true,
+  "visibility": "onboard_private"
+ }
+}
