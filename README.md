@@ -4,6 +4,52 @@ SYMBIOSIS X is a software-only prototype for astronaut self-assessment in a simu
 
 Use the [Jira board](https://crewsync-1794569647227.atlassian.net/jira/software/projects/KAN/boards/2) for ticket status and the [build plan](SYMBIOSIS%20X%20Feature%20Backlog%20and%20Build%20Plan.html) for dependencies and acceptance checks. The [technical architecture](SYMBIOSIS%20X%20Technical%20Architecture.html) describes the role boundaries and the five planned screens.
 
+## Project description
+
+**Challenge:** [2026 NASA Space Apps Challenge, *Create Health Monitoring Software for Astronauts on Space Missions*](https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/).
+
+The challenge asks for a visual tool that helps astronauts assess their own health during a mission and decide when a result needs attention from the crew or from flight surgeons on the ground. It names NASA's Human Research Program hazards, including distance from Earth, and indicators such as blood pressure, heart rate, blood sugar, body temperature, sleep and mood.
+
+SYMBIOSIS X answers with four ideas, each shown on its own screen of a simulated mission.
+
+1. **Self-assessment that explains itself.** On **Take Measurement**, a crew member enters one of seven synthetic indicators. Each has a help card that cites its method: heart rate, blood pressure, glucose, temperature, sleep, mood and symptoms. On **Crew Health**, the reading is compared with two separate references. One is the crew member's own baseline. The other is an Earth-based sourced range, used only when the method and context match. Each comparison gives its reason, rule version and evidence. Missing context gives "unknown", never "normal".
+2. **Explainable change.** A repeated resting heart rate above the personal band raises a review alert that names the readings behind it. A missing reading turns the alert to unknown and keeps the last good sample in view. The cabin twin explains its own changes in the same way: CO₂ rises when the main scrubber degrades, and the standby scrubber is blocked when 0.40 kW is needed but only 0.20 kW is available.
+3. **Local emergency response.** On **Emergency Assist**, chest-pain and collapse drills open one case onboard, with a responder and timestamp, even during a communication blackout. The alert never waits for vital signs or the Ground link, and the procedure shown is a labelled training placeholder.
+4. **Privacy-aware, delayed support.** **Ground** sees only allowlisted data, after a simulated 300-second relay delay. Each delivered snapshot shows its basis, observation and receive times and sample age, so an old basis is never mistaken for current state. Ground can queue advice on the snapshot it was shown. Advice built on an older basis is held onboard (`STALE_BASIS`) and changes nothing. Private notes, measurements and health profiles stay in the Crew projection, and a shared emergency reaches Ground only as an opaque case alias, priority and status.
+
+**Who benefits:**
+- **Astronauts:** a quick self-check with reasons they can read.
+- **The onboard responder:** a case they can act on without waiting for Earth.
+- **Flight surgeons on the ground:** delayed data that says how old it is, without private details they don't need.
+
+**NASA provenance.** NASA's [ExMC clinical decision support concept of operations](https://ntrs.nasa.gov/citations/20220017856) and the [HRP five hazards](https://www.nasa.gov/hrp/hazards/) motivate the local-first response. [NASA OSDR RadLab](https://visualization.osdr.nasa.gov/radlab/gui/overview) ISS DosTel1 data appears on Crew Health as labelled radiation context. It is not a personal dose. [NASA-STD-3001 Vol. 2 V2 6004](https://www.nasa.gov/reference/6-0-natural-and-induced-environments-vol-2/) is cited so the demo's CO₂ limit is not mistaken for it. The full register is in [docs/acceptance.md](docs/acceptance.md).
+
+**Simulation assumptions** (synthetic fixtures, not real data):
+- All four astronauts (SIM-01 to SIM-04) and every health reading are fictional, labelled `synthetic`. No real health record is used.
+- Earth-based adult references come from MedlinePlus, AHA and ADA, and are labelled as Earth-based.
+- The personal heart-rate band (±15 bpm around a 72 bpm baseline) and the review alert rule (three resting readings ≥20 bpm above baseline) are demo rules, not clinical thresholds.
+- The cabin is a 100 m³ single-zone CO₂ model with seed 4242. The 3,200 ppm planner limit is a demo rule, not NASA's one-hour ppCO₂ requirement. The relay delay is a fixed 300 mission seconds.
+- Emergency procedures are training placeholders, not approved medical procedures. Everything is advisory, and any simulated plant change goes through the Crew commit gate.
+
+**Not built yet** (described in the build plan, not claimed above):
+- personal reminders and follow-up (SX-24C)
+- the comparable trend in the live Crew view (the trend evaluator exists; the fixture panel shows it)
+- the live Ground list of delivered health cases (the backend delivers them; the fixture console shows them)
+
+### Project description review
+
+Manual review against the SX-11D method, on `main` at `2dd0177` (2026-11-13):
+
+| Check | Evidence | Result |
+| --- | --- | --- |
+| Challenge alignment | The challenge page asks for astronaut self-assessment, named indicators, and when to involve crew or flight surgeons. The four ideas above map to self-assessment (Take Measurement, Crew Health), explanation (assessment and alert reasons), and crew vs. Ground escalation (Emergency Assist, Ground). | Pass |
+| Stakeholder benefit | Astronaut, onboard responder and flight-surgeon benefits are each tied to a screen. | Pass |
+| NASA provenance | Every NASA link above was opened and checked for its stated use in the [source-to-feature review](docs/acceptance.md#source-to-feature-review). | Pass |
+| Fixture labels | Crew, readings, references, demo rules, cabin model, relay delay and procedures are each labelled as synthetic or as a demo assumption. Unbuilt features are listed separately, not claimed. | Pass |
+| Claims match the build | Claims were checked against merged work and its tests: SX-23C, SX-23D, SX-04C, SX-25A, SX-09B, SX-09D, SX-07D, SX-03B, SX-18B and KAN-60. | Pass, with the "not built yet" items excluded |
+
+Update this section after the release rehearsal (SX-11B): refresh the commit and remove items from "Not built yet" as they land.
+
 ## Start on your laptop
 
 Clone the private repository with your GitHub account and run the contract checks from the repository root. If you already have a clone, run `git fetch origin` before switching to your member branch.
