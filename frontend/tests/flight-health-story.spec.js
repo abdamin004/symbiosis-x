@@ -61,7 +61,9 @@ test("Mara's live Flight twin explains review and shares only a delayed case sta
   await expect(story).toContainText("Blood pressure · Unobserved");
   await expect(story.getByRole("button",{name:/chest-pain/})).toBeHidden();
 
-  await advance(49);
+  for (let elapsed = 30; elapsed < 85 && (await show.textContent()) !== "Mara · More evidence needed"; elapsed += 5) {
+    await advance(5);
+  }
   await expect(show).toHaveText("Mara · More evidence needed");
   await show.click();
   await expect(state).toHaveText("More evidence needed");
@@ -74,7 +76,7 @@ test("Mara's live Flight twin explains review and shares only a delayed case sta
 
   // The cabin, scrubber and EVA beats keep their own timing. A later Flight
   // coast takes the health-story clock through the third scripted reading.
-  for (let i=0;i<7 && (await show.textContent()) !== "Mara · Review resting heart rate";i++) await advance(10);
+  for (let i=0;i<14 && (await show.textContent()) !== "Mara · Review resting heart rate";i++) await advance(8);
   await expect(show).toHaveText("Mara · Review resting heart rate");
   await show.click();
   await expect(state).toHaveText("Review resting heart rate");

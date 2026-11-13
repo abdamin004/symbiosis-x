@@ -232,9 +232,11 @@ def assess(
         "quality": measurement.quality,
         "context": dict(context),
     }
-    for key in ("value", "systolic", "diastolic", "unit"):
+    for key in ("value", "systolic", "diastolic", "unit", "score", "symptoms", "duration_min"):
         if getattr(measurement, key, None) is not None:
             evidence[key] = getattr(measurement, key)
+    if measurement.metric == "sleep" and "duration_min" not in evidence and measurement.start_mission_s is not None:
+        evidence["duration_min"] = (measurement.end_mission_s - measurement.start_mission_s) / 60
 
     def build(personal: Comparison, reference: Comparison) -> Assessment:
         return Assessment(measurement.metric, profile.crew_id, measurement.observed_at_s,

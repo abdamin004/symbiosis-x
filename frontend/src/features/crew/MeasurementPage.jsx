@@ -7,6 +7,7 @@ import MetricGuide from "./MetricGuide.jsx";
 const EMPTY = {
   observed_at_s: "0", source_id: "synthetic.manual.sim-01", quality: "valid",
   value: "", systolic: "", diastolic: "", method: "assigned_device",
+  cuff_method: "unknown", posture: "unknown",
   meal_context: "fasting", site: "oral", duration_min: "",
   start_mission_s: "", end_mission_s: "", score: "3", symptoms: "", private_text: "", activity: "rest",
 };
@@ -88,18 +89,20 @@ function MeasurementForm({ runId, selectedCrew }) {
     const measurement = buildMeasurement(metric, values);
     const message = validate(metric, measurement);
     setError(message);
-    setPreview(message ? null : measurement);
+    const context = metric === "heart_rate" ? {activity:values.activity}
+      : metric === "blood_pressure" ? {method:values.cuff_method, posture:values.posture} : {};
+    setPreview(message ? null : {measurement,context});
     setSaved(null);
     setSaveError("");
+    measurementId.current = null;
   }
   async function saveMeasurement() {
     if (!preview || (selectedCrew && (!subject || subject.status === "closed"))) return;
     setSaving(true);
     setSaveError("");
     if (!measurementId.current) measurementId.current = createOperationId("measurement");
-    const context = metric === "heart_rate" ? { activity: values.activity } : {};
     try {
-      const receipt = await saveCrewMeasurement(runId, { measurement_id: measurementId.current, crew_id: crewId, synthetic: true, measurement: preview, context });
+      const receipt = await saveCrewMeasurement(runId, {measurement_id:measurementId.current, crew_id:crewId, synthetic:true, ...preview});
       setSaved(receipt);
       measurementId.current = null;
     } catch (e) { setSaveError(e.message); }
@@ -128,11 +131,13 @@ function MeasurementForm({ runId, selectedCrew }) {
             {metric === "blood_pressure" ? <div className="grid grid-cols-2 gap-3">
               <Field id="systolic" label="Systolic (mmHg)"><Input id="systolic" type="number" min="1" value={values.systolic} onChange={update("systolic")} /></Field>
               <Field id="diastolic" label="Diastolic (mmHg)"><Input id="diastolic" type="number" min="1" value={values.diastolic} onChange={update("diastolic")} /></Field>
+              <Field id="cuff_method" label="Method"><Select id="cuff_method" value={values.cuff_method} onChange={update("cuff_method")}><option value="unknown">Unknown</option><option value="automatic_upper_arm_cuff">Automatic upper-arm cuff</option><option value="other">Other method</option></Select></Field>
+              <Field id="posture" label="Posture"><Select id="posture" value={values.posture} onChange={update("posture")}><option value="unknown">Unknown</option><option value="seated_rested">Seated and rested</option><option value="other">Other posture</option></Select></Field>
             </div> : null}
             {["heart_rate", "glucose", "temperature"].includes(metric) ? <Field id="value" label={`Value (${selected.unit})`}><Input id="value" type="number" min="0" value={values.value} onChange={update("value")} /></Field> : null}
             {metric === "heart_rate" ? <Field id="activity" label="Activity context"><Select id="activity" value={values.activity ?? "rest"} onChange={update("activity")}><option value="rest">Rest</option><option value="exercise">Exercise</option><option value="recovery">Recovery</option></Select></Field> : null}
             {metric === "glucose" ? <>
-              <Field id="method" label="Method"><Select id="method" value={values.method} onChange={update("method")}><option value="assigned_device">Assigned device</option><option value="laboratory">Laboratory</option></Select></Field>
+              <Field id="method" label="Method"><Select id="method" value={values.method} onChange={update("method")}><option value="assigned_device">Assigned device</option><option value="handheld_meter">Handheld meter</option><option value="lab_plasma">Laboratory plasma assay</option></Select></Field>
               <Field id="meal_context" label="Meal context"><Select id="meal_context" value={values.meal_context} onChange={update("meal_context")}><option value="fasting">Fasting</option><option value="before_meal">Before meal</option><option value="after_meal">After meal</option></Select></Field>
             </> : null}
             {metric === "temperature" ? <>
@@ -158,11 +163,11 @@ function MeasurementForm({ runId, selectedCrew }) {
           {preview && <section role="status" data-testid="measurement-preview" className="mt-5 rounded-md border border-emerald-200 bg-emerald-50 p-3">
             <h2 className="font-semibold">Measurement validated · local preview</h2>
             <p className="mt-1 text-xs">Validated against the project metric shape. Save sends this synthetic reading to the private Crew API.</p>
-            <pre className="mt-2 overflow-auto text-xs">{JSON.stringify(preview, null, 2)}</pre>
+            <pre className="mt-2 overflow-auto text-xs">{JSON.stringify(preview.measurement, null, 2)}</pre>
             <button type="button" onClick={saveMeasurement} disabled={saving || Boolean(selectedCrew && (!subject || subject.status === "closed"))} className="mt-3 rounded-md bg-selection px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{saving ? "Saving..." : "Save to private Crew record"}</button>
           </section>}
           {saveError && <p role="alert" className="mt-3 rounded bg-red-50 p-3 text-sm text-red-800">{saveError}</p>}
-          {saved && <p role="status" data-testid="measurement-saved" className="mt-3 rounded border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">Saved privately for {saved.crew_id} at mission time {saved.received_at_s}s. <Link className="font-semibold underline" to={`/runs/${encodeURIComponent(runId)}/crew`}>See the assessment in Crew Health</Link></p>}
+          {saved && <p role="status" data-testid="measurement-saved" className="mt-3 rounded border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">Saved privately for {saved.crew_id} at mission time {saved.received_at_s}s. <Link className="font-semibold underline" to={`/runs/${encodeURIComponent(runId)}/crew` + (selectedCrew ? "?crew_id=" + encodeURIComponent(selectedCrew) : "")}>See the assessment in Crew Health</Link></p>}
         </section>
         <MetricGuide guide={guide} />
       </div>

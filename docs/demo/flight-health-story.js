@@ -150,7 +150,8 @@ function bindFlightHealthStory({find, clock, metrics, openTwin, onUpdate}) {
     const nextPhase = gravity?.next_phase_at_s;
     const phaseDue = (gravity?.current.phase === "orbit" && active.enteringAtmosphere) ||
       (gravity?.current.phase === "reentry" && active.recovered);
-    const target = current < 360 ? Math.min(active.flightTime, current < 60 ? 60 : 360)
+    const nextReading = current < 60 ? 60 : 360;
+    const target = current < 360 ? (active.flightTime >= nextReading ? nextReading : current)
       : delivery?.status === "queued" ? Math.min(delivery.deliver_at_s,
         delivery.issued_at_s + Math.max(0, active.flightTime - active.sharedAtFlightTime))
       : phaseDue && nextPhase != null ? nextPhase : current;

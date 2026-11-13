@@ -136,6 +136,9 @@ const COMPARISON_LABELS = {
 function readingText(evidence) {
   if (evidence?.systolic != null) return `${evidence.systolic}/${evidence.diastolic} ${evidence.unit ?? "mmHg"}`;
   if (evidence?.value != null) return `${formatValue(evidence.value)} ${evidence.unit ?? ""}`.trim();
+  if (evidence?.duration_min != null) return `${evidence.duration_min} min`;
+  if (evidence?.score != null) return `${evidence.score}/5`;
+  if (evidence?.symptoms?.length) return evidence.symptoms.join(", ");
   return "Recorded (no numeric value)";
 }
 
@@ -206,7 +209,7 @@ export function CrewHealthDashboard({ profile, assessment, metrics, measureHref,
       {assessment ? <div className="mt-4" data-testid="crew-health-assessment">
         <p className="text-sm text-slate-800">
           <strong>{selected?.label ?? assessment.metric}</strong>: <span data-testid="crew-health-reading">{readingText(assessment.evidence)}</span>
-          <span className="text-slate-600"> · observed {missionTime(assessment.observed_at_s)} · quality <span data-testid="crew-health-quality">{assessment.evidence?.quality ?? "unknown"}</span> · {contextText(assessment.evidence?.context)}</span>
+          <span className="text-slate-600"> · observed {missionTime(assessment.observed_at_s)} · quality <span data-testid="crew-health-quality">{assessment.evidence?.quality ?? "unknown"}</span> · {contextText(assessment.evidence?.context)}{assessment.evidence?.source_id && <> · source {assessment.evidence.source_id}</>}</span>
         </p>
         <div className="mt-3 grid gap-3 md:grid-cols-2">
           <Comparison title="Personal baseline" comparison={assessment.personal} testId="comparison-personal" />
