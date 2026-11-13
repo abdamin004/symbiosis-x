@@ -2,8 +2,10 @@
 function createLaunchScene(canvas) {
   const ctx = canvas.getContext("2d");
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
-  let phase = "pad", separated = false, elapsed = 0, burning = false, ignition = null, transition = null, frame;
+  let phase = "pad", ship = "", lightStack = false, separated = false, elapsed = 0, burning = false, ignition = null, transition = null, frame;
+  let orbitalBurn = false, engineThrottle = 1;
   let separation = null;
+  let checkout = null;
   let previous = {rise:0, drift:0, tilt:0, camera:0, space:0};
   const padPose = previous;
   let daylight = {angle:.8,altitude:.7,light:1};
@@ -74,7 +76,7 @@ function createLaunchScene(canvas) {
       ctx.globalAlpha=pose.space;
       rect(gradient(0,0,0,h,[[0,"#03091a"],[.8,"#16263e"],[1,"#3b617c"]]),0,0,w,h);
       for(let i=0;i<110;i++) rect(i%7===0?"#dae8ff":"#8d9ebd",rand(i+13)*w,rand(i+69)*h*.9,i%7===0?1.8:1,1);
-      if(phase==="upper") {
+      if(phase==="upper" || phase==="orbital") {
         const earth=gradient(0,h*.7,0,h,[[0,"#adcde0"],[.11,"#345e7d"],[1,"#172e52"]]);
         ellipse(earth,w*.47,h*1.35,w*.89,h*.66);
       }
@@ -141,10 +143,15 @@ function createLaunchScene(canvas) {
     rect("#273542",-91,-253,33,6);
     rect("#536674",-78,-274,3,21);
     ellipse("#ff9875",-76,-274,2,2);
-    const reach=28*(1-away);
+    const reach=36;
     for(const level of [-179,-103]) {
-      rect("#344652",-65,level,9+reach,8);
-      rect("#a4a19a",-65,level,9+reach,1);
+      ctx.save();
+      ctx.translate(-65,level);
+      ctx.rotate(away*1.34);
+      rect("#344652",0,0,9+reach,8);
+      rect("#a4a19a",0,0,9+reach,1);
+      ellipse("#ddc4a0",2,4,3,3);
+      ctx.restore();
     }
     rect("#26313e",-96,-5,41,5);
     for (const level of [-200,-152,-104,-56]) {
@@ -159,11 +166,12 @@ function createLaunchScene(canvas) {
     ctx.translate(x+pose.drift*s,y-pose.rise*s+pose.camera);
     ctx.scale(s,s);
     ctx.rotate(pose.tilt);
-    if(thrust) {
-      const upper = phase === "upper";
+    if(thrust > 0) {
+      const upper = phase === "upper" || phase === "orbital";
       const nozzleY = upper ? -121 : 0;
-      const length=(upper ? 45 : 86)+Math.sin(now*.051)*8+Math.sin(now*.032)*6;
+      const length=((upper ? 67 : 86)+Math.sin(now*.051)*8+Math.sin(now*.032)*6)*thrust;
       ctx.save();
+      ctx.globalAlpha = thrust;
       ctx.translate(0,nozzleY);
       const glow=ctx.createRadialGradient(0,-4,2,0,15,65);
       glow.addColorStop(0,"#fff5dcae");
@@ -177,8 +185,9 @@ function createLaunchScene(canvas) {
     const alloy=gradient(-22,0,22,0,[[0,"#8d9fac"],[.24,"#c6d1d6"],[.54,"#edf0eb"],[.77,"#d0cebf"],[1,"#7a8791"]]);
     if(!separated || pose.booster<1) {
       ctx.save();
-      ctx.translate(-72*pose.booster,215*pose.booster**1.25);
-      ctx.rotate(-.62*pose.booster);
+      ctx.translate(-96*pose.booster**1.35,226*pose.booster**1.15);
+      ctx.rotate(-1.05*pose.booster);
+      ctx.globalAlpha = 1-Math.max(0,(pose.booster-.68)/.32);
       path("#445362",[[-19,-34],[-30,-12],[-30,-6],[-13,-10],[13,-10],[30,-6],[30,-12],[19,-34]]);
       path("#283846",[[-14,-14],[14,-14],[17,-2],[10,0],[-10,0],[-17,-2]]);
       rect(alloy,-21,-132,42,117);
@@ -207,10 +216,10 @@ function createLaunchScene(canvas) {
     line("#e0e5e6",1,[[-18,-201],[-18,-137]]);
     ctx.font="700 7px system-ui";
     ctx.fillStyle="#253d4d";
-    ctx.fillText("ASTERIA",-16,-179);
+    ctx.fillText(ship.toUpperCase(),-16,-179);
     if(separated) {
       path("#414d58",[[-10,-132],[10,-132],[14,-121],[-14,-121]]);
-      if (pose.booster > 0 && pose.booster < .52) {
+      if (pose.booster > 0 && pose.booster < .64) {
         const spread = pose.booster*70;
         for (let i=0;i<14;i++) {
           const alpha = Math.max(0,1-2*pose.booster);
@@ -225,7 +234,42 @@ function createLaunchScene(canvas) {
     if(phase==="pad") return {...padPose,booster:0};
     if(phase==="ascent") return {rise:100+elapsed*2.6,drift:Math.min(43,elapsed*.7),tilt:Math.min(.17,elapsed*.003),camera:32+elapsed*2.3,space:Math.min(.67,elapsed/86),booster:0};
     if(phase==="abort") return {rise:190,drift:-37,tilt:-.24,camera:106,space:.24,booster:Number(separated)};
+    if(phase==="orbital") return {rise:105,drift:0,tilt:1.41,camera:0,space:1,booster:1};
     return {rise:250,drift:34,tilt:.78,camera:128,space:1,booster:1};
+  }
+
+  function drawCheckout(x,y,s) {
+    const {systems,crew,time,power} = checkout;
+    const lamp = ctx.createRadialGradient(x,y-145*s,4,x,y-145*s,85*s);
+    lamp.addColorStop(0,`rgba(112,232,223,${power*.38})`);
+    lamp.addColorStop(1,"#9fe7ef00");
+    ellipse(lamp,x,y-145*s,90*s,130*s);
+    ctx.font="600 11px system-ui";
+    for (const [i,system] of systems.entries()) {
+      if (system.state === "off") continue;
+      const color = system.state === "online" ? "#a6f8db" : "#ffce94";
+      const level = y-(221-i*25)*s;
+      const edge = x+19*s;
+      const end = x+72*s;
+      ctx.globalAlpha = system.state === "starting" && !reduced.matches ? .6+.35*Math.sin(time*1.6)**2 : 1;
+      line(color,1,[[edge,level],[end,level]]);
+      ellipse(color,edge,level,3,3);
+      rect("#112536",end,level-8,35,16);
+      ctx.fillStyle=color;
+      ctx.fillText(system.label,end+4,level+4);
+    }
+    ctx.globalAlpha=1;
+    for (const [i,person] of crew.entries()) {
+      if (person.state === "idle") continue;
+      const color = person.state === "verified" ? "#9cebd0" : "#ffce94";
+      const level = y-(222-i*23)*s;
+      const start = x-108*s;
+      line(color,1,[[start+44,level],[x-20*s,level]]);
+      rect("#162437",start,level-8,44,16);
+      rect(color,start,level+6,44*person.progress,2);
+      ctx.fillStyle=color;
+      ctx.fillText(person.state === "verified" ? "✓ "+person.label : person.label,start+3,level+3);
+    }
   }
 
   function draw(now) {
@@ -239,28 +283,40 @@ function createLaunchScene(canvas) {
     ctx.setTransform(dpr,0,0,dpr,0,0);
     const target=poseFor();
     const t=transition ? clamp((now-transition.start)/transition.duration) : 1;
-    const ease=phase==="ascent" && elapsed===0 ? t*t*(3-2*t) : 1-(1-t)**3;
-    const pose=Object.fromEntries(Object.keys(target).map(key=>[key,mix(transition?.from[key]??target[key],target[key],ease)]));
+    const liftoff = phase==="ascent" && elapsed===0;
+    const lift = clamp((t-.33)/.67);
+    const ease=liftoff ? lift*lift*(3-2*lift) : 1-(1-t)**3;
+    const ignitionProgress = ignition === null ? 1 : clamp((now-ignition)/1000);
+    const holdAtPad = phase === "ascent" && elapsed === 0 && ignitionProgress < .85;
+    const pose=Object.fromEntries(Object.keys(target).map(key=>[key,mix(transition?.from[key]??target[key],target[key],holdAtPad ? 0 : ease)]));
     previous=pose;
-    const shipX=w*(w<610?.63:.66), ground=h*.79, s=Math.min(h/605,1.48);
-    if (separation !== null) pose.booster = clamp((now-separation)/1250);
-    const upperBurn = phase === "upper" && separation !== null && now-separation > 450 && now-separation < 1500;
-    const thrust=phase==="ascent" && burning || upperBurn;
+    const centered = canvas.closest(".launch-field")?.dataset.view === "launch";
+    const shipX=w*(centered ? w<520 ? .34 : .5 : w<610 ? .63 : .66), ground=h*.79, s=Math.min(h/605,1.48);
+    if (separation !== null) pose.booster = clamp((now-separation)/2800);
+    const upperBurn = phase === "upper" && separation !== null && now-separation > 1000 && now-separation < 2700;
+    const powered=phase==="ascent" && burning || upperBurn || orbitalBurn || phase==="orbital";
+    const thrust = powered ? engineThrottle : 0;
+    if (!reduced.matches && (orbitalBurn || phase==="orbital")) {
+      pose.drift += 18*Math.sin(now*.0011);
+      pose.rise += 7*Math.sin(now*.0016);
+    }
     sky(w,h,ground,shipX,pose);
     if(pose.space<1) {
       ctx.save();
       ctx.globalAlpha=1-pose.space;
       terrain(w,h,ground+pose.camera,shipX);
-      gantry(shipX,ground+pose.camera,s,clamp(pose.rise/60));
+      const release = ignition === null ? clamp(pose.rise/60) : clamp((ignitionProgress-.38)/.47);
+      gantry(shipX,ground+pose.camera,s,release);
       if(daylight.light<1) rect("rgba(4,12,35,"+(1-daylight.light)*.35+")",0,ground+pose.camera-60,w,h-ground+60);
       ctx.restore();
     }
-    rocket(shipX,ground,s,pose,reduced.matches?0:now,thrust);
+    rocket(shipX,ground,lightStack ? s*.77 : s,pose,reduced.matches?0:now,thrust);
+    if (checkout && phase === "pad") drawCheckout(shipX,ground,lightStack ? s*.77 : s);
     if(ignition!==null && phase==="ascent" && !reduced.matches) {
       const age=(now-ignition)/1000;
       if(age<4) {
         for(let i=0;i<40;i++) {
-          const life=clamp((age-rand(i+430)*.53)/3.35);
+          const life=clamp((age-.85-rand(i+430)*.53)/3.35);
           if(life===0 || life===1) continue;
           const x=shipX+(rand(i+315)-.5)*s*(32+life*358);
           const y=ground+pose.camera+s*(4-life*(9+rand(i+212)*58));
@@ -269,18 +325,22 @@ function createLaunchScene(canvas) {
       }
     }
     if(t===1) transition=null;
-    if(!reduced.matches && (transition || thrust || separation!==null && now-separation<1500 ||
+    if(!reduced.matches && (transition || thrust || separation!==null && now-separation<2800 ||
         (ignition!==null && now-ignition<4000))) frame=requestAnimationFrame(draw);
   }
 
   function show(next,animate) {
     const changed=phase!==next.phase || elapsed!==next.elapsed || separated!==next.separated;
     const lift=phase==="pad" && next.phase==="ascent" && next.elapsed===0;
-    const staging=!separated && next.separated;
+    const staging=!separated && next.separated && next.phase==="upper";
     phase=next.phase;
+    ship=next.ship;
+    lightStack=next.lightStack;
     separated=next.separated;
     elapsed=next.elapsed;
     burning=next.burning;
+    orbitalBurn=Boolean(next.orbitalBurn);
+    engineThrottle=1;
     const now=performance.now();
     if (staging && animate && !reduced.matches) separation=now;
     if (!separated || !animate || reduced.matches) separation=null;
@@ -298,7 +358,13 @@ function createLaunchScene(canvas) {
   }
   new ResizeObserver(refresh).observe(canvas);
   reduced.addEventListener("change",()=>{transition=null; ignition=null; refresh();});
-  return {show,setSky(light) {
+  return {show,hide:()=>cancelAnimationFrame(frame),setThrottle(value) {
+    engineThrottle = value;
+    refresh();
+  },setCheckout(value) {
+    checkout = value;
+    refresh();
+  },setSky(light) {
     daylight = light;
     refresh();
   }};

@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "scenario_id": "crew-wearables",
+  "scenario_version": "1",
+  "seed": 4242,
+  "synthetic": true,
+  "visibility": "crew",
+  "freshness_s": 15,
+  "channels": {
+    "wristband": {"source_id": "sim.crew.wristband", "metric": "heart_rate", "unit": "bpm"},
+    "back_pod": {"source_id": "sim.crew.back_pod", "metric": "motion_speed", "unit": "m/s"}
+  },
+  "deliveries": [
+    {
+      "sample_id": "wrist-rest", "channel": "wristband",
+      "observed_at_s": 0, "received_at_s": 0,
+      "value": 72, "quality": "valid", "activity": "rest"
+    },
+    {
+      "sample_id": "wrist-disconnected", "channel": "wristband",
+      "observed_at_s": 20, "received_at_s": 20,
+      "value": null, "quality": "unavailable", "activity": "rest",
+      "reason_code": "DEVICE_DISCONNECTED"
+    },
+    {
+      "sample_id": "wrist-restored", "channel": "wristband",
+      "observed_at_s": 50, "received_at_s": 50,
+      "value": 74, "quality": "valid", "activity": "rest", "duplicate": true
+    },
+    {
+      "sample_id": "wrist-delayed", "channel": "wristband",
+      "observed_at_s": 10, "received_at_s": 60,
+      "value": 73, "quality": "valid", "activity": "rest"
+    },
+    {
+      "sample_id": "back-pod-motion", "channel": "back_pod",
+      "observed_at_s": 70, "received_at_s": 71,
+      "value": 0.8, "quality": "valid", "activity": "exercise"
+    },
+    {
+      "sample_id": "wrist-motion", "channel": "wristband",
+      "observed_at_s": 70, "received_at_s": 72,
+      "value": 132, "quality": "suspect", "activity": "exercise",
+      "reason_code": "MOTION_ARTIFACT", "motion_sample_id": "back-pod-motion"
+    }
+  ],
+  "recheck_repeat": {
+    "sample_id": "wrist-recheck", "channel": "wristband",
+    "observed_at_s": 100, "received_at_s": 100,
+    "value": 96, "quality": "valid", "activity": "exercise",
+    "repeat_of_sample_id": "wrist-motion"
+  }
+}

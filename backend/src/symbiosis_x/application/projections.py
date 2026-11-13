@@ -4,7 +4,7 @@ import json
 from sqlite3 import Connection, Row
 
 from symbiosis_x.application.runs import RunNotFound
-from symbiosis_x.crew.profile import load_profile
+from symbiosis_x.crew.profile import profile_for_crew
 from symbiosis_x.crew.measurements import latest_crew_assessment
 from symbiosis_x.contracts.projections import (
     AcceptedCO2, CurrentCrewView, CurrentGroundView, DeliveredTelemetry, Delivery, GroundPacket,
@@ -33,8 +33,11 @@ def read_run(db: Connection, run_id: str) -> Row:
     return run
 
 
-def read_crew(db: Connection, run_id: str) -> CurrentCrewView:
+def read_crew(db: Connection, run_id: str, crew_id: str = "SIM-01") -> CurrentCrewView:
     run = read_run(db, run_id)
+    profile = profile_for_crew(crew_id)
+    if profile is None:
+        raise LookupError("CREW_NOT_ON_ROSTER")
     co2 = db.execute(
         """SELECT value, unit, observed_at_s, source_id, event_id
            FROM telemetry_observations
@@ -46,8 +49,8 @@ def read_crew(db: Connection, run_id: str) -> CurrentCrewView:
     return CurrentCrewView(
         **dict(run),
         co2=AcceptedCO2(**dict(co2)) if co2 else None,
-        health_profile=load_profile(),
-        health_assessment=latest_crew_assessment(db, run_id),
+        health_profile=profile,
+        health_assessment=latest_crew_assessment(db, run_id, profile),
         trace=read_trace(db, run_id, run["mission_s"]),
     )
 

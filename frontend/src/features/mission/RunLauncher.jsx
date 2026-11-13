@@ -57,6 +57,11 @@ export default function RunLauncher({ run: fixtureRun }) {
               </Link>
             </li>
           ))}
+        <li><a href={"/flight?view=replay&run_id=" + encodeURIComponent(run.runId)}
+          className="block rounded-lg border border-slate-200 bg-white p-5 hover:border-selection">
+          <span className="font-semibold text-slate-900">Open Flight crew portraits</span>
+          <span className="mt-1 block text-sm text-slate-600">Use the deck to open a private health record for this run.</span>
+        </a></li>
         </ul>
       )}
 

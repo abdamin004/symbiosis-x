@@ -57,6 +57,6 @@ test("End mission stops the replay, summarizes it and starts fresh", async ({ pa
   await page.locator("#end-mission").click();
   await dialog.getByRole("button", { name: "End mission" }).click();
   await dialog.getByRole("button", { name: "Back to game menu" }).click();
-  await expect(page.getByRole("heading", { name: /Asteria/ }).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "SYMBIOSIS X", exact: true })).toBeVisible();
   await expect(page).not.toHaveURL(/view=/);
 });

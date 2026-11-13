@@ -1,6 +1,6 @@
-import { useMemo, useRef, useState } from "react";
-import { createOperationId, saveCrewMeasurement } from "../../api/client.js";
-import { Link, useParams } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createOperationId, readRunView, saveCrewMeasurement } from "../../api/client.js";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { HEALTH_GUIDE_DISCLAIMER, HEALTH_GUIDES, HEALTH_METRICS } from "../../api/healthCatalog.js";
 import MetricGuide from "./MetricGuide.jsx";
 
@@ -48,18 +48,41 @@ function validate(metric, m) {
 
 export default function MeasurementPage() {
   const { runId } = useParams();
+  const [query] = useSearchParams();
+  const selectedCrew = query.get("crew_id");
+  return <MeasurementForm key={runId + ":" + (selectedCrew ?? "SIM-01")} runId={runId} selectedCrew={selectedCrew} />;
+}
+
+function MeasurementForm({ runId, selectedCrew }) {
+  const crewId = selectedCrew ?? "SIM-01";
+  const [subject, setSubject] = useState(null);
+  const [subjectError, setSubjectError] = useState("");
   const [metric, setMetric] = useState("heart_rate");
-  const [values, setValues] = useState(EMPTY);
+  const [values, setValues] = useState({...EMPTY, source_id:"synthetic.manual." + crewId.toLowerCase()});
   const [error, setError] = useState("");
   const [preview, setPreview] = useState(null);
   const [saved, setSaved] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const measurementId = useRef(null);
+  useEffect(() => {
+    if (!selectedCrew) return;
+    let active = true;
+    readRunView(runId, "crew", selectedCrew).then(view => {
+      if (!active) return;
+      setSubject(view);
+      setValues(old => ({...old, observed_at_s:String(view.mission_s)}));
+    }).catch(error => { if (active) setSubjectError(error.message); });
+    return () => { active = false; };
+  }, [runId, selectedCrew]);
   const guide = useMemo(() => HEALTH_GUIDES.get(metric), [metric]);
   const selected = HEALTH_METRICS.find((item) => item.id === metric);
   const update = (key) => (value) => setValues((old) => ({ ...old, [key]: value }));
-  function changeMetric(value) { setMetric(value); setValues(EMPTY); setError(""); setPreview(null); setSaved(null); setSaveError(""); measurementId.current = null; }
+  function changeMetric(value) {
+    setMetric(value);
+    setValues({...EMPTY, observed_at_s:String(subject?.mission_s ?? 0), source_id:"synthetic.manual." + crewId.toLowerCase()});
+    setError(""); setPreview(null); setSaved(null); setSaveError(""); measurementId.current = null;
+  }
   function submit(event) {
     event.preventDefault();
     const measurement = buildMeasurement(metric, values);
@@ -70,13 +93,13 @@ export default function MeasurementPage() {
     setSaveError("");
   }
   async function saveMeasurement() {
-    if (!preview) return;
+    if (!preview || (selectedCrew && (!subject || subject.status === "closed"))) return;
     setSaving(true);
     setSaveError("");
     if (!measurementId.current) measurementId.current = createOperationId("measurement");
     const context = metric === "heart_rate" ? { activity: values.activity } : {};
     try {
-      const receipt = await saveCrewMeasurement(runId, { measurement_id: measurementId.current, crew_id: "SIM-01", synthetic: true, measurement: preview, context });
+      const receipt = await saveCrewMeasurement(runId, { measurement_id: measurementId.current, crew_id: crewId, synthetic: true, measurement: preview, context });
       setSaved(receipt);
       measurementId.current = null;
     } catch (e) { setSaveError(e.message); }
@@ -85,9 +108,11 @@ export default function MeasurementPage() {
   return (
     <main className="mx-auto max-w-5xl px-4 py-8" data-testid="measurement-page">
       <header className="border-b border-slate-200 pb-4">
-        <Link className="text-sm text-slate-500 underline" to={`/runs/${encodeURIComponent(runId)}/crew`}>Back to Crew Health</Link>
+        <Link className="text-sm text-slate-500 underline" to={`/runs/${encodeURIComponent(runId)}/crew` + (selectedCrew ? "?crew_id=" + encodeURIComponent(selectedCrew) : "")}>Back to Crew Health</Link>
         <h1 className="mt-2 text-2xl font-semibold">Take a measurement</h1>
         <p className="mt-1 text-sm text-slate-600">Run {runId} · Synthetic training data only · Private Crew entry</p>
+        {selectedCrew && <p className="mt-1 text-sm text-slate-600">{subject?.health_profile.display_name ?? crewId}</p>}
+        {subjectError && <p role="alert">Could not load this crew record. {subjectError}</p>}
       </header>
       <p className="mt-4 text-sm text-slate-600">{HEALTH_GUIDE_DISCLAIMER}</p>
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
@@ -128,13 +153,13 @@ export default function MeasurementPage() {
             </> : null}
             <Field id="quality" label="Reading quality"><Select id="quality" value={values.quality} onChange={update("quality")}><option value="valid">Valid</option><option value="suspect">Suspect</option><option value="unavailable">Unavailable</option></Select></Field>
             {error && <p role="alert" data-testid="measurement-error" className="rounded-md bg-red-50 p-3 text-sm text-red-800">{error}</p>}
-            <button className="rounded-md bg-selection px-4 py-2 text-sm font-semibold text-white" type="submit">Validate measurement</button>
+            <button className="rounded-md bg-selection px-4 py-2 text-sm font-semibold text-white disabled:opacity-50" type="submit" disabled={Boolean(selectedCrew && !subject)}>Validate measurement</button>
           </form>
           {preview && <section role="status" data-testid="measurement-preview" className="mt-5 rounded-md border border-emerald-200 bg-emerald-50 p-3">
             <h2 className="font-semibold">Measurement validated · local preview</h2>
             <p className="mt-1 text-xs">Validated against the project metric shape. Save sends this synthetic reading to the private Crew API.</p>
             <pre className="mt-2 overflow-auto text-xs">{JSON.stringify(preview, null, 2)}</pre>
-            <button type="button" onClick={saveMeasurement} disabled={saving} className="mt-3 rounded-md bg-selection px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{saving ? "Saving..." : "Save to private Crew record"}</button>
+            <button type="button" onClick={saveMeasurement} disabled={saving || Boolean(selectedCrew && (!subject || subject.status === "closed"))} className="mt-3 rounded-md bg-selection px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{saving ? "Saving..." : "Save to private Crew record"}</button>
           </section>}
           {saveError && <p role="alert" className="mt-3 rounded bg-red-50 p-3 text-sm text-red-800">{saveError}</p>}
           {saved && <p role="status" data-testid="measurement-saved" className="mt-3 rounded border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">Saved privately for {saved.crew_id} at mission time {saved.received_at_s}s. <Link className="font-semibold underline" to={`/runs/${encodeURIComponent(runId)}/crew`}>See the assessment in Crew Health</Link></p>}

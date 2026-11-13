@@ -1,9 +1,9 @@
 {
   "id": "launch-checkout",
   "version": 1,
-  "title": "Asteria Launch",
-  "vehicle": "Asteria · three-part launch stack",
-  "objective": "Launch, establish orbit, and capture the station.",
+  "title": "ISS Research and Return",
+  "vehicle": "Horizon · three-part launch stack",
+  "objective": "Launch Horizon, deliver the research kit to the ISS, and recover the crew on Earth.",
   "stages": [
     {
       "id": "capsule",
@@ -50,7 +50,7 @@
   "ascent": {
     "burn_s": 45,
     "separation_deadline_s": 90,
-    "minimum_coast_s": 15,
+    "minimum_coast_s": 30,
     "coast_limit_s": 90,
     "reserve_initial": 100,
     "insertion_cost": 55,
@@ -71,7 +71,7 @@
         "seconds": 0,
         "range": 100,
         "closing": 0,
-        "state": "Phasing burn logged"
+        "state": "Station orbit matched · approach ready"
       },
       {
         "seconds": 15,
@@ -126,52 +126,57 @@
       {
         "id": "insertion",
         "label": "Establish stable orbit",
-        "planned_s": 120
+        "planned_s": 135
       },
       {
         "id": "phasing",
-        "label": "Commit station rendezvous",
-        "planned_s": 120
+        "label": "Coast to departure and commit the ISS transfer burn",
+        "planned_s": null
+      },
+      {
+        "id": "match",
+        "label": "Coast to apoapsis and match station orbit",
+        "planned_s": null
       },
       {
         "id": "capture",
         "label": "Capture the station",
-        "planned_s": 165
+        "planned_s": null
       },
       {
         "id": "hatch",
         "label": "Verify seal and pressure before transfer",
-        "planned_s": 180
+        "planned_s": null
       },
       {
         "id": "transfer",
         "label": "Hand off the research kit",
-        "planned_s": 180
+        "planned_s": null
       },
       {
         "id": "research",
         "label": "Complete station research",
-        "planned_s": 210
+        "planned_s": null
       },
       {
         "id": "departure",
         "label": "Board the return capsule and depart",
-        "planned_s": 210
+        "planned_s": null
       },
       {
         "id": "deorbit",
         "label": "Commit deorbit",
-        "planned_s": 210
+        "planned_s": null
       },
       {
         "id": "landing",
         "label": "Land the return capsule",
-        "planned_s": 270
+        "planned_s": null
       },
       {
         "id": "return",
         "label": "Confirm Earth recovery",
-        "planned_s": 270
+        "planned_s": null
       }
     ]
   },
@@ -190,5 +195,14 @@
     "daylight_cycle_s": 240,
     "daylight_offset_s": 35,
     "startup_s": 15
-  }
+  },
+  "ship": "Horizon",
+  "seed": 4242,
+  "pacing": "8–12 minutes",
+  "briefing": [
+    "Start ship systems and assign the crew checks. Play advances their work and stops when the countdown can be armed.",
+    "Arm the countdown and commit liftoff. Separate the booster at burnout, then commit insertion when the orbit map shows an eligible window.",
+    "In Flight command, coast to the ISS departure window, commit the transfer burn, coast to apoapsis, and match station orbit. Capture the station and verify seal and pressure before opening the hatch.",
+    "Deliver the kit, complete station research, and return to Earth in the recovery capsule."
+  ]
 }

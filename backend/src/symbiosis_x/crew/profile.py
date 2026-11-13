@@ -1,4 +1,4 @@
-"""Load and validate the fictional SIM-01 health profile."""
+"""Load and validate fictional Crew health profiles."""
 
 import json
 from pathlib import Path
@@ -35,7 +35,7 @@ class AstronautHealthProfile(Contract):
     display_name: Identifier
     simulated: Literal[True]
     history: HealthHistory
-    baselines: list[PersonalBaseline] = Field(min_length=1)
+    baselines: list[PersonalBaseline] = Field(default_factory=list)
 
 
 DEFAULT_PROFILE_PATH = (
@@ -51,3 +51,19 @@ def load_profile(path: str | Path | None = None) -> AstronautHealthProfile:
     profile_path = Path(path) if path is not None else DEFAULT_PROFILE_PATH
     payload = json.loads(profile_path.read_text(encoding="utf-8"))
     return AstronautHealthProfile.model_validate(payload)
+
+
+def profile_for_crew(crew_id: str) -> AstronautHealthProfile | None:
+    if crew_id == "SIM-01":
+        return load_profile()
+    catalog = DEFAULT_PROFILE_PATH.parent
+    roster = json.loads((catalog / "synthetic-roster.json").read_text(encoding="utf-8"))["crew"]
+    member = next((row for row in roster if row["crew_id"] == crew_id), None)
+    if member is None:
+        return None
+    profiles = json.loads((catalog / "selected-crew-health.json").read_text(encoding="utf-8"))
+    return AstronautHealthProfile(
+        schema_version=1, profile_id=f"{crew_id.lower()}-health-v1", crew_id=crew_id,
+        display_name=member["display_name"], simulated=True, history=HealthHistory(status="unknown"),
+        baselines=[PersonalBaseline.model_validate(baseline) for baseline in profiles.get(crew_id, [])],
+    )

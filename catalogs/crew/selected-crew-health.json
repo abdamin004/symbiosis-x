@@ -1,0 +1,12 @@
+{
+  "SIM-02": [{
+    "metric": "heart_rate", "value": 68, "unit": "bpm",
+    "context": "Synthetic resting value during quiet seated activity",
+    "source_id": "synthetic.sim-02-health-baseline-v1"
+  }],
+  "SIM-03": [{
+    "metric": "heart_rate", "value": 76, "unit": "bpm",
+    "context": "Synthetic resting value during quiet seated activity",
+    "source_id": "synthetic.sim-03-health-baseline-v1"
+  }]
+}

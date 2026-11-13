@@ -4,6 +4,8 @@ from hashlib import sha256
 from uuid import uuid4
 
 from symbiosis_x.application.nominal import deliver_nominal_ground, record_nominal_co2
+from symbiosis_x.application.wearables import WEARABLE_SCENARIO, WEARABLE_STEPS_S, record_wearables
+from symbiosis_x.crew.wearable_series import load_wearable_fixture
 from symbiosis_x.contracts.commands import (
     AdvanceReceipt, AdvanceRunRequest, DriverPauseRequest, DriverPauseReceipt, EndReceipt, EndRunRequest, ResetReceipt, ResetRunRequest, RunReceipt, StartRunRequest,
 )
@@ -67,6 +69,9 @@ def start_run(repository: Repository, command: StartRunRequest, golden_manifest_
                 manifest = load_organizer_manifest()
                 if command.seed != manifest["seed"]:
                     raise RunConflict("ORGANIZER_SEED_MISMATCH")
+            elif scenario == WEARABLE_SCENARIO:
+                if command.seed != load_wearable_fixture()["seed"]:
+                    raise RunConflict("WEARABLE_SEED_MISMATCH")
             elif scenario != NOMINAL_SCENARIO:
                 raise RunNotFound("SCENARIO_NOT_FOUND")
             run_id = uuid4().hex
@@ -101,6 +106,8 @@ def _record_start(db, run_id: str, payload_json: str) -> None:
         seed_golden(db, run_id)
     elif (scenario["scenario_id"], scenario["scenario_version"]) == ORGANIZER_SCENARIO:
         seed_golden(db, run_id, variant=load_organizer_manifest())
+    elif (scenario["scenario_id"], scenario["scenario_version"]) == WEARABLE_SCENARIO:
+        record_wearables(db, run_id, 0)
 
 
 def reset_run(repository: Repository, run_id: str, command: ResetRunRequest) -> ResetReceipt:
@@ -157,6 +164,8 @@ def _step_of(run) -> int:
     """The facilitator step cursor for a run's current mission time."""
     scenario = (run["scenario_id"], run["scenario_version"])
     steps = GOLDEN_STEPS_S if scenario in (GOLDEN_SCENARIO, ORGANIZER_SCENARIO) else NOMINAL_STEPS_S
+    if scenario == WEARABLE_SCENARIO:
+        steps = WEARABLE_STEPS_S
     return steps.index(run["mission_s"]) if run["mission_s"] in steps else 0
 
 
@@ -231,24 +240,26 @@ def advance_run(repository: Repository, run_id: str, command: AdvanceRunRequest,
             ).fetchone()
             if paused is not None and paused["paused"]:
                 raise RunConflict("DRIVER_PAUSED")
-        if (run["scenario_id"], run["scenario_version"]) in (GOLDEN_SCENARIO, ORGANIZER_SCENARIO):
+        scenario = (run["scenario_id"], run["scenario_version"])
+        if scenario in (GOLDEN_SCENARIO, ORGANIZER_SCENARIO):
             return _advance_golden(db, run_id, run, command)
-        if (run["scenario_id"], run["scenario_version"]) != NOMINAL_SCENARIO:
+        if scenario not in (NOMINAL_SCENARIO, WEARABLE_SCENARIO):
             raise RunConflict("SCENARIO_NOT_ADVANCEABLE")
         if command.target_mission_s is not None:
             raise RunConflict("TARGET_ONLY_FOR_GOLDEN")
-        if command.expected_step >= len(NOMINAL_STEPS_S) or (
-            NOMINAL_STEPS_S[command.expected_step] != run["mission_s"]
+        steps = WEARABLE_STEPS_S if scenario == WEARABLE_SCENARIO else NOMINAL_STEPS_S
+        if command.expected_step >= len(steps) or (
+            steps[command.expected_step] != run["mission_s"]
         ):
             raise RunConflict("STALE_STEP")
         next_step = command.expected_step + 1
-        if next_step == len(NOMINAL_STEPS_S):
+        if next_step == len(steps):
             raise RunConflict("NO_NEXT_STEP")
 
         receipt = AdvanceReceipt(
             run_id=run_id, scenario_id=run["scenario_id"],
             scenario_version=run["scenario_version"], seed=run["seed"],
-            step=next_step, mission_s=NOMINAL_STEPS_S[next_step], advance_id=command.advance_id,
+            step=next_step, mission_s=steps[next_step], advance_id=command.advance_id,
         )
         db.execute("UPDATE runs SET mission_s = ? WHERE run_id = ?", (receipt.mission_s, run_id))
         db.execute(
@@ -264,7 +275,10 @@ def advance_run(repository: Repository, run_id: str, command: AdvanceRunRequest,
             (run_id, command.advance_id, digest, receipt.model_dump_json()),
         )
         record_nominal_co2(db, run_id, receipt.mission_s)
-        deliver_nominal_ground(db, run_id, receipt.mission_s)
+        if scenario == WEARABLE_SCENARIO:
+            record_wearables(db, run_id, receipt.mission_s, run["mission_s"])
+        else:
+            deliver_nominal_ground(db, run_id, receipt.mission_s)
         deliver_due(db, run_id, receipt.mission_s)
         receive_due_advisories(db, run_id, receipt.mission_s)
     return receipt
