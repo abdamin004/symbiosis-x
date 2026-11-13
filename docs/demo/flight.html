@@ -675,6 +675,7 @@ ul.tutorial-startup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));g
 .stage[data-asteria=true] #mission-command-widget{max-height:min(44vh,385px)}
 .stage[data-demo-crew] #personnel-widget{
   width:min(296px,calc(100% - 20px));max-height:min(390px,48dvh);
+  padding:.6rem .72rem;
   background:linear-gradient(150deg,#192744f5,#10172ce8);
 }
 .stage[data-demo-crew] #personnel-widget :is(.personnel-actions,.anatomy-tabs,.device-links,#body-regions,.twin-camera){display:none}
@@ -682,10 +683,17 @@ ul.tutorial-startup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));g
 .stage[data-demo-crew] #personnel-art .crew-face{width:34px;height:34px}
 .stage[data-demo-crew] #personnel-widget .body-layout{grid-template-columns:68px minmax(0,1fr)}
 .stage[data-demo-crew] #personnel-widget .region-card{padding:.35rem .45rem}
+.stage[data-demo-crew] #personnel-widget .region-card h3{margin:.08rem 0;font-size:.8rem}
+.stage[data-demo-crew] #personnel-widget #region-source{display:block;line-height:1.2}
+.stage[data-demo-crew] #personnel-widget #twin-layer-label{margin-bottom:.16rem}
+.stage[data-demo-crew] #personnel-widget #personnel-role{margin:0}
 .stage[data-demo-crew] #personnel-widget .wrist-readout{margin:.25rem 0}
 @media(min-width:1000px){
   .stage[data-demo-crew] .viewport{margin-left:318px;margin-right:14px;overflow:visible}
   .stage[data-demo-crew] #ship{width:100%;min-width:0;margin-inline:0}
+}
+@media(min-width:1100px){
+  .stage[data-demo-crew] .viewport{margin-right:clamp(280px,25vw,325px)}
 }
 .stage[data-asteria=true] .control-deck{border:1px solid #9cacf13d}
 .stage[data-asteria=true] #widget-shelf{top:var(--resource-bottom,calc(100% + 10rem))}

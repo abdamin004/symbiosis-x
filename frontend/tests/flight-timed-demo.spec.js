@@ -25,6 +25,7 @@ test.afterAll(() => {
 
 test("the health demo shows the cabin response, private check and scheduled EVA without touching player saves", async ({ page }) => {
   test.setTimeout(120_000);
+  await page.setViewportSize({width:1200,height:674});
   const errors = [];
   const apiRequests = [];
   page.on("pageerror", error => errors.push(error.message));
@@ -85,8 +86,13 @@ test("the health demo shows the cabin response, private check and scheduled EVA 
   await expect(twin.locator("#personnel-name")).toHaveText("Sana Kepler");
   await expect(twin.locator("#region-source")).toHaveText("Synthetic demo · optical wristband");
   await expect(twin.locator("#region-reading")).toHaveText(/68 bpm.*observed T\+02:10.*received T\+02:15.*accepted/);
-  const [twinBounds, shipBounds] = await Promise.all([twin.boundingBox(),page.locator("#ship").boundingBox()]);
+  const [twinBounds, shipBounds, guideBounds, readingBounds] = await Promise.all([
+    twin.boundingBox(), page.locator("#ship").boundingBox(), page.locator("#mission-guide").boundingBox(),
+    twin.locator("#region-reading").boundingBox(),
+  ]);
   expect(twinBounds.x+twinBounds.width).toBeLessThan(shipBounds.x);
+  expect(shipBounds.x+shipBounds.width).toBeLessThan(guideBounds.x);
+  expect(readingBounds.y+readingBounds.height).toBeLessThan(twinBounds.y+twinBounds.height);
   await expect(twin.getByRole("link",{name:"Open private health record"})).toBeHidden();
   await advance(7);
   await expect(beat).toHaveText("Crew alert · scrubber capacity falls and cabin CO₂ rises");
