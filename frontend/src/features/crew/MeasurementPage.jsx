@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { createOperationId, saveCrewMeasurement } from "../../api/client.js";
 import { Link, useParams } from "react-router-dom";
 import { HEALTH_GUIDE_DISCLAIMER, HEALTH_GUIDES, HEALTH_METRICS } from "../../api/healthCatalog.js";
 import MetricGuide from "./MetricGuide.jsx";
@@ -51,6 +52,10 @@ export default function MeasurementPage() {
   const [values, setValues] = useState(EMPTY);
   const [error, setError] = useState("");
   const [preview, setPreview] = useState(null);
+  const [saved, setSaved] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const measurementId = useRef(null);
   const guide = useMemo(() => HEALTH_GUIDES.get(metric), [metric]);
   const selected = HEALTH_METRICS.find((item) => item.id === metric);
   const update = (key) => (value) => setValues((old) => ({ ...old, [key]: value }));
