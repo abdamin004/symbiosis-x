@@ -2,13 +2,14 @@
 
 import argparse
 import json
-from itertools import combinations
 from pathlib import Path
 
 if __package__:
-    from .build_cabin_preview import ACTIVITY_S, ROOT, replay
+    from .build_cabin_preview import ACTIVITY_S, ROOT
+    from .iss_mission_replay import build_replays
 else:
-    from build_cabin_preview import ACTIVITY_S, ROOT, replay
+    from build_cabin_preview import ACTIVITY_S, ROOT
+    from iss_mission_replay import build_replays
 
 
 def build(output: Path) -> None:
@@ -16,14 +17,10 @@ def build(output: Path) -> None:
     crew_ids = [member["crew_id"] for member in crew]
     rooms = json.loads((ROOT / "catalogs/sx01/rooms.json").read_text())["rooms"]
     ground = json.loads((ROOT / "contracts/examples/ground-v102.json").read_text())["delivery"]
-    frames = {
-        ",".join(selected): replay(crew, set(selected))
-        for count in range(len(crew_ids) + 1)
-        for selected in combinations(crew_ids, count)
-    }
+    scenario, frames = build_replays(crew)
     data = json.dumps({
         "rooms": rooms, "crew": crew_ids, "activity_s": ACTIVITY_S,
-        "frames": frames, "relay_delivery_s": ground["received_at_s"],
+        "frames": frames, "research": scenario["research"],
     }, ensure_ascii=False).replace("<", "\\u003c")
     template = (ROOT / "docs/demo/flight.html").read_text(encoding="utf-8")
     output.write_text(template.replace("__FLIGHT_DATA__", data), encoding="utf-8")

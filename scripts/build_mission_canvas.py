@@ -2,13 +2,14 @@
 
 import argparse
 import json
-from itertools import combinations
 from pathlib import Path
 
 if __package__:
-    from .build_cabin_preview import ROOT, replay
+    from .build_cabin_preview import ROOT
+    from .iss_mission_replay import build_replays
 else:
-    from build_cabin_preview import ROOT, replay
+    from build_cabin_preview import ROOT
+    from iss_mission_replay import build_replays
 
 
 def read_catalog(path: str) -> dict:
@@ -18,16 +19,12 @@ def read_catalog(path: str) -> dict:
 def build(output: Path) -> None:
     crew = read_catalog("catalogs/crew/synthetic-roster.json")["crew"]
     crew_ids = [member["crew_id"] for member in crew]
-    runs = {
-        ",".join(selected): replay(crew, set(selected))
-        for count in range(len(crew_ids) + 1)
-        for selected in combinations(crew_ids, count)
-    }
+    scenario, runs = build_replays(crew)
     data = {
         "rooms": read_catalog("catalogs/sx01/rooms.json")["rooms"],
         "metrics": read_catalog("catalogs/crew/health-metrics.json")["metrics"],
         "crew_ids": crew_ids,
-        "replays": runs,
+        "replays": runs, "research": scenario["research"],
         "sensor": read_catalog("catalogs/sx01/sensors.json")["sensors"][0],
         "ground": read_catalog("contracts/examples/ground-v102.json"),
     }

@@ -184,12 +184,14 @@ function systemReading(system, frame) {
   const packet = liveView?.packet;
   const readings = {
     clock: [run ? formatTime(run.mission_s) : "Ready to start", "Live run"],
-    navigation: [frame.time === 0 ? "Departure checkpoint" : "Outbound transit", "Scripted phase · ETA planned"],
+    navigation: [frame.phase + " · " + frame.site, "Scripted phase · ETA planned"],
     air: [replayCo2, "Replay · " + formatTime(frame.time)],
-    activity: [frame.generation.toFixed(3) + " m³/h CO₂", "Replay · Four astronauts"],
+    activity: [frame.generation == null ? "Unmodeled" : frame.generation.toFixed(3) + " m³/h CO₂", "Replay · Four astronauts"],
     co2: [replayCo2, "Replay · " + catalog.sensor.source_id],
-    scrubber: [frame.removal.toFixed(0) + " m³/h", frame.removal < 20 ? "Replay · Degraded" : "Replay · Nominal"],
-    power: [frame.power.toFixed(2) + " kW", frame.power < 0.40 ? "Replay · Low headroom" : "Replay · Nominal"],
+    scrubber: [frame.removal == null ? "Unmodeled" : frame.removal.toFixed(0) + " m³/h", frame.removal == null ? "Station · Unmodeled" : frame.removal < 20 ? "Replay · Degraded" : "Replay · Nominal"],
+    power: [frame.power == null ? "Unmodeled" : frame.power.toFixed(2) + " kW", frame.power == null ? "Station · Unmodeled" : frame.power < 0.40 ? "Replay · Low headroom" : "Replay · Nominal"],
+    habitat: [frame.habitat.beds + "/4 beds · WC " + frame.habitat.wc, frame.habitat.meal],
+    hatch: [frame.dock, "Scripted"],
     health: [catalog.metrics.length + " measurement types", "Catalog ready"],
     relay: [frame.time >= launchPacket.delivery.received_at_s ? "Delivered · " + launchPacket.snapshot_id : "Awaiting replay packet", "Replay · Ground"],
   };
@@ -212,7 +214,7 @@ function renderReplay() {
   byId("checkpoint").value = frameIndex;
   byId("live-systems").hidden = !replayMode || !run;
   byId("checkpoint").setAttribute("aria-valuetext", formatTime(frame.time) + " " + frame.label);
-  byId("replay-caption").textContent = "Replay " + formatTime(frame.time) + " · " + frame.label + " · Cabin " + frame.co2.toFixed(2) + " ppm";
+  byId("replay-caption").textContent = "Replay " + formatTime(frame.time) + " · " + frame.phase + " · " + frame.vehicle + " · " + frame.label + " · Cabin " + frame.co2.toFixed(2) + " ppm";
   byId("play-replay").textContent = timer ? "Pause travel replay" : "Play travel replay";
   byId("next-checkpoint").disabled = frameIndex === catalog.replays[""].length - 1;
   const chosen = selectedRoom ? [selectedRoom] : rooms;
