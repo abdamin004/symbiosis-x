@@ -149,6 +149,8 @@ class CurrentCrewView(RunView):
     co2: AcceptedCO2 | None
     health_profile: AstronautHealthProfile
     health_assessment: dict | None = None
+    # Crew-private reminders (SX-24C); never part of a Ground packet.
+    health_followup: dict | None = None
     trace: list[TraceRecord] = []
 
 

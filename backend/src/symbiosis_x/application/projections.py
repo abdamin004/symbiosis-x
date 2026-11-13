@@ -5,6 +5,7 @@ from sqlite3 import Connection, Row
 
 from symbiosis_x.application.runs import RunNotFound
 from symbiosis_x.crew.profile import profile_for_crew
+from symbiosis_x.crew.followup import compute_followup
 from symbiosis_x.crew.measurements import latest_crew_assessment
 from symbiosis_x.contracts.projections import (
     AcceptedCO2, CurrentCrewView, CurrentGroundView, DeliveredTelemetry, Delivery, GroundPacket,
@@ -46,11 +47,13 @@ def read_crew(db: Connection, run_id: str, crew_id: str = "SIM-01") -> CurrentCr
            ORDER BY observed_at_s DESC, received_at_s DESC, event_id DESC LIMIT 1""",
         (run_id, run["mission_s"]),
     ).fetchone()
+    assessment = latest_crew_assessment(db, run_id, profile)
     return CurrentCrewView(
         **dict(run),
         co2=AcceptedCO2(**dict(co2)) if co2 else None,
         health_profile=profile,
-        health_assessment=latest_crew_assessment(db, run_id, profile),
+        health_assessment=assessment,
+        health_followup=compute_followup(db, run_id, crew_id, run["mission_s"], assessment),
         trace=read_trace(db, run_id, run["mission_s"]),
     )
 
