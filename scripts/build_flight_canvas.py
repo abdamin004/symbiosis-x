@@ -24,7 +24,8 @@ def build(output: Path) -> None:
         "frames": frames, "history": crew_history(frames[""], crew_ids), "research": scenario["research"],
     }, ensure_ascii=False).replace("<", "\\u003c")
     template = (ROOT / "docs/demo/flight.html").read_text(encoding="utf-8")
-    output.write_text(template.replace("__FLIGHT_DATA__", data), encoding="utf-8")
+    workflow = (ROOT / "docs/demo/flight-workflow.js").read_text(encoding="utf-8")
+    output.write_text(template.replace("__FLIGHT_DATA__", data).replace("__FLIGHT_WORKFLOW__", workflow), encoding="utf-8")
 
 
 if __name__ == "__main__":
