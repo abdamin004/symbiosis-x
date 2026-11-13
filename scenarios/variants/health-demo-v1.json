@@ -1,0 +1,41 @@
+{
+  "scenario_id": "health-demo",
+  "scenario_version": "1",
+  "synthetic": true,
+  "provenance": "synthetic_fixture",
+  "training_scope": "simulated_training_only",
+  "description": "SX-26A: the health-first release replay. It runs on the golden cabin run (sx01-golden v1, seed 4242), so cabin context stays available, and drives all five routes on a fresh store: Run Launcher, Take Measurement, Crew Health, Emergency Assist and Ground. Readings, notes and drills are fictional.",
+  "base_run": { "scenario_id": "sx01-golden", "scenario_version": "1", "seed": 4242 },
+  "time_unit": "s",
+  "clock": "mission",
+  "subject_crew_id": "SIM-01",
+  "private_marker": "SX26A_PRIVATE_MARKER fictional check-in",
+  "steps": [
+    { "at_s": 0, "route": "crew/measure", "action": "enter_reading",
+      "reading": { "metric": "heart_rate", "value": 76, "unit": "bpm", "observed_at_s": 0, "context": { "activity": "rest" } } },
+    { "at_s": 60, "route": "crew/measure", "action": "enter_reading",
+      "reading": { "metric": "heart_rate", "value": 88, "unit": "bpm", "observed_at_s": 60, "context": { "activity": "rest" } } },
+    { "at_s": 360, "route": "crew/measure", "action": "enter_reading",
+      "reading": { "metric": "heart_rate", "value": 95, "unit": "bpm", "observed_at_s": 360, "context": { "activity": "rest" } } },
+    { "at_s": 360, "route": "crew", "action": "review_assessment_trend_and_reminders" },
+    { "at_s": 360, "route": "crew", "action": "save_private_check_in", "note": "private_marker" },
+    { "at_s": 360, "route": "crew/emergency", "action": "open_drill", "drill_id": "drill-chest-pain-v1" },
+    { "at_s": 360, "route": "crew/emergency", "action": "acknowledge_locally" },
+    { "at_s": 360, "route": "crew/emergency", "action": "share_case_status_with_ground" },
+    { "at_s": 480, "route": "ground", "action": "confirm_case_pending" },
+    { "at_s": 780, "route": "ground", "action": "confirm_case_delivered_and_acknowledge" }
+  ],
+  "collapse_replay": {
+    "description": "Run separately on its own run: the collapse drill with unknown responsiveness, acknowledged locally.",
+    "steps": [
+      { "at_s": 0, "route": "crew/emergency", "action": "open_drill", "drill_id": "drill-collapse-v1", "responsiveness": "unknown" },
+      { "at_s": 0, "route": "crew/emergency", "action": "acknowledge_locally" }
+    ]
+  },
+  "golden_steps_s": [0, 60, 360, 480, 600, 780],
+  "fallback": {
+    "offline_player": "/backup",
+    "storyboard": "scenarios/expected/sx01-golden-storyboard.json",
+    "note": "If the live service is unavailable, present the saved golden frames and the evidence screenshots from the last passing replay."
+  }
+}

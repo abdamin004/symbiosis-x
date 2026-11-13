@@ -1,10 +1,6 @@
-import { spawn } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { createServer } from "node:net";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
+import { startBackend, stopBackend, useBackend } from "./support/backend.js";
 
 const example = (name) =>
   JSON.parse(readFileSync(new URL(`../../contracts/examples/${name}.json`, import.meta.url)));
@@ -263,69 +259,11 @@ test("facilitator starts and steps one shared run", async ({ browser, baseURL })
 
 
 // SX-20E: a real backend on a fresh SQLite file, shared by three browser sessions.
-// CI's browser job has no backend, so the test starts its own on a free port and
-// routes each session's /api and /health calls to it.
-const repoRoot = fileURLToPath(new URL("../../", import.meta.url));
-
-function freePort() {
-  return new Promise((resolve, reject) => {
-    const server = createServer();
-    server.once("error", reject);
-    server.listen(0, "127.0.0.1", () => {
-      const { port } = server.address();
-      server.close(() => resolve(port));
-    });
-  });
-}
-
-async function startBackend() {
-  const directory = mkdtempSync(join(tmpdir(), "sx20e-"));
-  const port = await freePort();
-  const python = process.env.SX_TEST_PYTHON || "python3";
-  const child = spawn(python, [
-    "-m", "uvicorn", "symbiosis_x.main:app", "--host", "127.0.0.1", "--port", String(port), "--no-proxy-headers",
-  ], {
-    cwd: repoRoot,
-    env: { ...process.env, SYMBIOSIS_X_DB_PATH: join(directory, "two-roles.sqlite3"), SYMBIOSIS_X_LOCAL_DEMO: "1" },
-    stdio: ["ignore", "ignore", "pipe"],
-  });
-  let stderr = "";
-  child.stderr.on("data", (chunk) => { stderr += chunk; });
-  const origin = `http://127.0.0.1:${port}`;
-  for (let attempt = 0; attempt < 120; attempt++) {
-    if (child.exitCode !== null) throw new Error("backend exited: " + stderr);
-    try {
-      const response = await fetch(origin + "/health/ready");
-      if (response.ok) return { origin, child, directory };
-    } catch { /* not listening yet */ }
-    await new Promise((resolve) => setTimeout(resolve, 250));
-  }
-  child.kill();
-  throw new Error("backend did not become ready: " + stderr);
-}
-
-/** Send this page's API calls to the test backend. Origin is dropped so the loopback check sees one host. */
-async function useBackend(page, origin) {
-  // Match the path prefix only: Vite serves app modules such as /src/api/client.js.
-  const isBackendPath = (url) => url.pathname.startsWith("/api/") || url.pathname.startsWith("/health/");
-  await page.route(isBackendPath, async (route) => {
-    const request = route.request();
-    const url = new URL(request.url());
-    const headers = { ...request.headers() };
-    delete headers.origin;
-    delete headers.host;
-    const response = await route.fetch({ url: origin + url.pathname + url.search, headers });
-    return route.fulfill({ response });
-  });
-}
 
 test.describe("two-role browser run", () => {
   let backend;
-  test.beforeAll(async () => { backend = await startBackend(); });
-  test.afterAll(async () => {
-    backend?.child.kill();
-    if (backend) rmSync(backend.directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
-  });
+  test.beforeAll(async () => { backend = await startBackend("sx20e"); });
+  test.afterAll(() => stopBackend(backend));
 
   test("two roles share a run without sharing private state", async ({ browser, baseURL }) => {
     test.setTimeout(60_000);
