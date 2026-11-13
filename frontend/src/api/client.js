@@ -74,6 +74,16 @@ export function commitAction(runId, command) {
 export function readActionReceipt(runId, operationId) {
   return jsonRequest("/runs/" + encodeURIComponent(runId) + "/actions/" + encodeURIComponent(operationId), "crew");
 }
+export function shareEmergencyCase(runId, caseId, command) {
+  return jsonRequest("/runs/" + encodeURIComponent(runId) + "/crew/emergencies/" + encodeURIComponent(caseId) + "/relay", "crew", {
+    method: "POST", body: JSON.stringify(command),
+  });
+}
+export function acknowledgeGroundHealthCase(runId, caseAlias) {
+  return jsonRequest("/runs/" + encodeURIComponent(runId) + "/ground/health-cases/" + encodeURIComponent(caseAlias) + "/acknowledgment", "ground", {
+    method: "POST",
+  });
+}
 export function acknowledgeReminder(runId, reminderId, command) {
   return jsonRequest("/runs/" + encodeURIComponent(runId) + "/crew/reminders/" + encodeURIComponent(reminderId) + "/acknowledgment", "crew", {
     method: "POST", body: JSON.stringify(command),

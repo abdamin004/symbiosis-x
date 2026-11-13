@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { acknowledgeEmergencyCase, createOperationId, openEmergencyCase } from "../../api/client.js";
+import { acknowledgeEmergencyCase, createOperationId, openEmergencyCase, shareEmergencyCase } from "../../api/client.js";
 
 const DRILLS = [
   { id: "drill-chest-pain-v1", title: "Chest pain drill", reporter: "SIM-01", subject: "SIM-01", responder: "SIM-02", kind: "chest_pain" },
@@ -15,7 +15,21 @@ export default function EmergencyAssist() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const operationId = useRef(null);
+  const shareId = useRef(null);
+  const [share, setShare] = useState(null);
   const selected = DRILLS.find((drill) => drill.id === drillId);
+
+  // Sharing is optional and delayed: it queues only an alias, priority and status for Ground.
+  async function shareWithGround() {
+    if (!caseData) return;
+    setBusy(true); setError("");
+    shareId.current ??= createOperationId("share");
+    try {
+      setShare(await shareEmergencyCase(runId, caseData.case_id, { operation_id: shareId.current }));
+      shareId.current = null;
+    } catch (e) { setError(e.message); }
+    finally { setBusy(false); }
+  }
 
   async function trigger(event) {
     event.preventDefault();
@@ -63,7 +77,9 @@ export default function EmergencyAssist() {
       {caseData && <section className="mt-6 rounded-lg border-2 border-amber-400 bg-amber-50 p-4" role="status" data-testid="emergency-case">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-lg font-semibold text-amber-950">Local alert · {caseData.status}</h2>
-          <span className="rounded-full bg-amber-200 px-3 py-1 text-xs font-semibold">Ground link not required</span>
+          <span className="rounded-full bg-amber-200 px-3 py-1 text-xs font-semibold" data-testid="emergency-ground-link">
+            {caseData.ground_link === "not_required" ? "Ground link not required" : "Ground link: " + String(caseData.ground_link ?? "unknown").replaceAll("_", " ")}
+          </span>
         </div>
         <p className="mt-2 text-sm">{caseData.report}</p>
         <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
@@ -77,6 +93,13 @@ export default function EmergencyAssist() {
         <p className="mt-4 rounded border border-amber-300 bg-white p-3 text-sm font-medium">{caseData.procedure.label}</p>
         <p className="mt-2 text-xs text-slate-600">This is a training placeholder, not an approved medical procedure. Follow the mission's approved onboard procedure.</p>
         {caseData.status === "open" ? <button disabled={busy} onClick={acknowledge} className="mt-4 rounded-md bg-selection px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Acknowledge local response</button> : <p className="mt-3 text-sm font-semibold text-emerald-800">Local responder acknowledged at {caseData.acknowledgment?.acknowledged_at_s}s.</p>}
+        <div className="mt-4 border-t border-amber-300 pt-3">
+          <button type="button" disabled={busy} onClick={shareWithGround} className="rounded-md border border-slate-400 bg-white px-4 py-2 text-sm font-semibold disabled:opacity-50">Share case status with Ground</button>
+          <p className="mt-1 text-xs text-slate-600">Optional. Ground receives only an opaque alias, a review priority and the status, after the relay delay. Local response never waits for it.</p>
+          {share && <p className="mt-2 rounded bg-white p-2 text-sm" data-testid="emergency-share-receipt">
+            Queued for Ground as <strong>{share.case_alias}</strong> · {share.status} · due at Ground {share.deliver_at_s}s mission time.
+          </p>}
+        </div>
       </section>}
     </main>
   );
