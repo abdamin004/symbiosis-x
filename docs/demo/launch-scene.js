@@ -2,7 +2,8 @@
 function createLaunchScene(canvas) {
   const ctx = canvas.getContext("2d");
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
-  let phase = "pad", ship = "Asteria", lightStack = false, separated = false, elapsed = 0, burning = false, ignition = null, transition = null, frame;
+  let phase = "pad", ship = "", lightStack = false, separated = false, elapsed = 0, burning = false, ignition = null, transition = null, frame;
+  let orbitalBurn = false;
   let separation = null;
   let checkout = null;
   let previous = {rise:0, drift:0, tilt:0, camera:0, space:0};
@@ -290,7 +291,7 @@ function createLaunchScene(canvas) {
     const shipX=w*(centered ? .5 : w<610?.63:.66), ground=h*.79, s=Math.min(h/605,1.48);
     if (separation !== null) pose.booster = clamp((now-separation)/1250);
     const upperBurn = phase === "upper" && separation !== null && now-separation > 450 && now-separation < 1500;
-    const thrust=phase==="ascent" && burning || upperBurn;
+    const thrust=phase==="ascent" && burning || upperBurn || orbitalBurn;
     sky(w,h,ground,shipX,pose);
     if(pose.space<1) {
       ctx.save();
@@ -330,6 +331,7 @@ function createLaunchScene(canvas) {
     separated=next.separated;
     elapsed=next.elapsed;
     burning=next.burning;
+    orbitalBurn=Boolean(next.orbitalBurn);
     const now=performance.now();
     if (staging && animate && !reduced.matches) separation=now;
     if (!separated || !animate || reduced.matches) separation=null;

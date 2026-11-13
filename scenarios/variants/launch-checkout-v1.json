@@ -2,8 +2,8 @@
   "id": "launch-checkout",
   "version": 1,
   "title": "ISS Research and Return",
-  "vehicle": "Asteria · three-part launch stack",
-  "objective": "Launch Asteria, deliver the research kit to the ISS, and recover the crew on Earth.",
+  "vehicle": "Horizon · three-part launch stack",
+  "objective": "Launch Horizon, deliver the research kit to the ISS, and recover the crew on Earth.",
   "stages": [
     {
       "id": "capsule",
@@ -50,7 +50,7 @@
   "ascent": {
     "burn_s": 45,
     "separation_deadline_s": 90,
-    "minimum_coast_s": 15,
+    "minimum_coast_s": 30,
     "coast_limit_s": 90,
     "reserve_initial": 100,
     "insertion_cost": 55,
@@ -191,7 +191,7 @@
     "daylight_offset_s": 35,
     "startup_s": 15
   },
-  "ship": "Asteria",
+  "ship": "Horizon",
   "seed": 4242,
   "pacing": "8–12 minutes",
   "briefing": [

@@ -177,7 +177,7 @@ Generate `flight.html` alongside the generated mission canvas.
 python3 scripts/build_flight_canvas.py /tmp/flight.html
 ```
 
-With the local backend running, open [Flight](http://127.0.0.1:8766/flight). Choose **ISS Research and Return** for the Asteria station mission or **Orbital Systems Checkout** for Kestrel's shorter flight. Open **Briefing** for the crew, ship, pacing, and flight plan, then choose **New run** or **Resume**.
+With the local backend running, open [Flight](http://127.0.0.1:8766/flight). Choose **ISS Research and Return** for Horizon’s station mission or **Orbital Systems Checkout** for Kestrel's shorter flight. Open **Briefing** for the crew, ship, pacing, and flight plan, then choose **New run** or **Resume**.
 
 Start ship systems, assign crew checks, and press **Play**. Playback stops for Commander decisions including countdown, booster separation, insertion, and capture. Use **Flight command** to continue once in orbit. At 1×, four mission seconds pass per real second during checkout and orbital operations. **Save and exit** returns to the selector. Progress is stored per campaign in the browser on the same origin. **New run** asks before replacing the selected campaign's save.
 

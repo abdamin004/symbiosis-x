@@ -2,7 +2,6 @@ function createFlightNavigation(reference, hosts) {
   const minimap = hosts.mini;
   const large = hosts.large;
   const fields = hosts.fields;
-  const canvases = [minimap,large];
   const tau = Math.PI * 2;
   let snapshot = null;
 
@@ -63,6 +62,23 @@ function createFlightNavigation(reference, hosts) {
       route(ascent,"#ffd0a4");
       craft = [radius*Math.cos(angle),radius*Math.sin(angle),null];
     }
+    if (data.transfer !== null && !data.captured && data.departure === null) {
+      const atBurn = pointAt(reference.parking,data.transfer-data.insertion);
+      const angle = Math.atan2(atBurn[1],atBurn[0]);
+      const align = ([x,y])=>[x*Math.cos(angle)-y*Math.sin(angle),x*Math.sin(angle)+y*Math.cos(angle)];
+      const progress = data.burn?.kind === "transfer" ? data.burn.progress : 1;
+      const transfer = reference.transfer.points.map((point)=>{
+        const [x,y] = align(point);
+        const radius = Math.hypot(x,y);
+        const base = reference.earth + reference.parking.ap;
+        const scale = (base + progress*(radius-base))/radius;
+        return [x*scale,y*scale];
+      });
+      route(reference.transfer.points.map(align),"#bd9bff",[3,4]);
+      route(transfer,"#ffbb89");
+      const index = 180+Math.min(179,Math.round((data.time-data.transfer)/reference.transfer.period*360));
+      craft = [...transfer[index],null];
+    }
     if (data.captured) craft = target;
     if (data.departure !== null) {
       const departureEpoch = data.departure-data.insertion;
@@ -91,6 +107,11 @@ function createFlightNavigation(reference, hosts) {
     ctx.save();
     ctx.translate(x,y);
     ctx.rotate(heading);
+    if (data.burn && data.burn.progress < 1) {
+      ctx.fillStyle="#ff9c62";
+      ctx.beginPath();
+      ctx.moveTo(-3,-3);ctx.lineTo(-14,0);ctx.lineTo(-3,3);ctx.fill();
+    }
     ctx.fillStyle="#fff0bf";
     ctx.beginPath();
     ctx.moveTo(7,0);ctx.lineTo(-4,4);ctx.lineTo(-2,0);ctx.lineTo(-4,-4);ctx.closePath();ctx.fill();
@@ -109,10 +130,17 @@ function createFlightNavigation(reference, hosts) {
     if (!data) return;
     const craft = paint(minimap,data);
     if (hosts.dialog.open) paint(large,data);
+    if (!hosts.burn.hidden) paint(hosts.burn,data);
     const orbit = data.captured || data.departure !== null ? reference.station : data.inserted ? reference.parking : reference.insertion;
     hosts.caption.textContent = data.phase;
-    fields.ap.textContent = data.deorbit === null ? orbit.ap+" km" : "—";
-    fields.pe.textContent = data.deorbit === null ? orbit.pe+" km" : "—";
+    const transferProgress = data.burn?.kind === "transfer" ? data.burn.progress : 1;
+    const transferring = data.transfer !== null && !data.captured && data.departure === null;
+    const ap = transferring ? Math.round(orbit.ap+(reference.transfer.ap-orbit.ap)*transferProgress) : orbit.ap;
+    const pe = data.burn?.kind === "insertion"
+      ? Math.round(reference.insertion.pe+(orbit.pe-reference.insertion.pe)*data.burn.progress)
+      : transferring ? reference.transfer.pe : orbit.pe;
+    fields.ap.textContent = data.deorbit === null ? ap+" km" : "—";
+    fields.pe.textContent = data.deorbit === null ? pe+" km" : "—";
     fields.altitude.textContent = Math.round(Math.hypot(craft[0],craft[1])-reference.earth)+" km";
     fields.speed.textContent = craft[2] === null ? "Scripted segment" : craft[2].toFixed(2)+" km/s";
     fields.period.textContent = data.inserted && data.deorbit === null ? Math.round((data.captured ? reference.station : orbit).period/60)+" min" : "—";
@@ -124,6 +152,7 @@ function createFlightNavigation(reference, hosts) {
     fields.approach.textContent = data.approach;
     fields.basis.textContent = data.captured ? "Station orbit reference" : data.deorbit !== null ? "Scripted descent path"
       : data.departure !== null ? "Departure reference in station orbit"
+      : data.transfer !== null ? "Ideal transfer reference · follow range for final approach"
       : data.inserted ? "Ideal two-body parking orbit · approach follows the range readout" : "Scripted ascent · dashed insertion reference";
     for (const button of hosts.attitudeControls) button.disabled = !data.canOrient;
   }

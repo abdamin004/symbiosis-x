@@ -15,7 +15,7 @@ function createDockingScene(canvas, caption) {
     ctx.closePath();
     ctx.fillStyle=fill; ctx.fill(); ctx.strokeStyle=stroke; ctx.stroke();
   }
-  function paint(gap,phase) {
+  function paint(gap,phase,ship) {
     ctx.fillStyle="#070d1b";
     ctx.fillRect(0,0,760,320);
     for (const [x,y,size] of stars) box(x,y,size,size,"#b5d1e8");
@@ -45,7 +45,7 @@ function createDockingScene(canvas, caption) {
     outline([[-98,-19],[-54,-21],[-18,-12],[-6,-7],[0,-5],[0,5],[-18,12],[-54,21],[-98,19]],
       "#a7bbc9","#ebf1f9");
     box(-88,-19,10,38,"#697c95"); box(-50,-13,16,8,"#21344a"); box(-8,-7,8,14,"#dfebf0");
-    ctx.fillStyle="#152337"; ctx.fillText("ASTERIA",-75,7);
+    ctx.fillStyle="#152337"; ctx.fillText(ship.toUpperCase(),-75,7);
     ctx.restore();
     if (phase !== "captured") {
       ctx.setLineDash([3,5]); ctx.strokeStyle="#9ad7d885";
@@ -63,7 +63,7 @@ function createDockingScene(canvas, caption) {
     const target = next.range;
     if (motion.matches || next.phase === "held") {
       distance = target;
-      paint(distance,next.phase);
+      paint(distance,next.phase,next.ship);
       return;
     }
     const from = distance;
@@ -72,7 +72,7 @@ function createDockingScene(canvas, caption) {
     function advance(now) {
       const progress = Math.min(1,(now-started)/duration);
       distance = from+(target-from)*(1-(1-progress)**3);
-      paint(distance,next.phase);
+      paint(distance,next.phase,next.ship);
       if (progress < 1) frame = requestAnimationFrame(advance);
     }
     frame = requestAnimationFrame(advance);

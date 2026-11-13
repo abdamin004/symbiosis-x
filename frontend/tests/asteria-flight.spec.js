@@ -23,9 +23,8 @@ test.afterAll(() => {
   if (outputDirectory) rmSync(outputDirectory, { recursive: true, force: true });
 });
 
-test("Asteria hands off to the crew canvas and returns to Earth in one saved mission", async ({ page }) => {
-  test.setTimeout(45_000);
-  await page.emulateMedia({ reducedMotion: "reduce" });
+test("Horizon burns into orbit, reaches ISS and returns to Earth in one saved mission", async ({ page }) => {
+  test.setTimeout(65_000);
   await page.route(url => url.pathname === "/flight", route => route.fulfill({ contentType: "text/html", body: flightHtml }));
   await page.goto("/flight");
   const button = name => page.getByRole("button", { name, exact: true });
@@ -78,10 +77,14 @@ test("Asteria hands off to the crew canvas and returns to Earth in one saved mis
   await expect(button("Separate booster")).toBeVisible();
   await expect(transport.getByRole("button", { name:"Play", exact:true })).toBeDisabled();
   await button("Separate booster").click();
+  await expect(page.locator("#launch-status")).toHaveText("Upper stage coast");
   await expect(button("Commit orbital insertion")).toBeVisible();
+  await expect(page.locator("#maneuver-target")).toContainText("66.9 m/s");
   await expect(transport.getByRole("button", { name:"Play", exact:true })).toBeDisabled();
   await button("Commit orbital insertion").click();
-  await expect(page.locator("#ship canvas")).toBeVisible();
+  await expect(page.locator("#launch-status")).toHaveText("Orbital insertion burn");
+  await expect(page.getByRole("progressbar",{name:"Engine burn progress"})).toBeVisible();
+  await expect(page.locator("#ship canvas")).toBeVisible({timeout:12_000});
   await expect(page.locator("#ship .pawn:visible")).toHaveCount(4);
   const flightPlayback = page.getByRole("group", { name:"Flight playback" });
   await expect(flightPlayback.getByRole("button", { name:"Cycle speed" })).toHaveText("4×");
@@ -115,7 +118,9 @@ test("Asteria hands off to the crew canvas and returns to Earth in one saved mis
 
   const command = page.getByRole("region", { name: "Flight command" });
   await command.getByRole("button", { name: "Commit phasing", exact: true }).click();
-  await expect(page.locator("#docking-view")).toBeVisible();
+  await expect(page.locator("#maneuver-target")).toContainText("71.3 m/s");
+  await expect(page.locator("#maneuver-track")).toBeVisible();
+  await expect(page.locator("#docking-view")).toBeVisible({timeout:12_000});
   await button("Hold approach").click();
   await expect(page.locator("#docking-caption")).toContainText("Approach held");
   await button("Resume approach").click();
