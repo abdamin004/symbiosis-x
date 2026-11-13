@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mission canvas · SYMBIOSIS X</title>
+<style>
+:root{color-scheme:dark;--ink:#f0f0ff;--muted:#a8a9c4;--light:#b8baff;--dark:#070812;font:16px/1.55 system-ui,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;color:var(--ink);background:
+  radial-gradient(ellipse at 87% 9%,#25204a80,transparent 45%),
+  radial-gradient(ellipse at 16% 88%,#12274d80,transparent 50%),var(--dark)}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;
+  background-image:radial-gradient(circle,#c7c6ff8a 1px,transparent 1.4px),radial-gradient(circle,#a2b8ff88 .8px,transparent 1.2px);
+  background-size:117px 89px,173px 137px;background-position:34px 16px,82px 58px}
+body{isolation:isolate}
+main{width:min(1060px,calc(100% - 48px));margin:0 auto;padding:clamp(2rem,8vh,6rem) 0 4rem}
+h1,h2,p{margin:0}
+h1{font-size:clamp(3.3rem,9vw,7.4rem);font-weight:650;line-height:.94;letter-spacing:-.075em}
+h2{font-size:clamp(1.8rem,5vw,3.2rem);font-weight:550;line-height:1.08;letter-spacing:-.045em}
+.muted{color:var(--muted)}
+.brand{color:var(--light);font-size:.8rem;letter-spacing:.16em;margin-bottom:.7rem}
+header{display:grid;grid-template-columns:1fr auto;gap:1.6rem;align-items:end}
+.clock{font-variant-numeric:tabular-nums;font-size:clamp(2.2rem,5vw,4rem);line-height:1}
+.actions{display:flex;flex-wrap:wrap;align-items:center;gap:.65rem;margin:1.5rem 0}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:transparent}
+button:disabled{opacity:.48;cursor:default}
+button:focus-visible{outline:2px solid var(--light);outline-offset:4px}
+.command{border-radius:999px;padding:.55rem 1rem;background:#252545;color:#f1efff}
+.command.primary{background:#bebaff;color:#14102a;font-weight:650}
+#run-status{font-size:.94rem}
+.rooms{margin-top:3rem;display:grid;grid-template-columns:minmax(9rem,1fr) minmax(0,3fr);gap:clamp(1rem,5vw,4rem)}
+nav{display:grid;align-content:start;gap:.15rem}
+.room{border-radius:7px;padding:.48rem .7rem;text-align:left;color:var(--muted)}
+.room:hover,.room[aria-pressed=true]{color:var(--ink);background:#9d93ff22}
+.detail{padding:.3rem 0 0}
+.detail p{margin:.65rem 0;color:var(--muted);max-width:42ch}
+ul{list-style:none;padding:0;margin:1rem 0}
+li{display:flex;justify-content:space-between;gap:1rem;padding:.52rem 0;color:var(--ink)}
+li span:last-child{font-size:.9rem;color:var(--muted)}
+li [data-status=live]{color:#a6dcff}
+li [data-status=replay]{color:#c6baff}
+@media(max-width:600px){main{width:calc(100% - 32px)}header{grid-template-columns:1fr}.rooms{grid-template-columns:1fr;margin-top:2rem}nav{display:flex;flex-wrap:wrap}.room{padding:.35rem .55rem}}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div><p class="brand">SYMBIOSIS X</p><h1>Mission canvas</h1></div>
+    <div><p class="muted">Mission time</p><p class="clock" id="clock">00:00</p></div>
+  </header>
+  <div class="actions">
+    <button id="start" class="command primary" type="button">Start nominal run</button>
+    <button id="advance" class="command" type="button" disabled>Advance to 01:00</button>
+    <p id="run-status" class="muted" role="status">Ready to start a simulated run.</p>
+  </div>
+  <div class="rooms">
+    <nav id="rooms" aria-label="Spacecraft rooms"></nav>
+    <section class="detail" aria-labelledby="room-name">
+      <h2 id="room-name"></h2>
+      <p id="room-function"></p>
+      <ul id="systems"></ul>
+    </section>
+  </div>
+</main>
+<script type="application/json" id="room-catalog">__ROOM_CATALOG__</script>
+<script>
+const byId = id => document.getElementById(id);
+const rooms = JSON.parse(byId("room-catalog").textContent).rooms;
+const systemStates = {live:"Live pilot", replay:"Replay only", planned:"Planned"};
+const roomButtons = [];
+let run = null;
+let startId = null;
+let advanceId = null;
+let working = false;
+
+function selectRoom(room) {
+  byId("room-name").textContent = room.name;
+  byId("room-function").textContent = room.function;
+  byId("systems").replaceChildren(...room.systems.map(system => {
+    const row = document.createElement("li");
+    const name = document.createElement("span");
+    const status = document.createElement("span");
+    name.textContent = system.name;
+    status.textContent = systemStates[system.status];
+    status.dataset.status = system.status;
+    if (system.entity_id) row.dataset.entityId = system.entity_id;
+    row.append(name, status);
+    return row;
+  }));
+  roomButtons.forEach(button => button.setAttribute("aria-pressed", button.dataset.roomId === room.room_id));
+}
+
+for (const room of rooms) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "room";
+  button.dataset.roomId = room.room_id;
+  button.textContent = room.name;
+  button.addEventListener("click", () => selectRoom(room));
+  roomButtons.push(button);
+  byId("rooms").append(button);
+}
+selectRoom(rooms[0]);
+
+async function send(path, payload) {
+  const response = await fetch(path, {
+    method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(typeof error.detail === "string" ? error.detail : "Request rejected");
+  }
+  return response.json();
+}
+
+function updateControls() {
+  byId("start").disabled = working || run !== null;
+  byId("advance").disabled = working || run === null || run.step >= 1;
+}
+
+async function execute(command) {
+  working = true;
+  updateControls();
+  try {
+    run = await command();
+    const time = [Math.floor(run.mission_s / 60), run.mission_s % 60];
+    byId("clock").textContent = time.map(value => String(value).padStart(2,"0")).join(":");
+    byId("run-status").textContent = "Run " + run.run_id.slice(0,8) + (run.step ? " · Step saved" : " · Seed " + run.seed);
+  } catch (error) {
+    byId("run-status").textContent = "Request failed. Retry to reuse the same operation. " + error.message;
+  } finally {
+    working = false;
+    updateControls();
+  }
+}
+
+byId("start").addEventListener("click", () => {
+  startId ??= crypto.randomUUID();
+  execute(() => send("/api/v1/runs", {
+    start_id:startId, scenario_id:"nominal", scenario_version:"1", seed:4242,
+  }));
+});
+byId("advance").addEventListener("click", () => {
+  advanceId ??= crypto.randomUUID();
+  execute(() => send("/api/v1/runs/" + encodeURIComponent(run.run_id) + "/advance", {
+    advance_id:advanceId, expected_step:run.step,
+  }));
+});
+</script>
+</body>
+</html>

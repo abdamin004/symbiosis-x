@@ -5,7 +5,8 @@ from contextlib import asynccontextmanager
 from os import environ
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from starlette.concurrency import run_in_threadpool
 
 from symbiosis_x.api.runs import router as runs_router
@@ -32,6 +33,16 @@ def create_app(*, database_path: str | Path | None = None) -> FastAPI:
     application = FastAPI(title=API_TITLE, version=API_VERSION, lifespan=lifespan)
     application.state.database_path = path
     application.include_router(runs_router)
+
+    canvas_path = environ.get("SYMBIOSIS_X_MISSION_CANVAS")
+    if canvas_path:
+        path_to_canvas = Path(canvas_path)
+
+        @application.get("/mission", include_in_schema=False)
+        def mission_canvas() -> FileResponse:
+            if not path_to_canvas.is_file():
+                raise HTTPException(404, "MISSION_CANVAS_UNAVAILABLE")
+            return FileResponse(path_to_canvas, media_type="text/html", headers={"Cache-Control": "no-store"})
     return application
 
 
