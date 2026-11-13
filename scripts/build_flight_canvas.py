@@ -25,10 +25,13 @@ def build(output: Path) -> None:
     }, ensure_ascii=False).replace("<", "\\u003c")
     template = (ROOT / "docs/demo/flight.html").read_text(encoding="utf-8")
     workflow = (ROOT / "docs/demo/flight-workflow.js").read_text(encoding="utf-8")
+    widgets = (ROOT / "docs/demo/flight-widgets.js").read_text(encoding="utf-8")
+    stations = (ROOT / "docs/demo/flight-stations.js").read_text(encoding="utf-8")
     icons = (ROOT / "frontend/src/ui/icons/lucide/flight.svg").read_text(encoding="utf-8")
     output.write_text(
         template.replace("__FLIGHT_DATA__", data)
-        .replace("__FLIGHT_WORKFLOW__", workflow).replace("__HUD_ICONS__", icons),
+        .replace("__FLIGHT_WORKFLOW__", workflow).replace("__FLIGHT_WIDGETS__", widgets)
+        .replace("__FLIGHT_STATIONS__", stations).replace("__HUD_ICONS__", icons),
         encoding="utf-8",
     )
 
