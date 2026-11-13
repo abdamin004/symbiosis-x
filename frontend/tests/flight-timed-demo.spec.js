@@ -178,6 +178,8 @@ test("the health demo shows the cabin response, private check and scheduled EVA 
   await expect(beat).toHaveText("Capsule landed");
   await expect(page.getByRole("figure",{name:"Command pod Earth return"})).toHaveAttribute("data-phase","splashdown");
   await expect(page.locator("#return-caption")).toContainText("4 crew aboard");
+  await expect(page.locator("#return-sea-backdrop")).toBeInViewport({ratio:1});
+  await expect(page.locator("#guide-next")).toHaveText("Confirm crew recovery");
   await advance(4);
   await expect(clock).toHaveText("3:43 / 3:43");
   await expect(beat).toHaveText("Crew recovered on Earth");

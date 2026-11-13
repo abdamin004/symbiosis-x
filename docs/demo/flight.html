@@ -434,9 +434,18 @@ button[aria-pressed=true]{background:#3d315e}
 #eva-tether{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
 #return-scene{position:relative;display:grid;justify-items:center;max-width:660px;margin:0 auto;color:#deefff;pointer-events:none}
 #return-art{width:min(100%,570px);height:min(48dvh,370px);overflow:visible}
+#return-sea-backdrop{display:none}
+.stage[data-vehicle=landed]::before,.stage[data-vehicle=landed]::after{display:none}
+.stage[data-vehicle=landed]{background:linear-gradient(#244964 2%,#7c9aaa 39%,#91b2bd 49%,#2e7296 50%,#102e42 100%)}
+.stage[data-vehicle=landed] .viewport{max-width:none;overflow:visible}
+.stage[data-vehicle=landed] #return-scene{max-width:none}
+.stage[data-vehicle=landed] #return-sea-backdrop{display:block;position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
+.stage[data-vehicle=landed] #return-art .return-environment{display:none}
+.stage[data-vehicle=landed] #return-art{filter:drop-shadow(0 12px 20px #031a2d88)}
 #return-scene .return-piece{display:none}
 #return-scene[data-phase=separation] #return-module,#return-scene[data-phase=entry] #return-heat,
 #return-scene[data-phase=chutes] #return-chutes,#return-scene:is([data-phase=splashdown],[data-phase=recovered]) #return-wake{display:inline}
+#return-scene:is([data-phase=splashdown],[data-phase=recovered]) #return-foam{display:inline}
 #return-scene[data-phase=separation] #return-module{animation:module-drift 2.8s ease-out both}
 #return-scene[data-phase=chutes] #return-chutes{animation:chutes-open .8s ease-out both;transform-origin:310px 128px}
 @keyframes module-drift{from{transform:translate(90px,-28px)}to{transform:translate(0,0)}}
@@ -948,14 +957,26 @@ __HUD_ICONS__
     </div>
     <canvas id="orbital-burn-scene" role="img" aria-label="Exterior spacecraft burn" hidden></canvas>
     <figure id="return-scene" aria-label="Command pod Earth return" hidden>
+      <svg id="return-sea-backdrop" viewBox="0 0 1000 600" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="splash-sky" x2="0" y2="1"><stop stop-color="#315871"/><stop offset="1" stop-color="#a9c4cb"/></linearGradient>
+          <linearGradient id="splash-water" x2="0" y2="1"><stop stop-color="#4084a5"/><stop offset=".48" stop-color="#235f82"/><stop offset="1" stop-color="#103043"/></linearGradient>
+        </defs>
+        <path d="M0 0H1000V290H0Z" fill="url(#splash-sky)"/>
+        <path d="M0 284Q260 275 500 286T1000 284V600H0Z" fill="url(#splash-water)"/>
+        <path d="M0 289Q242 278 500 290T1000 289M0 332q170-11 320 1t334 0t346-4M0 390q170-19 325 3t355 0t320-6M0 475q200-25 350 0t330 0t320-9M0 557q215-31 358 0t338 0t304-8" fill="none" stroke="#bdebfd" opacity=".25" stroke-width="2"/>
+        <path d="M42 314q58-5 110 0m668 5q74-7 125-4M102 359q86-9 172 0m452-3q97-7 192 3M0 437q110-8 205 3m608-6q83-7 187 0M84 529q106-12 192 0m412-8q111-15 214 4" fill="none" stroke="#8dd4ed" opacity=".32"/>
+      </svg>
       <svg id="return-art" viewBox="0 0 620 350" aria-hidden="true">
         <defs>
           <linearGradient id="return-sky" x2="0" y2="1"><stop stop-color="#080f25"/><stop offset="1" stop-color="#406680"/></linearGradient>
           <linearGradient id="return-sea" x2="0" y2="1"><stop stop-color="#226e95"/><stop offset="1" stop-color="#102631"/></linearGradient>
         </defs>
-        <rect width="620" height="350" rx="22" fill="url(#return-sky)"/>
-        <path d="M0 288Q310 235 620 288V328Q620 350 598 350H22Q0 350 0 328Z" fill="url(#return-sea)"/>
-        <path d="M20 305q40 -4 80 0m36 24q45 -6 90 0m182 -36q42 -4 87 0m10 30q46 -5 90 0" stroke="#a2dcf5" opacity=".6" fill="none"/>
+        <g class="return-environment">
+          <rect width="620" height="350" rx="22" fill="url(#return-sky)"/>
+          <path d="M0 288Q310 235 620 288V328Q620 350 598 350H22Q0 350 0 328Z" fill="url(#return-sea)"/>
+          <path d="M20 305q40 -4 80 0m36 24q45 -6 90 0m182 -36q42 -4 87 0m10 30q46 -5 90 0" stroke="#a2dcf5" opacity=".6" fill="none"/>
+        </g>
         <g id="return-module" class="return-piece" fill="#687686" stroke="#ccd4e3">
           <path d="M116 155h55l23 23-23 23h-55l-19-17v-16Z"/><path d="M103 163v30m23-38v46m39-46v46" fill="none"/>
           <path d="M164 206l-22 31m-5 -10 5 10 12-1" fill="none" stroke="#ffb984" stroke-width="2"/>
@@ -977,6 +998,7 @@ __HUD_ICONS__
           <path d="M266 213h88l-12 13h-64Z" fill="#394451"/>
           <rect x="298" y="181" width="24" height="10" rx="3" fill="#204e67" stroke="#9cbbce"/>
         </g>
+        <path class="return-piece" id="return-foam" d="M239 284q35-6 71 0t71 0m-105 7q34-5 64 0" fill="none" stroke="#beedfc" stroke-width="3" stroke-linecap="round"/>
       </svg>
       <figcaption id="return-caption"></figcaption>
     </figure>

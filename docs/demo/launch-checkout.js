@@ -714,6 +714,10 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
 
   function nextControl(flight) {
     if (activeBurn || flight.terminal) return null;
+    if (state.landedAt !== null) return "launch-recover";
+    if (state.deorbitAt !== null) {
+      return state.time >= state.deorbitAt+returnPlan.entry_s+returnPlan.descent_s ? "launch-land" : "play";
+    }
     if (state.ignition === null) {
       if (state.hold) return "launch-hold";
       if (state.startupAt === null) return "startup";
