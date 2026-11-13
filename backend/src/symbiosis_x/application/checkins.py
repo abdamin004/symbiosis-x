@@ -55,6 +55,14 @@ def create_check_in(
                 raise CheckInConflict("CHECK_IN_ID_REUSED")
             return PrivateCheckInReceipt.model_validate(stored["receipt"])
 
+        # Event IDs are unique across every event type and visibility in a run.
+        collision = db.execute(
+            "SELECT 1 FROM events WHERE run_id = ? AND event_id = ?",
+            (run_id, command.check_in_id),
+        ).fetchone()
+        if collision is not None:
+            raise CheckInConflict("CHECK_IN_ID_REUSED")
+
         if run["status"] != "active":
             raise CheckInConflict("RUN_CLOSED")
 
