@@ -44,6 +44,17 @@ function bindFlightHealthStory({find, clock, metrics, openTwin, onUpdate}) {
       " · Sample T+" + clock(assessment.observed_at_s) : "";
     find("health-story-reason").textContent = assessment?.personal.reason ?? "";
     find("health-story-trend").textContent = story?.health_trend?.reason ?? "";
+    const gravity = story?.gravity_context;
+    find("health-story-gravity").hidden = !gravity;
+    if (gravity) {
+      const phase = {preflight:"Preflight", orbit:"Orbital microgravity", reentry:"Reentry", recovery:"Earth recovery"};
+      find("gravity-summary").textContent = phase[gravity.current.phase] + " · " +
+        clock(gravity.elapsed_in_phase_s) + " in phase · " + clock(gravity.orbital_exposure_s) + " in orbit";
+      for (const field of ["mobility", "orientation", "rest"]) {
+        find("gravity-baseline-" + field).textContent = gravity.baseline[field];
+        find("gravity-current-" + field).textContent = gravity.current[field];
+      }
+    }
     find("health-story-case").textContent = caseStatus
       ? caseStatus.acknowledgment ? "Local response acknowledged" : "Local alert raised · crew response pending"
       : "";
@@ -135,10 +146,14 @@ function bindFlightHealthStory({find, clock, metrics, openTwin, onUpdate}) {
     if (session !== active || !active.view || active.working || active.failed) return;
     const current = active.view.mission_s;
     const delivery = active.view.ground_delivery;
+    const gravity = active.view.gravity_context;
+    const nextPhase = gravity?.next_phase_at_s;
+    const phaseDue = (gravity?.current.phase === "orbit" && active.enteringAtmosphere) ||
+      (gravity?.current.phase === "reentry" && active.recovered);
     const target = current < 360 ? Math.min(active.flightTime, current < 60 ? 60 : 360)
       : delivery?.status === "queued" ? Math.min(delivery.deliver_at_s,
         delivery.issued_at_s + Math.max(0, active.flightTime - active.sharedAtFlightTime))
-      : current;
+      : phaseDue && nextPhase != null ? nextPhase : current;
     if (target > current) {
       work(active, () => advance(active,target)).then(() => drive(active));
     }
@@ -170,6 +185,8 @@ function bindFlightHealthStory({find, clock, metrics, openTwin, onUpdate}) {
   function update(flight) {
     if (!session || !flight?.timedDemo) return;
     session.flightTime = Math.max(session.flightTime, Math.floor(flight.time - flight.crewStarted));
+    session.enteringAtmosphere = Boolean(flight.recovery);
+    session.recovered = flight.recovery?.phase === "recovered";
     drive(session);
   }
 

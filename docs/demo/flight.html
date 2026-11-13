@@ -439,6 +439,10 @@ button[aria-pressed=true]{background:#3d315e}
 #health-story-indicators li{background:#182641;border-radius:4px;padding:.2rem .35rem}
 #health-story-indicators output{color:#c6e8ff;font-weight:700}
 #live-health-story p{margin:.3rem 0}
+#health-story-gravity{background:#14213a;border-radius:6px;padding:.4rem .55rem}
+#health-story-gravity summary{cursor:pointer;color:#c6e8ff}
+#health-story-gravity table{width:100%;table-layout:fixed;text-align:left;font-size:.7rem}
+#health-story-gravity th,#health-story-gravity td{padding:.16rem .25rem;vertical-align:top;overflow-wrap:anywhere}
 .health-story-actions{display:flex;flex-wrap:wrap;gap:.3rem}
 #health-story-error{color:#ffd0d0}
 #ground-health-story{padding:.35rem .5rem;border-left:2px solid var(--blue);font-size:.74rem}
@@ -1198,6 +1202,19 @@ __HUD_ICONS__
         </div>
       </div>
       <ul id="health-story-indicators" aria-label="Health indicators"></ul>
+      <details id="health-story-gravity" hidden>
+        <summary>Gravity and adaptation</summary>
+        <p id="gravity-summary"></p>
+        <table aria-label="Simulated gravity observations">
+          <thead><tr><td></td><th scope="col">Preflight</th><th scope="col">Current phase</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Mobility</th><td id="gravity-baseline-mobility"></td><td id="gravity-current-mobility"></td></tr>
+            <tr><th scope="row">Orientation</th><td id="gravity-baseline-orientation"></td><td id="gravity-current-orientation"></td></tr>
+            <tr><th scope="row">Rest</th><td id="gravity-baseline-rest"></td><td id="gravity-current-rest"></td></tr>
+          </tbody>
+        </table>
+        <small>Scripted observations · simulated health story clock</small>
+      </details>
       <p id="health-story-case" role="status"></p>
       <p id="health-story-delivery" aria-live="polite"></p>
       <div class="health-story-actions">

@@ -7,6 +7,8 @@ from symbiosis_x.application.projections import read_crew
 from symbiosis_x.contracts.events import Contract, Identifier, NonnegativeInt
 from symbiosis_x.contracts.projections import RunView
 from symbiosis_x.crew.emergency import EmergencyCase
+from symbiosis_x.crew.gravity_context import GravityContext, project_gravity_context
+from symbiosis_x.simulation.scenario import HEALTH_STORY_SCENARIO, load_health_story_manifest
 from symbiosis_x.workflows.relay import read_case_delivery
 
 StoryState = Literal["unobserved", "clear", "insufficient", "review", "emergency"]
@@ -30,6 +32,7 @@ class CrewHealthTwin(RunView):
     health_followup: dict | None
     emergency: EmergencyCase | None
     ground_delivery: CaseDelivery | None
+    gravity_context: GravityContext | None
 
 
 def _story_state(assessment: dict | None, trend: dict | None, emergency: EmergencyCase | None) -> StoryState:
@@ -69,10 +72,15 @@ def read_health_twin(db: Connection, run_id: str, crew_id: str) -> CrewHealthTwi
                 remaining_s=max(0, share["deliver_at_s"] - crew.mission_s),
             )
 
+    gravity = None
+    if (crew.scenario_id, crew.scenario_version) == HEALTH_STORY_SCENARIO:
+        gravity = project_gravity_context(load_health_story_manifest(), crew_id, crew.mission_s)
+
     return CrewHealthTwin(
         run_id=run_id, scenario_id=crew.scenario_id, scenario_version=crew.scenario_version,
         mission_s=crew.mission_s, status=crew.status, crew_id=crew_id,
         story_state=_story_state(crew.health_assessment, crew.health_trend, emergency),
         health_assessment=crew.health_assessment, health_trend=crew.health_trend,
         health_followup=crew.health_followup, emergency=emergency, ground_delivery=delivery,
+        gravity_context=gravity,
     )
