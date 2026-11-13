@@ -1,5 +1,6 @@
 import { Link, useParams } from "react-router-dom";
 import { fixtureFor } from "../../api/fixtures.js";
+import ServiceStatus from "./ServiceStatus.jsx";
 
 const ROLE_TITLES = { crew: "Crew console", ground: "Ground console" };
 const CO2_KINDS = {
@@ -23,7 +24,8 @@ export default function MissionConsole({ role }) {
   if (!snapshot) {
     return (
       <main className="mx-auto max-w-4xl px-4 py-12">
-        <h1 className="text-2xl font-semibold">{title}</h1>
+        <ServiceStatus />
+        <h1 className="mt-2 text-2xl font-semibold">{title}</h1>
         <p className="mt-3 text-slate-700" role="status">
           No fixture is available for run {runId}.
         </p>
@@ -44,9 +46,12 @@ export default function MissionConsole({ role }) {
     >
       <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-slate-200 pb-4">
         <div>
-          <Link className="text-sm text-slate-500 hover:underline" to="/">
-            SYMBIOSIS X
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link className="text-sm text-slate-500 hover:underline" to="/">
+              SYMBIOSIS X
+            </Link>
+            <ServiceStatus />
+          </div>
           <h1 className="text-2xl font-semibold text-slate-900">{title}</h1>
         </div>
         <dl className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
@@ -120,7 +125,9 @@ function DeliveryPanel({ delivery }) {
         <dt className="text-slate-500">Age</dt>
         <dd>{formatMissionTime(delivery.age_s)}</dd>
         <dt className="text-slate-500">Link</dt>
-        <dd>{delivery.link_status === "delayed" ? "Delayed" : delivery.link_status}</dd>
+        <dd data-testid="relay-link-status">
+          {delivery.link_status === "delayed" ? "Delayed" : delivery.link_status}
+        </dd>
       </dl>
     </section>
   );
