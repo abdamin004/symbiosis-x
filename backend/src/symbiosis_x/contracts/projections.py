@@ -121,3 +121,21 @@ class CurrentCrewView(RunView):
     role: Literal["crew"] = "crew"
     decision_rev: NonnegativeInt
     co2: AcceptedCO2 | None
+
+
+class GroundPacket(Contract):
+    """Operational data stored at delivery, without private or live Crew fields."""
+
+    co2: GroundCO2
+
+
+class DeliveredTelemetry(Contract):
+    snapshot_id: Identifier
+    decision_rev: NonnegativeInt
+    delivery: Delivery
+    co2: GroundCO2
+
+
+class CurrentGroundView(RunView):
+    role: Literal["ground"] = "ground"
+    packet: DeliveredTelemetry | None

@@ -29,6 +29,15 @@ button:focus-visible{outline:2px solid var(--light);outline-offset:4px}
 .command{border-radius:999px;padding:.55rem 1rem;background:#252545;color:#f1efff}
 .command.primary{background:#bebaff;color:#14102a;font-weight:650}
 #run-status{font-size:.94rem}
+[hidden]{display:none!important}
+.run-data{padding:1.1rem 0 1.3rem;border-block:1px solid #a3a0ff2b}
+.view-controls{display:flex;align-items:center;gap:.65rem;flex-wrap:wrap}
+.view-controls button{padding:.28rem .55rem;border-radius:7px;color:var(--muted)}
+.view-controls button[aria-pressed=true]{background:#9d93ff22;color:var(--ink)}
+#refresh-view{margin-inline-start:auto}
+#projection-value{margin:.75rem 0 .15rem;color:#c9dfff;font-size:clamp(1.45rem,4vw,2.35rem);font-variant-numeric:tabular-nums}
+#projection-evidence{color:var(--muted);font-size:.93rem}
+#run-key{overflow-wrap:anywhere;font: .83rem ui-monospace,monospace;color:var(--muted);margin-top:.65rem}
 .rooms{margin-top:3rem;display:grid;grid-template-columns:minmax(9rem,1fr) minmax(0,3fr);gap:clamp(1rem,5vw,4rem)}
 nav{display:grid;align-content:start;gap:.15rem}
 .room{border-radius:7px;padding:.48rem .7rem;text-align:left;color:var(--muted)}
@@ -54,6 +63,18 @@ li [data-status=replay]{color:#c6baff}
     <button id="advance" class="command" type="button" disabled>Advance to 01:00</button>
     <p id="run-status" class="muted" role="status">Ready to start a simulated run.</p>
   </div>
+  <section class="run-data" id="run-data" aria-label="Run viewpoints" hidden>
+    <div class="view-controls" role="group" aria-label="Viewpoint">
+      <button id="crew-view" type="button" aria-pressed="true">Crew</button>
+      <button id="ground-view" type="button" aria-pressed="false">Ground</button>
+      <button id="refresh-view" type="button">Refresh view</button>
+    </div>
+    <div aria-live="polite">
+      <p id="projection-value"></p>
+      <p id="projection-evidence"></p>
+    </div>
+    <p id="run-key"></p>
+  </section>
   <div class="rooms">
     <nav id="rooms" aria-label="Spacecraft rooms"></nav>
     <section class="detail" aria-labelledby="room-name">
@@ -69,7 +90,14 @@ const byId = id => document.getElementById(id);
 const rooms = JSON.parse(byId("room-catalog").textContent).rooms;
 const systemStates = {live:"Live pilot", replay:"Replay only", planned:"Planned"};
 const roomButtons = [];
+const runStorageKey = "symbiosis-x:nominal-run";
 let run = null;
+try {
+  const saved = JSON.parse(sessionStorage.getItem(runStorageKey));
+  if (saved?.run_id && Number.isInteger(saved.step)) run = saved;
+} catch {}
+let viewpoint = "crew";
+let readVersion = 0;
 let startId = null;
 let advanceId = null;
 let working = false;
@@ -114,21 +142,96 @@ async function getDemoTokens() {
   return demoTokens;
 }
 
-async function send(path, payload) {
+async function requestRun(path, role, payload, retry = true) {
   const tokens = await getDemoTokens();
+  const headers = {Authorization:"Bearer " + tokens[role]};
+  if (payload) headers["Content-Type"] = "application/json";
   const response = await fetch(path, {
-    method:"POST", headers:{"Content-Type":"application/json", Authorization:"Bearer " + tokens.facilitator}, body:JSON.stringify(payload),
+    method:payload ? "POST" : "GET", headers,
+    body:payload ? JSON.stringify(payload) : undefined,
+    cache:"no-store",
   });
+  if (response.status === 401 && retry) {
+    demoTokens = null;
+    return requestRun(path, role, payload, false);
+  }
   if (!response.ok) {
-    if (response.status === 401) demoTokens = null;
     const error = await response.json();
-    throw new Error(typeof error.detail === "string" ? error.detail : "Request rejected");
+    const failure = new Error(typeof error.detail === "string" ? error.detail : "Request rejected");
+    failure.status = response.status;
+    throw failure;
   }
   return response.json();
 }
 
+const formatTime = seconds => {
+  const sign = seconds < 0 ? "−" : "";
+  const time = Math.abs(seconds);
+  return sign + [Math.floor(time / 60), time % 60].map(value => String(value).padStart(2, "0")).join(":");
+};
+
+async function readView() {
+  if (!run) return;
+  const version = ++readVersion;
+  const activeRun = run.run_id;
+  const role = viewpoint;
+  byId("crew-view").setAttribute("aria-pressed", role === "crew");
+  byId("ground-view").setAttribute("aria-pressed", role === "ground");
+  byId("projection-value").textContent = "Loading view…";
+  byId("projection-evidence").textContent = "";
+  try {
+    const view = await requestRun("/api/v1/runs/" + encodeURIComponent(activeRun) + "/" + role, role);
+    if (version !== readVersion || view.run_id !== activeRun) return;
+    byId("clock").textContent = formatTime(view.mission_s);
+    const packet = role === "ground" ? view.packet : null;
+    const reading = role === "crew" ? view.co2 : packet?.co2;
+    byId("projection-value").textContent = reading
+      ? reading.value.toFixed(2) + " " + reading.unit + " cabin CO₂"
+      : (role === "ground" ? "Awaiting Ground delivery" : "No cabin sample yet");
+    byId("projection-evidence").textContent = packet
+      ? "Observed " + formatTime(packet.delivery.observed_at_s)
+        + " · delivered " + formatTime(packet.delivery.received_at_s)
+        + " · age " + formatTime(packet.delivery.age_s)
+      : (reading ? "Observed " + formatTime(reading.observed_at_s) + " · " + reading.source_id : "");
+    // Synchronize the nominal cursor if another operator advanced this run.
+    if (view.mission_s === 60 && run.step === 0) {
+      run = {...run, mission_s:60, step:1};
+      saveRun();
+      showRun();
+    }
+    updateControls();
+  } catch (error) {
+    if (version !== readVersion) return;
+    if (error.status === 404) {
+      run = null;
+      startId = null;
+      advanceId = null;
+      saveRun();
+      byId("run-data").hidden = true;
+      byId("clock").textContent = "00:00";
+      byId("run-status").textContent = "Run unavailable. Start a new nominal run.";
+      updateControls();
+      return;
+    }
+    byId("projection-value").textContent = "View unavailable";
+    byId("projection-evidence").textContent = error.message + " · Use Refresh view to retry.";
+  }
+}
+
+function saveRun() {
+  try { sessionStorage.setItem(runStorageKey, JSON.stringify(run)); } catch {}
+}
+
+function showRun() {
+  byId("clock").textContent = formatTime(run.mission_s);
+  byId("run-status").textContent = run.step ? "Step saved" : "Nominal run · Seed " + run.seed;
+  byId("run-data").hidden = false;
+  byId("run-key").textContent = "Run " + run.run_id;
+}
+
 function updateControls() {
-  byId("start").disabled = working || run !== null;
+  byId("start").disabled = working || (run !== null && run.step < 1);
+  byId("start").textContent = run?.step ? "Start another run" : "Start nominal run";
   byId("advance").disabled = working || run === null || run.step >= 1;
 }
 
@@ -137,9 +240,9 @@ async function execute(command) {
   updateControls();
   try {
     run = await command();
-    const time = [Math.floor(run.mission_s / 60), run.mission_s % 60];
-    byId("clock").textContent = time.map(value => String(value).padStart(2,"0")).join(":");
-    byId("run-status").textContent = "Run " + run.run_id.slice(0,8) + (run.step ? " · Step saved" : " · Seed " + run.seed);
+    saveRun();
+    showRun();
+    await readView();
   } catch (error) {
     byId("run-status").textContent = "Request failed. Retry to reuse the same operation. " + error.message;
   } finally {
@@ -150,16 +253,32 @@ async function execute(command) {
 
 byId("start").addEventListener("click", () => {
   startId ??= crypto.randomUUID();
-  execute(() => send("/api/v1/runs", {
+  execute(() => requestRun("/api/v1/runs", "facilitator", {
     start_id:startId, scenario_id:"nominal", scenario_version:"1", seed:4242,
+  }).then(receipt => {
+    startId = null;
+    advanceId = null;
+    return receipt;
   }));
 });
 byId("advance").addEventListener("click", () => {
   advanceId ??= crypto.randomUUID();
-  execute(() => send("/api/v1/runs/" + encodeURIComponent(run.run_id) + "/advance", {
+  execute(() => requestRun("/api/v1/runs/" + encodeURIComponent(run.run_id) + "/advance", "facilitator", {
     advance_id:advanceId, expected_step:run.step,
   }));
 });
+for (const role of ["crew", "ground"]) {
+  byId(role + "-view").addEventListener("click", () => {
+    viewpoint = role;
+    readView();
+  });
+}
+byId("refresh-view").addEventListener("click", readView);
+if (run) {
+  showRun();
+  updateControls();
+  readView();
+}
 </script>
 </body>
 </html>

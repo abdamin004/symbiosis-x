@@ -3,7 +3,7 @@
 from hashlib import sha256
 from uuid import uuid4
 
-from symbiosis_x.application.nominal import record_nominal_co2
+from symbiosis_x.application.nominal import deliver_nominal_ground, record_nominal_co2
 from symbiosis_x.contracts.commands import (
     AdvanceReceipt, AdvanceRunRequest, RunReceipt, StartRunRequest,
 )
@@ -112,4 +112,5 @@ def advance_run(repository: Repository, run_id: str, command: AdvanceRunRequest)
             (run_id, command.advance_id, digest, receipt.model_dump_json()),
         )
         record_nominal_co2(db, run_id, receipt.mission_s)
+        deliver_nominal_ground(db, run_id, receipt.mission_s)
     return receipt
