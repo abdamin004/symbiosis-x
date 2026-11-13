@@ -53,18 +53,25 @@ button[aria-pressed=true]{background:#3d315e}
 .widget-bar{gap:.28rem}
 .widget-title{display:flex;align-items:center;gap:.35rem;text-align:left;color:var(--ink)}
 .widget-close{padding:.17rem .4rem;background:transparent;color:var(--muted)}
-.speed-buttons{display:flex;gap:.2rem}
+.crew-strip{position:absolute;top:calc(100% + .35rem);left:.65rem;display:flex;gap:.32rem}
+.crew-portrait{width:clamp(42px,7vw,57px);padding:.28rem .2rem;background:#10152bdf;display:grid;justify-items:center;gap:.12rem;color:var(--suit)}
+.crew-portrait .icon{width:1.25rem;height:1.25rem}
+.crew-portrait small{font:600 .6rem ui-monospace,monospace;color:var(--ink)}
+.crew-portrait[data-working=true]{box-shadow:inset 0 -2px #ffcb9c}
+.crew-portrait[aria-pressed=true]{box-shadow:inset 0 -2px var(--suit)}
+.overview-time{display:flex;align-items:center;justify-content:space-between;gap:.35rem}
+#timeline{width:100%;accent-color:var(--violet)}
+#map-widget #reset{background:#682c42;color:#ffe1e9;padding:.2rem .45rem}
+#map-widget #reset:hover{background:#8c3854}
 .play-area{position:relative;min-height:max(520px,calc(100dvh - 145px))}
 .profile-window{max-height:min(58vh,480px)}
 .asset-target{position:absolute;transform:translate(-50%,-50%);display:grid;place-items:center;padding:2px;color:#c8d8ff;background:#10182fc9;border-radius:4px}
 .asset-target .icon{width:.85rem;height:.85rem}
 .ribbon output{color:var(--blue)}
-.flight-controls{position:absolute;right:.6rem;top:calc(100% + .35rem);width:min(545px,calc(100vw - 1.2rem));pointer-events:none}
+.flight-controls{position:absolute;right:.6rem;top:calc(100% + .35rem);width:max-content;pointer-events:none}
 .flight-controls .control-deck{pointer-events:auto;gap:.3rem .44rem;padding:.4rem .55rem;background:#0b1026aa;backdrop-filter:blur(9px);border-radius:10px}
 .control-deck button{padding:.25rem .45rem;font-size:.8rem}
 .transport{display:flex;align-items:center;gap:.3rem}
-.control-deck #reset{margin-inline-start:auto;background:#682c42;color:#ffe1e9}
-.control-deck #reset:hover{background:#8c3854}
 #phase{font-size:.75rem}
 .overlays{top:var(--control-clearance,100px)}
 .asset-target[data-work="active"]{color:#ffd49d;background:#513953}
@@ -75,15 +82,14 @@ button[aria-pressed=true]{background:#3d315e}
 .asset-target{min-width:23px;min-height:23px}
 .pawn[data-working=true]{box-shadow:0 0 14px #ffca9c99}
 .widget-bar h2{overflow-wrap:anywhere}
-@media(max-width:540px){.flight-controls .control-deck{gap:.2rem .35rem}.speed-buttons button{padding:.22rem .38rem}#timeline{flex-basis:6rem;min-width:5rem}}
+
 
 .widget-bar h2 .icon{margin-inline-end:.4rem;color:var(--violet)}
 .viewport{padding-top:clamp(2rem,9vh,6rem)}
-#map-widget{width:280px}#workflow-widget{width:320px}.route-map{width:100%;display:block}.route-map circle{fill:#b0bdfa}.route-map #ship-position{fill:#e8ccff;stroke:#fbf4ff}
+#map-widget{width:min(280px,calc(100% - 20px))}#workflow-widget{width:320px}.route-map{width:100%;display:block}.route-map circle{fill:#b0bdfa}.route-map #ship-position{fill:#e8ccff;stroke:#fbf4ff}
 
 .control-deck a{margin-left:auto;font-size:.85rem}
-#phase{flex:1 0 100%;color:var(--muted);font-size:.86rem}
-#timeline{flex:1 1 9rem}
+#phase{color:var(--muted);font-size:.78rem}
 #profile-tabs{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.65rem}
 #profile-tabs button{font-size:.76rem}
 .profile-data{margin:.55rem 0;display:grid;grid-template-columns:1fr auto;gap:.24rem .6rem;font-size:.82rem;color:var(--muted)}
@@ -92,7 +98,8 @@ button[aria-pressed=true]{background:#3d315e}
 #wellbeing label{display:block;font-size:.8rem;color:var(--muted);margin-top:.3rem}
 #wellbeing select{max-width:100%}
 [hidden]{display:none!important}
-@media(max-width:720px){.stage::after{width:70vw}.control-deck input{flex-basis:100%}}
+@media(max-width:720px){.stage::after{width:70vw}}
+@media(max-width:335px){.flight-controls{top:calc(100% + 3.15rem)}.crew-strip{gap:.22rem}}
 @media(prefers-reduced-motion:reduce){.pawn{transition:none}.stage[data-playing=true]::before{animation:none}}
 </style>
 </head>
@@ -105,24 +112,14 @@ __HUD_ICONS__
     <button type="button" id="show-inspector" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#hud-activity"/></svg>Inspector</button>
     <button type="button" id="show-crew" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#hud-users"/></svg>Crew</button>
     <button type="button" id="show-workflow" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#hud-clipboard-list"/></svg>Orders</button>
-    <button type="button" id="show-map" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="#hud-map"/></svg>Route map</button>
+    <button type="button" id="show-map" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="#hud-map"/></svg>Overview</button>
     <a href="/mission">Mission control</a>
   </div>
-  <div class="flight-controls"><div class="control-deck">
-    <p id="phase"></p>
-    <div class="transport">
-      <button id="play" type="button" aria-label="Play" title="Play or pause"><svg class="icon" aria-hidden="true"><use id="play-icon" href="#hud-play"/></svg></button>
-      <button id="step" type="button" aria-label="Skip to next event" title="Skip to next event"><svg class="icon" aria-hidden="true"><use href="#hud-skip-forward"/></svg></button>
-    </div>
-    <div class="speed-buttons" role="group" aria-label="Playback speed">
-      <button type="button" data-rate="1" aria-pressed="true">1×</button>
-      <button type="button" data-rate="2" aria-pressed="false">2×</button>
-      <button type="button" data-rate="4" aria-pressed="false">4×</button>
-      <button type="button" data-rate="one-hour" aria-pressed="false">1-hour mission</button>
-    </div>
-    <input id="timeline" type="range" min="0" value="0" aria-label="Mission time">
-    <output class="clock" id="clock" for="timeline"></output>
-    <button id="reset" type="button" aria-label="Reset game" title="Reset game"><svg class="icon" aria-hidden="true"><use href="#hud-rotate-ccw"/></svg></button>
+  <nav class="crew-strip" id="crew-strip" aria-label="Astronaut portraits"></nav>
+  <div class="flight-controls"><div class="control-deck" role="group" aria-label="Flight playback">
+    <button id="play" type="button" aria-label="Play" title="Play or pause"><svg class="icon" aria-hidden="true"><use id="play-icon" href="#hud-play"/></svg></button>
+    <button id="speed-cycle" type="button" aria-label="Cycle speed" title="Cycle 1×, 2×, and 4×">1×</button>
+    <button id="step" type="button" aria-label="Skip one mission hour" title="Skip one mission hour"><svg class="icon" aria-hidden="true"><use href="#hud-skip-forward"/></svg></button>
   </div></div></div>
   <div class="play-area">
   <div class="viewport" tabindex="0" aria-label="Scrollable spacecraft cutaway">
@@ -139,8 +136,8 @@ __HUD_ICONS__
     <button id="hold-order" type="button" hidden>Commander · Hold</button>
     <button id="complete-order" type="button" hidden>SIM-03 · Report inspection</button>
   </section>
-  <section class="panel" id="map-widget" aria-label="Route minimap">
-    <div class="widget-bar"><button class="move-widget widget-title" type="button" aria-label="Move route map with drag or arrow keys"><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button><h2>Route map</h2><button class="widget-close" type="button" aria-label="Close route map"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button></div>
+  <section class="panel" id="map-widget" aria-label="Mission overview">
+    <div class="widget-bar"><button class="move-widget widget-title" type="button" aria-label="Move route map with drag or arrow keys"><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button><h2>Mission overview</h2><button class="widget-close" type="button" aria-label="Close route map"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button></div>
     <svg class="route-map" viewBox="0 0 260 58" aria-hidden="true">
       <path d="M18 35 Q75 -4 130 17 Q190 -4 242 35" stroke="#8385bd" fill="none"/>
       <circle cx="18" cy="35" r="4"/><circle cx="130" cy="17" r="4"/><circle cx="242" cy="35" r="4"/>
@@ -148,6 +145,14 @@ __HUD_ICONS__
       <g fill="#bac5e7" font-size="10"><text x="3" y="55">Earth</text><text x="122" y="39">ISS</text><text x="218" y="55">Return</text></g>
     </svg>
     <p id="map-location"></p>
+    <p id="phase"></p>
+    <div class="overview-time">
+      <output class="clock" id="clock" for="timeline"></output>
+      <button id="next-event" type="button" title="Jump to the next scenario checkpoint">Next event</button>
+      <button id="reset" type="button" aria-label="Reset game" title="Reset game"><svg class="icon" aria-hidden="true"><use href="#hud-rotate-ccw"/></svg></button>
+    </div>
+    <input id="timeline" type="range" min="0" value="0" aria-label="Mission time">
+    <button id="one-hour" type="button" aria-pressed="false" title="Scale the entire mission to one hour of playback">1-hour pacing</button>
   </section>
   <section class="panel" id="inspector-widget" hidden aria-labelledby="focus-name">
     <div class="widget-bar"><button class="move-widget widget-title" type="button" aria-label="Move inspector with drag or arrow keys"><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button><h2 id="focus-name"></h2><button class="widget-close" type="button" aria-label="Close inspector"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button></div>
@@ -310,6 +315,7 @@ const reduced = new Set();
 const roomButtons = new Map();
 const pawns = new Map();
 const roster = new Map();
+const portraits = new Map();
 const ctx = element("hull").getContext("2d");
 const checkpoints = data.frames[""];
 const last = checkpoints.length - 1;
@@ -318,14 +324,14 @@ let missionTime = 0;
 let lastWallTime = 0;
 let index = 0;
 let timer = null;
-let speed = "1";
-for (const button of document.querySelectorAll("[data-rate]")) {
-  button.addEventListener("click", () => {
-    speed = button.dataset.rate;
-    document.querySelectorAll("[data-rate]").forEach(item =>
-      item.setAttribute("aria-pressed", item === button));
-  });
-}
+let speed = 1;
+let compressed = false;
+element("speed-cycle").addEventListener("click", () => {
+  speed = speed === 4 ? 1 : speed * 2;
+  compressed = false;
+  render();
+});
+element("one-hour").addEventListener("click", () => { compressed = !compressed; render(); });
 let selection = {room:"command-01"};
 
 function place(button, x, y) {
@@ -604,6 +610,11 @@ function render() {
   element("play").setAttribute("aria-label", timer !== null ? "Pause" : "Play");
   element("play-icon").setAttribute("href", timer !== null ? "#hud-pause" : "#hud-play");
   element("step").disabled = missionTime >= endTime;
+  element("next-event").disabled = missionTime >= endTime;
+  element("speed-cycle").textContent = compressed ? "1 h" : speed + "×";
+  element("speed-cycle").title = compressed ? "One-hour pacing active. Click for normal speeds."
+    : (4 * speed) + " mission seconds per real second. Click to change speed.";
+  element("one-hour").setAttribute("aria-pressed", compressed);
   for (const [roomId, button] of roomButtons) {
     button.setAttribute("aria-pressed", selection.room === roomId);
   }
@@ -620,6 +631,10 @@ function render() {
     button.dataset.working = Boolean(work);
     button.setAttribute("aria-pressed", selection.crew === i);
     roster.get(i).setAttribute("aria-pressed", selection.crew === i);
+    const portrait = portraits.get(i);
+    portrait.setAttribute("aria-pressed", selection.crew === i);
+    portrait.dataset.working = Boolean(work);
+    portrait.title = duty.role + " · " + roomById.get(roomId).name + " · " + task;
   });
   for (const [id,button] of equipmentButtons) {
     const task = taskAt(id, frame.time);
@@ -642,7 +657,7 @@ function setMissionTime(seconds) {
 }
 
 function tick(now) {
-  const rate = speed === "one-hour" ? endTime / 3600 : 4 * Number(speed);
+  const rate = compressed ? endTime / 3600 : 4 * speed;
   setMissionTime(missionTime + (now - lastWallTime) / 1000 * rate);
   lastWallTime = now;
   if (missionTime >= endTime) stop();
@@ -676,6 +691,18 @@ duties.forEach((duty,i) => {
   const select = () => { selection = {crew:i}; showInspector(); render(); };
   pawn.addEventListener("click", select);
   member.addEventListener("click", select);
+  const portrait = document.createElement("button");
+  portrait.type = "button";
+  portrait.className = "crew-portrait";
+  portrait.style.setProperty("--suit", duty.color);
+  portrait.setAttribute("aria-label", "Inspect " + data.crew[i] + " " + duty.role);
+  setIcon(portrait, ["users","flask-conical","zap","radio"][i], "");
+  const id = document.createElement("small");
+  id.textContent = data.crew[i];
+  portrait.append(id);
+  portrait.addEventListener("click", select);
+  portraits.set(i,portrait);
+  element("crew-strip").append(portrait);
   pawns.set(i,pawn);
   roster.set(i,member);
   element("ship").append(pawn);
@@ -732,11 +759,16 @@ element("play").addEventListener("click", () => {
 });
 element("step").addEventListener("click", () => {
   stop();
+  setMissionTime(missionTime + 3600);
+  render();
+});
+element("next-event").addEventListener("click", () => {
+  stop();
   if (index < last) setMissionTime(checkpoints[index + 1].time);
   render();
 });
 element("reset").addEventListener("click", () => {
-  stop(); setMissionTime(0); reduced.clear(); checkIns.clear(); tasks.length = 0; flightWorkflow.reset(); render();
+  stop(); setMissionTime(0); speed = 1; compressed = false; reduced.clear(); checkIns.clear(); tasks.length = 0; flightWorkflow.reset(); render();
 });
 element("activity").addEventListener("click", () => {
   const id = data.crew[selection.crew];
@@ -769,10 +801,13 @@ const overlay = element("overlays");
 const controller = document.querySelector(".flight-controls");
 const playArea = document.querySelector(".play-area");
 const hudSize = new ResizeObserver(() => {
-  const clearance = controller.getBoundingClientRect().bottom - playArea.getBoundingClientRect().top + 8;
+  const portraitsBottom = element("crew-strip").getBoundingClientRect().bottom;
+  const clearance = Math.max(controller.getBoundingClientRect().bottom, portraitsBottom)
+    - playArea.getBoundingClientRect().top + 8;
   playArea.style.setProperty("--control-clearance", Math.max(0, clearance) + "px");
 });
 hudSize.observe(controller);
+hudSize.observe(element("crew-strip"));
 hudSize.observe(document.querySelector(".hud"));
 let widgetOrder = 3;
 
@@ -828,7 +863,7 @@ function enableWidget(panel, toggle, initialPosition) {
   return {open: () => setOpen(true), close: () => setOpen(false)};
 }
 enableWidget(element("workflow-widget"), element("show-workflow"), () => ({x:14,y:50}));
-enableWidget(element("map-widget"), element("show-map"), () => ({x:14,y:overlay.clientHeight - 165}));
+enableWidget(element("map-widget"), element("show-map"), () => ({x:14,y:overlay.clientHeight - 220}));
 enableWidget(element("inspector-widget"), element("show-inspector"), () => ({x:14,y:10}));
 enableWidget(element("crew-widget"), element("show-crew"), () => ({
   x:overlay.clientWidth - 354,
