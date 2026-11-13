@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "synthetic": true,
+  "crew": [
+    {
+      "crew_id": "SIM-01",
+      "display_name": "SIM-01 (fictional)",
+      "zone_id": "cabin-01",
+      "initial_mode": "baseline",
+      "co2_generation_m3_h": {
+        "baseline": 0.04,
+        "reduced_activity": 0.02
+      }
+    }
+  ]
+}

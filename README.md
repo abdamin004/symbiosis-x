@@ -72,3 +72,13 @@ git merge origin/main
 Run the ticket checks, push to your member branch, and open a pull request into `main`. Put the Jira key in the commit subject and PR title, for example `KAN-10 Bootstrap the FastAPI package`. Link Jira and GitHub in both directions. Use **Create a merge commit** on GitHub to keep the branch history shared with `main`. Keep your member branch after merge and update it before starting the next ticket.
 
 In the PR, record the test command and result, affected consumers, and any blockers. Move the Jira ticket to In Review when the PR is open and to Done after the change merges and meets its acceptance criteria.
+
+## Run the cabin pilot
+
+Generate a standalone HTML preview from the cabin model and synthetic astronaut roster.
+
+```sh
+python3 scripts/build_cabin_preview.py /tmp/symbiosis-x-cabin.html
+```
+
+Open the generated file. Compare the Crew replay at 13:00 before and after confirming reduced activity at 06:00. Planning leaves the cabin input unchanged. The Ground fixture shows the earlier delivered snapshot at 13:00. This preview uses synthetic data and runs without the application server.
