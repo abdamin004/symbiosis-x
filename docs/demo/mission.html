@@ -103,11 +103,24 @@ for (const room of rooms) {
 }
 selectRoom(rooms[0]);
 
+let demoTokens = null;
+
+async function getDemoTokens() {
+  if (!demoTokens) {
+    const response = await fetch("/api/v1/demo/session", {method:"POST", cache:"no-store"});
+    if (!response.ok) throw new Error("Local demo session unavailable");
+    demoTokens = await response.json();
+  }
+  return demoTokens;
+}
+
 async function send(path, payload) {
+  const tokens = await getDemoTokens();
   const response = await fetch(path, {
-    method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload),
+    method:"POST", headers:{"Content-Type":"application/json", Authorization:"Bearer " + tokens.facilitator}, body:JSON.stringify(payload),
   });
   if (!response.ok) {
+    if (response.status === 401) demoTokens = null;
     const error = await response.json();
     throw new Error(typeof error.detail === "string" ? error.detail : "Request rejected");
   }
