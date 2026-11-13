@@ -192,12 +192,18 @@ button[aria-pressed=true]{background:#3d315e}
 .mission-options article,#launch-jobs li{background:#212d49;padding:.7rem;border-radius:8px}
 .mission-options button{margin-top:.45rem}
 .launch-board{grid-template-columns:minmax(160px,.75fr) minmax(0,1.3fr)}
-.launch-stack-area{display:grid;place-items:center;min-height:270px;background:radial-gradient(ellipse,#34355c,#11172f 72%);border-radius:9px}
-#launch-stack{width:min(160px,95%);margin:0;padding:0;list-style:none;text-align:center}
+.launch-page{min-height:100dvh;background:radial-gradient(ellipse at 24% 39%,#22294b,#090d1c 74%)}
+.launch-ribbon{background:#10162d}
+.launch-heading,.launch-board{width:min(1180px,calc(100% - 2rem));margin-inline:auto}
+.launch-heading{padding:clamp(.85rem,3vw,2.2rem) 0 .8rem}
+.launch-heading h1{font-size:clamp(1.65rem,4vw,2.65rem);line-height:1.05}
+.launch-heading p{color:var(--muted);margin-top:.3rem}
+.launch-page .launch-board{grid-template-columns:minmax(0,1.55fr) minmax(270px,1fr);gap:clamp(.8rem,2.7vw,2rem);align-items:start;padding-bottom:1rem}
+.launch-board h2{font-size:1.05rem}
+#launch-stack{display:flex;gap:.3rem;justify-content:center;margin:.65rem 0 0;padding:0;list-style:none;text-align:center}
 .launch-stage{margin:2px auto;padding:.6rem .25rem;background:linear-gradient(90deg,#273858,#536c90 48%,#273858);border:1px solid #91a8cb}
-.launch-stage[data-stage=capsule]{width:72%;padding-top:1.1rem;border-radius:45% 45% 3px 3px}
-.launch-stage[data-stage=upper]{width:83%;min-height:60px}
-.launch-stage[data-stage=booster]{width:94%;min-height:76px;border-bottom:5px solid #8394b1}
+.launch-stage{flex:1;border-radius:6px;font-size:.78rem}
+.launch-stage[data-stage=booster]{border-bottom:3px solid #8394b1}
 #launch-stack[data-ignited=true] [data-stage=booster]{border-bottom-color:#ffc68b;box-shadow:0 7px 17px #ff954e90}
 .launch-stage small,#launch-jobs small{display:block;color:#d7e2fa;font-size:.72rem}
 #launch-jobs{padding:0;list-style:none;display:grid;gap:.4rem}
@@ -213,7 +219,7 @@ button[aria-pressed=true]{background:#3d315e}
 .launch-readouts div{display:grid;grid-template-columns:110px 1fr;gap:.4rem;padding:.32rem .5rem;background:#202e50;border-radius:5px}
 .launch-readouts dt{color:var(--muted);font-size:.75rem}
 .launch-readouts dd{color:var(--blue);font-size:.8rem;margin:0}
-@media(max-width:540px){.mission-options,.launch-board{grid-template-columns:1fr}.launch-stack-area{min-height:240px}}
+@media(max-width:660px){.mission-options,.launch-page .launch-board{grid-template-columns:1fr}}
 #personnel-widget{width:min(440px,calc(100% - 20px))}
 .personnel-actions{margin:.3rem 0 .55rem}
 .body-layout{display:grid;grid-template-columns:minmax(110px,.8fr) minmax(0,1.2fr);gap:.55rem;margin-bottom:.45rem}
@@ -231,17 +237,20 @@ button[aria-pressed=true]{background:#3d315e}
 .region-card h3{margin:.2rem 0;font-size:.95rem}
 .region-card small{color:var(--muted);font-size:.72rem}
 .region-card strong{color:var(--blue);font-size:.85rem}
-.launch-scene{height:220px;overflow:hidden;position:relative;isolation:isolate;border-radius:8px;background:radial-gradient(ellipse at 50% 100%,#556992,#182240 58%,#090e1c)}
+.launch-scene{height:clamp(250px,48vh,490px);overflow:hidden;position:relative;isolation:isolate;border-radius:8px;background:radial-gradient(ellipse at 50% 100%,#556992,#182240 58%,#090e1c)}
 .launch-earth{position:absolute;inset:60% -35% -105%;border-radius:50%;background:#2a5b85;box-shadow:0 -5px 30px #7ba5fa66;opacity:0}
-.launch-pad{position:absolute;bottom:0;inset-inline:0;height:19px;background:linear-gradient(#5e6d8b,#242b40)}
-.launch-tower{position:absolute;bottom:18px;left:27%;width:15%;height:120px;border-inline:3px solid #6a7d9f;background:repeating-linear-gradient(-43deg,transparent 0 13px,#516585 14px 17px,transparent 18px 24px)}
-.launch-vehicle{position:absolute;left:55%;bottom:19px;width:29px;display:flex;flex-direction:column;align-items:center;transition:transform .65s ease}
+.launch-horizon{position:absolute;inset:auto 0 12% 0;height:30%;background:linear-gradient(15deg,#343d55,#283453);clip-path:polygon(0 50%,18% 29%,37% 56%,54% 39%,68% 12%,84% 40%,100% 24%,100% 100%,0 100%)}
+.launch-pad{position:absolute;bottom:0;inset-inline:0;height:12%;background:linear-gradient(#6a7898 0 4%,#3f4b68 5%,#20273c 70%)}
+.launch-pad::before{content:"";position:absolute;left:43%;right:21%;height:4px;background:#bbd5fb;border-radius:3px}
+[data-phase=upper] .launch-horizon,[data-phase=orbit] .launch-horizon{opacity:0}
+.launch-tower{position:absolute;bottom:12%;left:33%;width:13%;height:49%;border-inline:3px solid #6a7d9f;background:repeating-linear-gradient(-43deg,transparent 0 13px,#516585 14px 17px,transparent 18px 24px)}
+.launch-vehicle{position:absolute;left:53%;bottom:12%;width:clamp(33px,5vw,52px);display:flex;flex-direction:column;align-items:center;transition:transform .65s ease}
 .launch-vehicle i{display:block;width:100%;background:linear-gradient(90deg,#657a9d,#e4eeff 50%,#7589ac);border:1px solid #a8b9d4}
-.launch-vehicle .launch-nose{height:27px;width:74%;border-radius:70% 70% 4px 4px}
-.launch-vehicle .launch-upper{height:31px;background:linear-gradient(90deg,#4f6290,#a9bde3 50%,#4f6290)}
-.launch-vehicle .launch-booster{height:61px;border-bottom:4px solid #2d3a57;transition:translate .7s ease,opacity .7s ease}
+.launch-vehicle .launch-nose{height:clamp(29px,8vh,64px);width:74%;border-radius:70% 70% 4px 4px}
+.launch-vehicle .launch-upper{height:clamp(35px,9vh,76px);background:linear-gradient(90deg,#4f6290,#a9bde3 50%,#4f6290)}
+.launch-vehicle .launch-booster{height:clamp(60px,13vh,122px);border-bottom:4px solid #2d3a57;transition:translate .7s ease,opacity .7s ease}
 .launch-vehicle .launch-plume{position:absolute;top:100%;width:70%;height:46px;border:0;opacity:0;background:linear-gradient(#f7f1d3,#e39264 32%,#9581e900);border-radius:0 0 80% 80%}
-[data-phase=ascent] .launch-vehicle{transform:translateY(calc(-15px - var(--climb)))}
+[data-phase=ascent] .launch-vehicle{transform:translateY(calc(-7px - var(--climb)))}
 [data-phase=ascent] .launch-plume{opacity:1;animation:launch-exhaust .18s ease-in-out infinite alternate}
 [data-separated=true] .launch-booster{translate:-25px 75px;opacity:0}
 [data-phase=upper] .launch-vehicle,[data-phase=orbit] .launch-vehicle{transform:translate(-25px,-25px) rotate(58deg)}
@@ -261,7 +270,7 @@ button[aria-pressed=true]{background:#3d315e}
 <body>
 __HUD_ICONS__
 <main>
-<section class="stage" id="stage" aria-label="Spacecraft in flight">
+<section class="stage" id="stage" aria-label="Spacecraft in flight" hidden>
   <div class="hud"><div class="ribbon" aria-label="Mission resources">
     <span class="resource"><svg class="icon" aria-hidden="true"><use href="#hud-map"/></svg><output id="resource-phase"></output></span><span class="resource"><svg class="icon" aria-hidden="true"><use href="#hud-wind"/></svg><output id="resource-air"></output></span><span class="resource"><svg class="icon" aria-hidden="true"><use href="#hud-zap"/></svg><output id="resource-power"></output></span><span class="resource"><svg class="icon" aria-hidden="true"><use href="#hud-users"/></svg><output id="resource-crew"></output></span>
     <button type="button" id="show-inspector" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#hud-activity"/></svg>Inspector</button>
@@ -441,7 +450,7 @@ __HUD_ICONS__
   <div class="dialog-top"><h2 id="mission-menu-title">Missions</h2><form method="dialog"><button>Close</button></form></div>
   <div class="mission-options">
     <article><h3>ISS Research Replay</h3><p>Outbound capsule · ISS laboratory · return capsule</p>
-      <form method="dialog"><button>Return to Flight replay</button></form></article>
+      <button id="open-flight-replay" type="button">Open Flight replay</button></article>
     <article><h3>Asteria Launch</h3><p>Prepare the crew and fly from the pad to station capture.</p>
       <button id="open-checkout" type="button">Open Asteria Launch</button></article>
   </div>
@@ -452,20 +461,26 @@ __HUD_ICONS__
   <ol id="mission-objective-list" class="objective-list"></ol>
   <button id="objective-open-launch" type="button">Open launch command</button>
 </dialog>
-<dialog id="launch-checkout" class="mission-dialog" aria-labelledby="launch-title">
-  <div class="dialog-top"><div><h2 id="launch-title">Launch Checkout</h2><p id="launch-subtitle"></p></div>
-    <form method="dialog"><button>Close</button></form></div>
+<section id="launch-checkout" class="launch-page" aria-labelledby="launch-title" hidden>
+  <nav class="ribbon launch-ribbon" aria-label="Launch navigation">
+    <button id="launch-open-missions" type="button">Missions</button>
+    <button id="launch-open-objectives" type="button">Mission objectives</button>
+    <a href="/mission">Mission control</a>
+  </nav>
+  <header class="launch-heading">
+    <h1 id="launch-title">Asteria Launch</h1><p id="launch-subtitle"></p>
+  </header>
   <div class="launch-board">
     <div>
-      <div class="launch-scene" id="launch-scene" aria-hidden="true">
-        <div class="launch-earth"></div><div class="launch-tower"></div>
+      <div class="launch-scene" id="launch-scene" role="img" aria-label="Asteria on the launchpad">
+        <div class="launch-earth"></div><div class="launch-horizon"></div><div class="launch-tower"></div>
         <div class="launch-vehicle"><i class="launch-nose"></i><i class="launch-upper"></i><i class="launch-booster"></i><i class="launch-plume"></i></div>
         <div class="launch-pad"></div>
       </div>
       <ol id="launch-stack" aria-label="Rocket stage stack"></ol>
     </div>
     <div>
-      <h3>Crew checklist</h3>
+      <h2>Crew checklist</h2>
       <ul id="launch-jobs"></ul>
       <p id="launch-checklist"></p>
       <dl class="launch-readouts">
@@ -497,7 +512,7 @@ __HUD_ICONS__
         </div>
       </div>
       <div class="choices checkout-controls">
-        <output id="launch-time" aria-label="Checkout time"></output>
+        <output id="launch-time" aria-label="Mission elapsed time"></output>
         <button id="launch-step" type="button">Advance 15 s</button>
         <button id="launch-hold" type="button" aria-pressed="false">Hold launch</button>
         <button id="launch-arm" type="button">Arm countdown</button>
@@ -509,12 +524,11 @@ __HUD_ICONS__
         <button id="launch-approach-hold" type="button" aria-pressed="false" hidden>Hold approach</button>
         <button id="launch-capture" type="button" hidden>Capture station</button>
         <button id="launch-retreat" type="button" hidden>Retreat to orbit</button>
-        <button id="launch-reset" type="button">Reset checkout</button>
-        <button id="launch-open-objectives" type="button">View objectives</button>
+        <button id="launch-reset" type="button">Restart at launchpad</button>
       </div>
     </div>
   </div>
-</dialog>
+</section>
 </main>
 <script type="application/json" id="flight-data">__FLIGHT_DATA__</script>
 <script>
