@@ -37,6 +37,12 @@
           "status": "replay",
           "key": "activity",
           "insight": "Confirmed activity changes CO₂ generation from 06:00."
+        },
+        {
+          "name": "Beds, WC and galley",
+          "status": "replay",
+          "key": "habitat",
+          "insight": "Protected rest and hygiene are visible on the shared mission schedule."
         }
       ]
     },

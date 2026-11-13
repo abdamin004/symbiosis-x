@@ -1,0 +1,19 @@
+{
+  "scenario_id": "iss-research-pilot",
+  "version": 1,
+  "synthetic": true,
+  "research": "Compare synthetic wrist and trunk motion during a standardized workstation task.",
+  "legs": [
+    {"time": 0, "phase": "Departure", "label": "Leave Earth orbit", "vehicle": "Outbound capsule", "site": "Earth orbit", "route": 0, "dock": "Hatch secured"},
+    {"time": 60, "phase": "Outbound", "label": "Primary scrubber degraded", "vehicle": "Outbound capsule", "site": "Outbound orbit", "route": 1, "dock": "Hatch secured"},
+    {"time": 360, "phase": "Outbound", "label": "Crew activity and first Ground delivery", "vehicle": "Outbound capsule", "site": "Outbound orbit", "route": 2, "dock": "Hatch secured"},
+    {"time": 600, "phase": "Outbound", "label": "Power headroom falls", "vehicle": "Outbound capsule", "site": "Outbound orbit", "route": 3, "dock": "Hatch secured"},
+    {"time": 780, "phase": "Outbound", "label": "Ground handoff", "vehicle": "Outbound capsule", "site": "Outbound orbit", "route": 4, "dock": "Hatch secured"},
+    {"time": 14400, "phase": "Approach", "label": "Review simulated docking checks", "vehicle": "Outbound capsule", "site": "ISS approach", "route": 5, "dock": "Approach"},
+    {"time": 16200, "phase": "Docked", "label": "Capture and verify transfer conditions", "vehicle": "Outbound capsule", "site": "ISS port", "route": 6, "dock": "Captured · transfer pending"},
+    {"time": 18000, "phase": "Station research", "label": "Transfer and collect paired motion samples", "vehicle": "ISS laboratory", "site": "ISS", "route": 6, "dock": "Transfer complete"},
+    {"time": 25200, "phase": "Station rest", "label": "Protected rest, meal and private check-in", "vehicle": "ISS laboratory", "site": "ISS", "route": 6, "dock": "Docked"},
+    {"time": 50400, "phase": "Return transit", "label": "Board a separate return capsule", "vehicle": "Return capsule", "site": "Inbound orbit", "route": 7, "dock": "Undocked"},
+    {"time": 64800, "phase": "Recovery", "label": "Return to Earth and archive research", "vehicle": "Return capsule", "site": "Earth recovery", "route": 8, "dock": "Recovery complete"}
+  ]
+}
