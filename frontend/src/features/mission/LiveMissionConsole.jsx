@@ -7,6 +7,8 @@ import CheckInForm from "../crew/CheckInForm.jsx";
 import { CrewHealthDashboard } from "../crew/CrewHealthPanel.jsx";
 import RadiationContext from "../crew/RadiationContext.jsx";
 import { HEALTH_METRICS } from "../../api/healthCatalog.js";
+import AdvisoryForm from "../ground/AdvisoryForm.jsx";
+import GroundSnapshot from "../ground/GroundSnapshot.jsx";
 import AgentStatusStrip from "../workflow/AgentStatusStrip.jsx";
 import TraceTimeline from "../workflow/TraceTimeline.jsx";
 
@@ -68,26 +70,19 @@ export default function LiveMissionConsole({ role, runId }) {
         {view.status !== "closed" && plan && <ApprovalPanel runId={runId} plan={plan} candidateId={selected} onReceipt={onReceipt} />}
         <CheckInForm runId={runId} crewId={view.health_profile?.crew_id ?? "SIM-01"} />
         <details className="mt-6 rounded-lg border border-slate-200 bg-white p-4" data-testid="supporting-context">
-          <summary className="cursor-pointer font-semibold">Supporting context: cabin deck and archived radiation data</summary>
-          <section className="mt-3 rounded-md border border-slate-200 p-3" data-testid="supporting-deck">
-            <h3 className="text-sm font-semibold">Cabin deck</h3>
-            <p className="mt-1 text-sm text-slate-700">The mission canvas shows the deck map, room inspector and cabin replay.</p>
-            <p className="mt-1 text-xs text-slate-500">It keeps its own run and replay, so it does not show run {view.run_id}. The 2D deck component (SX-08A) will be shown here once it is merged.</p>
-            <a className="mt-2 inline-block text-sm font-semibold text-selection underline" href="/mission" target="_blank" rel="noreferrer">Open the cabin deck</a>
+          <summary className="cursor-pointer font-semibold">Supporting context: ship systems and archived radiation data</summary>
+          <section className="mt-3 rounded-md border border-slate-200 p-3" data-testid="supporting-ship-systems">
+            <h3 className="text-sm font-semibold">Ship systems</h3>
+            <p className="mt-1 text-sm text-slate-700">Mission control lists ship systems by room and plays the cabin replay.</p>
+            <p className="mt-1 text-xs text-slate-500">It keeps its own run and replay, so it does not show run {view.run_id}. A drawn deck map is not available yet; the 2D deck (SX-08A) will be shown here once it is merged.</p>
+            <a className="mt-2 inline-block text-sm font-semibold text-selection underline" href="/mission" target="_blank" rel="noreferrer">Open ship systems</a>
           </section>
           <RadiationContext />
         </details>
-      </> : <section className="mt-6 rounded-lg border border-slate-200 bg-white p-4">
-        <h2 className="font-semibold">Latest delivered snapshot</h2>
-        {view.packet ? <dl className="mt-2 grid grid-cols-2 gap-2 text-sm">
-          <dt>Snapshot</dt><dd>{view.packet.snapshot_id}</dd>
-          <dt>CO₂</dt><dd>{view.packet.co2.value} {view.packet.co2.unit}</dd>
-          <dt>Observed</dt><dd>{time(view.packet.delivery.observed_at_s)}</dd>
-          <dt>Received</dt><dd>{time(view.packet.delivery.received_at_s)}</dd>
-          <dt>Age</dt><dd>{time(view.packet.delivery.age_s)}</dd>
-          <dt>Link</dt><dd>{view.packet.delivery.link_status}</dd>
-        </dl> : <p className="mt-2 text-sm text-slate-600">No Ground packet has been delivered yet.</p>}
-      </section>}
+      </> : <>
+        <GroundSnapshot packet={view.packet} missionS={view.mission_s} />
+        <AdvisoryForm runId={runId} packet={view.packet} closed={view.status === "closed"} />
+      </>}
       <AgentStatusStrip trace={view.trace ?? []} />
       <TraceTimeline trace={view.trace ?? []} />
     </main>

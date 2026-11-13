@@ -43,3 +43,31 @@ def normalize_incoming_co2(sample: dict) -> dict:
         "quality": quality,
         "original_unit": unit,
     }
+
+
+def normalize_sample(sample: dict) -> dict:
+    """SX-12B: map every row of one sample, keeping its provenance and row order.
+
+    Accepted rows go through ``normalize_incoming_co2``; a missing reading stays
+    unknown (``value`` None). A row with an ambiguous unit or a bad time is
+    rejected with its reason code instead of stopping the whole sample. The
+    sample's approval flag is carried through unchanged, never assumed.
+    """
+    if not isinstance(sample, dict) or not isinstance(sample.get("rows"), list):
+        raise ValueError("INVALID_SAMPLE")
+    sample_id = sample.get("sample_id")
+    if not isinstance(sample_id, str) or not sample_id.strip():
+        raise ValueError("SAMPLE_ID_REQUIRED")
+    accepted, rejected = [], []
+    for index, row in enumerate(sample["rows"]):
+        try:
+            accepted.append({**normalize_incoming_co2(row), "sample_id": sample_id, "row": index})
+        except ValueError as error:
+            rejected.append({"sample_id": sample_id, "row": index, "reason_code": str(error)})
+    return {
+        "sample_id": sample_id,
+        "provenance": sample.get("provenance"),
+        "approved": sample.get("approved_organizer_data") is True,
+        "accepted": accepted,
+        "rejected": rejected,
+    }

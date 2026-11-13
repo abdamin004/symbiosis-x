@@ -79,7 +79,8 @@ test("facilitator controls one run while independent Crew and Ground sessions on
     await expect(crew.getByText(/Mission time 01:00/)).toBeVisible();
     await expect(ground.getByText(/Mission time 01:00/)).toBeVisible();
     await expect(crew.getByText("SIM-01")).toBeVisible();
-    await expect(ground.getByText("ground-v1")).toBeVisible();
+    // The advisory form repeats the basis ID, so read it from the delivered snapshot panel.
+    await expect(ground.getByTestId("ground-basis-snapshot")).toHaveText("ground-v1");
     await expect(crew.getByRole("button", { name: "Advance one step" })).toHaveCount(0);
     await expect(ground.getByRole("button", { name: "Advance one step" })).toHaveCount(0);
 
