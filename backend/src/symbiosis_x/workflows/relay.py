@@ -10,6 +10,7 @@ only; Relay never reads or writes plant state.
 
 import json
 from hashlib import sha256
+from secrets import token_hex
 from sqlite3 import Connection, Row
 
 from symbiosis_x.contracts.commands import (
@@ -231,9 +232,27 @@ def receive_due_advisories(db: Connection, run_id: str, mission_s: int) -> list[
     return dispositions
 
 
-def case_alias(run_id: str, case_id: str) -> str:
-    """An opaque per-run alias, so Ground never learns the case ID or the drill behind it."""
-    return "health-case-" + sha256(f"{run_id}:{case_id}".encode()).hexdigest()[:10]
+def _case_alias(db: Connection, run_id: str, case_id: str) -> str:
+    """Return the case's random alias, creating it on first share.
+
+    The alias is random rather than derived from the case: Ground knows the run
+    ID and the drill IDs are predictable, so any hash of them could be reversed.
+    The mapping stays onboard in the operations table, which Ground never reads.
+    """
+    row = db.execute(
+        """SELECT receipt_json FROM operations
+           WHERE run_id = ? AND operation_scope = 'case_alias' AND operation_id = ?""",
+        (run_id, case_id),
+    ).fetchone()
+    if row is not None:
+        return json.loads(row["receipt_json"])["case_alias"]
+    alias = "health-case-" + token_hex(8)
+    db.execute(
+        """INSERT INTO operations (run_id, operation_scope, operation_id, request_digest, receipt_json)
+           VALUES (?, 'case_alias', ?, ?, ?)""",
+        (run_id, case_id, sha256(alias.encode()).hexdigest(), json.dumps({"case_alias": alias})),
+    )
+    return alias
 
 
 def queue_case_status(
@@ -262,7 +281,7 @@ def queue_case_status(
         raise CaseRelayRejected("RUN_CLOSED")
 
     receipt = CaseRelayReceipt(
-        operation_id=request.operation_id, case_alias=case_alias(run_id, case_id),
+        operation_id=request.operation_id, case_alias=_case_alias(db, run_id, case_id),
         review_priority=EMERGENCY_REVIEW_PRIORITY, status=status,
         issued_at_s=mission_s, deliver_at_s=mission_s + RELAY_DELAY_S,
     )

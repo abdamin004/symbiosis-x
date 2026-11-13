@@ -1,5 +1,6 @@
 """SX-25C: Ground receives only the approved, delayed status of an onboard health case."""
 
+import hashlib
 import json
 import sqlite3
 from contextlib import closing
@@ -57,6 +58,8 @@ def test_delayed_case_packet_is_minimal(tmp_path):
                            json={"operation_id": "share-01"}, headers=as_role("crew")).json() == receipt
         assert client.post(f"{runs}/crew/emergencies/{case['case_id']}/relay", json={"operation_id": "share-01"},
                            headers=as_role("ground")).status_code == 403
+        # The alias is random, not a hash Ground could recompute from the run and drill IDs.
+        assert hashlib.sha256(f"{run_id}:{case['case_id']}".encode()).hexdigest()[:10] not in alias
 
         # Before delivery Ground has nothing about the case, and cannot acknowledge it.
         step(client, as_role, run_id, "to-60", 0, 60)
@@ -91,6 +94,11 @@ def test_delayed_case_packet_is_minimal(tmp_path):
         # Ground's acknowledgment is its own record; the onboard case is unchanged.
         onboard = client.get(f"{runs}/crew/emergencies/{case['case_id']}", headers=as_role("crew")).json()
         assert onboard == local.json()
+
+        # A later share of the same case keeps its alias, so Ground sees one case with the newer status.
+        again = client.post(f"{runs}/crew/emergencies/{case['case_id']}/relay",
+                            json={"operation_id": "share-02"}, headers=as_role("crew")).json()
+        assert (again["case_alias"], again["status"], again["deliver_at_s"]) == (alias, "acknowledged", 660)
 
     with closing(sqlite3.connect(database)) as db:
         (payload,) = db.execute(
