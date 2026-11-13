@@ -8,11 +8,15 @@ at the time it was scheduled. The Ground projection reads delivered records
 only; Relay never reads or writes plant state.
 """
 
+import json
 from hashlib import sha256
+from secrets import token_hex
 from sqlite3 import Connection, Row
 
-from symbiosis_x.contracts.commands import AdvisoryDisposition, AdvisoryReceipt, GroundAdvisoryRequest
-from symbiosis_x.contracts.projections import GroundPacket
+from symbiosis_x.contracts.commands import (
+    AdvisoryDisposition, AdvisoryReceipt, CaseRelayReceipt, GroundAdvisoryRequest, ShareCaseStatusRequest,
+)
+from symbiosis_x.contracts.projections import GroundCaseStatus, GroundPacket
 
 # One-way link delay in the golden scenario: v102 observed 01:00 reaches Ground at 06:00,
 # and advice issued at 08:00 reaches Crew at 13:00.
@@ -25,6 +29,16 @@ class SnapshotConflict(Exception):
 
 class AdvisoryRejected(Exception):
     """Advice cannot be queued; the message is a public reason code."""
+
+
+class CaseRelayRejected(Exception):
+    """A health case status cannot be relayed or acknowledged; the message is a reason code."""
+
+
+# Every scripted drill is an emergency, so Ground gets the same generic priority for
+# all of them; the priority never reveals the drill kind.
+EMERGENCY_REVIEW_PRIORITY = "urgent"
+CASE_MESSAGE_PREFIX = "health-case:"
 
 
 def message_id_for(snapshot_id: str) -> str:
@@ -216,3 +230,136 @@ def receive_due_advisories(db: Connection, run_id: str, mission_s: int) -> list[
         )
         dispositions.append(disposition)
     return dispositions
+
+
+def _case_alias(db: Connection, run_id: str, case_id: str) -> str:
+    """Return the case's random alias, creating it on first share.
+
+    The alias is random rather than derived from the case: Ground knows the run
+    ID and the drill IDs are predictable, so any hash of them could be reversed.
+    The mapping stays onboard in the operations table, which Ground never reads.
+    """
+    row = db.execute(
+        """SELECT receipt_json FROM operations
+           WHERE run_id = ? AND operation_scope = 'case_alias' AND operation_id = ?""",
+        (run_id, case_id),
+    ).fetchone()
+    if row is not None:
+        return json.loads(row["receipt_json"])["case_alias"]
+    alias = "health-case-" + token_hex(8)
+    db.execute(
+        """INSERT INTO operations (run_id, operation_scope, operation_id, request_digest, receipt_json)
+           VALUES (?, 'case_alias', ?, ?, ?)""",
+        (run_id, case_id, sha256(alias.encode()).hexdigest(), json.dumps({"case_alias": alias})),
+    )
+    return alias
+
+
+def queue_case_status(
+    db: Connection, run: Row, request: ShareCaseStatusRequest, *, case_id: str, status: str,
+) -> CaseRelayReceipt:
+    """Queue the approved minimal status of one onboard case for Ground.
+
+    Only the alias, a generic review priority and the case status leave the
+    ship; delivery time is added when the packet arrives. History, vitals,
+    reports, crew IDs and onboard event times are never passed in. Runs inside
+    the caller's write transaction and never touches the onboard case, so
+    local escalation does not depend on it.
+    """
+    run_id, mission_s = run["run_id"], run["mission_s"]
+    digest = sha256(f"{request.model_dump_json()}:{case_id}:{status}".encode()).hexdigest()
+    prior = db.execute(
+        """SELECT request_digest, receipt_json FROM operations
+           WHERE run_id = ? AND operation_scope = 'case_relay' AND operation_id = ?""",
+        (run_id, request.operation_id),
+    ).fetchone()
+    if prior is not None:
+        if prior["request_digest"] != digest:
+            raise CaseRelayRejected("OPERATION_ID_REUSED")
+        return CaseRelayReceipt.model_validate_json(prior["receipt_json"])
+    if run["status"] != "active":
+        raise CaseRelayRejected("RUN_CLOSED")
+
+    receipt = CaseRelayReceipt(
+        operation_id=request.operation_id, case_alias=_case_alias(db, run_id, case_id),
+        review_priority=EMERGENCY_REVIEW_PRIORITY, status=status,
+        issued_at_s=mission_s, deliver_at_s=mission_s + RELAY_DELAY_S,
+    )
+    packet = receipt.model_dump_json(include={"case_alias", "review_priority", "status"})
+    db.execute(
+        """INSERT INTO messages (run_id, message_id, direction, issued_at_s, deliver_at_s, payload_json)
+           VALUES (?, ?, 'to_ground', ?, ?, ?)""",
+        (run_id, CASE_MESSAGE_PREFIX + request.operation_id, mission_s, receipt.deliver_at_s, packet),
+    )
+    db.execute(
+        """INSERT INTO events
+           (run_id, event_seq, event_id, event_type, mission_s, visibility, payload_json)
+           SELECT ?, COALESCE(MAX(event_seq), 0) + 1, ?, 'relay.case_status_queued', ?, 'operational', ?
+           FROM events WHERE run_id = ?""",
+        (run_id, f"case-relay:{request.operation_id}", mission_s, packet, run_id),
+    )
+    db.execute(
+        """INSERT INTO operations (run_id, operation_scope, operation_id, request_digest, receipt_json)
+           VALUES (?, 'case_relay', ?, ?, ?)""",
+        (run_id, request.operation_id, digest, receipt.model_dump_json()),
+    )
+    return receipt
+
+
+def _latest_delivered_cases(db: Connection, run_id: str, mission_s: int) -> dict[str, Row]:
+    rows = db.execute(
+        """SELECT message_id, delivered_at_s, acknowledged_at_s, payload_json FROM messages
+           WHERE run_id = ? AND direction = 'to_ground' AND message_id LIKE ?
+             AND delivered_at_s IS NOT NULL AND delivered_at_s <= ?
+           ORDER BY delivered_at_s, message_id""",
+        (run_id, CASE_MESSAGE_PREFIX + "%", mission_s),
+    ).fetchall()
+    latest: dict[str, Row] = {}
+    for row in rows:
+        latest[json.loads(row["payload_json"])["case_alias"]] = row
+    return latest
+
+
+def ground_case_statuses(db: Connection, run_id: str, mission_s: int) -> list[GroundCaseStatus]:
+    """Ground's view: the newest delivered status per case, nothing before delivery."""
+    statuses = []
+    for alias, row in _latest_delivered_cases(db, run_id, mission_s).items():
+        packet = json.loads(row["payload_json"])
+        acknowledged = row["acknowledged_at_s"]
+        statuses.append(GroundCaseStatus(
+            case_alias=alias, review_priority=packet["review_priority"], status=packet["status"],
+            delivered_at_s=row["delivered_at_s"],
+            ground_ack="pending" if acknowledged is None else "acknowledged",
+            ground_acknowledged_at_s=acknowledged,
+        ))
+    return statuses
+
+
+def acknowledge_ground_case(db: Connection, run: Row, alias: str) -> GroundCaseStatus:
+    """Record that Ground received the newest delivered status for one case.
+
+    The acknowledgment is a separate Ground event. It never changes the onboard
+    case, and repeating it returns the original acknowledgment time.
+    """
+    run_id, mission_s = run["run_id"], run["mission_s"]
+    row = _latest_delivered_cases(db, run_id, mission_s).get(alias)
+    if row is None:
+        # Unknown and not-yet-delivered cases look the same, so Ground cannot probe the queue.
+        raise CaseRelayRejected("CASE_NOT_DELIVERED")
+    if row["acknowledged_at_s"] is None:
+        if run["status"] != "active":
+            raise CaseRelayRejected("RUN_CLOSED")
+        db.execute(
+            """UPDATE messages SET acknowledged_at_s = ?
+               WHERE run_id = ? AND message_id = ? AND acknowledged_at_s IS NULL""",
+            (mission_s, run_id, row["message_id"]),
+        )
+        db.execute(
+            """INSERT INTO events
+               (run_id, event_seq, event_id, event_type, mission_s, visibility, payload_json)
+               SELECT ?, COALESCE(MAX(event_seq), 0) + 1, ?, 'ground.case_acknowledged', ?, 'operational', ?
+               FROM events WHERE run_id = ?""",
+            (run_id, f"case-ack:{row['message_id']}", mission_s,
+             json.dumps({"case_alias": alias}), run_id),
+        )
+    return next(status for status in ground_case_statuses(db, run_id, mission_s) if status.case_alias == alias)

@@ -9,7 +9,9 @@ from symbiosis_x.crew.measurements import (
 )
 from symbiosis_x.application.projections import read_crew
 from symbiosis_x.application.runs import RunNotFound
+from symbiosis_x.contracts.commands import CaseRelayReceipt, ShareCaseStatusRequest
 from symbiosis_x.contracts.projections import CurrentCrewView
+from symbiosis_x.workflows.relay import CaseRelayRejected, queue_case_status
 from symbiosis_x.crew.emergency import (
     AcknowledgeEmergencyRequest,
     EmergencyCase,
@@ -86,6 +88,32 @@ def acknowledge_case(
         return acknowledge_emergency(request.app.state.repository, run_id, case_id, command)
     except (EmergencyNotFound, EmergencyRejected, EmergencyConflict) as error:
         raise _emergency_error(error) from error
+
+@router.post(
+    "/{run_id}/crew/emergencies/{case_id}/relay", dependencies=[Depends(require_role("crew"))],
+    response_model=CaseRelayReceipt,
+)
+def share_case_status(
+    run_id: str, case_id: str, command: ShareCaseStatusRequest, request: Request, response: Response,
+) -> CaseRelayReceipt:
+    """Queue the approved minimal case status for Ground. Local escalation never waits for it."""
+    response.headers["Cache-Control"] = "no-store"
+    with request.app.state.repository.write() as db:
+        run = db.execute("SELECT run_id, mission_s, status FROM runs WHERE run_id = ?", (run_id,)).fetchone()
+        if run is None:
+            raise HTTPException(404, "RUN_NOT_FOUND")
+        row = db.execute(
+            "SELECT case_json FROM emergency_cases WHERE run_id = ? AND case_id = ?", (run_id, case_id),
+        ).fetchone()
+        if row is None:
+            raise HTTPException(404, "CASE_NOT_FOUND")
+        case = EmergencyCase.model_validate_json(row["case_json"])
+        try:
+            # Only the case ID (for the opaque alias) and status cross into Relay.
+            return queue_case_status(db, run, command, case_id=case.case_id, status=case.status)
+        except CaseRelayRejected as error:
+            raise HTTPException(409, str(error)) from error
+
 
 @router.post(
     "/{run_id}/crew/measurements",
