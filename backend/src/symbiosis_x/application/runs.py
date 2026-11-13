@@ -1,5 +1,5 @@
 """Durable run commands for the nominal first slice."""
-
+import json
 from hashlib import sha256
 from uuid import uuid4
 
@@ -113,4 +113,90 @@ def advance_run(repository: Repository, run_id: str, command: AdvanceRunRequest)
         )
         record_nominal_co2(db, run_id, receipt.mission_s)
         deliver_nominal_ground(db, run_id, receipt.mission_s)
+    return receipt
+
+def reset_run(repository: Repository, run_id: str) -> RunReceipt:
+    """Close the current run and atomically create a fresh run."""
+    with repository.write() as db:
+        old_run = db.execute(
+            "SELECT * FROM runs WHERE run_id = ?",
+            (run_id,),
+        ).fetchone()
+
+        if old_run is None:
+            raise RunNotFound("RUN_NOT_FOUND")
+
+        if old_run["status"] != "active":
+            raise RunConflict("RUN_CLOSED")
+
+        new_run_id = uuid4().hex
+
+        # Close the old run without deleting its audit history.
+        db.execute(
+            """UPDATE runs
+               SET status = 'closed'
+               WHERE run_id = ? AND status = 'active'""",
+            (run_id,),
+        )
+
+        old_event_seq = db.execute(
+            """SELECT COALESCE(MAX(event_seq), 0) + 1
+               FROM events WHERE run_id = ?""",
+            (run_id,),
+        ).fetchone()[0]
+
+        db.execute(
+            """INSERT INTO events
+               (run_id, event_seq, event_id, event_type,
+                mission_s, visibility, payload_json)
+               VALUES (?, ?, ?, 'run.closed', ?, 'operational', ?)""",
+            (
+                run_id,
+                old_event_seq,
+                f"reset:{new_run_id}:closed",
+                old_run["mission_s"],
+                json.dumps({"reset_to_run_id": new_run_id}),
+            ),
+        )
+
+        # Create the replacement run using the original configuration.
+        db.execute(
+            """INSERT INTO runs
+               (run_id, scenario_id, scenario_version, seed,
+                schema_version, model_version, policy_version,
+                mission_s, decision_rev, status, reset_from_run_id)
+               VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, 'active', ?)""",
+            (
+                new_run_id,
+                old_run["scenario_id"],
+                old_run["scenario_version"],
+                old_run["seed"],
+                old_run["schema_version"],
+                old_run["model_version"],
+                old_run["policy_version"],
+                run_id,
+            ),
+        )
+
+        receipt = RunReceipt(
+            run_id=new_run_id,
+            scenario_id=old_run["scenario_id"],
+            scenario_version=old_run["scenario_version"],
+            seed=old_run["seed"],
+            mission_s=0,
+            step=0,
+        )
+
+        db.execute(
+            """INSERT INTO events
+               (run_id, event_seq, event_id, event_type,
+                mission_s, visibility, payload_json)
+               VALUES (?, 1, 'run-started', 'run.started',
+                       0, 'operational', ?)""",
+            (new_run_id, receipt.model_dump_json()),
+        )
+                        
+        if (old_run["scenario_id"], old_run["scenario_version"]) == NOMINAL_SCENARIO:
+            record_nominal_co2(db, new_run_id, 0)
+
     return receipt
