@@ -25,7 +25,7 @@ button[aria-pressed=true]{background:#3d315e}
 .zone,.pawn{position:absolute;transform:translate(-50%,-50%)}
 .zone{background:transparent;text-shadow:0 1px 8px #070711;font-size:clamp(.68rem,1.15vw,.88rem);padding:.12rem .38rem;white-space:nowrap;color:#e1e6ff}
 .zone[data-alert=true]{color:#ffd198;text-shadow:0 0 12px #ffa45f}
-.pawn{--suit:#a9c7ff;width:38px;height:38px;padding:0;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--suit),transparent 45%);border-radius:50%;background:#141a31;transition:left .95s ease,top .95s ease;z-index:2}
+.pawn{--suit:#a9c7ff;width:38px;height:38px;padding:0;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--suit),transparent 45%);border-radius:50%;background:#141a31;z-index:2}
 .pawn::before{content:"";width:21px;height:19px;border-radius:7px 7px 4px 4px;background:linear-gradient(90deg,transparent 3px,var(--suit) 3px 18px,transparent 18px);box-shadow:inset 0 -4px #121a2d9e;transform:translateY(3px)}
 .pawn::after{content:"";position:absolute;width:14px;height:11px;top:6px;border:2px solid var(--suit);border-radius:50%;background:#1c2848}
 .pawn[aria-pressed=true]{outline:2px solid var(--suit);outline-offset:3px}
@@ -239,14 +239,15 @@ const clock = seconds => {
   const parts = [Math.floor(whole / 3600), Math.floor(whole / 60) % 60, whole % 60];
   return parts.slice(parts[0] ? 0 : 1).map(part => String(part).padStart(2,"0")).join(":");
 };
+const passageY = 241;
 const zones = {
-  "cargo-01": {x:162,y:194,w:126,h:89,color:"#252841"},
-  "engineering-01": {x:302,y:187,w:145,h:96,color:"#292443"},
-  "habitat-01": {x:458,y:130,w:181,h:98,color:"#222d4c"},
-  "medical-01": {x:458,y:257,w:181,h:93,color:"#263753"},
-  "life-support-01": {x:650,y:130,w:133,h:98,color:"#253954"},
-  "comms-01": {x:650,y:257,w:133,h:93,color:"#30294e"},
-  "command-01": {x:795,y:187,w:143,h:96,color:"#30395e"},
+  "cargo-01":        {x:204,y:133,w:211,h:91,side:"upper",door:318,color:"#2e2c48",accent:"#c5a9ff"},
+  "engineering-01":  {x:204,y:258,w:211,h:96,side:"lower",door:315,color:"#2b2e49",accent:"#ffa86f"},
+  "habitat-01":      {x:415,y:122,w:238,h:102,side:"upper",door:542,color:"#282c50",accent:"#baa5ff"},
+  "medical-01":      {x:415,y:258,w:238,h:105,side:"lower",door:550,color:"#233a4e",accent:"#94e8d3"},
+  "life-support-01": {x:653,y:136,w:153,h:88,side:"upper",door:736,color:"#243b53",accent:"#84d9ff"},
+  "comms-01":        {x:653,y:258,w:153,h:92,side:"lower",door:743,color:"#322d50",accent:"#bbadff"},
+  "command-01":      {x:806,y:189,w:124,h:104,side:"bridge",door:passageY,color:"#303b60",accent:"#9ac6ff"},
 };
 const duties = [
   {role:"Commander", color:"#c9b4ff", stations:[
@@ -290,14 +291,14 @@ function station(duty, member) {
 }
 
 const fixtures = [
-  {id:"bed",room:"habitat-01",x:497,y:174,icon:"bed-single",name:"Crew bunk",use:"Rest and sleep",task:"Tidy bunk",result:"Bunk tidy",crew:1},
-  {id:"wc",room:"habitat-01",x:579,y:174,icon:"toilet",name:"WC",use:"Crew hygiene",task:"Service WC",result:"WC serviced",crew:3},
-  {id:"galley",room:"habitat-01",x:614,y:174,icon:"droplets",name:"Galley",use:"Food and hydration",task:"Prepare provisions",result:"Provisions ready",crew:0},
-  {id:"lab",room:"medical-01",x:534,y:300,icon:"flask-conical",name:"Medical workbench",use:"Research and simulated medical stock",task:"Prepare simulated medical supplies",result:"Training supplies ready",crew:1},
-  {id:"radio",room:"comms-01",x:686,y:300,icon:"radio",name:"Comms console",use:"Operational status reports",task:"Send status report",result:"Status transmitted",crew:3},
-  {id:"scrubber",room:"life-support-01",x:692,y:174,icon:"wind",name:"Scrubber rack",use:"Cabin CO₂ removal",task:"Inspect scrubber",result:"Scrubber inspected",crew:2},
-  {id:"bus",room:"engineering-01",x:342,y:229,icon:"zap",name:"Power bus",use:"Power distribution",task:"Inspect bus",result:"Bus inspected",crew:2},
-  {id:"stores",room:"cargo-01",x:201,y:235,icon:"package",name:"Cargo lockers",use:"Payload stowage",task:"Reconcile inventory",result:"Inventory reconciled",crew:0},
+  {id:"bed",room:"habitat-01",x:445,y:171,icon:"bed-single",name:"Crew bunk",use:"Rest and sleep",task:"Tidy bunk",result:"Bunk tidy",crew:1},
+  {id:"wc",room:"habitat-01",x:612,y:169,icon:"toilet",name:"WC",use:"Crew hygiene",task:"Service WC",result:"WC serviced",crew:3},
+  {id:"galley",room:"habitat-01",x:570,y:169,icon:"droplets",name:"Galley",use:"Food and hydration",task:"Prepare provisions",result:"Provisions ready",crew:0},
+  {id:"lab",room:"medical-01",x:455,y:308,icon:"flask-conical",name:"Medical workbench",use:"Research and simulated medical stock",task:"Prepare simulated medical supplies",result:"Training supplies ready",crew:1},
+  {id:"radio",room:"comms-01",x:697,y:307,icon:"radio",name:"Comms console",use:"Operational status reports",task:"Send status report",result:"Status transmitted",crew:3},
+  {id:"scrubber",room:"life-support-01",x:683,y:179,icon:"wind",name:"Scrubber rack",use:"Cabin CO₂ removal",task:"Inspect scrubber",result:"Scrubber inspected",crew:2},
+  {id:"bus",room:"engineering-01",x:239,y:306,icon:"zap",name:"Power bus",use:"Power distribution",task:"Inspect bus",result:"Bus inspected",crew:2},
+  {id:"stores",room:"cargo-01",x:238,y:181,icon:"package",name:"Cargo lockers",use:"Payload stowage",task:"Reconcile inventory",result:"Inventory reconciled",crew:0},
 ];
 const equipment = new Map(fixtures.map(asset => [asset.id, asset]));
 const tasks = [];
@@ -354,72 +355,137 @@ function rectangle(x,y,w,h,fill) {
   ctx.fillRect(x,y,w,h);
 }
 
+function bulkhead(x1,y1,x2,y2) {
+  ctx.beginPath();
+  ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+  ctx.strokeStyle = "#10162b"; ctx.lineWidth = 7; ctx.stroke();
+  ctx.strokeStyle = "#687596"; ctx.lineWidth = 2; ctx.stroke();
+  ctx.lineWidth = 1;
+}
+
+function doorway(x,y,vertical,accent) {
+  ctx.save();
+  ctx.translate(x,y);
+  if (vertical) ctx.rotate(Math.PI / 2);
+  rectangle(-16,-4,32,8,"#3d4764");
+  for (const dx of [-19,14]) {
+    rectangle(dx,-6,5,12,"#1b2540");
+    rectangle(dx,-3,5,6,accent);
+  }
+  for (const dx of [-10,0,10]) rectangle(dx-2,-1,4,2,"#9cadd480");
+  ctx.restore();
+}
+
 function drawShip(frame) {
   ctx.clearRect(0,0,1100,475);
-  ctx.lineWidth = 2;
-  const plume = ctx.createLinearGradient(5,0,180,0);
-  plume.addColorStop(0,"#7b70ff00");
-  plume.addColorStop(1,"#a1c5ffe8");
-  shape([[13,235],[140,211],[163,213],[163,261],[140,263]],plume,"#7777ff39");
-  for (const y of [44,382]) {
-    rectangle(540,y,14,49,"#50557f");
-    rectangle(352,y,395,44,"#171f45");
-    for (let x=360;x<745;x+=23) rectangle(x,y+5,19,34,"#283668");
+  ctx.lineWidth = 1;
+  const plume = ctx.createLinearGradient(27,0,177,0);
+  plume.addColorStop(0,"#756aff00");
+  plume.addColorStop(.78,"#756aff65");
+  plume.addColorStop(1,"#c2d5ff");
+  for (const y of [200,282]) {
+    shape([[25,y],[157,y-13],[182,y-10],[182,y+10],[157,y+13]],plume,"#9a8dff44");
+    shape([[144,y-19],[204,y-25],[204,y+25],[144,y+19]],"#2e385a","#8a9ac3");
+    rectangle(156,y-12,22,24,"#181e38");
+    rectangle(160,y-8,4,16,"#a2b8ff");
   }
-  shape([[116,230],[167,166],[416,166],[448,110],[779,110],[811,165],[938,165],
-    [1005,235],[938,306],[810,306],[782,366],[449,366],[416,305],[166,305],[116,260]],
-    "#171b34","#8c9dd2a0");
-  rectangle(177,228,754,16,"#424c71");
-  rectangle(533,139,20,199,"#38486b");
-  rectangle(708,139,20,199,"#38486b");
-  for (const [id, z] of Object.entries(zones)) {
+  for (const y of [41,385]) {
+    rectangle(503,y,16,51,"#3e4b6d");
+    rectangle(597,y,16,51,"#3e4b6d");
+    shape([[337,y],[745,y],[762,y+12],[745,y+43],[337,y+43],[322,y+25]],"#121c3c","#7487bc");
+    for (let x=340;x<747;x+=26) {
+      rectangle(x,y+5,20,33,"#2b3c72");
+      for (let line=1;line<4;line++) rectangle(x,y+5+line*8,20,1,"#5869a2");
+      rectangle(x+8,y+5,1,33,"#7187c3");
+    }
+  }
+  shape([[162,209],[198,115],[399,115],[426,97],[648,97],[670,116],[811,116],
+    [838,167],[930,167],[1008,241],[930,315],[838,315],[811,369],[672,369],
+    [647,379],[426,379],[399,370],[198,370],[162,273]],"#161e35","#8192be");
+  shape([[179,214],[208,125],[810,125],[828,182],[924,182],[986,241],
+    [924,300],[828,300],[806,355],[206,359],[179,269]],"#131a2f","#3c5079");
+  rectangle(198,224,622,34,"#26354f");
+  rectangle(198,226,609,1,"#556b9290");
+  rectangle(198,255,609,1,"#556b9290");
+  for (let x=208;x<793;x+=26) rectangle(x,passageY,12,1,"#7386b070");
+  rectangle(196,228,4,27,"#7087ac");
+  for (const [id,z] of Object.entries(zones)) {
     const warning = (id === "life-support-01" && frame.removal != null && frame.removal < 20)
       || (id === "engineering-01" && frame.power != null && frame.power < .40);
-    const glow = ctx.createRadialGradient(z.x+z.w/2,z.y+z.h/2,4,z.x+z.w/2,z.y+z.h/2,z.w*.7);
-    glow.addColorStop(0,warning ? "#98615180" : z.color);
-    glow.addColorStop(1,"#171b3400");
-    rectangle(z.x-8,z.y-8,z.w+16,z.h+16,glow);
-    rectangle(z.x+12,z.y+10,24,3,warning ? "#ffc486" : "#9bbffc");
-    for (let x=z.x+16;x<z.x+z.w-17;x+=19) rectangle(x,z.y+z.h-12,13,3,"#8093ca70");
-    drawFixtures(id, z, frame);
+    const accent = warning ? "#ffc486" : z.accent;
+    const {x,y,w,h,door} = z;
+    const right=x+w, bottom=y+h;
+    rectangle(x,y,w,h,z.color);
+    for (let xx=x+18;xx<right-5;xx+=18) rectangle(xx,y+4,1,h-8,"#a7b9f212");
+    for (let yy=y+17;yy<bottom-6;yy+=17) rectangle(x+4,yy,w-8,1,"#a7b9f212");
+    const walls = [[x,y,right,y],[right,y,right,bottom],[x,bottom,right,bottom],[x,y,x,bottom]];
+    const opening = {lower:0,upper:2,bridge:3}[z.side];
+    walls.forEach(([x1,y1,x2,y2],i) => {
+      if (i !== opening) bulkhead(x1,y1,x2,y2);
+      else if (z.side === "bridge") {
+        bulkhead(x1,y1,x2,door-16); bulkhead(x1,door+16,x2,y2);
+        doorway(x1,door,true,accent);
+      } else {
+        bulkhead(x1,y1,door-16,y2); bulkhead(door+16,y1,x2,y2);
+        doorway(door,y1,false,accent);
+      }
+    });
+    rectangle(x+9,y+7,19,2,accent);
+    rectangle(right-14,y+7,5,2,accent);
+    drawFixtures(id,z,frame);
     roomButtons.get(id).dataset.alert = warning;
   }
+  shape([[938,207],[980,241],[938,275]],"#203458","#5a7bac");
+  shape([[943,219],[967,241],[943,263]],"#354d73","#6d95c9");
 }
 
-function drawFixtures(id, z, frame) {
-  const x = z.x + 12, y = z.y + 29;
-  const steel = "#92a2cc9c", dark = "#101a34", light = "#a8bfff";
+function drawFixtures(id,z,frame) {
+  const steel="#7184a9", dark="#111b32", light=z.accent;
+  function module(x,y,w,h) {
+    rectangle(x-1,y-1,w+2,h+2,"#13192e");
+    rectangle(x,y,w,h,steel);
+    rectangle(x+2,y+2,w-4,h-4,dark);
+  }
   if (id === "habitat-01") {
-    for (let bed = 0; bed < 4; bed += 1) {
-      rectangle(x+bed*24,y,19,29,bed < frame.habitat.beds ? "#7c75ad" : steel);
-      rectangle(x+2+bed*24,y+2,15,6,light);
+    for (let i=0;i<4;i++) {
+      const x=432+i*27;
+      module(x,159,20,34);
+      rectangle(x+3,169,14,20,i < frame.habitat.beds ? "#b1a2eb" : "#6e6ba5");
+      rectangle(x+3,162,14,5,"#c9d9ff");
     }
-    rectangle(x+110,y,20,27,dark);
-    ctx.beginPath(); ctx.ellipse(x+120,y+15,7,9,0,0,Math.PI*2);
+    module(555,157,32,26);
+    rectangle(572,160,11,9,"#9cc0db");
+    module(599,155,27,31);
+    ctx.beginPath(); ctx.ellipse(612,168,8,10,0,0,Math.PI*2);
     ctx.fillStyle = frame.habitat.wc === "In use" ? "#b4a3e6" : steel; ctx.fill();
-    rectangle(x+137,y+5,20,13,steel);
   } else if (id === "engineering-01" || id === "life-support-01") {
-    for (let rack = 0; rack < 3; rack += 1) {
-      rectangle(x+rack*23,y,17,26,dark);
-      rectangle(x+3+rack*23,y+6,11,2,id === "engineering-01" && frame.power < .4 ? "#ffbd80" : light);
-      rectangle(x+3+rack*23,y+14,11,2,steel);
+    const assets=fixtures.filter(f=>f.room===id);
+    for (let rack=0;rack<3;rack++) {
+      const x=assets[0].x-14+rack*30, y=assets[0].y-13;
+      module(x,y,24,30);
+      for (let vent=0;vent<3;vent++) rectangle(x+5,y+5+vent*6,14,2,vent===0?light:steel);
     }
   } else if (id === "cargo-01") {
-    for (let crate = 0; crate < 3; crate += 1) {
-      rectangle(x+crate*22,y+3,16,16,steel);
-      rectangle(x+crate*22+6,y+3,3,16,dark);
+    for (let i=0;i<4;i++) {
+      const x=225+i*31;
+      module(x,169,25,25);
+      rectangle(x+3,172,19,19,"#494363");
+      rectangle(x+4,178,17,2,light);
+      rectangle(x+11,172,3,19,steel);
     }
   } else {
-    rectangle(x,y,53,17,steel);
-    rectangle(x+4,y+3,45,8,dark);
-    rectangle(x+9,y+5,20,2,light);
+    const x=z.x+22, y=z.y+37;
+    module(x,y,56,24);
+    rectangle(x+5,y+5,46,7,"#354963");
+    rectangle(x+9,y+7,22,2,light);
+    for (let i=0;i<4;i++) rectangle(x+8+i*10,y+16,4,2,steel);
     if (id === "medical-01") {
-      rectangle(x+69,y,18,31,steel);
-      rectangle(x+72,y+3,12,8,light);
+      module(x+83,y-4,20,37);
+      rectangle(x+86,y+1,14,9,light);
+      rectangle(x+86,y+14,14,12,"#4c7185");
     }
   }
 }
-
 function showInspector() {
   if (element("inspector-widget").hidden) element("show-inspector").click();
 }
@@ -624,8 +690,10 @@ function render() {
     const button = pawns.get(i);
     const work = activeTask(i, frame.time);
     const asset = work ? equipment.get(work.asset) : null;
-    if (asset) place(button,asset.x + 16,asset.y + 26);
-    else place(button,z.x+z.w*(.18 + i*.21),z.y+z.h*.68);
+    const floorY = z.side === "upper" ? z.y+z.h-16 : z.side === "lower" ? z.y+z.h-21 : z.y+z.h-24;
+    const x = asset ? asset.x : z.x + z.w*(.18+i*.21);
+    const y = asset ? floorY : floorY - (i%2)*4;
+    routePawn(button,roomId,x,y);
     button.setAttribute("aria-label", data.crew[i] + " " + duty.role + " in " + roomById.get(roomId).name);
     button.title = task;
     button.dataset.working = Boolean(work);
@@ -644,6 +712,33 @@ function render() {
   drawShip(frame);
   inspect(frame);
   renderProfiles(frame);
+}
+
+const crewPositions = new WeakMap();
+function routePawn(button, room, x, y) {
+  const previous = crewPositions.get(button);
+  if (previous?.x === x && previous?.y === y && previous?.room === room) return;
+  place(button,x,y);
+  const next = {room,x,y,animation:null};
+  crewPositions.set(button,next);
+  previous?.animation?.cancel();
+  if (!previous || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const portal = id => zones[id].side === "bridge" ? [zones[id].x,passageY] : [zones[id].door,passageY];
+  const threshold = id => {
+    const z = zones[id];
+    return z.side === "bridge" ? portal(id) : [z.door,z.side === "upper" ? z.y+z.h-9 : z.y+9];
+  };
+  const start = [previous.x,previous.y], end = [x,y];
+  const points = previous.room === room ? [start,end]
+    : [start,threshold(previous.room),portal(previous.room),portal(room),threshold(room),end];
+  const distances = [0];
+  for (let i=1;i<points.length;i++) distances.push(distances[i-1]+Math.hypot(
+    points[i][0]-points[i-1][0], points[i][1]-points[i-1][1]));
+  const distance = distances.at(-1);
+  if (!distance) return;
+  next.animation = button.animate(points.map(([xx,yy],i)=>({
+    left:(xx/11)+"%",top:(yy/475*100)+"%",offset:distances[i]/distance,
+  })), {duration:Math.min(1550,Math.max(220,distance*3.3)),easing:"linear"});
 }
 
 function stop() {
@@ -671,7 +766,7 @@ for (const room of data.rooms) {
   button.type = "button";
   button.className = "zone";
   button.textContent = room.name;
-  place(button,z.x+z.w/2,z.y+z.h*.27);
+  place(button,z.x+z.w/2,z.y+18);
   button.addEventListener("click", () => { selection = {room:room.room_id}; showInspector(); render(); });
   roomButtons.set(room.room_id,button);
   element("ship").append(button);
