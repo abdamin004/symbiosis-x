@@ -15,6 +15,17 @@ scenario version, estimated playtime and availability. Choose a preset, start a
 new seeded run or resume a saved run. Do not make vehicle switching available in a
 running mission outside its authored handoff.
 
+## First implementation milestone — Play the operating workflows
+
+Connect the Commander job board to the [operating workflow sequence](flight-workflow-pr-order.md).
+Start with a daily Life Support inspection and a Ground request during a fault.
+The Commander assigns or holds, the astronaut travels and records evidence, and
+Ground receives the approved operational report after the relay delay. Exercise
+both the successful response and a missed deadline in the same scenario. Reuse
+this workflow for launch checkout, readiness to stage, docking checks and recovery
+before attempting the full flight. Keep the game’s synthetic crew and private
+check-ins in the Crew view.
+
 ## PR 1 — Mission selection and crew job board
 
 Add versioned mission and vehicle definitions. A vehicle owns its room graph,
