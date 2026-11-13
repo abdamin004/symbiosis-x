@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import model_validator
 
 from .events import Contract, Identifier, NonnegativeInt, NonnegativeNumber
 
@@ -119,38 +119,12 @@ class AcceptedCO2(Quantity):
     event_id: Identifier
 
 
-class ReminderAcknowledgment(Contract):
-    acknowledged_by: Identifier
-    acknowledged_at_s: NonnegativeInt
-
-
-class HealthReminder(Contract):
-    reminder_id: Identifier
-    metric: Identifier
-    status: Literal["scheduled", "overdue", "acknowledged"]
-    due_at_s: NonnegativeInt
-    last_accepted_at_s: NonnegativeInt
-    interval_s: NonnegativeInt = Field(gt=0)
-    assessment_id: Identifier
-    trend_status: Literal["review", "steady", "insufficient_history"]
-    trend_reason: str
-    evidence_ids: list[Identifier] = Field(default_factory=list)
-    action: Literal["repeat_measurement", "review_assessment"]
-    action_text: str
-    designated_role: str | None = None
-    acknowledgment: ReminderAcknowledgment | None = None
-    synthetic: Literal[True] = True
-    visibility: Literal["crew"] = "crew"
-
-
 class CurrentCrewView(RunView):
     role: Literal["crew"] = "crew"
     decision_rev: NonnegativeInt
     co2: AcceptedCO2 | None
     health_profile: AstronautHealthProfile
     health_assessment: dict | None = None
-    health_reminders: list[HealthReminder] = Field(default_factory=list)
-    emergency_precedence: bool = False
 
 
 class GroundPacket(Contract):

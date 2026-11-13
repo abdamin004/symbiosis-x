@@ -1,5 +1,4 @@
 import HealthTrend from "./HealthTrend.jsx";
-import HealthReminders from "./HealthReminders.jsx";
 
 function missionTime(seconds) {
   const minutes = String(Math.floor(seconds / 60)).padStart(2, "0");
@@ -28,7 +27,7 @@ function ObservationCard({ observation }) {
   );
 }
 
-export default function CrewHealthPanel({ health, cabin, onAcknowledgeReminder }) {
+export default function CrewHealthPanel({ health, cabin }) {
   const alert = health?.baseline_alert;
   const observation = health?.latest_observation;
   const signal = alert?.signal ?? "unknown";
@@ -62,12 +61,6 @@ export default function CrewHealthPanel({ health, cabin, onAcknowledgeReminder }
         </span>
       </header>
 
-      <HealthReminders
-        reminders={health?.health_reminders ?? health?.reminders ?? []}
-        emergencyPrecedence={health?.emergency_precedence ?? false}
-        onAcknowledge={onAcknowledgeReminder}
-      />
-
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         <div>
           <ObservationCard observation={observation} />
@@ -83,7 +76,7 @@ export default function CrewHealthPanel({ health, cabin, onAcknowledgeReminder }
           </dl>
         </div>
 
-        <div id="health-assessment" className="rounded-md border border-slate-200 p-3" aria-labelledby="health-reason-heading">
+        <div className="rounded-md border border-slate-200 p-3" aria-labelledby="health-reason-heading">
           <h3 id="health-reason-heading" className="text-sm font-semibold text-slate-800">
             Why this status?
           </h3>
