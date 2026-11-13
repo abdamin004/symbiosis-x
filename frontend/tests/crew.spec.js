@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { GOLDEN_1300_PLAN, json, mockLiveRun, RUN_ID } from "./fixtures/live-run.js";
 
 test("Crew can read the alert reason", async ({ page }) => {
   await page.goto("/runs/run-001/crew");
@@ -51,4 +52,59 @@ test("archive chart shows source and missing gaps", async ({ page }) => {
   await expect(panel.getByRole("cell", { name: "No reading (gap)" })).toBeVisible();
   await expect(panel.getByTestId("radlab-gap-summary")).toContainText("not interpolated");
   await expect(panel).not.toContainText("SIM-01 personal dose");
+});
+
+test("standby shows its power constraint", async ({ page }) => {
+  await mockLiveRun(page);
+  await page.goto(`/runs/${RUN_ID}/crew`);
+
+  const list = page.getByTestId("candidate-list");
+  await expect(list.getByTestId("candidate-basis")).toContainText("basis crew-v103 (v103)");
+  await expect(list.getByTestId("candidate-basis")).toContainText("advisory only");
+  const standby = list.getByTestId("candidate-start_standby");
+  await expect(standby).toContainText("Not available");
+  await expect(standby).toContainText("POWER_LIMIT");
+  await expect(standby.getByTestId("candidate-power")).toHaveText("Power 0.40 kW required · 0.20 kW available");
+  await expect(list.getByTestId("candidate-hold_course")).toContainText("3757 ppm (limit 3,200)");
+  await expect(list.getByTestId("candidate-reduce_activity")).toContainText("Unknown");
+  // No option is feasible, so nothing can be selected for approval.
+  await expect(list.getByRole("button", { name: "Select for approval" })).toHaveCount(0);
+});
+
+test("approval retries use the same operation ID", async ({ page }) => {
+  const plan = { ...GOLDEN_1300_PLAN, candidates: GOLDEN_1300_PLAN.candidates.map((c) => c.candidate_id === "start_standby"
+    ? { ...c, result: "feasible", reason_code: null, available_kw: 0.6 } : c) };
+  await mockLiveRun(page, { plan });
+  const posts = [];
+  const lookups = [];
+  await page.route(`**/api/v1/runs/${RUN_ID}/actions`, (route) => {
+    posts.push(route.request().postDataJSON());
+    if (posts.length === 1) return route.abort("failed");             // the response is lost
+    const sent = posts.at(-1);
+    return route.fulfill(json({ operation_id: sent.operation_id, candidate_id: sent.candidate_id, status: "accepted",
+      reason_code: null, basis_decision_rev: 103, current_decision_rev: 104, applied: true }));
+  });
+  await page.route(`**/api/v1/runs/${RUN_ID}/actions/*`, (route) => {
+    lookups.push(decodeURIComponent(new URL(route.request().url()).pathname.split("/").at(-1)));
+    return route.fulfill(json({ detail: "ACTION_NOT_FOUND" }, 404));
+  });
+
+  await page.goto(`/runs/${RUN_ID}/crew`);
+  await page.getByTestId("candidate-start_standby").getByRole("button", { name: "Select for approval" }).click();
+  await page.getByTestId("approval-panel").getByRole("button", { name: "Approve" }).click();
+
+  const uncertain = page.getByTestId("approval-uncertain");
+  await expect(uncertain).toContainText("may or may not have been recorded");
+  await uncertain.getByRole("button", { name: "Look up receipt" }).click();
+  await expect(uncertain).toContainText("no record of this approval yet");
+  await uncertain.getByRole("button", { name: "Send again" }).click();
+
+  await expect(page.getByTestId("approval-decision")).toHaveText("Accepted · applied");
+  expect(posts).toHaveLength(2);
+  const operationId = posts[0].operation_id;
+  expect(operationId).toMatch(/^approve-/);
+  expect(posts[1]).toEqual(posts[0]);
+  expect(posts[0]).toMatchObject({ candidate_id: "start_standby", basis_decision_rev: 103, policy_version: "demo-1", basis_snapshot_id: "crew-v103" });
+  expect(lookups).toEqual([operationId]);
+  await expect(page.getByTestId("approval-operation-id")).toHaveText(operationId);
 });
