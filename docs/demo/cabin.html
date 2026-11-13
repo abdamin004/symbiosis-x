@@ -118,7 +118,8 @@ __ICON_SPRITE__
     <div class="panel-heading"><h2 id="deck-heading">Spacecraft deck</h2></div>
     <canvas id="deck" width="780" height="350" role="img" aria-label="Spacecraft schematic showing power, cabin and primary scrubber">Spacecraft schematic. Use the component buttons to inspect the power bus, cabin and scrubber.</canvas>
     <div class="controls" id="assets" role="group" aria-label="Inspect a component">
-      <button type="button" data-asset="cabin"><svg class="icon" aria-hidden="true" focusable="false"><use href="#sx-icon-cabin"/></svg>Cabin</button>
+      <button type="button" id="cabin-asset" data-asset=""><svg class="icon" aria-hidden="true" focusable="false"><use href="#sx-icon-cabin"/></svg>Cabin</button>
+      <button type="button" id="sensor-asset" data-asset="">CO₂ sensor</button>
       <button type="button" data-asset="scrubber"><svg class="icon" aria-hidden="true" focusable="false"><use href="#sx-icon-scrubber"/></svg>Primary scrubber</button>
       <button type="button" data-asset="power"><svg class="icon" aria-hidden="true" focusable="false"><use href="#sx-icon-power"/></svg>Power bus</button>
     </div>
@@ -132,6 +133,7 @@ __ICON_SPRITE__
       <div><dt>Power headroom</dt><dd id="power"></dd></div>
     </dl>
     <p id="detail"></p>
+    <p id="sensor-detail" hidden></p>
   </section>
 </div>
 <section class="panel" id="activity" aria-labelledby="activity-title">
@@ -155,9 +157,15 @@ const data = JSON.parse(document.getElementById("replay-data").textContent);
 const byId = id => document.getElementById(id);
 const deck = byId("deck");
 const ctx = deck.getContext("2d");
+const sensor = data.sensor;
+const catalog = new Map(data.components.map(component => [component.entity_id, component]));
+const cabin = catalog.get(sensor.entity_id);
+const sensorAsset = catalog.get(sensor.component_id);
+byId("cabin-asset").dataset.asset = cabin.entity_id;
+byId("sensor-asset").dataset.asset = sensorAsset.entity_id;
 const components = [
   {id: "power", x: 151, y: 136, width: 132, height: 76, label: "POWER BUS"},
-  {id: "cabin", x: 302, y: 125, width: 176, height: 98, label: "CREW CABIN"},
+  {id: cabin.entity_id, x: 302, y: 125, width: 176, height: 98, label: "CREW CABIN"},
   {id: "scrubber", x: 497, y: 136, width: 135, height: 76, label: "PRIMARY SCRUBBER"},
 ];
 const style = getComputedStyle(document.documentElement);
@@ -228,7 +236,7 @@ function drawShip() {
 
 function drawComponent(component, value, warning) {
   const {id, x, y, width, height, label} = component;
-  const active = id === selected;
+  const active = id === selected || (id === cabin.entity_id && selected === sensorAsset.entity_id);
   ctx.beginPath();
   ctx.roundRect(x, y, width, height, 9);
   ctx.fillStyle = color(active ? "deck-module-selected" : "deck-module");
@@ -246,11 +254,12 @@ function drawComponent(component, value, warning) {
 }
 
 const describe = {
-  cabin: "One well-mixed zone. The model balances crew CO₂ generation against effective scrubber removal.",
+  [cabin.entity_id]: "One well-mixed zone. The model balances crew CO₂ generation against effective scrubber removal.",
+  [sensorAsset.entity_id]: sensorAsset.name + " measures CO₂ in " + cabin.name + ".",
   scrubber: "The scripted degradation reduces effective flow from 20 to 4 m³/h at 01:00.",
   power: "The scenario drops headroom at 10:00. The power bus here shows authored scenario values.",
 };
-let view = "crew", selected = "cabin", checkpoint = 0, astronaut = data.crew_ids[0];
+let view = "crew", selected = cabin.entity_id, checkpoint = 0, astronaut = data.crew_ids[0];
 const baseline = data.replays[""];
 const activityStart = baseline.findIndex(frame => frame.time === data.activity_s);
 const activities = new Map();
@@ -289,7 +298,6 @@ function render() {
   });
   const frame = ground ? {
     time: packet.mission_s, label: "Delivered " + packet.snapshot_id,
-    co2: packet.equipment.co2.value,
     removal: packet.equipment.scrubber_removal.value,
     power: packet.equipment.power_headroom.value,
   } : replay[checkpoint];
@@ -303,15 +311,27 @@ function render() {
   };
   byId("activity-status").textContent = astronaut + " · " + activityStatus[activity]
     + " · Cabin total " + replay[checkpoint].generation.toFixed(3) + " m³/h";
-  const values = {cabin: frame.co2.toFixed(2) + " ppm", scrubber: frame.removal.toFixed(1) + " m³/h", power: frame.power.toFixed(2) + " kW"};
+  const sample = ground ? packet.equipment.co2 : frame.co2_sample;
+  const reading = ground ? sample : sample?.payload;
+  const values = {
+    [cabin.entity_id]: reading?.value == null ? "Unavailable" : reading.value.toFixed(2) + " " + reading.unit,
+    scrubber: frame.removal.toFixed(1) + " m³/h", power: frame.power.toFixed(2) + " kW"};
   byId("phase").textContent = frame.label;
   byId("provenance").textContent = ground
     ? "Observed " + clock(packet.delivery.observed_at_s) + " · received " + clock(packet.delivery.received_at_s) + " · age " + clock(packet.delivery.age_s)
-    : "Mission " + clock(frame.time) + " · CO₂ from the Python model";
-  byId("co2").textContent = values.cabin;
+    : "Mission " + clock(frame.time) + " · Simulated sensor sample";
+  byId("co2").textContent = values[cabin.entity_id];
   byId("removal").textContent = values.scrubber;
   byId("power").textContent = values.power;
   byId("detail").textContent = describe[selected];
+  const sensorDetail = byId("sensor-detail");
+  sensorDetail.hidden = selected !== sensorAsset.entity_id;
+  const status = ground ? "Delivered observation" : (reading?.quality ?? "Unavailable");
+  const observed = sample ? " · observed " + clock(sample.observed_at_s) : "";
+  sensorDetail.textContent = ground
+    ? sensor.entity_id + " · " + status + observed
+    : sensor.source_id + " → " + sensor.entity_id
+      + " · every " + sensor.sample_period_s + " s · " + status + observed;
   byId("timeline").hidden = ground;
   document.querySelectorAll("[data-view]").forEach(button => button.setAttribute("aria-pressed", button.dataset.view === view));
   document.querySelectorAll("[data-asset]").forEach(button => button.setAttribute("aria-pressed", button.dataset.asset === selected));
