@@ -1,0 +1,112 @@
+<svg class="anatomy-figure" viewBox="0 0 200 300" aria-hidden="true">
+  <defs>
+    <linearGradient id="twin-body-fill" x2="1" y2=".15">
+      <stop stop-color="#203456"/><stop offset=".5" stop-color="#3b547e"/><stop offset="1" stop-color="#203456"/>
+    </linearGradient>
+    <linearGradient id="twin-muscle-fill" x2="1" y2="1">
+      <stop stop-color="#fbac99"/><stop offset=".5" stop-color="#b45866"/><stop offset="1" stop-color="#723b57"/>
+    </linearGradient>
+    <linearGradient id="twin-lung-fill" x2="1" y2="1">
+      <stop stop-color="#98e3f8"/><stop offset="1" stop-color="#426bc2"/>
+    </linearGradient>
+    <path id="twin-outline" d="M87 53Q83 49 81 36V28Q81 10 100 9Q119 10 119 28V36Q117 49 113 53L112 61
+      Q118 66 134 69Q145 72 149 88L156 121L168 158L174 174Q174 183 169 179L165 172L165 182
+      Q161 189 157 180L151 165L137 132L128 101Q126 121 131 143Q139 157 135 181L128 221L127 255
+      L129 273Q130 280 144 286Q148 292 139 292H116Q112 290 114 279L112 251L112 225L103 172
+      Q100 168 97 172L88 225V251L86 279Q88 290 84 292H61Q52 292 56 286Q70 280 71 273L73 255
+      L72 221L65 181Q61 157 69 143Q74 121 72 101L63 132L49 165L43 180Q39 189 35 182V172
+      L31 179Q26 183 26 174L32 158L44 121L51 88Q55 72 66 69Q82 66 88 61Z"/>
+    <g id="twin-muscle-half" fill="url(#twin-muscle-fill)" stroke="#ffb4a2" stroke-width=".65">
+      <path d="M98 75Q77 66 66 81Q69 99 95 99L98 95Z"/>
+      <path d="M64 74Q49 78 50 99L57 107Q61 95 67 88Z"/>
+      <path d="M54 99Q45 109 44 127L49 137Q55 130 59 115L59 101Z"/>
+      <path d="M45 130Q35 144 34 161L42 164Q50 153 52 139Z"/>
+      <path d="M93 100Q83 100 79 105L80 113Q89 117 96 112V103Z"/>
+      <path d="M96 115Q88 118 80 115L81 126Q89 131 96 126Z"/>
+      <path d="M96 130Q89 134 81 129L84 142Q91 148 97 142Z"/>
+      <path d="M77 100Q69 117 73 139Q79 147 88 151L80 137Z"/>
+      <path d="M70 150Q59 174 72 209L79 218Q83 216 82 207L79 184L86 155Z"/>
+      <path d="M90 154Q95 159 96 170L87 203Q81 195 82 181Z"/>
+      <path d="M77 225Q68 242 76 267L79 276Q85 261 86 237L84 224Z"/>
+      <path d="M73 84q11-2 19 8M51 109l-4 16M73 164q-6 15 0 31M79 234l-2 20" fill="none" opacity=".55"/>
+    </g>
+  </defs>
+  <use href="#twin-outline" fill="url(#twin-body-fill)" stroke="#91afd3" stroke-width="1.4"/>
+  <g data-anatomy-art="anatomy" fill="none" stroke="#91afd3" stroke-width="1.2" opacity=".7">
+    <path d="M87 48q13 12 26 0M85 32l8-2m14 0 8 2M98 34l-2 9h6m-8 4h12M88 61q12 9 24 0
+      M69 81q12-5 31 1 19-6 31-1M74 102q15 8 26 4 11 4 26-4M100 83v50m-1 7h2
+      M69 149q12-3 28 20m34-20q-12-3-28 20M47 124l14 5m78 0 14-5M74 218q7 5 14 0m24 0q7 5 14 0"/>
+  </g>
+  <g data-anatomy-art="skeleton" fill="none" stroke-linecap="round" hidden>
+    <g stroke="#f5e0b5" stroke-width="5">
+      <path d="M100 62V146M59 82l-11 45-10 35m103-80 11 45 10 35M79 160l2 62-2 53m42-115-2 62 2 53"/>
+      <path d="M92 17q-10 4-7 19l6 6 2 10h14l2-10 6-6q3-15-7-19Z" fill="#eed5ac" stroke-width="2"/>
+      <path d="M83 146q-10-3-10 8 2 10 14 14l13-11 13 11q12-4 14-14 0-11-10-8l-17 4Z" fill="#d6b990" stroke-width="2"/>
+    </g>
+    <g stroke="#eed5ac" stroke-width="2.5">
+      <path d="M64 83q10-10 36-3 26-7 36 3M100 80v43
+        M100 89q-31-15-29 1 2 9 22 12m7-13q31-15 29 1-2 9-22 12
+        M100 98q-31-13-26 3 3 8 19 10m7-13q31-13 26 3-3 8-19 10
+        M100 107q-28-9-22 5 3 7 16 9m6-14q28-9 22 5-3 7-16 9
+        M100 117q-19-3-18 5 3 8 18 12 15-4 18-12 1-8-18-5"/>
+      <path d="M52 126l-11 38m107-38 11 38M85 226l-3 49m33-49 3 49M38 164l-4 11m7-10-1 14m122-15 4 11m-7-10 1 14m-80 97-14 10m54-10 14 10"/>
+    </g>
+    <path d="M91 34h4m10 0h4m-10 7h2m-7 6h12" stroke="#5d4e4f" stroke-width="2"/>
+  </g>
+  <g data-anatomy-art="muscles" hidden>
+    <use href="#twin-muscle-half"/><use href="#twin-muscle-half" transform="translate(200 0) scale(-1 1)"/>
+    <path d="M91 57l9 18 9-18-9 5Z" fill="#d77680" stroke="#ffb4a2"/>
+  </g>
+  <g data-anatomy-art="cardiorespiratory" fill="none" stroke-linecap="round" hidden>
+    <path d="M95 87Q81 74 74 98Q66 124 78 127L95 120ZM105 87Q119 74 126 98Q134 124 122 127L105 120Z"
+      fill="url(#twin-lung-fill)" stroke="#b8f2ff" stroke-width="1.2"/>
+    <path d="M100 68V91L85 106m15-15 15 15m-30 0-3 10m33-10 3 10" stroke="#d5f7ff" stroke-width="2.5"/>
+    <path d="M105 104q7-8 12-1 6 9-12 23-15-12-12-20 4-9 12-2Z" fill="#f48095" stroke="#ffc6ce"/>
+    <path d="M104 124v24l13 37 4 38 1 46m-18-121-18 37-7 38-1 46M101 102l-6-19-30 5-15 42-12 34m65-60 9-21 23 5 15 42 12 34"
+      stroke="#ff8a9d" stroke-width="1.8" opacity=".86"/>
+    <path d="M109 125v22l13 37 4 39-1 46m-16-122-18 37-7 38-2 47M95 105l-6-17-21 6-14 37-12 34m55-60 17-16 18 5 14 37 12 34"
+      stroke="#7caeff" stroke-width="1.4" opacity=".82"/>
+  </g>
+  <g data-anatomy-art="sensors" fill="#7fe6bf" stroke="#d7fff1" stroke-width="1.4" hidden>
+    <rect x="94" y="118" width="12" height="18" rx="3"/>
+    <rect x="154" y="157" width="11" height="8" rx="2" transform="rotate(-20 159.5 161)"/>
+  </g>
+</svg>
+<!-- Suit illustration adapted from the Person 3 Astronaut Twin dashboard. -->
+<svg viewBox="0 0 160 220" class="anatomy-figure" data-anatomy-suit="" aria-hidden="true" hidden>
+<defs>
+<linearGradient id="twin-suit" x2="0" y2="1">
+<stop stop-color="#eff9f7">
+</stop>
+<stop offset="1" stop-color="#aac5cc">
+</stop>
+</linearGradient>
+<linearGradient id="twin-visor" x2="1" y2="1">
+<stop stop-color="#55a8c0">
+</stop>
+<stop offset="1" stop-color="#122c3b">
+</stop>
+</linearGradient>
+</defs>
+<ellipse cx="80" cy="207" rx="44" ry="7" fill="#000" opacity=".4">
+</ellipse>
+<path d="M47 86Q80 71 113 86l15 82q-48 20-96 0z" fill="url(#twin-suit)" stroke="#d5e8e7" stroke-width="3">
+</path>
+<path d="m47 101-24 22-9 39 18 5 20-35m61-31 24 22 9 39-18 5-20-35" fill="url(#twin-suit)" stroke="#c2d9dd" stroke-width="3" stroke-linejoin="round">
+</path>
+<circle cx="80" cy="45" r="35" fill="url(#twin-suit)" stroke="#d5e8e7" stroke-width="3">
+</circle>
+<ellipse cx="80" cy="47" rx="26" ry="23" fill="url(#twin-visor)" stroke="#8bd9e9" stroke-width="3">
+</ellipse>
+<path d="M62 41q15-13 32-6" fill="none" stroke="#d7f7fb" stroke-width="3" opacity=".7">
+</path>
+<path d="M53 145h54v35H53z" fill="#6c8f98" stroke="#d3e5e4" stroke-width="3">
+</path>
+<rect x="65" y="152" width="30" height="19" rx="3" fill="#143849">
+</rect>
+<text x="80" y="165" text-anchor="middle" font-size="7" font-family="monospace" fill="#d6f4fa" data-twin-suit-id="">SIM-01</text>
+<path d="m57 181-7 22h21l9-18 9 18h21l-7-22" fill="#dce9e8" stroke="#b7cdd1" stroke-width="3" stroke-linejoin="round">
+</path>
+<circle cx="43" cy="116" r="5" fill="#7fe6bf">
+</circle>
+</svg>

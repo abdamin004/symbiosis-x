@@ -310,19 +310,20 @@ button[aria-pressed=true]{background:#3d315e}
 .launch-readouts div{display:grid;grid-template-columns:110px 1fr;gap:.4rem;padding:.32rem .5rem;background:#202e50;border-radius:5px}
 .launch-readouts dt{color:var(--muted);font-size:.75rem}
 .launch-readouts dd{color:var(--blue);font-size:.8rem;margin:0}
-#personnel-widget{width:min(440px,calc(100% - 20px))}
 .personnel-actions{margin:.3rem 0 .55rem}
-.body-layout{display:grid;grid-template-columns:minmax(110px,.8fr) minmax(0,1.2fr);gap:.55rem;margin-bottom:.45rem}
-.body-map{position:relative;height:182px;background:radial-gradient(ellipse,#2a3861,#131b33);border-radius:8px}
-.body-map button{position:absolute;background:linear-gradient(140deg,#6e81a5,#334566);padding:0;border:1px solid #869cc7;border-radius:5px}
-.body-map button[aria-pressed=true]{background:var(--profile-accent);border-color:#eaf3ff;box-shadow:0 0 10px #b6a3ff77}
-.body-map [data-region=head]{left:40%;top:5%;width:20%;height:16%;border-radius:45%}
-.body-map [data-region=torso]{left:34%;top:23%;width:32%;height:37%;border-radius:15% 15% 28% 28%}
-.body-map [data-region=right-arm]{left:19%;top:24%;width:12%;height:35%;rotate:8deg}
-.body-map [data-region=left-arm]{left:69%;top:24%;width:12%;height:29%;rotate:-8deg}
-.body-map [data-region=wrist]{left:73%;top:54%;width:13%;height:12%;border-color:#acdfff}
-.body-map [data-region=right-leg]{left:34%;top:62%;width:14%;height:32%}
-.body-map [data-region=left-leg]{left:52%;top:62%;width:14%;height:32%}
+#personnel-widget{width:min(485px,calc(100% - 20px));max-height:min(100% - 16px,62dvh,515px)}
+.anatomy-tabs{margin:.6rem 0 .5rem}
+.anatomy-tabs button[aria-selected=true]{background:#3d315e;box-shadow:inset 0 -2px var(--violet)}
+.body-layout{display:grid;grid-template-columns:minmax(104px,1fr) minmax(0,1.1fr);gap:.55rem;margin-bottom:.45rem;align-items:start}
+.body-map{position:relative;isolation:isolate;width:100%;max-width:168px;aspect-ratio:2/3;margin-inline:auto;
+  background:radial-gradient(ellipse,#24395b,#10182f 78%);border:1px solid var(--edge);border-radius:8px}
+.anatomy-figure{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.body-map [data-region]{position:absolute;transform:translate(-50%,-50%);display:grid;place-items:center;
+  width:24px;height:24px;padding:0;border-radius:50%;border:1px solid #bddbff9c;background:#0a163bb8;color:#d9eeff}
+.body-map [data-region]::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
+.body-map [data-region][aria-pressed=true]{border-color:#fff;background:#45416d;color:#fff;box-shadow:0 0 10px var(--profile-accent)}
+#twin-layer-label{display:block;margin-bottom:.4rem;color:var(--violet)}
+#body-regions{margin-top:.15rem}
 .region-card{background:#202d4b;padding:.55rem .65rem;border-radius:8px}
 .region-card h3{margin:.2rem 0;font-size:.95rem}
 .region-card small{color:var(--muted);font-size:.72rem}
@@ -475,7 +476,7 @@ __HUD_ICONS__
     <button type="button" id="activity" hidden></button>
     <div id="crew-profile" hidden>
       <div id="profile-tabs" role="group" aria-label="Astronaut profile">
-        <button type="button" data-profile="personnel">Profile</button>
+        <button type="button" data-profile="personnel">Digital twin</button>
         <button type="button" data-profile="duty">Duty</button>
         <button type="button" data-profile="needs">Needs</button>
         <button type="button" data-profile="vitals">Vitals</button>
@@ -485,9 +486,9 @@ __HUD_ICONS__
   </section>
   <section class="panel profile-window" id="personnel-widget" hidden aria-labelledby="personnel-title">
     <div class="widget-bar">
-      <button class="move-widget widget-title" type="button" aria-label="Move Profile widget"><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button>
-      <h2 id="personnel-title">Crew profile</h2>
-      <button class="widget-close" type="button" aria-label="Close Profile widget"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button>
+      <button class="move-widget widget-title" type="button" aria-label="Move Digital twin widget"><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button>
+      <h2 id="personnel-title">Digital twin</h2>
+      <button class="widget-close" type="button" aria-label="Close Digital twin widget"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button>
     </div>
     <div class="personnel-hero">
       <div id="personnel-art"></div>
@@ -501,14 +502,27 @@ __HUD_ICONS__
       <button type="button" data-personnel-view="vitals">Vitals</button><button type="button" data-personnel-view="devices">Gear</button>
     </div>
     <div id="twin-body">
-      <div class="body-layout">
-        <div class="body-map" id="body-map" role="group" aria-label="Astronaut body regions"></div>
-        <div class="region-card">
-          <small id="region-source"></small><h3 id="region-name"></h3>
-          <strong id="region-reading"></strong><p id="region-detail"></p><small id="region-time"></small>
-        </div>
+      <div class="choices anatomy-tabs" role="tablist" aria-label="Anatomy layers">
+        <button type="button" role="tab" id="layer-anatomy" aria-controls="twin-layer" aria-selected="true" data-layer="anatomy">Anatomy</button>
+        <button type="button" role="tab" id="layer-skeleton" aria-controls="twin-layer" aria-selected="false" tabindex="-1" data-layer="skeleton">Skeleton</button>
+        <button type="button" role="tab" id="layer-muscles" aria-controls="twin-layer" aria-selected="false" tabindex="-1" data-layer="muscles">Muscles</button>
+        <button type="button" role="tab" id="layer-cardiorespiratory" aria-controls="twin-layer" aria-selected="false" tabindex="-1" data-layer="cardiorespiratory">Heart &amp; lungs</button>
+        <button type="button" role="tab" id="layer-sensors" aria-controls="twin-layer" aria-selected="false" tabindex="-1" data-layer="sensors">Sensors</button>
+        <button type="button" role="tab" id="layer-suit" aria-controls="twin-layer" aria-selected="false" tabindex="-1" data-layer="suit">Suit</button>
       </div>
-      <div class="choices" id="body-regions" role="group" aria-label="Select body region"></div>
+      <div id="twin-layer" role="tabpanel" aria-labelledby="layer-anatomy">
+        <div class="body-layout">
+          <div class="body-map" id="body-map" role="group" aria-label="Astronaut body regions">
+            __FLIGHT_ANATOMY__
+          </div>
+          <div class="region-card">
+            <small id="twin-layer-label"></small>
+            <small id="region-source"></small><h3 id="region-name"></h3>
+            <strong id="region-reading"></strong><p id="region-detail"></p><small id="region-time"></small>
+          </div>
+        </div>
+        <div class="choices" id="body-regions" role="group" aria-label="Select body region"></div>
+      </div>
     </div>
     <div class="profile-cards" id="personnel-data" hidden></div>
   </section>
@@ -1035,51 +1049,120 @@ function showInspector() {
 const profileMembers = new Map();
 const profileIcons = {personnel:"users",duty:"clipboard-list",needs:"bed-single",vitals:"activity",devices:"zap"};
 const profileRows = new Map();
+// Front-facing figure. Coordinates are percentages of each illustration.
 const bodyRegions = {
-  head:["Head","No regional sample"],
-  torso:["Torso / back","Synthetic back pod"],
-  "left-arm":["Left arm","No regional sample"],
-  "right-arm":["Right arm","No regional sample"],
-  wrist:["Left wrist","Synthetic optical watch"],
-  "left-leg":["Left leg","No regional sample"],
-  "right-leg":["Right leg","No regional sample"],
+  head:{label:"Head",body:[50,11],suit:[50,21]},
+  torso:{label:"Torso / back",body:[50,37],suit:[50,56]},
+  "right-arm":{label:"Right arm",body:[26,42],suit:[21,56]},
+  "left-arm":{label:"Left arm",body:[74,42],suit:[79,56]},
+  wrist:{label:"Left wrist",body:[80,54],suit:[86,71]},
+  "right-leg":{label:"Right leg",body:[39,74],suit:[37,86]},
+  "left-leg":{label:"Left leg",body:[61,74],suit:[63,86]},
 };
-let twinView = "body", selectedRegion = "torso";
+const anatomyTabs = [...element("twin-body").querySelectorAll("[role=tab]")];
+const anatomyArt = [...element("body-map").querySelectorAll("[data-anatomy-art]")];
+const anatomyFigure = element("body-map").querySelector(".anatomy-figure");
+const suitFigure = element("body-map").querySelector("[data-anatomy-suit]");
+const suitId = suitFigure.querySelector("[data-twin-suit-id]");
+const bodyButtons = [];
+const anatomyLabels = {
+  anatomy:"Body regions · simulated crew",
+  skeleton:"Skeleton · anatomy illustration",
+  muscles:"Muscles · anatomy illustration",
+  cardiorespiratory:"Heart & lungs · anatomy illustration",
+  sensors:"Wearables · simulated crew",
+  suit:"Flight suit illustration",
+};
+let twinView = "body", activeLayer = "anatomy", selectedRegion = "torso";
 function setupBodyMap() {
-  const silhouette = element("body-map");
-  for (const [id,[label]] of Object.entries(bodyRegions)) {
-    for (const container of [silhouette,element("body-regions")]) {
+  const map = element("body-map");
+  const regions = element("body-regions");
+  for (const [id,{label}] of Object.entries(bodyRegions)) {
+    for (const container of [map,regions]) {
       const button = document.createElement("button");
       button.type = "button";
       button.dataset.region = id;
-      button.setAttribute("aria-label", label + (container===silhouette ? " on body map" : ""));
-      if (container !== silhouette) button.textContent = label;
+      if (container === map) button.setAttribute("aria-label", label + " on body map");
+      else button.textContent = label;
       button.addEventListener("click",()=>{selectedRegion=id;render();});
       container.append(button);
+      bodyButtons.push(button);
     }
   }
+  anatomyTabs.forEach((tab, index) => {
+    tab.addEventListener("click",()=>{activeLayer=tab.dataset.layer;render();});
+    tab.addEventListener("keydown",event=>{
+      const last = anatomyTabs.length - 1;
+      const target = {
+        ArrowLeft:(index + last) % anatomyTabs.length,
+        ArrowRight:(index + 1) % anatomyTabs.length,
+        Home:0, End:last,
+      }[event.key];
+      if (target === undefined) return;
+      event.preventDefault();
+      anatomyTabs[target].click();
+      anatomyTabs[target].focus();
+    });
+  });
   for (const button of document.querySelectorAll("[data-twin-view]")) button.addEventListener("click",()=>{
     twinView = button.dataset.twinView;
     render();
   });
 }
-function updateBodyMap(sample, member) {
-  const [name,source] = bodyRegions[selectedRegion];
-  element("body-map").style.setProperty("--profile-accent",duties[member].color);
-  for (const button of document.querySelectorAll("[data-region]")) {
-    button.setAttribute("aria-pressed",String(button.dataset.region===selectedRegion));
+function renderAnatomyLayer() {
+  const suit = activeLayer === "suit";
+  anatomyFigure.toggleAttribute("hidden", suit);
+  suitFigure.toggleAttribute("hidden", !suit);
+  for (const group of anatomyArt) group.toggleAttribute("hidden", group.dataset.anatomyArt !== activeLayer);
+  for (const tab of anatomyTabs) {
+    const active = tab.dataset.layer === activeLayer;
+    tab.setAttribute("aria-selected", String(active));
+    tab.tabIndex = active ? 0 : -1;
+    if (active) element("twin-layer").setAttribute("aria-labelledby", tab.id);
   }
-  element("region-name").textContent = name;
+  for (const button of bodyButtons) {
+    const region = button.dataset.region;
+    button.setAttribute("aria-pressed", String(region === selectedRegion));
+    if (button.parentElement.id !== "body-map") continue;
+    const [x,y] = bodyRegions[region][suit ? "suit" : "body"];
+    button.style.left = x + "%";
+    button.style.top = y + "%";
+  }
+  element("twin-layer-label").textContent = anatomyLabels[activeLayer];
+}
+function regionTelemetry(sample) {
+  const unobserved = ["No measurement", "Unobserved", "No sensor sample is available for this region.", false];
+  if (activeLayer === "suit") return ["Equipment illustration", "Suit status unavailable", "This replay carries no suit sensor readings.", false];
+  if (activeLayer === "skeleton") return ["Anatomical reference", "Unobserved", "The replay carries no bone or joint assessment.", false];
+  if (activeLayer === "muscles") {
+    if (selectedRegion !== "torso") return unobserved;
+    return ["Simulated back-pod EMG", sample.emg + " mV RMS", "Synthetic research channel. Muscle condition is unobserved.", true];
+  }
+  if (activeLayer === "cardiorespiratory") {
+    if (selectedRegion !== "torso" && selectedRegion !== "wrist") return unobserved;
+    return ["Simulated optical watch", sample.heart_rate + " bpm", "Heart rate is sampled at the left wrist. Breathing rate and blood oxygen are unavailable in this replay.", true];
+  }
+  if (selectedRegion === "torso") return ["Simulated back-pod IMU", sample.pitch + "° pitch · " + sample.roll + "° roll",
+    "Trunk orientation from the back pod.", true];
+  if (selectedRegion === "wrist") return ["Simulated optical watch", sample.heart_rate + " bpm",
+    "Whole-person heart rate sampled at the left wrist.", true];
+  return unobserved;
+}
+function updateBodyMap(sample, member) {
+  const map = element("body-map");
+  const state = activeLayer + ":" + selectedRegion;
+  if (map.dataset.view !== state) {
+    map.dataset.view = state;
+    renderAnatomyLayer();
+  }
+  map.style.setProperty("--profile-accent",duties[member].color);
+  suitId.textContent = data.crew[member];
+  const [source,reading,detail,observed] = regionTelemetry(sample);
+  element("region-name").textContent = bodyRegions[selectedRegion].label;
   element("region-source").textContent = source;
-  const observed = selectedRegion==="torso" || selectedRegion==="wrist";
-  element("region-reading").textContent = selectedRegion==="torso"
-    ? sample.pitch+"° pitch · "+sample.roll+"° roll"
-    : selectedRegion==="wrist" ? sample.heart_rate+" bpm" : "Unobserved";
-  element("region-detail").textContent = selectedRegion==="torso"
-    ? "Trunk orientation only · EMG is a synthetic research channel."
-    : selectedRegion==="wrist" ? "Whole-person heart rate sampled at the wrist."
-    : "This region has no sensor or recorded finding.";
-  element("region-time").textContent = observed ? "Observed T+"+clock(sample.time)+" · replay" : "No timestamp";
+  element("region-reading").textContent = reading;
+  element("region-detail").textContent = detail;
+  element("region-time").textContent = observed ? "Observed T+" + clock(sample.time) + " · replay" : "";
 }
 const profileWindows = new Map();
 const checkIns = new Map();
@@ -1459,7 +1542,7 @@ function render() {
     marker.hidden = !asset && !sharedWork;
     marker.style.color = travelling || sharedWork ? "#bed6ff" : "";
     button.setAttribute("aria-label", characters[i].name + " " + duty.role + " · " + task);
-    button.title = task;
+    button.title = "Open digital twin · " + task;
     button.dataset.working = Boolean(work);
     button.setAttribute("aria-pressed", selection.crew === i);
     roster.get(i).setAttribute("aria-pressed", selection.crew === i);
@@ -1643,6 +1726,16 @@ function setupMinimap() {
     paintFlight(currentFrame());
   });
 }
+function openDigitalTwin(member, trigger) {
+  selection = {crew:member};
+  twinView = "body";
+  activeLayer = "anatomy";
+  selectedRegion = "torso";
+  profileMembers.set("personnel",member);
+  render();
+  profileWindows.get("personnel").open(trigger);
+}
+
 function crewFace(member) {
   const persona = characters[member], suit = duties[member].color;
   const art = document.createElementNS("http://www.w3.org/2000/svg","svg");
@@ -1679,9 +1772,10 @@ duties.forEach((duty,i) => {
   const member = document.createElement("button");
   member.type = "button";
   member.textContent = characters[i].name + " · " + duty.role;
-  const select = () => { selection = {crew:i}; showInspector(); render(); };
-  pawn.addEventListener("click", select);
-  member.addEventListener("click", select);
+  for (const button of [pawn,member]) {
+    button.setAttribute("aria-controls","personnel-widget");
+    button.addEventListener("click",()=>openDigitalTwin(i,button));
+  }
   const portrait = document.createElement("button");
   portrait.type = "button";
   portrait.className = "crew-portrait";
@@ -1694,13 +1788,8 @@ duties.forEach((duty,i) => {
   status.className = "crew-status";
   status.setAttribute("aria-hidden","true");
   portrait.append(crewFace(i),id,status);
-  portrait.addEventListener("click",()=>{
-    selection = {crew:i};
-    twinView = "body"; selectedRegion = "torso";
-    profileMembers.set("personnel",i);
-    profileWindows.get("personnel").open(portrait);
-    render();
-  });
+  portrait.setAttribute("aria-controls","personnel-widget");
+  portrait.addEventListener("click",()=>openDigitalTwin(i,portrait));
   portraits.set(i,portrait);
   element("crew-strip").append(portrait);
   pawns.set(i,pawn);
@@ -1787,6 +1876,10 @@ element("activity").addEventListener("click", () => {
 for (const button of document.querySelectorAll("[data-profile]")) {
   button.addEventListener("click", () => {
     const kind = button.dataset.profile;
+    if (kind === "personnel") {
+      openDigitalTwin(selection.crew,button);
+      return;
+    }
     profileMembers.set(kind, selection.crew);
     profileWindows.get(kind).open(button);
     render();
@@ -1847,8 +1940,8 @@ for (const [offset, kind] of ["personnel", "duty", "needs", "vitals", "devices"]
   const button = document.querySelector('[data-profile="'+kind+'"]');
   setIcon(button,profileIcons[kind],button.textContent);
   profileWindows.set(kind,widgets.register(element(kind + "-widget"),null,() => ({
-    x:Math.max(14,overlay.clientWidth - 355),y:10 + offset * 18,
-  })));
+    x:Math.max(14,overlay.clientWidth - (kind === "personnel" ? 500 : 355)),y:10 + offset * 18,
+  }),{compactPriority:kind === "personnel"}));
 }
 choices("medical-crew",characters.map((persona,i)=>[i,persona.short,persona.name]),
   value=>{medicalCrew=value;});

@@ -34,7 +34,9 @@ function createFlightWidgets(overlay, shelf, notice) {
 
   function layout() {
     const active = entries.filter(entry=>entry.wanted);
-    const ordered = [...active.filter(entry=>entry.persistent), focused,
+    const pinned = active.filter(entry=>entry.persistent);
+    const prioritizeFocus = focused?.compactPriority && overlay.clientWidth < 700;
+    const ordered = [...(prioritizeFocus ? [focused,...pinned] : [...pinned,focused]),
       ...active.filter(entry=>entry!==focused && !entry.persistent)]
       .filter((entry,index,list)=>entry?.wanted && list.indexOf(entry)===index);
     const occupied = [];
@@ -59,7 +61,7 @@ function createFlightWidgets(overlay, shelf, notice) {
   const sizes = new ResizeObserver(entries=>{ if (entries.some(e=>!e.target.hidden)) schedule(); });
   sizes.observe(overlay);
 
-  function register(panel, toggle, preferred, {persistent=false,lock=null} = {}) {
+  function register(panel, toggle, preferred, {persistent=false,lock=null,compactPriority=false} = {}) {
     const handle = panel.querySelector(".move-widget"), bar = panel.querySelector(".widget-bar");
     const recall = document.createElement("button");
     recall.type = "button";
@@ -67,7 +69,7 @@ function createFlightWidgets(overlay, shelf, notice) {
     recall.setAttribute("aria-controls",panel.id);
     recall.hidden = true;
     shelf.append(recall);
-    const entry = {panel,toggle,preferred,recall,persistent,wanted:!panel.hidden,position:null,trigger:null};
+    const entry = {panel,toggle,preferred,recall,persistent,compactPriority,wanted:!panel.hidden,position:null,trigger:null};
     let locked = Boolean(lock);
     entries.push(entry);
     sizes.observe(panel);
