@@ -155,6 +155,9 @@ class ActionRequest(Contract):
     operation_id: Identifier
     candidate_id: CandidateId
     basis_decision_rev: NonnegativeInt
+    policy_version: Identifier = "demo-1"
+    basis_snapshot_id: Identifier | None = None
+    expires_at_s: NonnegativeInt | None = None
 
 
 class ActionReceipt(Contract):
@@ -174,7 +177,7 @@ class CrewActionReceipt(Contract):
     operation_id: Identifier
     candidate_id: CandidateId
     status: Literal["accepted", "rejected"]
-    reason_code: PlanReasonCode | Literal["STALE_DECISION_REV"] | None = None
+    reason_code: PlanReasonCode | Literal["STALE_DECISION_REV", "ACTION_EXPIRED", "POLICY_VERSION_MISMATCH", "BASIS_SNAPSHOT_MISMATCH"] | None = None
     basis_decision_rev: NonnegativeInt
     current_decision_rev: NonnegativeInt
     applied: bool
