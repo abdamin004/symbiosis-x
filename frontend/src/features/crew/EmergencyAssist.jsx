@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { acknowledgeEmergencyCase, createOperationId, openEmergencyCase, shareEmergencyCase } from "../../api/client.js";
 
 const DRILLS = [
@@ -9,7 +9,8 @@ const DRILLS = [
 
 export default function EmergencyAssist() {
   const { runId } = useParams();
-  const [drillId, setDrillId] = useState(DRILLS[0].id);
+  const [search] = useSearchParams();
+  const [drillId, setDrillId] = useState(() => DRILLS.find(drill => drill.kind === search.get("drill"))?.id ?? DRILLS[0].id);
   const [responsiveness, setResponsiveness] = useState("unknown");
   const [caseData, setCaseData] = useState(null);
   const [error, setError] = useState("");

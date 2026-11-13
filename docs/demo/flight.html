@@ -3147,6 +3147,7 @@ function renderStation(roomId,frame) {
   if (!advisor) {stationContext.key=null;return;}
   const medical = roomId === "medical-01";
   const foodReviewAvailable = medical && Boolean(crewSession?.galley?.incident());
+  const medicalRun = medical && (flightHealthStory.runId() ?? flightHealthRun);
   element("medical-crew").hidden = !medical;
   const sample = data.history[data.crew[medicalCrew]][index];
   if (medical) setChoices("medical-crew",medicalCrew);
@@ -3156,7 +3157,7 @@ function renderStation(roomId,frame) {
     const run = taskAt("bench",frame.time);
     if (run) rows.push(["Latest experiment",frame.time<run.finishes ? run.action + " · in progress" : run.result]);
   }
-  const key = JSON.stringify([roomId,rows,foodReviewAvailable]);
+  const key = JSON.stringify([roomId,rows,foodReviewAvailable,medicalRun,medicalCrew]);
   if (key === stationContext.key) return;
   stationContext.key = key;
   const dl = element("station-evidence");
@@ -3165,7 +3166,7 @@ function renderStation(roomId,frame) {
     dt.textContent = label; dd.textContent = value;
     return [dt,dd];
   }));
-  const stationActionKey = roomId + ":" + foodReviewAvailable;
+  const stationActionKey = JSON.stringify([roomId,foodReviewAvailable,medicalRun,medical ? medicalCrew : null]);
   if (stationActions.dataset.room === stationActionKey) return;
   stationActions.dataset.room = stationActionKey;
   stationActions.replaceChildren();
@@ -3183,6 +3184,14 @@ function renderStation(roomId,frame) {
   }
   if (medical) {
     if (foodReviewAvailable) action("clipboard-list","Food exposure review",openFoodReview);
+    if (medicalRun) {
+      const link = document.createElement("a");
+      link.href = "/runs/" + encodeURIComponent(medicalRun) + "/crew/medical?crew_id=" + encodeURIComponent(data.crew[medicalCrew]);
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.textContent = "Open private Medical record";
+      stationActions.append(link);
+    }
     action("activity","Review vitals",event=>profile("vitals",event.currentTarget));
     action("clipboard-list","Record crew check-in",event=>profile("needs",event.currentTarget));
     action("flask-conical","Research workbench",()=>openFixture(equipment.get("lab")));

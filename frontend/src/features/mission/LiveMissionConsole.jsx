@@ -65,6 +65,8 @@ function RunProjection({ role, runId, crewId }) {
       <DeckMap role={role} equipment={role === "ground" ? view.packet : (view.equipment ?? null)} />
       {view.status === "closed" && <p role="status" data-testid="console-run-ended" className="mt-4 rounded bg-slate-100 p-3 text-sm text-slate-700">Mission ended at {time(view.mission_s)}. This view is read only.</p>}
       {role === "crew" ? <>
+        <Link className="mt-4 inline-block text-sm font-semibold text-selection underline"
+          to={"/runs/" + encodeURIComponent(runId) + "/crew/medical" + subjectQuery}>Open Medical</Link>
         <CrewHealthDashboard profile={view.health_profile} assessment={view.health_assessment} metrics={HEALTH_METRICS}
           measureHref={"/runs/" + encodeURIComponent(runId) + "/crew/measure" + subjectQuery}
           emergencyHref={"/runs/" + encodeURIComponent(runId) + "/crew/emergency"} />
