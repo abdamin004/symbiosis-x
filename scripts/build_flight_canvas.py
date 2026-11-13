@@ -31,12 +31,14 @@ def build(output: Path) -> None:
     workflow = (ROOT / "docs/demo/flight-workflow.js").read_text(encoding="utf-8")
     widgets = (ROOT / "docs/demo/flight-widgets.js").read_text(encoding="utf-8")
     stations = (ROOT / "docs/demo/flight-stations.js").read_text(encoding="utf-8")
+    launch_scene = (ROOT / "docs/demo/launch-scene.js").read_text(encoding="utf-8")
     checkout = (ROOT / "docs/demo/launch-checkout.js").read_text(encoding="utf-8")
     icons = (ROOT / "frontend/src/ui/icons/lucide/flight.svg").read_text(encoding="utf-8")
     output.write_text(
         template.replace("__FLIGHT_DATA__", data)
         .replace("__FLIGHT_WORKFLOW__", workflow).replace("__FLIGHT_WIDGETS__", widgets)
-        .replace("__FLIGHT_STATIONS__", stations).replace("__LAUNCH_CHECKOUT__", checkout).replace("__HUD_ICONS__", icons),
+        .replace("__FLIGHT_STATIONS__", stations).replace("__LAUNCH_SCENE__", launch_scene)
+        .replace("__LAUNCH_CHECKOUT__", checkout).replace("__HUD_ICONS__", icons),
         encoding="utf-8",
     )
 
