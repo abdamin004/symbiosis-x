@@ -1,5 +1,6 @@
 """SQLite connection settings and atomic startup migrations."""
 
+import re
 import sqlite3
 from collections.abc import Iterator
 from contextlib import closing
@@ -50,13 +51,14 @@ def migrate(database_path: Path) -> None:
 
 def _statements(sql: str) -> Iterator[str]:
     """Split packaged SQL by complete statements without implicit commits."""
-    pending = ""
-    for line in sql.splitlines(keepends=True):
-        if not pending and (not line.strip() or line.lstrip().startswith("--")):
-            continue
-        pending += line
-        if sqlite3.complete_statement(pending):
-            yield pending
-            pending = ""
-    if pending.strip():
+    start = 0
+    for match in re.finditer(";", sql):
+        end = match.end()
+        statement = sql[start:end]
+        if sqlite3.complete_statement(statement):
+            yield statement
+            start = end
+
+    tail = sql[start:]
+    if not re.fullmatch(r"(?:\s+|--[^\n]*|/\*[\s\S]*?\*/)*", tail):
         raise ValueError("Incomplete SQLite migration statement")
