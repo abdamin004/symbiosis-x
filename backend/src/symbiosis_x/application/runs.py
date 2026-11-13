@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from symbiosis_x.application.nominal import deliver_nominal_ground, record_nominal_co2
 from symbiosis_x.contracts.commands import (
-    AdvanceReceipt, AdvanceRunRequest, RunReceipt, StartRunRequest,
+    AdvanceReceipt, AdvanceRunRequest, ResetReceipt, ResetRunRequest, RunReceipt, StartRunRequest,
 )
 from symbiosis_x.storage.repository import Repository
 from symbiosis_x.workflows.relay import deliver_due
@@ -22,7 +22,7 @@ class RunConflict(Exception):
     pass
 
 
-def request_digest(command: StartRunRequest | AdvanceRunRequest) -> str:
+def request_digest(command: StartRunRequest | AdvanceRunRequest | ResetRunRequest) -> str:
     return sha256(command.model_dump_json().encode()).hexdigest()
 
 
@@ -50,18 +50,71 @@ def start_run(repository: Repository, command: StartRunRequest) -> RunReceipt:
                 (run_id, command.scenario_id, command.scenario_version, command.seed,
                  LOCAL_FACILITATOR, command.start_id, digest),
             )
-            db.execute(
-                """INSERT INTO events
-                   (run_id, event_seq, event_id, event_type, mission_s, visibility, payload_json)
-                   VALUES (?, 1, 'run-started', 'run.started', 0, 'operational', ?)""",
-                (run_id, command.model_dump_json()),
-            )
-            record_nominal_co2(db, run_id, 0)
+            _record_start(db, run_id, command.model_dump_json())
 
     return RunReceipt(
         run_id=run_id, scenario_id=command.scenario_id,
         scenario_version=command.scenario_version, seed=command.seed, mission_s=0, step=0,
     )
+
+
+def _record_start(db, run_id: str, payload_json: str) -> None:
+    db.execute(
+        """INSERT INTO events
+           (run_id, event_seq, event_id, event_type, mission_s, visibility, payload_json)
+           VALUES (?, 1, 'run-started', 'run.started', 0, 'operational', ?)""",
+        (run_id, payload_json),
+    )
+    record_nominal_co2(db, run_id, 0)
+
+
+def reset_run(repository: Repository, run_id: str, command: ResetRunRequest) -> ResetReceipt:
+    """Close a run and start its replacement in one write so neither change lands alone."""
+    digest = request_digest(command)
+    with repository.write() as db:
+        run = db.execute("SELECT * FROM runs WHERE run_id = ?", (run_id,)).fetchone()
+        if run is None:
+            raise RunNotFound("RUN_NOT_FOUND")
+        prior = db.execute(
+            """SELECT request_digest, receipt_json FROM operations
+               WHERE run_id = ? AND operation_scope = 'reset' AND operation_id = ?""",
+            (run_id, command.reset_id),
+        ).fetchone()
+        if prior is not None:
+            if prior["request_digest"] != digest:
+                raise RunConflict("RESET_ID_REUSED")
+            return ResetReceipt.model_validate_json(prior["receipt_json"])
+        if run["status"] != "active":
+            raise RunConflict("RUN_CLOSED")
+
+        receipt = ResetReceipt(
+            run_id=uuid4().hex, scenario_id=run["scenario_id"],
+            scenario_version=run["scenario_version"], seed=run["seed"], mission_s=0, step=0,
+            reset_id=command.reset_id, reset_from_run_id=run_id,
+        )
+        db.execute("UPDATE runs SET status = 'closed' WHERE run_id = ?", (run_id,))
+        db.execute(
+            """INSERT INTO events
+               (run_id, event_seq, event_id, event_type, mission_s, visibility, payload_json)
+               SELECT ?, COALESCE(MAX(event_seq), 0) + 1, ?, 'run.closed', ?, 'operational', ?
+               FROM events WHERE run_id = ?""",
+            (run_id, f"reset:{command.reset_id}", run["mission_s"], receipt.model_dump_json(), run_id),
+        )
+        db.execute(
+            """INSERT INTO runs
+               (run_id, scenario_id, scenario_version, seed, schema_version,
+                model_version, policy_version, reset_from_run_id)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (receipt.run_id, run["scenario_id"], run["scenario_version"], run["seed"],
+             run["schema_version"], run["model_version"], run["policy_version"], run_id),
+        )
+        _record_start(db, receipt.run_id, receipt.model_dump_json())
+        db.execute(
+            """INSERT INTO operations (run_id, operation_scope, operation_id, request_digest, receipt_json)
+               VALUES (?, 'reset', ?, ?, ?)""",
+            (run_id, command.reset_id, digest, receipt.model_dump_json()),
+        )
+    return receipt
 
 
 NOMINAL_STEPS_S = (0, 60)

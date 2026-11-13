@@ -11,6 +11,7 @@ from starlette.concurrency import run_in_threadpool
 
 from symbiosis_x.api.crew import router as crew_router
 from symbiosis_x.api.ground import router as ground_router
+from symbiosis_x.api.health import router as health_router
 from symbiosis_x.api.roles import new_demo_tokens, router as roles_router
 from symbiosis_x.api.runs import router as runs_router
 from symbiosis_x.storage.repository import Repository
@@ -41,6 +42,7 @@ def create_app(
     if enable_local_demo is None:
         enable_local_demo = bool(canvas_path) or environ.get("SYMBIOSIS_X_LOCAL_DEMO") == "1"
     application.state.demo_tokens = new_demo_tokens() if enable_local_demo else {}
+    application.include_router(health_router)
     application.include_router(roles_router)
     application.include_router(runs_router)
     application.include_router(crew_router)
