@@ -8,6 +8,7 @@ import GroundHealthStatus from "../ground/GroundHealthStatus.jsx";
 import AdvisoryForm from "../ground/AdvisoryForm.jsx";
 import GroundSnapshot, { packetFromGroundFixture } from "../ground/GroundSnapshot.jsx";
 import ServiceStatus from "./ServiceStatus.jsx";
+import DeckMap from "../deck/DeckMap.jsx";
 import LiveMissionConsole from "./LiveMissionConsole.jsx";
 
 const ROLE_TITLES = { crew: "Crew console", ground: "Ground console" };
