@@ -87,3 +87,28 @@ def test_examples_preserve_the_golden_handoff(examples):
     assert candidates["start_standby"]["required_kw"] == 0.40
     assert candidates["start_standby"]["available_kw"] == crew["equipment"]["power_headroom"]["value"]
     assert receipt["applied"] is False
+
+
+def test_published_examples_validate(examples):
+    from pydantic import ValidationError as ModelValidationError
+
+    from symbiosis_x.contracts.commands import ActionReceipt, CandidateResults
+    from symbiosis_x.contracts.events import ObservationEvent
+    from symbiosis_x.contracts.projections import CrewProjection, GroundProjection
+    from symbiosis_x.telemetry.sampling import CabinCO2Sensor
+
+    for name, model in (
+        ("crew-v103", CrewProjection), ("ground-v102", GroundProjection),
+        ("candidate-results", CandidateResults), ("action-receipts", ActionReceipt),
+    ):
+        assert model.model_validate(examples[name]).model_dump() == examples[name]
+
+    ground = deepcopy(examples["ground-v102"])
+    ground["equipment"]["co2"]["private_check_in"] = "private"
+    with pytest.raises(ModelValidationError, match="extra_forbidden"):
+        GroundProjection.model_validate(ground)
+
+    sensors = CONTRACTS.parent / "catalogs/sx01/sensors.json"
+    sensor = CabinCO2Sensor(**json.loads(sensors.read_text())["sensors"][0])
+    sample = sensor.sample(2000, run_id="run-001", mission_s=60, model_version="cabin-1")
+    assert ObservationEvent.model_validate(sample).payload.unit == "ppm"
