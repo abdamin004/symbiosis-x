@@ -82,10 +82,10 @@ button[aria-pressed=true]{background:#3d315e}
   <div class="flight-controls"><div class="control-deck">
     <p id="phase"></p>
     <button id="play" type="button">Fly mission</button>
-    <button id="step" type="button">Step</button>
+    <button id="step" type="button">Skip to next event</button>
     <button id="reset" type="button">Reset</button>
-    <label>Speed <select id="speed"><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
-    <input id="timeline" type="range" min="0" value="0" aria-label="Mission checkpoint">
+    <label>Speed <select id="speed"><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option><option value="one-hour">Mission in 1 hour</option></select></label>
+    <input id="timeline" type="range" min="0" value="0" aria-label="Mission time">
     <output class="clock" id="clock" for="timeline"></output>
   </div></div>
 <div class="overlays" id="overlays">
@@ -153,8 +153,11 @@ __FLIGHT_WORKFLOW__
 <script>
 const element = id => document.getElementById(id);
 const data = JSON.parse(element("flight-data").textContent);
-const clock = seconds => [Math.floor(seconds / 60), seconds % 60]
-  .map(part => String(part).padStart(2, "0")).join(":");
+const clock = seconds => {
+  const whole = Math.floor(seconds);
+  const parts = [Math.floor(whole / 3600), Math.floor(whole / 60) % 60, whole % 60];
+  return parts.slice(parts[0] ? 0 : 1).map(part => String(part).padStart(2,"0")).join(":");
+};
 const zones = {
   "cargo-01": {x:162,y:194,w:126,h:89,color:"#252841"},
   "engineering-01": {x:302,y:187,w:145,h:96,color:"#292443"},
@@ -192,7 +195,7 @@ const stationDuties = [
 ];
 function station(duty, member) {
   const order = flightWorkflow.read();
-  const time = data.frames[""][index].time;
+  const time = Math.floor(missionTime);
   if (member === 2 && order?.assigned && time >= order.decided &&
       (order.completed == null || time < order.completed)) {
     return ["life-support-01", "Inspect life support at the Commander's request"];
@@ -206,7 +209,11 @@ const roomButtons = new Map();
 const pawns = new Map();
 const roster = new Map();
 const ctx = element("hull").getContext("2d");
-const last = data.frames[""].length - 1;
+const checkpoints = data.frames[""];
+const last = checkpoints.length - 1;
+const endTime = checkpoints[last].time;
+let missionTime = 0;
+let lastWallTime = 0;
 let index = 0;
 let timer = null;
 let selection = {room:"command-01"};
@@ -339,7 +346,7 @@ function drawHistory(series, field, time) {
 
 function renderProfile(id, frame) {
   const row = data.history[id][index];
-  const entryKey = id + ":" + frame.time;
+  const entryKey = id + ":" + row.time;
   const reports = checkIns.get(entryKey) ?? {};
   const reporting = profileTab === "needs";
   element("wellbeing").hidden = !reporting;
@@ -417,11 +424,14 @@ function inspect(frame) {
 
 function currentFrame() {
   const key = data.crew.filter(id => reduced.has(id)).join(",");
-  return data.frames[key][index];
+  return {...data.frames[key][index], time:Math.floor(missionTime)};
 }
+
+let lastRenderedSecond = -1;
 
 function render() {
   const frame = currentFrame();
+  lastRenderedSecond = frame.time;
   element("workflow-state").textContent = flightWorkflow.status(frame, clock);
   element("monitor-state").textContent = frame.removal != null && frame.removal < 20
     ? "Monitor · Primary scrubber degraded. Inspection records evidence." : "";
@@ -439,11 +449,11 @@ function render() {
   element("ship-position").setAttribute("cx",mx);
   element("ship-position").setAttribute("cy",my);
   element("map-location").textContent = frame.site + " · " + clock(frame.time);
-  element("timeline").value = index;
+  element("timeline").value = Math.floor(missionTime);
   element("timeline").setAttribute("aria-valuetext", clock(frame.time) + " " + frame.label);
   element("stage").dataset.playing = timer !== null;
   element("play").textContent = timer ? "Pause flight" : (index === last ? "Replay flight" : "Fly mission");
-  element("step").disabled = index === last;
+  element("step").disabled = missionTime >= endTime;
   for (const [roomId, button] of roomButtons) {
     button.setAttribute("aria-pressed", selection.room === roomId);
   }
@@ -462,14 +472,23 @@ function render() {
 }
 
 function stop() {
-  clearInterval(timer);
+  cancelAnimationFrame(timer);
   timer = null;
 }
 
-function advance() {
-  if (index < last) index += 1;
-  if (index === last) stop();
-  render();
+function setMissionTime(seconds) {
+  missionTime = Math.max(0, Math.min(seconds, endTime));
+  index = checkpoints.findLastIndex(frame => frame.time <= missionTime);
+}
+
+function tick(now) {
+  const selected = element("speed").value;
+  const rate = selected === "one-hour" ? endTime / 3600 : Number(selected);
+  setMissionTime(missionTime + (now - lastWallTime) / 1000 * rate);
+  lastWallTime = now;
+  if (missionTime >= endTime) stop();
+  else timer = requestAnimationFrame(tick);
+  if (Math.floor(missionTime) !== lastRenderedSecond || timer === null) render();
 }
 
 for (const room of data.rooms) {
@@ -503,27 +522,29 @@ duties.forEach((duty,i) => {
   element("ship").append(pawn);
   element("roster").append(member);
 });
-element("timeline").max = last;
+element("timeline").max = endTime;
 element("timeline").addEventListener("input", event => {
   stop();
-  index = Number(event.target.value);
+  setMissionTime(Number(event.target.value));
   render();
 });
 element("play").addEventListener("click", () => {
   if (timer !== null) stop();
   else {
-    if (index === last) index = 0;
-    timer = setInterval(advance,2400 / Number(element("speed").value));
+    if (missionTime >= endTime) setMissionTime(0);
+    lastWallTime = performance.now();
+    timer = requestAnimationFrame(tick);
   }
   render();
 });
-element("speed").addEventListener("change", () => {
-  if (timer === null) return;
+element("step").addEventListener("click", () => {
   stop();
-  timer = setInterval(advance,2400 / Number(element("speed").value));
+  if (index < last) setMissionTime(checkpoints[index + 1].time);
+  render();
 });
-element("step").addEventListener("click", () => { stop(); advance(); });
-element("reset").addEventListener("click", () => { stop(); index = 0; reduced.clear(); checkIns.clear(); render(); });
+element("reset").addEventListener("click", () => {
+  stop(); setMissionTime(0); reduced.clear(); checkIns.clear(); render();
+});
 element("activity").addEventListener("click", () => {
   const id = data.crew[selection.crew];
   if (reduced.has(id)) reduced.delete(id);
@@ -536,7 +557,7 @@ for (const button of document.querySelectorAll("[data-profile]")) {
 element("series").addEventListener("change", render);
 for (const field of ["mood", "symptoms"]) {
   element(field).addEventListener("change", () => {
-    const key = data.crew[selection.crew] + ":" + data.frames[""][index].time;
+    const key = data.crew[selection.crew] + ":" + checkpoints[index].time;
     checkIns.set(key,{...checkIns.get(key),[field]:element(field).value});
     render();
   });
