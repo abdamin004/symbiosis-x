@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "scenario_id": "organizer-replay",
+  "scenario_version": "1",
+  "title": "Organizer-style incoming data replay — synthetic test case",
+  "synthetic": true,
+  "provenance": "synthetic_test_fixture",
+  "approved_organizer_data": false,
+  "seed": 4242,
+  "noise": "off",
+  "model_version": "cabin-1",
+  "policy_version": "demo-1",
+  "time_unit": "s",
+  "clock": "mission",
+  "start_s": 0,
+  "end_s": 900,
+  "note": "This variant uses generated synthetic CO2 samples. It must not be represented as a real organizer-approved sample.",
+  "power_headroom_kw": {
+    "initial": 0.55,
+    "degraded": 0.15
+  },
+  "incoming_observations": [
+    {
+      "source_id": "synthetic.organizer.co2",
+      "metric": "co2",
+      "value": 2010,
+      "unit": "ppm",
+      "observed_at_s": 60,
+      "received_at_s": 60,
+      "quality": "valid"
+    },
+    {
+      "source_id": "synthetic.organizer.co2",
+      "metric": "co2",
+      "value": 2057.86,
+      "unit": "ppm",
+      "observed_at_s": 600,
+      "received_at_s": 600,
+      "quality": "valid"
+    },
+    {
+      "source_id": "synthetic.organizer.co2",
+      "metric": "co2",
+      "value": 2073.74,
+      "unit": "ppm",
+      "observed_at_s": 780,
+      "received_at_s": 780,
+      "quality": "valid"
+    },
+    {
+      "source_id": "synthetic.organizer.co2",
+      "metric": "co2",
+      "value": 2084.35,
+      "unit": "ppm",
+      "observed_at_s": 900,
+      "received_at_s": 900,
+      "quality": "valid"
+    }
+  ]
+}
