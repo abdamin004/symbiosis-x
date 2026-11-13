@@ -1,0 +1,43 @@
+{
+  "scenario_id": "health-demo",
+  "scenario_version": "1",
+  "synthetic": true,
+  "derived_from": "scenarios/variants/health-demo-v1.json on a fresh SQLite store (sx01-golden v1, seed 4242)",
+  "at_360_crew": {
+    "assessment": {
+      "metric": "heart_rate",
+      "reading": "95 bpm",
+      "personal": { "status": "outside_personal_range", "reason_code": "ABOVE_PERSONAL_RANGE", "range": [57, 87], "unit": "bpm" },
+      "reference": { "status": "within_reference", "range": [60, 100], "unit": "bpm", "earth_based": true }
+    },
+    "trend": { "status": "review", "direction": "rising", "sample_count": 3, "start_value": 76, "end_value": 95, "rules_version": "health-trends-v1" },
+    "reminders": {
+      "heart_rate": { "status": "scheduled", "due_at_s": 660, "action": "review_with_designated_role" },
+      "blood_pressure": { "status": "overdue", "due_at_s": 300, "action": "routine_check" }
+    },
+    "cabin_context_available": true
+  },
+  "chest_pain_case": {
+    "opened_at_s": 360,
+    "owner": "SIM-02",
+    "escalation": "local_alert",
+    "acknowledged_at_s": 360,
+    "reminder_precedence_after_open": "emergency",
+    "share": { "review_priority": "urgent", "status": "acknowledged", "issued_at_s": 360, "deliver_at_s": 660 }
+  },
+  "ground": {
+    "at_480": { "health_cases": 0 },
+    "at_780": {
+      "health_cases": 1,
+      "case": { "review_priority": "urgent", "status": "acknowledged", "delivered_at_s": 660, "ground_ack_before": "pending" },
+      "snapshot": { "snapshot_id": "ground-v102", "decision_rev": 102, "power_headroom_kw": 0.6 }
+    },
+    "never_contains": ["SX26A_PRIVATE_MARKER", "SIM-01", "chest", "drill-chest-pain-v1", "case-drill-chest-pain-v1", "health_profile", "health_followup", "health_trend"]
+  },
+  "collapse_case": {
+    "responsiveness": "unknown",
+    "escalation": "local_alert",
+    "owner": "SIM-04",
+    "acknowledged": true
+  }
+}

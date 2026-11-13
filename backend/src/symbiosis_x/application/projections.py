@@ -1,12 +1,14 @@
 """Read role projections without moving the simulation clock."""
 
 import json
+from dataclasses import asdict
 from sqlite3 import Connection, Row
 
 from symbiosis_x.application.runs import RunNotFound
 from symbiosis_x.crew.profile import profile_for_crew
 from symbiosis_x.crew.followup import compute_followup
 from symbiosis_x.crew.measurements import latest_crew_assessment
+from symbiosis_x.crew.trends import TrendSample, evaluate_trend
 from symbiosis_x.contracts.projections import (
     AcceptedCO2, CurrentCrewView, CurrentGroundView, DeliveredTelemetry, Delivery, GroundPacket,
     TraceRecord,
@@ -34,6 +36,39 @@ def read_run(db: Connection, run_id: str) -> Row:
     return run
 
 
+def latest_crew_trend(db: Connection, run_id: str, crew_id: str) -> dict | None:
+    """Describe the comparable trend of the crew member's latest scalar metric (Crew-only)."""
+    latest = db.execute(
+        """SELECT h.metric FROM health_observations h
+           JOIN events e ON e.run_id = h.run_id AND e.event_id = h.event_id
+           WHERE h.run_id = ? AND h.crew_id = ? AND e.event_type = 'crew.health_measurement'
+           ORDER BY h.observed_at_s DESC, h.received_at_s DESC, h.event_id DESC LIMIT 1""",
+        (run_id, crew_id),
+    ).fetchone()
+    if latest is None:
+        return None
+    rows = db.execute(
+        """SELECT h.event_id, h.metric, h.numeric_value, h.unit, h.observed_at_s, h.quality,
+                  h.source_id, h.context_json
+           FROM health_observations h
+           JOIN events e ON e.run_id = h.run_id AND e.event_id = h.event_id
+           WHERE h.run_id = ? AND h.crew_id = ? AND h.metric = ? AND h.unit IS NOT NULL
+             AND e.event_type = 'crew.health_measurement'""",
+        (run_id, crew_id, latest["metric"]),
+    ).fetchall()
+    if not rows:
+        return None  # Structured metrics (for example blood pressure) have no scalar trend here.
+    samples = [
+        TrendSample(
+            sample_id=row["event_id"], crew_id=crew_id, metric=row["metric"], value=row["numeric_value"],
+            unit=row["unit"], observed_at_s=row["observed_at_s"], quality=row["quality"],
+            source_id=row["source_id"], context=json.loads(row["context_json"]),
+        )
+        for row in rows
+    ]
+    return asdict(evaluate_trend(samples))
+
+
 def read_crew(db: Connection, run_id: str, crew_id: str = "SIM-01") -> CurrentCrewView:
     run = read_run(db, run_id)
     profile = profile_for_crew(crew_id)
@@ -54,6 +89,7 @@ def read_crew(db: Connection, run_id: str, crew_id: str = "SIM-01") -> CurrentCr
         health_profile=profile,
         health_assessment=assessment,
         health_followup=compute_followup(db, run_id, crew_id, run["mission_s"], assessment),
+        health_trend=latest_crew_trend(db, run_id, crew_id),
         trace=read_trace(db, run_id, run["mission_s"]),
     )
 

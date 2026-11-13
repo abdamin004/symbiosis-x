@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { readRunView } from "../../api/client.js";
+import { acknowledgeGroundHealthCase, readRunView } from "../../api/client.js";
 import ApprovalPanel from "../crew/ApprovalPanel.jsx";
 import CandidateList from "../crew/CandidateList.jsx";
 import CheckInForm from "../crew/CheckInForm.jsx";
 import { CrewHealthDashboard } from "../crew/CrewHealthPanel.jsx";
 import HealthReminders from "../crew/HealthReminders.jsx";
+import HealthTrend from "../crew/HealthTrend.jsx";
+import GroundHealthStatus from "../ground/GroundHealthStatus.jsx";
 import RadiationContext from "../crew/RadiationContext.jsx";
 import { HEALTH_METRICS } from "../../api/healthCatalog.js";
 import AdvisoryForm from "../ground/AdvisoryForm.jsx";
@@ -32,6 +34,7 @@ function RunProjection({ role, runId, crewId }) {
   const [plan, setPlan] = useState(null);
   const [selected, setSelected] = useState(null);
   const [reload, setReload] = useState(0);
+  const [busyAlias, setBusyAlias] = useState(null);
   useEffect(() => {
     let active = true;
     setError("");
@@ -67,6 +70,7 @@ function RunProjection({ role, runId, crewId }) {
           measureHref={"/runs/" + encodeURIComponent(runId) + "/crew/measure" + subjectQuery}
           emergencyHref={"/runs/" + encodeURIComponent(runId) + "/crew/emergency"}
           onChange={() => setReload((n) => n + 1)} />
+        {view.health_trend && <HealthTrend trend={view.health_trend} />}
         <section className="mt-6 rounded-lg border border-sky-200 bg-sky-50 p-4" data-testid="live-cabin-context">
           <h2 className="font-semibold">Cabin context</h2>
           <p className="mt-1 text-sm text-slate-700">{view.co2
@@ -90,6 +94,12 @@ function RunProjection({ role, runId, crewId }) {
       </> : <>
         <GroundSnapshot packet={view.packet} missionS={view.mission_s} />
         <AdvisoryForm runId={runId} packet={view.packet} closed={view.status === "closed"} />
+        <GroundHealthStatus cases={view.health_cases ?? []} busyAlias={busyAlias}
+          onAcknowledge={async (alias) => {
+            setBusyAlias(alias);
+            try { await acknowledgeGroundHealthCase(runId, alias); setReload((n) => n + 1); }
+            finally { setBusyAlias(null); }
+          }} />
       </>}
       <AgentStatusStrip trace={view.trace ?? []} />
       <TraceTimeline trace={view.trace ?? []} />

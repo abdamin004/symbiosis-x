@@ -40,8 +40,14 @@ test("facilitator starts and steps one shared run", async ({ page }) => {
 test("Crew can submit a private check-in", async ({ page }) => {
   await mockSession(page);
   let saved;
+  let auth;
+  const groundRequests = [];
+  page.on("request", (request) => {
+    if (request.url().includes("/ground")) groundRequests.push(request.postData() ?? "");
+  });
   await page.route("**/api/v1/runs/run-001/crew/check-ins", (route) => {
     saved = route.request().postDataJSON();
+    auth = route.request().headers().authorization;
     return route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({
       check_in_id: saved.check_in_id, run_id: "run-001", crew_id: "SIM-01",
       note: saved.note, synthetic: true, mission_s: 0,
@@ -55,4 +61,11 @@ test("Crew can submit a private check-in", async ({ page }) => {
   expect(saved.synthetic).toBe(true);
   expect(saved.crew_id).toBe("SIM-01");
   expect(saved.check_in_id).toBeTruthy();
+  expect(auth).toBe("Bearer crew-token");          // sent on the Crew lane only
+  // The note appears in Crew and is absent from Ground.
+  await page.goto("/runs/run-001/ground");
+  await expect(page.getByTestId("console-shell")).toHaveAttribute("data-role", "ground");
+  await expect(page.getByText("Synthetic check-in marker")).toHaveCount(0);
+  await expect(page.getByTestId("private-checkin")).toHaveCount(0);
+  expect(groundRequests.join("")).not.toContain("Synthetic check-in marker");
 });
