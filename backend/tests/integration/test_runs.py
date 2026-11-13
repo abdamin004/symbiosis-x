@@ -11,13 +11,20 @@ START = {"start_id": "start-01", "scenario_id": "nominal", "scenario_version": "
 
 
 def local_client(database):
-    return TestClient(create_app(database_path=database),
+    return TestClient(create_app(database_path=database, enable_local_demo=True),
                       base_url="http://127.0.0.1", client=("127.0.0.1", 60000))
+
+
+def authenticate(client, role="facilitator"):
+    response = client.post("/api/v1/demo/session")
+    assert response.status_code == 200
+    client.headers["Authorization"] = "Bearer " + response.json()[role]
 
 
 def test_start_seed_at_zero(tmp_path):
     database = tmp_path / "runs.sqlite3"
     with local_client(database) as client:
+        authenticate(client)
         response = client.post("/api/v1/runs", json=START)
         assert response.status_code == 200
         receipt = response.json()
@@ -29,6 +36,7 @@ def test_start_seed_at_zero(tmp_path):
         assert client.post("/api/v1/runs", json={**START, "role": "facilitator"}).status_code == 422
         assert client.post("/api/v1/runs", json=START, headers={"Origin": "http://elsewhere.test"}).status_code == 403
     with local_client(database) as restarted:
+        authenticate(restarted)
         assert restarted.post("/api/v1/runs", json=START).json() == receipt
     with closing(sqlite3.connect(database)) as db:
         assert db.execute("SELECT run_id, mission_s FROM runs").fetchall() == [(receipt["run_id"], 0)]
@@ -38,6 +46,7 @@ def test_start_seed_at_zero(tmp_path):
 def test_duplicate_advance_returns_one_receipt(tmp_path):
     database = tmp_path / "runs.sqlite3"
     with local_client(database) as client:
+        authenticate(client)
         original = client.post("/api/v1/runs", json=START).json()
         url = f"/api/v1/runs/{original['run_id']}/advance"
         advance = {"advance_id": "advance-01", "expected_step": 0}
@@ -50,6 +59,7 @@ def test_duplicate_advance_returns_one_receipt(tmp_path):
         assert client.post(url, json={"advance_id": "new", "expected_step": 1}).json() == {"detail": "NO_NEXT_STEP"}
         assert client.post(url, json=advance, headers={"Origin": "http://elsewhere.test"}).status_code == 403
     with local_client(database) as restarted:
+        authenticate(restarted)
         assert restarted.post(url, json=advance).json() == receipt
         assert restarted.post("/api/v1/runs", json=START).json() == original
     with closing(sqlite3.connect(database)) as db:
