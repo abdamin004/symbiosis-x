@@ -403,8 +403,11 @@ button[aria-pressed=true]{background:#3d315e}
 #navigation-heading,#navigation-caption{max-width:210px;background:#0b1428ed;border-radius:4px;padding:.15rem .35rem}
 .instrument-actions{display:flex;align-items:center;gap:.25rem}
 .instrument-actions button{padding:.2rem .35rem;background:#111a32ed}
-#demo-banner{position:fixed;left:50%;top:25%;transform:translateX(-50%);z-index:9;display:flex;align-items:center;gap:.65rem;padding:.45rem .6rem;background:#101932ee;border:1px solid #8ea2d0;border-radius:8px;max-width:calc(100% - 1rem)}
-#demo-banner button{white-space:nowrap}
+#demo-banner{display:flex;align-items:center;flex-wrap:wrap;gap:.25rem .4rem;margin-top:.52rem;padding-top:.45rem;border-top:1px solid #8ea2d042}
+#demo-banner button{font-size:.68rem;white-space:nowrap;padding:.25rem .36rem}
+#demo-time{font:650 .7rem ui-monospace,monospace;color:var(--blue)}
+#demo-status:not([data-stopped]){position:absolute;width:1px;height:1px;clip-path:inset(50%);overflow:hidden}
+#demo-status[data-stopped]{flex-basis:100%;font-size:.72rem;color:#ffcb95}
 .launch-field[data-view=launch] .pad-checkout{padding-bottom:calc(clamp(116px,16vw,168px)*.6 + 2.8rem)}
 .launch-field[data-view=launch] .pad-checkout .launch-board{max-height:calc(100svh - var(--launch-clearance,100px) - clamp(116px,16vw,168px)*.6 - 3rem)}
 @media(max-width:850px){.launch-field[data-view=launch] .pad-checkout .launch-board{max-height:none}}
@@ -494,6 +497,65 @@ button[aria-pressed=true]{background:#3d315e}
   .launch-visual{position:sticky;top:0;height:min(43svh,430px)}
   .launch-board{max-height:none;margin-top:.7rem}
 }
+
+/* The guide lives outside the movable panels so it survives the pad-to-orbit cut. */
+.mission-guide{--guide-color:#bcb4ff;position:fixed;z-index:9;top:var(--guide-top,5.4rem);right:clamp(.55rem,1.5vw,1.1rem);
+  width:min(17rem,calc(100vw - 1.1rem));padding:.72rem .8rem .62rem;border:1px solid #9cacf14a;border-radius:12px;
+  background:linear-gradient(138deg,#1a2340f5,#0a1328f5 80%);box-shadow:0 10px 30px #0006,inset 0 1px #c5d4ff1c}
+.mission-guide[data-state=waiting]{--guide-color:#a7dbff}
+.mission-guide[data-state=held],.mission-guide[data-state=ended]{--guide-color:#ffcb95}
+.mission-guide[data-state=complete]{--guide-color:#a5ebce}
+.guide-head{display:flex;align-items:center;justify-content:space-between;gap:.35rem;margin-bottom:.42rem}
+.guide-head h2{font-size:.78rem;display:flex;align-items:center;gap:.36rem;color:#e0eaff}
+.guide-head h2 .icon{color:var(--guide-color);width:.85rem;height:.85rem}
+.guide-count{font:650 .67rem ui-monospace,monospace;color:#c2cde8;white-space:nowrap}
+.guide-track{display:flex;gap:3px;margin-bottom:.55rem}
+.guide-track i{height:3px;flex:1;border-radius:3px;background:#7e93c341}
+.guide-track [data-step=complete]{background:#96dac9}
+.guide-track [data-step=current]{background:var(--guide-color);box-shadow:0 0 7px var(--guide-color)}
+#guide-phase{font-size:.66rem;font-weight:700;color:var(--guide-color);letter-spacing:.04em}
+#guide-next{font-size:clamp(.9rem,1.3vw,1.05rem);line-height:1.28;font-weight:740;color:#f1f5ff;margin:.16rem 0 .28rem}
+#guide-detail{font-size:.75rem;line-height:1.36;color:#c4cee5}
+.guide-actions{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.55rem}
+.guide-actions button{font-size:.7rem;padding:.26rem .47rem;background:#202e50;color:#e6ecff}
+.guide-actions button:hover{background:#344471}
+#guide-focus{background:#32336a;color:#f0ebff}
+.stage[data-asteria=true] #show-objectives,#launch-open-objectives{display:none}
+.stage[data-asteria=true] .ribbon .resource{position:absolute;clip-path:inset(50%);width:1px;height:1px;overflow:hidden}
+#mission-command-widget .command-status > div:nth-child(-n+2){display:none}
+.stage[data-asteria=true] #mission-command-widget{max-height:min(44vh,385px)}
+.stage[data-asteria=true] .control-deck{border:1px solid #9cacf13d}
+#flight-instrument #navigation-caption{display:none}
+#flight-instrument:has(#navigation-mini:focus-visible) #navigation-help{color:#fff;outline:1px solid var(--blue)}
+.launch-field[data-view=launch] .pad-checkout #pad-command{align-self:start;margin-top:var(--pad-guide-offset,0px);
+  max-height:max(8rem,calc(100svh - var(--launch-clearance,100px) - var(--pad-guide-offset,0px) - 2.4rem))}
+@media(max-width:850px){
+  .launch-field[data-view=launch] .pad-checkout #pad-command{margin-top:0;max-height:none}
+}
+@media(max-width:680px){
+  .hud .ribbon,.launch-hud .ribbon{flex-wrap:nowrap;overflow:auto;scrollbar-width:thin;padding:.45rem .55rem}
+  .hud .ribbon > *,.launch-hud .ribbon > *,.launch-nav-actions > *{flex:none;white-space:nowrap}
+  .launch-hud .launch-ribbon .launch-nav-actions{flex-wrap:nowrap}
+  .hud .ribbon a,.launch-hud .ribbon a{margin-left:0}
+  .mission-guide{width:min(13.4rem,calc(100vw - 1.1rem));padding:.45rem .55rem}
+  .guide-head{margin-bottom:.26rem}.guide-track{margin-bottom:.3rem}
+  .guide-actions{margin-top:.32rem}.guide-actions button{padding:.2rem .35rem}
+  #guide-next{font-size:.84rem}#guide-detail{font-size:.68rem}
+  .stage[data-asteria=true] #mission-command-widget{max-height:min(30dvh,235px)}
+  #flight-instrument{bottom:.3rem}.instrument-actions button{min-width:1.55rem}
+}
+@media(max-width:430px){
+  .mission-guide{width:min(11.6rem,calc(100vw - 1.1rem))}
+  .stage[data-asteria=true] .mission-resources{grid-template-columns:max-content;font-size:.61rem;gap:.08rem;top:calc(100% + 4.15rem)}
+  .stage[data-asteria=true] #widget-shelf{top:calc(100% + 10rem);right:auto;max-width:43%}
+  .stage[data-asteria=true] .viewport{padding-top:max(var(--control-clearance,110px),min(var(--guide-bottom,0px),48dvh))}
+  #flight-instrument #navigation-mini{width:75px}
+}
+@media(max-width:680px) and (max-height:700px){
+  .mission-guide{max-height:24dvh;overflow:auto}
+  #flight-instrument #navigation-mini{width:63px}
+  .stage[data-asteria=true] #mission-command-widget{max-height:20dvh}
+}
 </style>
 </head>
 <body>
@@ -523,7 +585,7 @@ __HUD_ICONS__
     <span><svg class="icon" aria-hidden="true"><use href="#hud-droplets"/></svg><output id="resource-water"></output></span>
   </div>
   <nav class="crew-strip" id="crew-strip" aria-label="Astronaut portraits"></nav>
-  <div class="flight-controls"><div class="control-deck" role="group" aria-label="Flight playback">
+  <div class="flight-controls" id="flight-playback"><div class="control-deck" role="group" aria-label="Flight playback">
     <button id="play" type="button" aria-label="Play" title="Play or pause"><svg class="icon" aria-hidden="true"><use id="play-icon" href="#hud-play"/></svg></button>
     <button id="speed-cycle" type="button" aria-label="Cycle speed" title="Cycle 1×, 2×, and 4×">1×</button>
     <button id="step" type="button" aria-label="Skip one mission hour" title="Skip one mission hour"><svg class="icon" aria-hidden="true"><use href="#hud-skip-forward"/></svg></button>
@@ -843,11 +905,27 @@ __HUD_ICONS__
   <small id="navigation-help">Select the ball to steer with WASD or arrows</small>
   <small id="navigation-caption"></small>
 </section>
-<aside id="demo-banner" aria-label="Timed mission demo" hidden>
-  <output id="demo-time" aria-label="Demo elapsed time"></output>
-  <span id="demo-status"></span>
-  <button type="button" id="demo-pause">Pause demo</button>
-  <button type="button" id="demo-exit">Exit demo</button>
+<aside id="mission-guide" class="mission-guide" aria-labelledby="mission-guide-title" hidden>
+  <div class="guide-head">
+    <h2 id="mission-guide-title"><svg class="icon" aria-hidden="true"><use href="#hud-clipboard-list"/></svg>Mission guide</h2>
+    <span id="guide-count" class="guide-count"></span>
+  </div>
+  <div id="guide-track" class="guide-track" aria-hidden="true"></div>
+  <div id="guide-status" role="status">
+    <p id="guide-phase"></p>
+    <p id="guide-next"></p>
+    <p id="guide-detail"></p>
+  </div>
+  <div class="guide-actions">
+    <button id="guide-focus" type="button" hidden>Go to control</button>
+    <button id="guide-plan" type="button">Flight plan</button>
+  </div>
+  <div id="demo-banner" role="group" aria-label="Timed mission demo" hidden>
+    <output id="demo-time" aria-label="Demo elapsed time" aria-live="off"></output>
+    <span id="demo-status"></span>
+    <button type="button" id="demo-pause">Pause demo</button>
+    <button type="button" id="demo-exit">Exit demo</button>
+  </div>
 </aside>
 <section id="launch-page" class="launch-page" aria-label="SYMBIOSIS X flight game" hidden>
   <div class="launch-hud">
@@ -918,7 +996,7 @@ __HUD_ICONS__
         <ul id="launch-jobs"></ul>
         <p id="launch-checklist"></p>
       </div>
-      <dl class="launch-readouts">
+      <dl class="launch-readouts command-status">
         <div><dt>Flight phase</dt><dd id="launch-status" role="status"></dd></div>
         <div><dt>Next action</dt><dd id="launch-next"></dd></div>
         <div><dt>Maneuver reserve</dt><dd id="launch-reserve"></dd></div>
@@ -2646,12 +2724,22 @@ const controller = document.querySelector(".flight-controls");
 const playArea = document.querySelector(".play-area");
 const shelf = element("widget-shelf");
 const flightInstrument = element("flight-instrument");
-const widgets = createFlightWidgets(overlay,shelf,element("widget-notice"),flightInstrument);
-new ResizeObserver(()=>widgets.schedule()).observe(flightInstrument);
+const missionGuide = element("mission-guide");
+const widgets = createFlightWidgets(overlay,shelf,element("widget-notice"),[flightInstrument,missionGuide]);
 const launchHud = document.querySelector(".launch-hud");
-new ResizeObserver(() => {
-  element("launch-field").style.setProperty("--launch-clearance", launchHud.offsetHeight + "px");
-}).observe(launchHud);
+const padTransport = element("pad-transport");
+const layoutFixedControls = new ResizeObserver(() => {
+  const launchClearance = launchHud.getBoundingClientRect().bottom;
+  element("launch-field").style.setProperty("--launch-clearance", launchClearance+"px");
+  element("launch-field").style.setProperty("--pad-guide-offset", missionGuide.offsetHeight+"px");
+  if (!missionGuide.hidden) {
+    const controls = element("stage").hidden ? padTransport : controller;
+    missionGuide.style.setProperty("--guide-top", Math.ceil(controls.getBoundingClientRect().bottom+8)+"px");
+    playArea.style.setProperty("--guide-bottom", Math.ceil(missionGuide.getBoundingClientRect().bottom+8)+"px");
+  }
+  widgets.schedule();
+});
+for (const control of [launchHud,padTransport,controller,missionGuide,flightInstrument]) layoutFixedControls.observe(control);
 const hudSize = new ResizeObserver(() => {
   const portraitsBottom = element("crew-strip").getBoundingClientRect().bottom;
   const clearance = Math.max(controller.getBoundingClientRect().bottom, portraitsBottom,shelf.getBoundingClientRect().bottom,
@@ -2692,17 +2780,18 @@ for (const button of document.querySelectorAll("[data-personnel-view]")) {
 setupMinimap();
 setupBodyMap();
 const commandPanel = widgets.register(element("mission-command-widget"),element("show-command"),() => ({
-  x:overlay.clientWidth-365,y:12,
-}));
+  x:overlay.clientWidth-365,
+  y:Math.max(12,missionGuide.getBoundingClientRect().bottom-overlay.getBoundingClientRect().top+12),
+}),{compactPriority:true});
 let replayTime = 0;
 const launchMission = bindLaunchCheckout(data.missions,data.replay_version,{
   crew: characters.map((character,index)=>({name:character.name,role:duties[index].role,portrait:()=>crewFace(index)})),
   pauseReplay:stop,
+  openCommand:trigger=>commandPanel.open(trigger),
   onCanvas(flight,procedureEvents) {
     launchProcessEvents = procedureEvents;
     if (!connectedFlight && flight) {
       replayTime = missionTime;
-      commandPanel.open(element("show-command"));
     }
     if (connectedFlight && !flight) {
       commandPanel.close();

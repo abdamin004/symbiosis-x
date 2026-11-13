@@ -38,6 +38,10 @@ test("Horizon burns into orbit, reaches ISS and returns to Earth in one saved mi
   }
   await tutorial.getByRole("button", {name:"Open checkout"}).click();
   await expect(page.locator("#launch-status")).toHaveText("Launchpad");
+  const guide = page.getByRole("complementary",{name:"Mission guide"});
+  await expect(guide.locator("#guide-next")).toHaveText("Start ship systems");
+  await guide.getByRole("button",{name:"Go to control"}).click();
+  await expect(button("Start ship systems")).toBeFocused();
 
   await button("Briefing").click();
   await expect(page.getByRole("dialog", { name:"ISS Research and Return briefing" })).toBeVisible();
@@ -85,6 +89,10 @@ test("Horizon burns into orbit, reaches ISS and returns to Earth in one saved mi
   await expect(page.locator("#launch-status")).toHaveText("Orbital insertion burn");
   await expect(page.getByRole("progressbar",{name:"Engine burn progress"})).toBeVisible();
   await expect(page.locator("#ship canvas")).toBeVisible({timeout:12_000});
+  await expect(guide.locator("#guide-next")).toContainText("Coast to the departure point");
+  await guide.getByRole("button",{name:"Flight plan"}).click();
+  await expect(page.locator("#mission-objective-list [data-status=next]")).toContainText("commit the ISS transfer burn");
+  await button("Close").click();
   await expect(page.locator("#ship .pawn:visible")).toHaveCount(4);
   const flightPlayback = page.getByRole("group", { name:"Flight playback" });
   await expect(flightPlayback.getByRole("button", { name:"Cycle speed" })).toHaveText("4×");
@@ -127,6 +135,8 @@ test("Horizon burns into orbit, reaches ISS and returns to Earth in one saved mi
   await twin.getByRole("button", { name:"Close Digital twin widget" }).click();
 
   const command = page.getByRole("region", { name: "Flight command" });
+  await guide.getByRole("button",{name:"Go to control"}).click();
+  await expect(button("Coast to ISS departure window")).toBeFocused();
   await expect(button("Commit ISS transfer burn")).toBeDisabled();
   await button("Coast to ISS departure window").click();
   await expect(page.getByRole("progressbar",{name:"Coast progress"})).toBeVisible();
@@ -138,6 +148,7 @@ test("Horizon burns into orbit, reaches ISS and returns to Earth in one saved mi
   await page.reload();
   await expect(page.locator("#launch-status")).toHaveText("Transfer coast · engines off");
   await expect(flightPlayback.getByRole("button",{name:"Play",exact:true})).toBeEnabled();
+  await guide.getByRole("button",{name:"Go to control"}).click();
   await expect(button("Match station orbit")).toBeHidden();
   await button("Coast to transfer apoapsis").click();
   await expect(page.getByRole("progressbar",{name:"Coast progress"})).toBeVisible();
@@ -178,6 +189,8 @@ test("Horizon burns into orbit, reaches ISS and returns to Earth in one saved mi
 
   await page.reload();
   await expect(page.locator("#launch-status")).toHaveText("Crew recovered on Earth");
+  await expect(guide).toHaveAttribute("data-state","complete");
+  await expect(guide.locator("#guide-count")).toHaveText("14 / 14 complete");
   await expect(page.locator("#ship canvas")).toBeVisible();
   await expect(page).toHaveURL(missionUrl);
   await button("Open orbit minimap").click();
@@ -185,6 +198,7 @@ test("Horizon burns into orbit, reaches ISS and returns to Earth in one saved mi
 });
 
 test("timed demo recovers the crew in four active minutes without touching the campaign", async ({ page }) => {
+  await page.setViewportSize({width:390,height:844});
   await page.clock.install();
   await page.route(url=>url.pathname==="/flight",route=>route.fulfill({contentType:"text/html",body:flightHtml}));
   await page.goto("/flight");
@@ -192,6 +206,16 @@ test("timed demo recovers the crew in four active minutes without touching the c
   await page.reload();
   await expect(page.locator("#campaign-save")).toHaveText("Launch held · T+0:15");
   await page.getByRole("button",{name:"Run 4-minute mission demo"}).click();
+  async function verifyGuideLayout(transport) {
+    const guide = await page.locator("#mission-guide").boundingBox();
+    const controls = await page.locator(transport).boundingBox();
+    expect(guide.x+guide.width).toBeLessThanOrEqual(390);
+    expect(guide.y).toBeGreaterThanOrEqual(controls.y+controls.height);
+    const instrument = await page.locator("#flight-instrument").boundingBox();
+    if (instrument) expect(guide.y+guide.height).toBeLessThan(instrument.y);
+  }
+  await expect(page.locator("#guide-next")).toHaveText("Start ship systems");
+  await verifyGuideLayout("#pad-transport");
   await page.clock.runFor(55_000);
   await expect(page.locator("#demo-time")).toHaveText(/0:55/);
   await page.getByRole("button",{name:"Pause demo"}).click();
@@ -200,6 +224,8 @@ test("timed demo recovers the crew in four active minutes without touching the c
   await page.getByRole("button",{name:"Resume demo"}).click();
   await page.clock.runFor(53_000);
   await expect(page.locator("#orbital-burn-scene")).toBeVisible();
+  await verifyGuideLayout(".flight-controls");
+  await expect(page.locator("#guide-next")).toHaveText("Raise apoapsis to station altitude");
   await page.clock.runFor(127_000);
   await expect(page.locator("#demo-status")).not.toHaveText("Crew recovered on Earth");
   await page.clock.runFor(5000);
@@ -321,6 +347,7 @@ test("Flight resumes independent campaigns and preserves the legacy Asteria save
   await expect(reopened.locator("#navigation-pe")).toHaveText("160 km");
   await expect(reopened.locator("#navigation-approach")).toHaveText("Orbital checkout");
   await reopenedButton("Close").click();
+  await reopenedButton("Go to control").click();
   await reopenedButton("Assign Ivo to orbital systems check").click();
   const orbitStep = reopenedButton("Advance one mission tick");
   await orbitStep.click();

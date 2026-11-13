@@ -291,7 +291,7 @@ function createLaunchScene(canvas) {
     const pose=Object.fromEntries(Object.keys(target).map(key=>[key,mix(transition?.from[key]??target[key],target[key],holdAtPad ? 0 : ease)]));
     previous=pose;
     const centered = canvas.closest(".launch-field")?.dataset.view === "launch";
-    const shipX=w*(centered ? .5 : w<610?.63:.66), ground=h*.79, s=Math.min(h/605,1.48);
+    const shipX=w*(centered ? w<520 ? .34 : .5 : w<610 ? .63 : .66), ground=h*.79, s=Math.min(h/605,1.48);
     if (separation !== null) pose.booster = clamp((now-separation)/2800);
     const upperBurn = phase === "upper" && separation !== null && now-separation > 1000 && now-separation < 2700;
     const powered=phase==="ascent" && burning || upperBurn || orbitalBurn || phase==="orbital";
