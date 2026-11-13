@@ -224,6 +224,17 @@
                 "check_in"
               ],
               "additionalProperties": false
+            },
+            "equipment": {
+              "properties": {
+                "co2": {
+                  "properties": {
+                    "kind": {
+                      "const": "modeled_estimate"
+                    }
+                  }
+                }
+              }
             }
           },
           "required": [
@@ -270,6 +281,17 @@
                 "link_status"
               ],
               "additionalProperties": false
+            },
+            "equipment": {
+              "properties": {
+                "co2": {
+                  "properties": {
+                    "kind": {
+                      "const": "delivered_observation"
+                    }
+                  }
+                }
+              }
             }
           },
           "required": [
@@ -384,7 +406,36 @@
                 "additionalProperties": false
               }
             ]
-          }
+          },
+          "allOf": [
+            {
+              "contains": {
+                "properties": {
+                  "candidate_id": {
+                    "const": "hold_course"
+                  }
+                }
+              }
+            },
+            {
+              "contains": {
+                "properties": {
+                  "candidate_id": {
+                    "const": "start_standby"
+                  }
+                }
+              }
+            },
+            {
+              "contains": {
+                "properties": {
+                  "candidate_id": {
+                    "const": "reduce_activity"
+                  }
+                }
+              }
+            }
+          ]
         }
       },
       "required": [

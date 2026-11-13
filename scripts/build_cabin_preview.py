@@ -82,7 +82,9 @@ def main() -> None:
     }
     template = (ROOT / "docs/demo/cabin.html").read_text(encoding="utf-8")
     payload = json.dumps(data).replace("<", "\\u003c")
-    args.output.write_text(template.replace("__REPLAY_DATA__", payload), encoding="utf-8")
+    sprite = (ROOT / "frontend/src/ui/icons/spacecraft.svg").read_text(encoding="utf-8")
+    preview = template.replace("__REPLAY_DATA__", payload).replace("__ICON_SPRITE__", sprite)
+    args.output.write_text(preview, encoding="utf-8")
 
 
 if __name__ == "__main__":

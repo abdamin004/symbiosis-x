@@ -5,58 +5,149 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cabin Systems · SYMBIOSIS X</title>
 <style>
-:root{color-scheme:dark;--bg:#0b121a;--panel:#121e2a;--border:#304657;--ink:#edf5fa;--muted:#a8beca;--teal:#88f1d7;--amber:#ffc481}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,sans-serif}
-main{max-width:1100px;margin:0 auto;padding:2rem clamp(1rem,4vw,3rem)}
-a{color:var(--teal);text-underline-offset:.22em}
-h1{font-size:clamp(2.5rem,7vw,4.6rem);line-height:1.05;letter-spacing:-.045em;margin:.8rem 0 .35rem}
-h2{font-size:1.25rem;margin:0 0 .55rem}
-p{margin:.35rem 0 .85rem;color:var(--muted)}
-header{margin-bottom:1.5rem}
-.layout{display:grid;grid-template-columns:minmax(0,2.3fr) minmax(14rem,1fr);gap:1rem}
-.panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:1rem;min-width:0}
-canvas{display:block;width:100%;height:auto;background:#0a1722;border:1px solid #254051;border-radius:8px}
-.controls[hidden]{display:none}.controls{display:flex;flex-wrap:wrap;gap:.45rem;margin-bottom:1rem}
-button{font:inherit;color:inherit;background:#162b38;border:1px solid #496677;border-radius:7px;padding:.44rem .75rem;cursor:pointer}
-button[aria-pressed=true]{background:#1d453f;border-color:var(--teal);color:var(--teal)}
-button:focus-visible,a:focus-visible{outline:2px solid var(--teal);outline-offset:3px}
-dl{margin:0}dt{color:var(--muted)}dd{margin:0 0 .8rem;font-size:1.38rem;font-variant-numeric:tabular-nums}
-#detail{border-top:1px solid var(--border);padding-top:.8rem;min-height:5rem}
-#assets{margin:1rem 0 0}
-@media(max-width:760px){.layout{grid-template-columns:1fr}}
+:root {
+  color-scheme: dark;
+  --page: #11121c;
+  --panel: #1b1c2c;
+  --panel-raised: #22243a;
+  --edge: #393c57;
+  --control-edge: #585c78;
+  --ink: #f0eff9;
+  --muted: #b5b6ce;
+  --violet: #c6b4ff;
+  --blue: #91c5ff;
+  --amber: #ffc587;
+  --deck: #131522;
+  --deck-grid: #22263d;
+  --deck-hull: #272c49;
+  --deck-outline: #6678a8;
+  --deck-array: #26345f;
+  --deck-array-line: #5573aa;
+  --deck-module: #1a1e33;
+  --deck-module-selected: #343058;
+  --mono: ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font: 15px/1.55 system-ui, sans-serif;
+}
+main { max-width: 1260px; margin: 0 auto; padding: clamp(1rem, 3vw, 2rem) clamp(1rem, 4vw, 3rem) 3rem; }
+h1, h2, p { margin: 0; }
+h1 { font-size: clamp(2rem, 4.5vw, 3.45rem); line-height: 1.1; letter-spacing: -.04em; }
+h2 { font-size: 1.13rem; letter-spacing: -.01em; }
+p { color: var(--muted); }
+header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-block: .25rem 1.15rem;
+  border-bottom: 1px solid var(--edge);
+  margin-bottom: 1.1rem;
+}
+.project-name { color: var(--violet); font: 700 .74rem/1.3 var(--mono); letter-spacing: .15em; margin-bottom: .42rem; }
+header p:last-child { margin-top: .35rem; }
+.layout { display: grid; grid-template-columns: minmax(0, 2.35fr) minmax(15rem, 1fr); gap: 1rem; }
+.panel { background: var(--panel); border: 1px solid var(--edge); border-radius: 12px; padding: clamp(.75rem, 1.6vw, 1.1rem); min-width: 0; }
+.panel-heading { display: flex; align-items: center; gap: .48rem; margin-bottom: .65rem; }
+.panel-heading h2 { margin: 0; }
+.icon { width: 1.06em; height: 1.06em; color: var(--blue); flex: none; vertical-align: -.15em; }
+canvas { display: block; width: 100%; height: auto; background: var(--deck); border-radius: 8px; outline: 1px solid var(--edge); outline-offset: -1px; }
+.controls[hidden], .panel[hidden] { display: none; }
+.controls { display: flex; flex-wrap: wrap; gap: .45rem; }
+#timeline { margin-bottom: 1rem; }
+#timeline button { font-family: var(--mono); font-size: .78rem; }
+#viewpoints { margin: 0; }
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .38rem;
+  min-height: 2.35rem;
+  padding: .37rem .68rem;
+  color: var(--ink);
+  background: var(--panel-raised);
+  border: 1px solid var(--control-edge);
+  border-radius: 6px;
+  font: inherit;
+  cursor: pointer;
+}
+button:not(:disabled):hover { border-color: var(--violet); background: #2a2b45; }
+button[aria-pressed="true"] { background: #33294f; border-color: var(--violet); color: var(--violet); }
+button[aria-pressed="true"] .icon { color: inherit; }
+button:disabled { opacity: .52; cursor: default; }
+button:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+dl { display: grid; gap: .65rem; margin: 0; }
+dl > div { padding: .58rem .72rem; background: var(--panel-raised); border: 1px solid var(--edge); border-radius: 6px; }
+dt { color: var(--muted); font-size: .82rem; }
+dd { margin: 0; color: var(--blue); font: 650 1.3rem/1.45 var(--mono); }
+dd[data-warning="true"] { color: var(--amber); }
+#provenance { font-size: .88rem; margin-bottom: .8rem; }
+#detail { border-top: 1px solid var(--edge); margin-top: .85rem; padding-top: .7rem; font-size: .88rem; }
+#assets { margin-top: .85rem; }
+#activity { margin-top: 1rem; }
+#activity p { margin-bottom: .65rem; }
+#activity-status { margin: .7rem 0 0; }
+#roster { margin-bottom: .55rem; }
+#roster button { font-family: var(--mono); }
+@media (max-width: 720px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 400px) { #timeline button { flex: 1 1 46%; } }
 </style>
 </head>
-<body><main>
-<header><h1>Cabin systems</h1><p>Simulated atmosphere in a 100 m³ cabin</p></header>
-<div class="controls" role="group" aria-label="Viewpoint">
-<button type="button" data-view="crew">Crew model</button><button type="button" data-view="ground">Ground fixture</button>
-</div>
+<body>
+__ICON_SPRITE__
+<main>
+<header>
+  <div>
+    <p class="project-name">SYMBIOSIS X</p>
+    <h1>Cabin systems</h1>
+    <p>Simulated atmosphere in a 100 m³ cabin</p>
+  </div>
+  <div class="controls" id="viewpoints" role="group" aria-label="Viewpoint">
+    <button type="button" data-view="crew">Crew model</button>
+    <button type="button" data-view="ground">Ground fixture</button>
+  </div>
+</header>
 <div class="controls" id="timeline" role="group" aria-label="Crew checkpoints"></div>
-<section class="panel" id="activity" aria-labelledby="activity-title" style="margin-bottom:1rem">
-<h2 id="activity-title">Astronaut activity</h2>
-<p>Choose an astronaut, then plan and confirm reduced activity at 06:00.</p>
-<div id="roster" class="controls" role="group" aria-label="Astronaut roster"></div>
-<div class="controls">
-<button type="button" id="plan">Plan reduced activity</button>
-<button type="button" id="confirm">Confirm activity</button>
-<button type="button" id="reset">Reset replay</button>
-</div>
-<p id="activity-status" role="status"></p>
-</section>
 <div class="layout">
-<section class="panel" aria-label="Spacecraft canvas">
-<canvas id="deck" width="720" height="320" role="img" aria-label="Spacecraft schematic showing power, cabin and primary scrubber">Spacecraft schematic. Use the component buttons to inspect the power bus, cabin and scrubber.</canvas>
-<div class="controls" id="assets" role="group" aria-label="Inspect a component">
-<button type="button" data-asset="cabin">Cabin</button><button type="button" data-asset="scrubber">Primary scrubber</button><button type="button" data-asset="power">Power bus</button>
+  <section class="panel" aria-labelledby="deck-heading">
+    <div class="panel-heading"><h2 id="deck-heading">Spacecraft deck</h2></div>
+    <canvas id="deck" width="780" height="350" role="img" aria-label="Spacecraft schematic showing power, cabin and primary scrubber">Spacecraft schematic. Use the component buttons to inspect the power bus, cabin and scrubber.</canvas>
+    <div class="controls" id="assets" role="group" aria-label="Inspect a component">
+      <button type="button" data-asset="cabin"><svg class="icon" aria-hidden="true" focusable="false"><use href="#sx-icon-cabin"/></svg>Cabin</button>
+      <button type="button" data-asset="scrubber"><svg class="icon" aria-hidden="true" focusable="false"><use href="#sx-icon-scrubber"/></svg>Primary scrubber</button>
+      <button type="button" data-asset="power"><svg class="icon" aria-hidden="true" focusable="false"><use href="#sx-icon-power"/></svg>Power bus</button>
+    </div>
+  </section>
+  <section class="panel" aria-labelledby="phase">
+    <div class="panel-heading"><h2 id="phase"></h2></div>
+    <p id="provenance"></p>
+    <dl>
+      <div><dt>Cabin CO₂</dt><dd id="co2"></dd></div>
+      <div><dt>Effective scrubber flow</dt><dd id="removal"></dd></div>
+      <div><dt>Power headroom</dt><dd id="power"></dd></div>
+    </dl>
+    <p id="detail"></p>
+  </section>
 </div>
+<section class="panel" id="activity" aria-labelledby="activity-title">
+  <div class="panel-heading">
+    <svg class="icon" aria-hidden="true" focusable="false"><use href="#sx-icon-crew"/></svg>
+    <h2 id="activity-title">Astronaut activity</h2>
+  </div>
+  <p>Choose an astronaut, then plan and confirm reduced activity at 06:00.</p>
+  <div id="roster" class="controls" role="group" aria-label="Astronaut roster"></div>
+  <div class="controls">
+    <button type="button" id="plan">Plan reduced activity</button>
+    <button type="button" id="confirm">Confirm activity</button>
+    <button type="button" id="reset">Reset replay</button>
+  </div>
+  <p id="activity-status" role="status"></p>
 </section>
-<section class="panel" aria-labelledby="phase">
-<h2 id="phase"></h2><p id="provenance"></p>
-<dl><dt>Cabin CO₂</dt><dd id="co2"></dd><dt>Effective scrubber flow</dt><dd id="removal"></dd><dt>Power headroom</dt><dd id="power"></dd></dl>
-<p id="detail"></p>
-</section>
-</div>
 </main>
 <script type="application/json" id="replay-data">__REPLAY_DATA__</script>
 <script>
@@ -65,10 +156,95 @@ const byId = id => document.getElementById(id);
 const deck = byId("deck");
 const ctx = deck.getContext("2d");
 const components = [
-  {id:"power", x:55, width:160, label:"POWER BUS"},
-  {id:"cabin", x:250, width:220, label:"CABIN"},
-  {id:"scrubber", x:505, width:160, label:"PRIMARY SCRUBBER"},
+  {id: "power", x: 151, y: 136, width: 132, height: 76, label: "POWER BUS"},
+  {id: "cabin", x: 302, y: 125, width: 176, height: 98, label: "CREW CABIN"},
+  {id: "scrubber", x: 497, y: 136, width: 135, height: 76, label: "PRIMARY SCRUBBER"},
 ];
+const style = getComputedStyle(document.documentElement);
+const color = name => style.getPropertyValue("--" + name).trim();
+
+function trace(points, fill, stroke) {
+  ctx.beginPath();
+  points.forEach(([x, y], index) => index === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y));
+  ctx.closePath();
+  ctx.fillStyle = color(fill);
+  ctx.fill();
+  ctx.strokeStyle = color(stroke);
+  ctx.stroke();
+}
+
+function drawSolarArray(top) {
+  for (const left of [292, 396]) {
+    ctx.fillStyle = color("deck-array");
+    ctx.strokeStyle = color("deck-array-line");
+    ctx.fillRect(left, top, 92, 43);
+    ctx.strokeRect(left + .5, top + .5, 91, 42);
+    for (let x = left + 15; x < left + 92; x += 15) {
+      ctx.beginPath();
+      ctx.moveTo(x, top + 1);
+      ctx.lineTo(x, top + 42);
+      ctx.stroke();
+    }
+    ctx.beginPath();
+    ctx.moveTo(left, top + 21);
+    ctx.lineTo(left + 92, top + 21);
+    ctx.stroke();
+  }
+}
+
+function drawShip() {
+  ctx.clearRect(0, 0, deck.width, deck.height);
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = color("deck-grid");
+  ctx.beginPath();
+  for (let x = 0; x < deck.width; x += 24) {
+    ctx.moveTo(x + .5, 0);
+    ctx.lineTo(x + .5, deck.height);
+  }
+  for (let y = 0; y < deck.height; y += 24) {
+    ctx.moveTo(0, y + .5);
+    ctx.lineTo(deck.width, y + .5);
+  }
+  ctx.stroke();
+  ctx.fillStyle = color("deck-outline");
+  ctx.fillRect(383, 53, 14, 243);
+  drawSolarArray(26);
+  drawSolarArray(281);
+
+  trace([[119, 151], [150, 109], [273, 109], [302, 94], [478, 94], [507, 109],
+    [635, 109], [667, 132], [702, 174], [667, 216], [635, 239], [507, 239],
+    [478, 254], [302, 254], [273, 239], [150, 239], [119, 197]],
+    "deck-hull", "deck-outline");
+  trace([[63, 143], [105, 143], [119, 151], [119, 197], [105, 205], [63, 205],
+    [74, 174]], "deck-module", "deck-outline");
+  trace([[644, 141], [669, 152], [687, 174], [669, 196], [644, 207]],
+    "deck-array", "deck-outline");
+  ctx.beginPath();
+  ctx.moveTo(125, 174);
+  ctx.lineTo(645, 174);
+  ctx.strokeStyle = color("deck-outline");
+  ctx.stroke();
+}
+
+function drawComponent(component, value, warning) {
+  const {id, x, y, width, height, label} = component;
+  const active = id === selected;
+  ctx.beginPath();
+  ctx.roundRect(x, y, width, height, 9);
+  ctx.fillStyle = color(active ? "deck-module-selected" : "deck-module");
+  ctx.fill();
+  ctx.lineWidth = active ? 2 : 1;
+  ctx.strokeStyle = color(active ? "violet" : "deck-outline");
+  ctx.stroke();
+  ctx.textAlign = "center";
+  ctx.fillStyle = color("muted");
+  ctx.font = "650 11px ui-monospace, monospace";
+  ctx.fillText(label, x + width / 2, y + height / 2 - 10);
+  ctx.fillStyle = color(warning ? "amber" : "blue");
+  ctx.font = "650 17px ui-monospace, monospace";
+  ctx.fillText(value, x + width / 2, y + height / 2 + 14);
+}
+
 const describe = {
   cabin: "One well-mixed zone. The model balances crew CO₂ generation against effective scrubber removal.",
   scrubber: "The scripted degradation reduces effective flow from 20 to 4 m³/h at 01:00.",
@@ -123,7 +299,7 @@ function render() {
   const activityStatus = {
     baseline: "Baseline activity",
     planned: "Planned at 06:00 · Cabin input unchanged",
-    confirmed: "Confirmed at 06:00",
+    confirmed: frame.time < data.activity_s ? "Confirmed for 06:00 · Pending" : "Confirmed at 06:00",
   };
   byId("activity-status").textContent = astronaut + " · " + activityStatus[activity]
     + " · Cabin total " + replay[checkpoint].generation.toFixed(3) + " m³/h";
@@ -141,27 +317,17 @@ function render() {
   document.querySelectorAll("[data-asset]").forEach(button => button.setAttribute("aria-pressed", button.dataset.asset === selected));
   [...byId("timeline").children].forEach((button, index) => button.setAttribute("aria-pressed", index === checkpoint));
 
-  ctx.clearRect(0, 0, deck.width, deck.height);
-  ctx.strokeStyle = "#172e3e"; ctx.lineWidth = 1;
-  ctx.beginPath();
-  for (let x = 0; x < 720; x += 24) { ctx.moveTo(x, 0); ctx.lineTo(x, 320); }
-  for (let y = 0; y < 320; y += 24) { ctx.moveTo(0, y); ctx.lineTo(720, y); }
-  ctx.stroke();
-  ctx.beginPath(); ctx.roundRect(25, 73, 670, 171, 53);
-  ctx.fillStyle = "#102331"; ctx.fill(); ctx.strokeStyle = "#587786"; ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(215, 160); ctx.lineTo(505, 160);
-  ctx.lineWidth = 3; ctx.strokeStyle = "#63828d"; ctx.stroke();
-  ctx.textAlign = "center";
-  for (const {id, x, width, label} of components) {
-    ctx.beginPath(); ctx.roundRect(x, 105, width, 108, 9);
-    ctx.fillStyle = "#142f3e"; ctx.fill();
-    ctx.strokeStyle = id === selected ? "#88f1d7" : "#4d707f"; ctx.stroke();
-    ctx.font = "600 13px ui-monospace, monospace"; ctx.fillStyle = "#b5ced8";
-    ctx.fillText(label, x + width/2, 140);
-    ctx.font = "600 22px ui-monospace, monospace";
-    ctx.fillStyle = (id === "scrubber" && frame.removal < 20) || (id === "power" && frame.power < 0.40) ? "#ffc481" : "#88f1d7";
-    ctx.fillText(values[id], x + width/2, 178);
-  }
+  const lowPower = frame.power < 0.40;
+  const degraded = frame.removal < 20;
+  byId("power").dataset.warning = lowPower;
+  byId("removal").dataset.warning = degraded;
+  if (lowPower) byId("power").textContent += " · Low";
+  if (degraded) byId("removal").textContent += " · Degraded";
+  drawShip();
+  components.forEach(component => {
+    const warning = (component.id === "power" && lowPower) || (component.id === "scrubber" && degraded);
+    drawComponent(component, values[component.id], warning);
+  });
 }
 baseline.forEach((frame, index) => {
   const button = document.createElement("button");
@@ -175,7 +341,7 @@ deck.addEventListener("click", event => {
   const bounds = deck.getBoundingClientRect();
   const x = (event.clientX - bounds.left) * deck.width / bounds.width;
   const y = (event.clientY - bounds.top) * deck.height / bounds.height;
-  const part = components.find(asset => x >= asset.x && x <= asset.x + asset.width && y >= 105 && y <= 213);
+  const part = components.find(asset => x >= asset.x && x <= asset.x + asset.width && y >= asset.y && y <= asset.y + asset.height);
   if (part) { selected = part.id; render(); }
 });
 render();

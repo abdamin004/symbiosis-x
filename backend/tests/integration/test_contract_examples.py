@@ -43,6 +43,18 @@ def test_examples_match_role_schemas(examples):
             validator.validate(ground)
 
 
+    ground = deepcopy(examples["ground-v102"])
+    ground["equipment"]["co2"]["kind"] = "modeled_estimate"
+    with pytest.raises(ValidationError):
+        validator.validate(ground)
+
+    plan = deepcopy(examples["candidate-results"])
+    candidate = plan["candidates"][0]
+    plan["candidates"] = [{**candidate, "peak_co2_ppm": peak} for peak in (3757, 3758, 3759)]
+    with pytest.raises(ValidationError):
+        validator.validate(plan)
+
+
 def test_examples_preserve_the_golden_handoff(examples):
     crew = examples["crew-v103"]
     ground = examples["ground-v102"]

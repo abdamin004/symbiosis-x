@@ -1,6 +1,7 @@
 """Independent oracles for the nominal and degraded cabin."""
 
 import sys
+from math import exp
 from pathlib import Path
 
 import pytest
@@ -35,3 +36,11 @@ def test_invalid_cabin_input(change):
               "duration_s": 60, "removal_m3_h": 4}
     with pytest.raises(ValueError):
         advance_co2_ppm(**(inputs | change))
+
+
+
+def test_strong_removal_preserves_the_exponential_tail():
+    value = advance_co2_ppm(
+        2000, duration_s=3600, volume_m3=100, generation_m3_h=0, removal_m3_h=4000,
+    )
+    assert value == pytest.approx(2000 * exp(-40), abs=0)

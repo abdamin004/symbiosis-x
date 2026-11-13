@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+  <symbol id="sx-icon-cabin" viewBox="0 0 24 24">
+    <g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 9.5a5 5 0 0 1 5-5h6a5 5 0 0 1 5 5v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM4 12H2m20 0h-2"/>
+      <circle cx="12" cy="12" r="3"/>
+    </g>
+  </symbol>
+  <symbol id="sx-icon-scrubber" viewBox="0 0 24 24">
+    <g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="7" y="3.5" width="10" height="17" rx="2"/>
+      <path d="M10 8h4m-4 4h4m-4 4h4M2.5 12H7m10 0h4.5M19 9.5l2.5 2.5-2.5 2.5"/>
+    </g>
+  </symbol>
+  <symbol id="sx-icon-power" viewBox="0 0 24 24">
+    <path d="m13.5 2.75-8 10.5h6l-1 8 8-10.5h-6z" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="sx-icon-crew" viewBox="0 0 24 24">
+    <g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 11a7 7 0 1 1 14 0v4a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4zM8 19v2m8-2v2"/>
+      <rect x="8" y="9" width="8" height="5" rx="1.5"/>
+    </g>
+  </symbol>
+</svg>
