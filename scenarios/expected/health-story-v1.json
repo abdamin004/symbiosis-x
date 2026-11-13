@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "scenario_id": "health-story",
+  "scenario_version": "1",
+  "seed": 4242,
+  "synthetic": true,
+  "crew_checkpoints_before_drill": [
+    {
+      "mission_s": 0,
+      "story_state": "clear",
+      "received_count": 1,
+      "heart_rate_bpm": 76,
+      "personal_status": "within_personal_range",
+      "reference_status": "within_reference",
+      "trend_status": "insufficient_history"
+    },
+    {
+      "mission_s": 60,
+      "story_state": "insufficient",
+      "received_count": 2,
+      "heart_rate_bpm": 88,
+      "personal_status": "outside_personal_range",
+      "reference_status": "within_reference",
+      "trend_status": "insufficient_history"
+    },
+    {
+      "mission_s": 360,
+      "story_state": "review",
+      "received_count": 3,
+      "heart_rate_bpm": 95,
+      "personal_status": "outside_personal_range",
+      "personal_reason_code": "ABOVE_PERSONAL_RANGE",
+      "personal_range_bpm": [57, 87],
+      "reference_status": "within_reference",
+      "reference_range_bpm": [60, 100],
+      "trend_status": "review",
+      "trend_direction": "rising",
+      "trend_start_bpm": 76,
+      "trend_end_bpm": 95
+    }
+  ],
+  "onboard_drill": {
+    "story_state": "emergency",
+    "opened_at_s": 360,
+    "subject_crew_id": "SIM-01",
+    "owner": "SIM-02",
+    "escalation": "local_alert",
+    "reminder_precedence": "emergency",
+    "after_local_ack": "acknowledged"
+  },
+  "authorized_share": {
+    "review_priority": "urgent",
+    "status": "acknowledged",
+    "issued_at_s": 360,
+    "deliver_at_s": 660,
+    "ground_checkpoints": [
+      { "mission_s": 480, "health_case_count": 0 },
+      {
+        "mission_s": 780,
+        "health_case_count": 1,
+        "delivered_at_s": 660,
+        "ground_ack": "pending"
+      }
+    ],
+    "ground_case_fields": [
+      "case_alias", "review_priority", "status", "delivered_at_s",
+      "ground_ack", "ground_acknowledged_at_s"
+    ]
+  },
+  "ground_forbidden_markers": [
+    "SIM-01", "SIM-02", "synthetic.health-story-v1", "health-story-v1:",
+    "drill-chest-pain-v1", "case-drill-chest-pain-v1",
+    "health_profile", "health_assessment", "health_trend", "health_followup",
+    "heart_rate", "bpm"
+  ]
+}

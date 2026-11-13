@@ -306,6 +306,19 @@ def queue_case_status(
     return receipt
 
 
+def read_case_delivery(db: Connection, run_id: str, case_id: str) -> Row | None:
+    """Look up the newest share from a private case ID without creating an alias."""
+    return db.execute(
+        """SELECT m.issued_at_s, m.deliver_at_s, m.delivered_at_s
+           FROM operations o JOIN messages m ON m.run_id = o.run_id
+           WHERE o.run_id = ? AND o.operation_scope = 'case_alias' AND o.operation_id = ?
+             AND m.direction = 'to_ground' AND m.message_id LIKE ?
+             AND json_extract(m.payload_json, '$.case_alias') = json_extract(o.receipt_json, '$.case_alias')
+           ORDER BY m.issued_at_s DESC, m.rowid DESC LIMIT 1""",
+        (run_id, case_id, CASE_MESSAGE_PREFIX + "%"),
+    ).fetchone()
+
+
 def _latest_delivered_cases(db: Connection, run_id: str, mission_s: int) -> dict[str, Row]:
     rows = db.execute(
         """SELECT message_id, delivered_at_s, acknowledged_at_s, payload_json FROM messages

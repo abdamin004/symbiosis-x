@@ -63,3 +63,38 @@ def load_organizer_manifest(path: str | Path | None = None) -> dict:
         if type(value) not in (int, float) or not 0 <= value <= 1:
             raise ValueError("INVALID_SYNTHETIC_HEADROOM")
     return source
+
+
+HEALTH_STORY_SCENARIO = ("health-story", "1")
+HEALTH_STORY_MEASUREMENT_PREFIX = "health-story-v1:"
+HEALTH_STORY_PATH = DEFAULT_MANIFEST_PATH.parent / "variants" / "health-story-v1.json"
+
+
+def load_health_story_manifest() -> dict:
+    """Read the versioned, Crew-private training fixture."""
+    fixture = json.loads(HEALTH_STORY_PATH.read_text(encoding="utf-8"))
+    if (
+        (fixture.get("scenario_id"), fixture.get("scenario_version")) != HEALTH_STORY_SCENARIO
+        or fixture.get("schema_version") != 1
+        or fixture.get("seed") != 4242
+        or fixture.get("synthetic") is not True
+        or fixture.get("visibility") != "crew"
+        or fixture.get("training_scope") != "simulated_training_only"
+    ):
+        raise ValueError("HEALTH_STORY_FIXTURE_MISMATCH")
+    previous = -1
+    ids = set()
+    for sample in fixture["readings"]:
+        observed, received = sample["observed_at_s"], sample["received_at_s"]
+        sample_id = sample["measurement_id"]
+        if (
+            type(observed) is not int or type(received) is not int
+            or not 0 <= observed <= received or received <= previous
+            or not sample_id.startswith(HEALTH_STORY_MEASUREMENT_PREFIX) or sample_id in ids
+        ):
+            raise ValueError("HEALTH_STORY_READING_MISMATCH")
+        ids.add(sample_id)
+        previous = received
+    if not fixture["readings"] or fixture["readings"][0]["received_at_s"] != 0:
+        raise ValueError("HEALTH_STORY_BASELINE_REQUIRED")
+    return fixture
