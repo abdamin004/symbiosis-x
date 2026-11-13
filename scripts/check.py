@@ -13,6 +13,7 @@ a required suite missing.
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import subprocess
 import sys
@@ -48,6 +49,8 @@ SUITES = (
     Suite("frontend-build", (NPM, "run", "build"), ROOT / "frontend", ROOT / "frontend/package.json"),
     Suite("browser-smoke", (NPX, "playwright", "test", "tests/smoke.spec.js"),
           ROOT / "frontend", ROOT / "frontend/tests/smoke.spec.js", kind="browser"),
+    Suite("asteria-flight", (NPX, "playwright", "test", "tests/asteria-flight.spec.js"),
+          ROOT / "frontend", ROOT / "frontend/tests/asteria-flight.spec.js", kind="browser"),
     # Required at release (SX-26A health replay, SX-11A privacy); --release fails until both land.
     Suite("health-replay", (NPX, "playwright", "test", "tests/health-demo.spec.js"),
           ROOT / "frontend", ROOT / "frontend/tests/health-demo.spec.js", kind="release"),
@@ -91,7 +94,7 @@ def main(argv: list[str] | None = None) -> int:
             continue
         print(f"\n== {suite.name}: {' '.join(suite.command[1:])}", flush=True)
         started = time.monotonic()
-        code = subprocess.run(suite.command, cwd=suite.cwd).returncode
+        code = subprocess.run(suite.command, cwd=suite.cwd, env={**os.environ, "SX_TEST_PYTHON": PYTHON}).returncode
         results.append((suite.name, "PASSED" if code == 0 else f"FAILED ({code})", time.monotonic() - started))
 
     print("\nSummary")
