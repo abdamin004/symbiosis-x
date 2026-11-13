@@ -22,3 +22,16 @@ The demo keeps procedure settings and allocated jobs in browser storage.
 Milestones for an inspection are derived from the deterministic task clock.
 Server-side journal capture, repeated-case analysis and measured crew
 observations are separate from this rehearsal.
+
+Life Support, Power, Comms, and Exterior Inspection each have their own saved
+assignee, deadline and repeat interval. Release is checked against crew and
+station availability. The active assignment drives the job board and avatar,
+and retains the procedure version in its case log. Launch, Ground relay and
+docking retain their separate command gates.
+
+Horizon can run an antenna inspection in parking orbit or at the station.
+The spacewalker and an airlock watch share one assignment. A link loss recalls
+the spacewalker, and a recalled inspection keeps ISS transfer held until a later
+inspection returns safely and the Commander verifies it. Suit channels and
+airlock states are synthetic. [NASA Quest airlock](https://www.nasa.gov/international-space-station/quest-airlock/)
+and [NASA spacesuits](https://www.nasa.gov/suits-and-rovers/spacesuits/) inform the scene.

@@ -235,6 +235,68 @@ test("timed demo recovers the crew in four active minutes without touching the c
   await expect(page.locator("#campaign-save")).toHaveText("Launch held · T+0:15");
 });
 
+test("the exterior workflow recalls on link loss and verifies a later repair once", async ({ page }) => {
+  await page.emulateMedia({reducedMotion:"reduce"});
+  await page.route(url=>url.pathname==="/flight",route=>route.fulfill({contentType:"text/html",body:flightHtml}));
+  await page.addInitScript(()=>{
+    if (!localStorage.getItem("eva-test-initialized")) {
+      localStorage.setItem("sx:launch-checkout:v1",JSON.stringify({
+        time:135,jobs:{},ignition:60,separation:105,insertion:135,
+      }));
+      localStorage.setItem("eva-test-initialized","1");
+    }
+  });
+  await page.goto("/flight?view=launch");
+  const button = name => page.getByRole("button",{name,exact:true});
+  const process = page.getByRole("dialog",{name:"Ship workflows"});
+  async function openExterior() {
+    await button("Workflows").click();
+    await process.getByRole("button",{name:"Exterior inspection",exact:true}).click();
+  }
+  async function step(count) {
+    for (let i=0;i<count;i++) await button("Advance one mission tick").click();
+  }
+  await openExterior();
+  await process.getByLabel("Qualified assignee").selectOption("0");
+  await button("Save procedure").click();
+  await button("Assign spacewalk").click();
+  await expect(process.locator("#process-crew-board")).toContainText("Airlock watch for Mara");
+  await expect(process.locator("#process-summary")).toContainText("v2 · Mara");
+  await button("Close").click();
+  await expect(page.locator("#guide-next")).toContainText("Wait for the spacewalker");
+  await step(3);
+  const suited = page.locator("#ship .pawn[data-suited=true]");
+  await expect(suited).toHaveCount(1);
+  await expect(suited.locator("meter")).toBeVisible();
+  await suited.click();
+  await expect(page.locator("#region-detail")).toContainText("O₂ reserve 76%");
+  await expect(page.locator("#region-detail")).toContainText("inner hatch closed · outer hatch open");
+  await button("Close Digital twin widget").click();
+  await page.reload();
+  await expect(suited).toHaveCount(1);
+  await openExterior();
+  await button("Simulate suit link loss").click();
+  await expect(process.locator("#process-events")).toContainText("Recall ordered");
+  await button("Close").click();
+  await step(2);
+  await expect(suited).toHaveCount(0);
+  await expect(page.locator("#guide-next")).toContainText("verify safe return in Workflows");
+  await openExterior();
+  await expect(button("Verify safe return")).toBeHidden();
+  await expect(button("Assign spacewalk")).toBeDisabled();
+  await button("Restore suit link").click();
+  await button("Assign spacewalk").click();
+  await button("Close").click();
+  await step(7);
+  await openExterior();
+  await button("Verify safe return").click();
+  await expect(process.locator("#process-events")).toContainText("Commander verified antenna service");
+  await expect(button("Verify safe return")).toBeHidden();
+  await button("Close").click();
+  await expect(page.locator("#eva-antenna")).toHaveText("Antenna · link verified");
+  await expect(page.locator("#guide-next")).toContainText("Coast to the departure point");
+});
+
 test("ISS replay portraits and pawns open crew anatomy with evidence for the selected region", async ({ page }) => {
   await page.setViewportSize({ width: 620, height: 820 });
   await page.route(url => url.pathname === "/flight", route => route.fulfill({ contentType: "text/html", body: flightHtml }));

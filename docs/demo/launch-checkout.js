@@ -1,5 +1,5 @@
 // Local Commander training exercise. The live golden run has its own clock and command gate.
-function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPlayback,resetCrew,crew,openCommand}) {
+function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPlayback,resetCrew,crew,openCommand,exteriorBusy,antennaUnverified}) {
   const saves = createFlightSaves();
   let config;
   const find = id => document.getElementById(id);
@@ -167,6 +167,10 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     if (activeBurn?.kind === "insertion") {
       return {phase:"Orbital insertion burn",next:"Raise periapsis into the parking orbit",reserve};
     }
+    if (!demo && exteriorBusy(config.id,state.time)) {
+      return {phase:"Exterior crew active",next:"Wait for the spacewalker to return before maneuvering",
+        reserve:reserve-(state.phasing === null ? 0 : rendezvous.phasing_cost),orbit:true,advance:true};
+    }
     if (!rendezvous) {
       const remaining = reserve-(state.deorbitAt === null ? 0 : returnPlan.reserve_cost);
       const checkout = state.systemsCheckAt === null ? {phase:"Stable orbit",next:"Assign Ivo to orbital systems check"}
@@ -181,6 +185,10 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     if (state.phasing === null) {
       const canPhase = reserve >= rendezvous.phasing_cost+rendezvous.retreat_reserve;
       const departure = state.insertion + config.navigation.departureS;
+      if (!demo && antennaUnverified(config.id,state.time)) {
+        return {phase:"ISS transfer held · antenna unverified",next:"Finish exterior inspection and verify safe return in Workflows",
+          reserve,orbit:true,canWaitForCrew:true};
+      }
       if (canPhase && state.time < departure) return {phase:"Parking orbit · waiting for ISS window",
         next:"Coast to the departure point · "+missionStamp(departure),reserve,orbit:true,advance:true,warpTo:departure};
       return {phase:"Stable orbit · ISS window open",next:canPhase ? "Commit ISS transfer burn" : "Approach held · reserve below minimum",
@@ -316,7 +324,9 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     return {missionId:demo ? config.id+"-timed-demo" : config.id,missionTitle:config.title,time:state.time,phaseStarted,crewStarted:state.insertion,
       frameIndex,visual,advance:!demo && canAdvance(),playable:!demo && canPlay(),speed,stationWork,
       steering:state.capture === null && state.deorbitAt === null, yaw:state.attitude,pitch:state.pitch,
-      playbackLimit:flight.warpTo,frame:{
+      playbackLimit:flight.warpTo,
+      evaEligible:Boolean(!demo && rendezvous && !activeBurn && !flight.terminal &&
+        (state.phasing === null || state.hatchAt !== null && state.departedAt === null)),frame:{
       phase:phases[frameIndex] ?? "Orbit",
       label:flight.phase,site,dock,
       vehicle:state.departedAt !== null ? config.ship + " return capsule" : config.ship,
@@ -540,6 +550,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     if (state.approachHeld) return "launch-approach-hold";
     if (flight.capture) return "launch-capture";
     if (flight.sample?.expired) return "launch-retreat";
+    if (!demo && antennaUnverified(config.id,state.time) && state.phasing === null) return "show-processes";
     if (flight.canOpen) return "launch-open-hatch";
     if (state.capture !== null && state.hatchAt === null) {
       return flight.seal.startsWith("Verified") ? "launch-check-pressure" : "launch-check-seal";
@@ -649,7 +660,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     find("launch-research").hidden = state.transferAt === null || state.researchAt !== null;
     const researchDone = state.researchAt !== null && state.time >= state.researchAt+returnPlan.research_s;
     find("launch-archive").hidden = !researchDone || state.archivedAt !== null;
-    find("launch-depart").hidden = state.archivedAt === null || state.departedAt !== null;
+    find("launch-depart").hidden = state.archivedAt === null || state.departedAt !== null || Boolean(exteriorBusy(config.id,state.time));
     find("station-research-board").hidden = state.hatchAt === null || state.departedAt !== null;
     find("station-research-progress").value = state.researchAt === null ? 0 :
       Math.min(100,100*(state.time-state.researchAt)/returnPlan.research_s);
@@ -677,7 +688,8 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     find("launch-approach-hold").setAttribute("aria-pressed",String(state.approachHeld));
     find("launch-capture").hidden = !flight.sample || state.capture !== null || flight.terminal;
     find("launch-capture").disabled = !flight.capture;
-    find("launch-retreat").hidden = !rendezvous || !flight.orbit || state.capture !== null || flight.terminal || Boolean(activeBurn);
+    find("launch-retreat").hidden = !rendezvous || !flight.orbit || state.capture !== null || flight.terminal ||
+      Boolean(activeBurn) || Boolean(exteriorBusy(config.id,state.time));
     find("launch-approach").hidden = !flight.sample || state.departedAt !== null;
     find("launch-range").textContent = flight.sample ? flight.sample.range + " game units" : "Awaiting phasing";
     find("launch-closing").textContent = flight.sample ? flight.sample.closing + " units/tick" : "—";
@@ -1211,7 +1223,8 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
   });
   find("launch-retreat").addEventListener("click", () => {
     const flight = flightState();
-    if (activeBurn || !rendezvous || !flight.orbit || state.capture !== null || flight.terminal) return;
+    if (activeBurn || !rendezvous || !flight.orbit || state.capture !== null || flight.terminal ||
+        exteriorBusy(config.id,state.time)) return;
     stopPlayback();
     state.retreat = state.time;
     persist();
