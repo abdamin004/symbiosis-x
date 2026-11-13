@@ -20,6 +20,8 @@ export default defineConfig({
     proxy: {
       "/api": { target: apiTarget, changeOrigin: false },
       "/health": { target: apiTarget, changeOrigin: false },
+      // The mission canvas (cabin deck) is served by the backend when SYMBIOSIS_X_MISSION_CANVAS is set.
+      "/mission": { target: apiTarget, changeOrigin: false },
     },
   },
 });
