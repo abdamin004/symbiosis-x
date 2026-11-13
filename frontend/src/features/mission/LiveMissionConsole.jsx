@@ -5,6 +5,7 @@ import ApprovalPanel from "../crew/ApprovalPanel.jsx";
 import CandidateList from "../crew/CandidateList.jsx";
 import CheckInForm from "../crew/CheckInForm.jsx";
 import { CrewHealthDashboard } from "../crew/CrewHealthPanel.jsx";
+import HealthReminders from "../crew/HealthReminders.jsx";
 import RadiationContext from "../crew/RadiationContext.jsx";
 import { HEALTH_METRICS } from "../../api/healthCatalog.js";
 import AdvisoryForm from "../ground/AdvisoryForm.jsx";
@@ -62,6 +63,10 @@ function RunProjection({ role, runId, crewId }) {
         <CrewHealthDashboard profile={view.health_profile} assessment={view.health_assessment} metrics={HEALTH_METRICS}
           measureHref={"/runs/" + encodeURIComponent(runId) + "/crew/measure" + subjectQuery}
           emergencyHref={"/runs/" + encodeURIComponent(runId) + "/crew/emergency"} />
+        <HealthReminders runId={runId} followup={view.health_followup}
+          measureHref={"/runs/" + encodeURIComponent(runId) + "/crew/measure" + subjectQuery}
+          emergencyHref={"/runs/" + encodeURIComponent(runId) + "/crew/emergency"}
+          onChange={() => setReload((n) => n + 1)} />
         <section className="mt-6 rounded-lg border border-sky-200 bg-sky-50 p-4" data-testid="live-cabin-context">
           <h2 className="font-semibold">Cabin context</h2>
           <p className="mt-1 text-sm text-slate-700">{view.co2
