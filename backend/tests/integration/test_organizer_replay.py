@@ -53,6 +53,13 @@ def _replay(client, scenario_id, run_index):
             )
         ]
 
+    with client.app.state.repository.read() as db:
+        power_change = db.execute(
+            "SELECT payload_json FROM events WHERE run_id = ? AND event_type = 'fault.power_drop'",
+            (run_id,),
+        ).fetchone()
+        crew_power = json.loads(power_change[0])["power_headroom_kw"]
+
     second = client.post(api + "/advance", json={
         "advance_id": "advance-to-900", "expected_step": 5, "target_mission_s": 900,
     }, headers=facilitator)
@@ -63,7 +70,7 @@ def _replay(client, scenario_id, run_index):
         "crew_revision": crew780.json()["decision_rev"],
         "ground_revision": ground780.json()["packet"]["decision_rev"],
         "crew_co2": crew780.json()["co2"]["value"],
-        "crew_power": crew780.json()["power_headroom"]["value"],
+        "crew_power": crew_power,
         "ground_co2": ground780.json()["packet"]["co2"]["value"],
         "ground_power": ground780.json()["packet"]["power_headroom"]["value"],
         "ground_snapshot": ground780.json()["packet"]["snapshot_id"],
