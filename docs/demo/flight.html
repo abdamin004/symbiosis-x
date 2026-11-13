@@ -374,6 +374,14 @@ button[aria-pressed=true]{background:#3d315e}
 #navigation-mini canvas,#navigation-track{display:block;width:100%;border-radius:6px}
 #navigation-mini small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.68rem;color:#c7d7ed}
 #orbit-dialog{width:min(680px,calc(100% - 1.5rem))}
+#process-dialog{width:min(670px,calc(100% - 1.5rem))}
+#process-diagram{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:.4rem;padding:0;list-style:none}
+#process-diagram li{padding:.55rem;background:#223451;border-radius:6px;font-size:.8rem}
+#process-diagram li[data-reached=true]{box-shadow:inset 3px 0 #9cebd0}
+#process-settings{display:flex;gap:.65rem;flex-wrap:wrap;align-items:end;margin:.8rem 0}
+#process-settings label{display:grid;gap:.2rem;font-size:.8rem}
+#process-settings select{background:#172944;color:inherit;padding:.35rem;border:1px solid #526585;border-radius:5px}
+#process-events{padding-left:1.3rem;font: .78rem/1.7 ui-monospace,monospace;color:#c1d2ef}
 .launch-field[data-view=launch]::before{background:linear-gradient(90deg,#091421ae,transparent 37%,transparent 63%,#091421ae)}
 .pad-checkout{display:grid;grid-template-columns:minmax(235px,296px) minmax(0,1fr) minmax(260px,350px);align-items:center;gap:1rem;padding:calc(var(--launch-clearance,100px) + .7rem) clamp(.75rem,2.4vw,2.4rem) 1rem}
 .pad-checkout .launch-board{width:auto;margin:0;max-height:calc(100svh - var(--launch-clearance,100px) - 2rem);background:linear-gradient(140deg,#152538ed,#101a2be8);border-color:#8dabc849}
@@ -462,6 +470,7 @@ __HUD_ICONS__
     <button type="button" id="show-inspector" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#hud-activity"/></svg>Inspector</button>
     <button type="button" id="show-crew" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#hud-users"/></svg>Crew</button>
     <button type="button" id="show-workflow" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#hud-clipboard-list"/></svg>Orders</button>
+    <button type="button" id="show-processes"><svg class="icon" aria-hidden="true"><use href="#hud-clipboard-list"/></svg>Workflows</button>
     <button type="button" id="show-orbit" hidden>Orbit map</button>
     <button type="button" id="show-briefing">Briefing</button>
     <button type="button" id="show-command" hidden>Flight command</button>
@@ -513,7 +522,7 @@ __HUD_ICONS__
     <div class="order-card">
       <strong>Routine · Scrubber check</strong>
       <p id="routine-state"></p>
-      <button id="assign-routine" type="button">Assign Ivo to routine check</button>
+      <button id="assign-routine" type="button">Release inspection</button>
     </div>
     <div class="order-card">
       <strong>Ground · Fault inspection</strong>
@@ -691,6 +700,25 @@ __HUD_ICONS__
   <ol id="mission-objective-list" class="objective-list"></ol>
   <button id="objective-open-launch" type="button">Open launch command</button>
 </dialog>
+<dialog id="process-dialog" class="mission-dialog" aria-labelledby="process-title">
+  <div class="dialog-top"><h2 id="process-title">Ship workflows</h2><form method="dialog"><button>Close</button></form></div>
+  <nav class="choices" id="process-list" aria-label="Operating procedures"></nav>
+  <p id="process-source"></p>
+  <ol id="process-diagram"></ol>
+  <form id="process-settings">
+    <label>Qualified assignee <select id="process-member"><option value="2">Ivo · Systems specialist</option><option value="0">Mara · Commander</option></select></label>
+    <label>Due after watch start <select id="process-deadline"><option value="180">3 min</option><option value="360">6 min</option><option value="600">10 min</option></select></label>
+    <button type="submit">Save procedure</button>
+  </form>
+  <button id="process-release" type="button">Release inspection</button>
+  <p id="process-config" role="status"></p>
+  <section id="process-trace" aria-label="Process event log">
+    <h3>Process event log</h3>
+    <p id="process-summary"></p>
+    <ol id="process-events"></ol>
+    <button type="button" id="process-export" hidden>Export case events</button>
+  </section>
+</dialog>
 <dialog id="mission-briefing" class="mission-dialog" aria-labelledby="briefing-title">
   <div class="dialog-top"><h2 id="briefing-title">Asteria mission briefing</h2><form method="dialog"><button>Close</button></form></div>
   <p>Take four crew members to the research station, hand off the kit, and bring the crew home.</p>
@@ -747,6 +775,7 @@ __HUD_ICONS__
       <button id="launch-briefing" type="button">Briefing</button>
       <button id="launch-open-missions" type="button" hidden>Game menu</button>
       <button id="launch-open-objectives" type="button" hidden>Objectives</button>
+      <button id="launch-show-processes" type="button" hidden>Workflows</button>
       <button id="pad-audio" type="button" aria-pressed="true">Voice cues</button>
       <a href="/mission">Mission control</a>
     </div>
@@ -871,6 +900,7 @@ __LAUNCH_CHECKOUT__
 __FLIGHT_CREW__
 __DOCKING_SCENE__
 __FLIGHT_NAVIGATION__
+__FLIGHT_PROCESSES__
 </script>
 <script>
 const element = id => document.getElementById(id);
@@ -967,7 +997,21 @@ const fixtures = [
   {id:"stores",room:"cargo-01",x:238,y:181,icon:"package",name:"Cargo lockers",use:"Payload stowage",task:"Reconcile inventory",result:"Inventory reconciled",crew:0},
 ];
 const equipment = new Map(fixtures.map(asset => [asset.id, asset]));
-const tasks = [];
+const allocator = createFlightAllocator({
+  tick:TICK_SECONDS,
+  position(member) { return crewPositions.get(pawns.get(member)); },
+  booked(job) {
+    if (!job.origin || !equipment.has(job.asset)) return "The assignee or station is unavailable.";
+    if (tasks.some(other => other.mode === job.mode && other.queued <= job.queued && other.finishes > job.queued &&
+      (other.member === job.member || other.asset === job.asset))) return "The assignee or station already has a job.";
+    if (peerWork(job.member,job.queued)) return "The assignee is performing a crew observation.";
+    if (job.member === 1 && connectedFlight?.stationWork) return "The assignee is collecting station research samples.";
+    const ground = !connectedFlight && groundInspection(currentFrame());
+    if (ground && (job.member === 2 || job.asset === "scrubber")) return "The Ground inspection occupies this assignee or station.";
+    return "";
+  },
+});
+const tasks = allocator.tasks;
 let crewSession;
 const crewRoutines = createCrewRoutines({
   count:duties.length,tick:TICK_SECONDS,
@@ -1770,6 +1814,70 @@ function currentFrame() {
 
 let lastRenderedSecond = -1;
 
+let selectedProcess = "shift";
+let lastProcessRender = "";
+let processExport = [];
+let launchProcessEvents = {};
+let processMode = "replay";
+function routineJob(frame) {
+  return tasks.find(task=>task.mode === crewMode() && task.routine && task.queued<=frame.time);
+}
+function routineDraft(frame) {
+  return allocator.routine(crewMode(),frame.time,connectedFlight?.crewStarted ?? 0);
+}
+function renderProcess(frame) {
+  if (!element("process-dialog").open) return;
+  const process = flightProcedures[selectedProcess];
+  const onPad = processMode === "pad";
+  const routine = routineJob(frame);
+  const settings = allocator.settings(crewMode());
+  const order = selectedProcess === "relay" && !connectedFlight ? flightWorkflow.read() : null;
+  const relayEvents = order ? [[order.sent,"Advice sent"],[order.arrives,"Advice delivered"],
+    [order.decided,order.decision],[order.completed,"Report recorded"],[order.reportDue,"Report delivered"]]
+    .filter(([time])=>time != null && time <= frame.time) : [];
+  const events = selectedProcess === "shift" && routine && !onPad ? allocator.events(routine,frame.time)
+    : launchProcessEvents[selectedProcess] ?? relayEvents;
+  const configurable = selectedProcess === "shift" && !onPad;
+  const reason = configurable && !routine ? allocator.problem(routineDraft(frame)) : "";
+  const key = JSON.stringify([processMode,selectedProcess,settings,routine?.caseId,events,reason]);
+  if (lastProcessRender === key) return;
+  lastProcessRender = key;
+  processExport = configurable && routine ? events.map(([mission_s,event],sequence)=>({
+    case_id:routine.caseId,procedure:"life-support-watch",version:routine.version,station:routine.asset,
+    assignee:data.crew[routine.member],mission_s,event,sequence:sequence+1,
+  })) : [];
+  element("process-export").hidden = !processExport.length;
+  element("process-source").textContent = process.source;
+  element("process-diagram").replaceChildren(...process.steps.map((step,i)=>{
+    const item = document.createElement("li");
+    item.textContent = step;
+    item.dataset.reached = i < events.length;
+    return item;
+  }));
+  element("process-settings").hidden = !configurable;
+  element("process-release").hidden = !configurable || Boolean(routine);
+  element("process-release").disabled = Boolean(reason);
+  element("process-config").textContent = configurable
+    ? "Procedure v"+settings.version+" · "+characters[settings.member].short+" · "+(reason || "Changes apply to new assignments")
+    : selectedProcess === "shift" ? "Life Support watch opens after orbit insertion." : "Mission-time handoffs";
+  element("process-summary").textContent = configurable && routine
+    ? routine.caseId+" · v"+routine.version+" · "+characters[routine.member].short+" · "+equipment.get(routine.asset).name+
+      (events.length === 4 ? " · "+(routine.finishes-routine.queued)+" s from release to result" : " · In progress")
+    : events.length ? "Observed handoffs" : "No recorded handoffs at this checkpoint.";
+  element("process-events").replaceChildren(...events.map(([time,label],i)=>{
+    const event = document.createElement("li");
+    event.textContent = "T+"+clock(time)+" · "+label+(i ? " · +"+(time-events[i-1][0])+" s" : "");
+    return event;
+  }));
+}
+function releaseInspection() {
+  const frame = currentFrame();
+  if (routineJob(frame)) return;
+  const reason = allocator.allocate(routineDraft(frame));
+  if (reason) element("process-config").textContent = reason;
+  if (connectedFlight) launchMission.refreshCrewWork();
+  render();
+}
 function render() {
   const frame = currentFrame();
   updateCrewRoutines(frame);
@@ -1782,18 +1890,21 @@ function render() {
   element("workflow-state").textContent = flightWorkflow.status(frame, clock);
   element("monitor-state").textContent = frame.removal != null && frame.removal < 20
     ? "Monitor · Primary scrubber degraded. Inspection records evidence." : "";
-  const routine = tasks.find(task=>task.mode === crewMode() && task.routine && task.queued<=frame.time);
+  const routine = routineJob(frame);
   const scrubber = taskAt("scrubber",frame.time);
   const rackBusy = Boolean(scrubber && frame.time < scrubber.finishes);
   const ivoBusy = Boolean(activeTask(2,frame.time));
   const windowEnds = flightWorkflow.timebox(frame.time).finishes;
-  const routineStatus = flightWorkflow.routine(frame,routine);
+  const draft = routineDraft(frame);
+  const routineStatus = routine && frame.time >= routine.finishes ? "Complete" : routine
+    ? frame.time >= routine.arrival ? "Inspecting" : "Travelling" : frame.time >= draft.deadline ? "Deadline missed" : "Awaiting Commander";
   element("routine-state").textContent = routineStatus === "Complete"
     ? routineStatus + " at " + clock(routine.finishes) + " · recorded at scrubber rack"
-    : routineStatus + " · due 06:00";
+    : routineStatus + " · due " + clock(routine?.deadline ?? draft.deadline);
   const assignRoutine = element("assign-routine");
-  assignRoutine.hidden = Boolean(routine) || frame.time >= flightWorkflow.routineDue;
-  assignRoutine.disabled = rackBusy || ivoBusy || Boolean(groundInspection(frame)) || windowEnds > flightWorkflow.routineDue;
+  assignRoutine.hidden = Boolean(routine) || frame.time >= draft.deadline;
+  assignRoutine.disabled = Boolean(allocator.problem(draft));
+  renderProcess(frame);
   element("assign-order").hidden = !flightWorkflow.canDecide(frame);
   element("assign-order").disabled = ivoBusy || rackBusy || windowEnds >= (flightWorkflow.read()?.expires ?? 0);
   element("hold-order").hidden = !flightWorkflow.canDecide(frame);
@@ -2190,12 +2301,10 @@ element("assign-asset").addEventListener("click", () => {
   const assigned = nextTick(missionTime), arrival = assigned + TICK_SECONDS;
   const previous = crewPositions.get(pawns.get(assetCrew));
   const origin = {room:previous.room,x:previous.x,y:previous.y};
-  // Assigning while scrubbed back branches the local task history.
-  discardFutureTasks(queued);
   const result = asset.id === "bench"
     ? engineeringResult(benchMode,checkpoints[checkpoints.findLastIndex(frame=>frame.time<=arrival)])
     : asset.result;
-  tasks.push({mode:crewMode(),asset:asset.id,action:asset.task,member:assetCrew,queued,assigned,arrival,origin,
+  allocator.allocate({mode:crewMode(),asset:asset.id,action:asset.task,member:assetCrew,queued,assigned,arrival,origin,
     finishes:arrival+WORK_SECONDS,result});
   render();
 });
@@ -2253,21 +2362,41 @@ for (const button of document.querySelectorAll("[data-profile]")) {
 choices("series", Object.entries(signals).map(([key,[name]])=>[key,key==="emg"?"Synthetic EMG":name]),
   value=>{selectedSignal = value;});
 function discardFutureTasks(time) {
-  const mode = crewMode();
-  for (let i = tasks.length-1; i >= 0; i--) {
-    if (tasks[i].mode === mode && tasks[i].queued > time) tasks.splice(i,1);
-  }
+  allocator.clear(crewMode(),time);
 }
-element("assign-routine").addEventListener("click", () => {
-  if (element("assign-routine").disabled || element("assign-routine").hidden) return;
-  const frame = currentFrame();
-  const [room] = station(duties[2],2);
-  const origin = stationPoint(room,2);
-  const work = flightWorkflow.timebox(frame.time);
-  discardFutureTasks(frame.time);
-  tasks.push({...work,mode:crewMode(),origin,queued:frame.time,asset:"scrubber",member:2,routine:true,
-    action:"Inspect the scrubber on the routine watch",result:"Routine scrubber check recorded"});
-  render();
+element("assign-routine").addEventListener("click",releaseInspection);
+element("process-release").addEventListener("click",releaseInspection);
+choices("process-list",Object.entries(flightProcedures).map(([id,process])=>[id,process.name]),id=>{
+  selectedProcess = id;
+  setChoices("process-list",id);
+});
+function openProcesses(mode) {
+  processMode = mode;
+  if (mode === "pad") selectedProcess = "checkout";
+  const settings = allocator.settings(crewMode());
+  element("process-member").value = settings.member;
+  element("process-deadline").value = settings.deadline;
+  setChoices("process-list",selectedProcess);
+  lastProcessRender = "";
+  element("process-dialog").showModal();
+  renderProcess(currentFrame());
+}
+element("show-processes").addEventListener("click",()=>openProcesses(crewMode()));
+element("launch-show-processes").addEventListener("click",()=>openProcesses("pad"));
+element("process-settings").addEventListener("submit",event=>{
+  event.preventDefault();
+  allocator.configure(crewMode(),Number(element("process-member").value),Number(element("process-deadline").value));
+  renderProcess(currentFrame());
+});
+element("process-export").addEventListener("click",()=>{
+  if (!processExport.length) return;
+  const blob = new Blob([JSON.stringify(processExport,null,2)],{type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = processExport[0].case_id+"-events.json";
+  link.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
 });
 element("assign-order").addEventListener("click", () => {
   if (element("assign-order").disabled || element("assign-order").hidden) return;
@@ -2333,7 +2462,8 @@ let replayTime = 0;
 const launchMission = bindLaunchCheckout(data.launch,{
   crew: characters.map((character,index)=>({name:character.name,role:duties[index].role,portrait:()=>crewFace(index)})),
   pauseReplay:stop,
-  onCanvas(flight) {
+  onCanvas(flight,procedureEvents) {
+    launchProcessEvents = procedureEvents;
     if (!connectedFlight && flight) {
       replayTime = missionTime;
       commandPanel.open(element("show-command"));
@@ -2372,7 +2502,7 @@ const launchMission = bindLaunchCheckout(data.launch,{
   },
   resetCrew() {
     for (let i = peerChecks.length-1; i >= 0; i--) if (peerChecks[i].mode === "asteria") peerChecks.splice(i,1);
-    for (let i = tasks.length-1; i >= 0; i--) if (tasks[i].mode === "asteria") tasks.splice(i,1);
+    allocator.clear("asteria");
     checkIns.clear();
     reduced.clear();
   },

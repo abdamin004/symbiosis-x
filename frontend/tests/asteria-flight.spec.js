@@ -66,6 +66,9 @@ test("Asteria hands off to the crew canvas and returns to Earth in one saved mis
   await expect(page.locator("#startup-status [data-state=online]")).toHaveCount(4);
   await expect(page.locator("#launch-jobs [data-state=verified]")).toHaveCount(3);
   await transport.getByRole("button", { name:"Pause", exact:true }).click();
+  await button("Workflows").click();
+  await expect(page.getByRole("region",{name:"Process event log"})).toContainText("Crew checks verified");
+  await button("Close").click();
   await button("Arm countdown").click();
   await expect(liftoff).toBeDisabled();
   await advance(1);
@@ -182,9 +185,30 @@ test("ISS replay portraits and pawns open crew anatomy with evidence for the sel
   await expect(twin).toBeVisible();
   await expect(twin.locator("#personnel-name")).not.toHaveText(firstMember);
   await expect(twin.getByRole("tab", { name: "Anatomy", exact: true })).toHaveAttribute("aria-selected", "true");
+  await twin.getByRole("button",{name:"Close Digital twin widget"}).click();
+  await page.getByRole("button",{name:"Workflows",exact:true}).click();
+  const process = page.getByRole("dialog",{name:"Ship workflows"});
+  await process.getByLabel("Qualified assignee").selectOption("0");
+  await process.getByRole("button",{name:"Save procedure"}).click();
+  await process.getByRole("button",{name:"Release inspection"}).click();
+  await expect(process.locator("#process-summary")).toContainText(/v2 · Mara/);
+  await process.getByRole("button",{name:"Close"}).click();
   const resources = page.getByRole("group", {name:"Mission resources"});
   await expect(resources).toContainText("40 meals");
   await page.getByRole("button", {name:"Skip one mission hour"}).click();
   await page.getByRole("button", {name:"Skip one mission hour"}).click();
   await expect(resources).not.toContainText("40 meals");
+  await page.getByRole("button",{name:"Workflows",exact:true}).click();
+  await expect(process.getByRole("region",{name:"Process event log"})).toContainText("Result recorded");
+  await expect(process.locator("#process-summary")).toContainText("45 s from release to result");
+  await process.getByLabel("Qualified assignee").selectOption("2");
+  await process.getByRole("button",{name:"Save procedure"}).click();
+  await expect(process.locator("#process-config")).toContainText("Procedure v3 · Ivo");
+  await expect(process.locator("#process-summary")).toContainText("v2 · Mara");
+  const [download] = await Promise.all([
+    page.waitForEvent("download"), process.getByRole("button",{name:"Export case events"}).click(),
+  ]);
+  const events = JSON.parse(readFileSync(await download.path(),"utf8"));
+  expect(events.map(event=>event.event)).toEqual(["Released","Travelling","Inspection started","Result recorded"]);
+  expect(events.every(event=>event.assignee === "SIM-01" && event.version === 2)).toBe(true);
 });

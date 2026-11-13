@@ -40,6 +40,7 @@ def build(output: Path) -> None:
     crew_routines = (ROOT / "docs/demo/flight-crew.js").read_text(encoding="utf-8")
     docking_scene = (ROOT / "docs/demo/docking-scene.js").read_text(encoding="utf-8")
     navigation = (ROOT / "docs/demo/flight-navigation.js").read_text(encoding="utf-8")
+    processes = (ROOT / "docs/demo/flight-processes.js").read_text(encoding="utf-8")
     icons = (ROOT / "frontend/src/ui/icons/lucide/flight.svg").read_text(encoding="utf-8")
     output.write_text(
         template.replace("__FLIGHT_DATA__", data)
@@ -47,7 +48,8 @@ def build(output: Path) -> None:
         .replace("__FLIGHT_STATIONS__", stations).replace("__LAUNCH_SCENE__", launch_scene)
         .replace("__LAUNCH_CHECKOUT__", checkout).replace("__HUD_ICONS__", icons)
         .replace("__FLIGHT_ANATOMY__", anatomy).replace("__FLIGHT_CREW__", crew_routines)
-        .replace("__DOCKING_SCENE__", docking_scene).replace("__FLIGHT_NAVIGATION__", navigation),
+        .replace("__DOCKING_SCENE__", docking_scene).replace("__FLIGHT_NAVIGATION__", navigation)
+        .replace("__FLIGHT_PROCESSES__", processes),
         encoding="utf-8",
     )
 

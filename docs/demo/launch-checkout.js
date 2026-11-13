@@ -300,6 +300,7 @@ function bindLaunchCheckout(config, {pauseReplay,onCanvas,onPlayback,resetCrew,c
     find("pad-controls").hidden = !launch || inOrbit;
     find("launch-open-missions").hidden = !launch;
     find("launch-open-objectives").hidden = !launch;
+    find("launch-show-processes").hidden = !launch;
     find("launch-field").dataset.view = view;
     if (menu) {
       scene.setCheckout(null);
@@ -311,7 +312,18 @@ function bindLaunchCheckout(config, {pauseReplay,onCanvas,onPlayback,resetCrew,c
     }
     if (launch) render(animate);
     renderNavigation(launch ? flightState() : null);
-    onCanvas(inOrbit ? canvasState(flightState()) : null);
+    const checks = ready() ? Math.max(...config.jobs.map(job=>state.jobs[job.id].due)) : null;
+    const reached = milestones=>milestones.filter(([time])=>time !== null && time<=state.time)
+      .sort(([first],[second])=>first-second);
+    const procedureEvents = launch ? {
+      checkout:reached([[state.startupAt,"Startup requested"],[checks,"Crew checks verified"],
+        [state.armed,"Countdown armed"],[state.ignition,"Launch committed"]]),
+      docking:reached([[state.phasing,"Phasing committed"],[state.capture,"Mechanical capture"],
+        [state.hatchAt === null || state.sealAt === null || state.pressureAt === null ? null : Math.max(state.sealAt,state.pressureAt),"Hatch evidence verified"],
+        [state.hatchAt,"Hatch authorized"],[state.transferAt,"Cargo receipt accepted"],
+        [state.archivedAt,"Research archived"],[state.departedAt,"Departure committed"]]),
+    } : {};
+    onCanvas(inOrbit ? canvasState(flightState()) : null,procedureEvents);
   }
 
   function advance() {
