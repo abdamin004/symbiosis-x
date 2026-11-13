@@ -1,0 +1,209 @@
+{
+  "schema_version": 1,
+  "catalog": "catalogs/crew/health-metrics.json",
+  "synthetic_data_only": true,
+  "disclaimer": "Training-simulation help cards for fictional crew. They summarize published measurement methods and are not medical advice or a clinical protocol.",
+  "sources_checked_on": "2026-11-13",
+  "guides": [
+    {
+      "metric_id": "heart_rate",
+      "title": "Heart rate",
+      "capture": "assigned_device",
+      "assigned_device": "Synthetic wrist heart-rate sensor (simulated)",
+      "what": "Beats per minute (bpm) from the assigned wearable, or a manual pulse count.",
+      "why": "Heart rate follows activity, stress and recovery. A resting value is only comparable with other resting values.",
+      "how": [
+        "For a resting reading, sit quietly for about five minutes before recording.",
+        "For a manual count, press two fingers on the wrist or side of the neck and count beats for 30 seconds, then double it.",
+        "Record whether the reading was taken at rest, during exercise or during recovery."
+      ],
+      "context_note": "Exercise versus rest: keep the activity context with each reading. Do not compare a reading taken during or right after exercise with a resting baseline.",
+      "ground_based_procedure": true,
+      "procedure_label": "Ground-based method: the cited pulse procedure was written for use on Earth, not validated in spaceflight.",
+      "sources": [
+        {
+          "title": "Pulse",
+          "publisher": "MedlinePlus Medical Encyclopedia, U.S. National Library of Medicine",
+          "version": "web page, accessed 2026-11-13",
+          "url": "https://medlineplus.gov/ency/article/003399.htm"
+        }
+      ]
+    },
+    {
+      "metric_id": "blood_pressure",
+      "title": "Blood pressure",
+      "capture": "assigned_device",
+      "assigned_device": "Synthetic automatic upper-arm cuff monitor (simulated)",
+      "what": "Systolic and diastolic pressure in mmHg, recorded as a pair.",
+      "why": "Pressure readings shift with posture, recent activity and cuff fit, so the setup decides whether readings can be compared.",
+      "how": [
+        "Avoid caffeine, exercise and smoking for 30 minutes before measuring.",
+        "Sit with the back supported and feet flat, and rest quietly for five minutes.",
+        "Wrap a correctly sized cuff on the bare upper arm, with the arm supported at heart level.",
+        "Stay still and silent during the reading. Take two readings about one minute apart and record both."
+      ],
+      "context_note": "Cuff setup: use an automatic upper-arm cuff of the correct size. Wrist and finger monitors are not recommended because they give less reliable readings.",
+      "ground_based_procedure": true,
+      "procedure_label": "Ground-based method: home and clinic cuff procedures assume Earth gravity and a seated posture.",
+      "sources": [
+        {
+          "title": "Home Blood Pressure Monitoring",
+          "publisher": "American Heart Association",
+          "version": "web page, accessed 2026-11-13",
+          "url": "https://www.heart.org/en/health-topics/high-blood-pressure/understanding-blood-pressure-readings/monitoring-your-blood-pressure-at-home"
+        },
+        {
+          "title": "Measurement of Blood Pressure in Humans: A Scientific Statement From the American Heart Association",
+          "publisher": "Hypertension, American Heart Association",
+          "version": "2019; 73(5)",
+          "url": "https://doi.org/10.1161/HYP.0000000000000087"
+        }
+      ]
+    },
+    {
+      "metric_id": "glucose",
+      "title": "Blood glucose",
+      "capture": "assigned_device",
+      "assigned_device": "Synthetic fingerstick glucose meter (simulated)",
+      "what": "Glucose concentration in mg/dL, with the measurement method and meal context.",
+      "why": "Glucose changes with meals and with the sampling method, so a value without both is hard to interpret.",
+      "how": [
+        "Wash and dry hands before a fingerstick.",
+        "Apply the capillary blood drop to the meter strip and read the result.",
+        "Record the method (meter or lab) and the meal context, for example fasting, before a meal or two hours after a meal."
+      ],
+      "context_note": "Glucose meter versus lab method: a self-test meter reads capillary blood and is allowed a wider error than a laboratory plasma glucose method. Record the method with each value and do not mix them in one trend.",
+      "ground_based_procedure": true,
+      "procedure_label": "Ground-based method: laboratory plasma glucose and meter accuracy limits are defined for ground laboratories and devices.",
+      "sources": [
+        {
+          "title": "Blood Glucose Monitoring Devices",
+          "publisher": "U.S. Food and Drug Administration",
+          "version": "web page, accessed 2026-11-13",
+          "url": "https://www.fda.gov/medical-devices/in-vitro-diagnostics/blood-glucose-monitoring-devices"
+        },
+        {
+          "title": "ISO 15197:2013 In vitro diagnostic test systems — Requirements for blood-glucose monitoring systems for self-testing in managing diabetes mellitus",
+          "publisher": "International Organization for Standardization",
+          "version": "Edition 2, 2013 (confirmed 2018)",
+          "url": "https://www.iso.org/standard/54976.html"
+        },
+        {
+          "title": "6. Glycemic Goals and Hypoglycemia: Standards of Care in Diabetes—2025",
+          "publisher": "Diabetes Care, American Diabetes Association",
+          "version": "2025; 48(Supplement 1): S128–S145",
+          "url": "https://doi.org/10.2337/dc25-S006"
+        }
+      ]
+    },
+    {
+      "metric_id": "temperature",
+      "title": "Body temperature",
+      "capture": "assigned_device",
+      "assigned_device": "Synthetic digital thermometer (simulated)",
+      "what": "Body temperature in °C, with the measurement method and the body site.",
+      "why": "Normal temperature differs by site and time of day, so readings are comparable only when the site matches.",
+      "how": [
+        "Choose one site, such as oral, ear, forehead or armpit, and keep using it.",
+        "For an oral reading, wait about 30 minutes after eating, drinking or exercise.",
+        "Record the method and site with the value."
+      ],
+      "context_note": "Measurement site: oral, ear, forehead and armpit readings differ. An armpit reading usually runs lower than an oral one, so record the site and compare only like with like.",
+      "ground_based_procedure": true,
+      "procedure_label": "Ground-based method: normal ranges are published for people on Earth.",
+      "sources": [
+        {
+          "title": "Body temperature norms",
+          "publisher": "MedlinePlus Medical Encyclopedia, U.S. National Library of Medicine",
+          "version": "web page, accessed 2026-11-13",
+          "url": "https://medlineplus.gov/ency/article/001982.htm"
+        }
+      ]
+    },
+    {
+      "metric_id": "sleep",
+      "title": "Sleep",
+      "capture": "manual_self_report",
+      "assigned_device": null,
+      "what": "Sleep as a duration in minutes, or as start and end mission times for one sleep period.",
+      "why": "Sleep timing and length shape alertness on the next shift. A diary keeps each period separate.",
+      "how": [
+        "After waking, record either the total sleep in minutes or the start and end mission times.",
+        "Record the main sleep period and each nap as separate entries.",
+        "Do not fill in a missing night from memory days later. Leave it missing."
+      ],
+      "context_note": "Sleep periods: log each sleep period on its own, with either a duration or a start and end time, not both. The adult reference of at least seven hours is a ground-based recommendation, not a mission rule.",
+      "ground_based_procedure": true,
+      "procedure_label": "Ground-based method: the sleep diary and the sleep-duration consensus come from ground studies.",
+      "sources": [
+        {
+          "title": "The Consensus Sleep Diary: Standardizing Prospective Sleep Self-Monitoring",
+          "publisher": "Sleep",
+          "version": "2012; 35(2): 287–302",
+          "url": "https://doi.org/10.5665/sleep.1642"
+        },
+        {
+          "title": "Recommended Amount of Sleep for a Healthy Adult: A Joint Consensus Statement of the American Academy of Sleep Medicine and Sleep Research Society",
+          "publisher": "Sleep",
+          "version": "2015; 38(6)",
+          "url": "https://doi.org/10.5665/sleep.4716"
+        }
+      ]
+    },
+    {
+      "metric_id": "mood",
+      "title": "Mood self-report",
+      "capture": "manual_self_report",
+      "assigned_device": null,
+      "what": "A self-rated mood score from 1 to 5 on the project scale mood-1-to-5-v1.",
+      "why": "A short, repeatable self-rating shows changes over the mission when it is recorded the same way each time.",
+      "how": [
+        "Pick the number from 1 to 5 that best matches how you feel right now.",
+        "Rate at a similar point in each day, for example after waking.",
+        "Skip a rating rather than guessing it later."
+      ],
+      "context_note": "Self-report: this is a project-defined scale for the simulation, not a validated or clinical assessment. It is never turned into a mental-state score for Ground.",
+      "ground_based_procedure": false,
+      "procedure_label": "Project-defined self-report scale (mood-1-to-5-v1), not a ground clinical procedure.",
+      "scale_id": "mood-1-to-5-v1",
+      "sources": [
+        {
+          "title": "Mood self-report scale mood-1-to-5-v1",
+          "publisher": "SYMBIOSIS X project health metrics catalog",
+          "version": "catalog schema_version 1",
+          "url": "https://github.com/abdamin004/symbiosis-x/blob/main/catalogs/crew/health-metrics.json"
+        }
+      ]
+    },
+    {
+      "metric_id": "symptoms",
+      "title": "Symptoms",
+      "capture": "manual_self_report",
+      "assigned_device": null,
+      "what": "A list of current symptoms, with optional private free text.",
+      "why": "A structured list makes symptoms comparable over time. The free text adds detail for the crew member only.",
+      "how": [
+        "Select each symptom you notice now from the list.",
+        "Add private free text only if it helps; it stays in your onboard private lane.",
+        "Record a new entry when symptoms change instead of editing an old one."
+      ],
+      "context_note": "Self-report: symptoms are what the crew member reports, not a diagnosis. Private text stays in the Crew projection and is never sent to Ground.",
+      "ground_based_procedure": false,
+      "procedure_label": "Project-defined symptom self-report, informed by general patient-reported outcome practice.",
+      "sources": [
+        {
+          "title": "Symptoms metric definition",
+          "publisher": "SYMBIOSIS X project health metrics catalog",
+          "version": "catalog schema_version 1",
+          "url": "https://github.com/abdamin004/symbiosis-x/blob/main/catalogs/crew/health-metrics.json"
+        },
+        {
+          "title": "PROMIS (Patient-Reported Outcomes Measurement Information System)",
+          "publisher": "HealthMeasures, Northwestern University",
+          "version": "web page, accessed 2026-11-13",
+          "url": "https://www.healthmeasures.net/explore-measurement-systems/promis"
+        }
+      ]
+    }
+  ]
+}
