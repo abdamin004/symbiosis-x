@@ -25,7 +25,7 @@ From the repository root, activate the virtual environment and run:
 
 ```sh
 python -m pip install -e 'backend[test]'
-python -m uvicorn symbiosis_x.main:app --host 127.0.0.1 --port 8766
+python -m uvicorn symbiosis_x.main:app --host 127.0.0.1 --port 8766 --no-proxy-headers
 ```
 
 Open [OpenAPI docs](http://127.0.0.1:8766/docs). Startup migrates the local database to revision 3. By default the file is `symbiosis-x.sqlite3` in the working directory. Set `SYMBIOSIS_X_DB_PATH` to use a different file. Use a temporary path for tests. The pilot canvas currently runs from generated replay data. The simulation API routes and health probes have their own tickets.
@@ -116,7 +116,7 @@ Generate the canvas from the spacecraft room catalog, then serve it on the same 
 
 ```sh
 python3 scripts/build_mission_canvas.py /tmp/symbiosis-x-mission.html
-SYMBIOSIS_X_MISSION_CANVAS=/tmp/symbiosis-x-mission.html python -m uvicorn symbiosis_x.main:app --host 127.0.0.1 --port 8766
+SYMBIOSIS_X_MISSION_CANVAS=/tmp/symbiosis-x-mission.html python -m uvicorn symbiosis_x.main:app --host 127.0.0.1 --port 8766 --no-proxy-headers
 ```
 
-Open [Mission canvas](http://127.0.0.1:8766/mission). Start the nominal run at 00:00 and advance it once to 01:00. The room catalog describes the ship's planned functions and links existing assets to the same IDs used by telemetry. Command uses the live run API. Replay and planned labels identify the other room capabilities. The canvas enables loopback demo sessions. For API-only testing, set `SYMBIOSIS_X_LOCAL_DEMO=1` and POST to `/api/v1/demo/session` to get the three role tokens. Send the appropriate token in the Bearer authorization header. The local operator can switch viewpoints. This session issuer is for a trusted local demo and grants all three demo roles to that operator. Keep the service bound to loopback without a reverse proxy.
+Open [Mission canvas](http://127.0.0.1:8766/mission). Start the nominal run at 00:00 and advance it once to 01:00. The room catalog describes the ship's planned functions and links existing assets to the same IDs used by telemetry. Command uses the live run API. Switch between Crew and Ground on the same run. Ground waits for the first packet and shows observation time, delivery time and age once it arrives. Replay and planned labels identify the other room capabilities. The canvas enables loopback demo sessions. For API-only testing, set `SYMBIOSIS_X_LOCAL_DEMO=1` and POST to `/api/v1/demo/session` to get the three role tokens. Send the appropriate token in the Bearer authorization header. The local operator can switch viewpoints. This session issuer is for a trusted local demo and grants all three demo roles to that operator. Keep the service bound to loopback without a reverse proxy.

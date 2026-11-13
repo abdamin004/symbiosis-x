@@ -3,6 +3,7 @@
 from json import dumps
 from sqlite3 import Connection
 
+from symbiosis_x.contracts.projections import GroundCO2, GroundPacket
 from symbiosis_x.simulation.spacecraft.atmosphere import advance_co2_ppm
 from symbiosis_x.telemetry.sampling import CabinCO2Sensor
 
@@ -36,4 +37,28 @@ def record_nominal_co2(db: Connection, run_id: str, mission_s: int) -> None:
            VALUES (:run_id, :event_id, :entity_id, :source_id, :metric, :observed_at_s,
                    :received_at_s, :value, :unit, :quality, :model_version)""",
         {**event, **event["payload"]},
+    )
+
+
+def deliver_nominal_ground(db: Connection, run_id: str, mission_s: int) -> None:
+    """Deliver the launch sample at the first nominal checkpoint."""
+    observation = db.execute(
+        """SELECT value, unit, observed_at_s FROM telemetry_observations
+           WHERE run_id = ? AND event_id = ? AND quality = 'valid'""",
+        (run_id, f"{SENSOR.source_id}:0"),
+    ).fetchone()
+    if observation is None:
+        return  # Older pilot runs may predate the launch sample writer.
+    packet = GroundPacket(co2=GroundCO2(**dict(observation), kind="delivered_observation"))
+    snapshot_id = "nominal-ground-launch"
+    db.execute(
+        """INSERT INTO snapshots (run_id, snapshot_id, audience, decision_rev, observed_at_s, payload_json)
+           VALUES (?, ?, 'ground', 0, ?, ?)""",
+        (run_id, snapshot_id, observation["observed_at_s"], packet.model_dump_json()),
+    )
+    db.execute(
+        """INSERT INTO messages (run_id, message_id, direction, issued_at_s, deliver_at_s,
+                                  delivered_at_s, ground_snapshot_id, payload_json)
+           VALUES (?, 'nominal-launch-delivery', 'to_ground', 0, ?, ?, ?, '{}')""",
+        (run_id, mission_s, mission_s, snapshot_id),
     )
