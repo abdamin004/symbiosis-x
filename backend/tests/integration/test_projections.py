@@ -63,3 +63,63 @@ def test_ground_has_no_onboard_fallback(tmp_path):
             db.execute("UPDATE messages SET delivered_at_s = NULL WHERE run_id = ?", (run_id,))
         assert client.get(url + "/ground").json()["packet"] is None
         assert client.get("/api/v1/runs/unknown/ground").status_code == 404
+
+
+GOLDEN_START = {"start_id": "trace-start", "scenario_id": "sx01-golden", "scenario_version": "1", "seed": 4242}
+
+
+def test_trace_filters_by_role_and_delivery(tmp_path):
+    with local_client(tmp_path / "trace.sqlite3") as client:
+        tokens = client.post("/api/v1/demo/session").json()
+        as_role = lambda who: {"Authorization": "Bearer " + tokens[who]}  # noqa: E731
+        run_id = client.post("/api/v1/runs", json=GOLDEN_START, headers=as_role("facilitator")).json()["run_id"]
+        url = f"/api/v1/runs/{run_id}"
+        # A private onboard case: Crew-only, it must never enter either role's operational trace.
+        case = client.post(f"{url}/crew/emergencies", headers=as_role("crew"), json={
+            "operation_id": "op-private", "drill_id": "drill-chest-pain-v1",
+            "reported_by": "SIM-01", "synthetic": True}).json()
+
+        def advance(advance_id, expected_step, target):
+            response = client.post(f"{url}/advance", headers=as_role("facilitator"), json={
+                "advance_id": advance_id, "expected_step": expected_step, "target_mission_s": target})
+            assert response.status_code == 200, response.text
+
+        def steps(view):
+            return [(r["mission_s"], r["actor"], r["step"], r["result"], r["reason_code"], r["next_owner"])
+                    for r in view["trace"]]
+
+        advance("to-13", 0, 780)
+        crew = client.get(f"{url}/crew", headers=as_role("crew")).json()
+        ground_response = client.get(f"{url}/ground", headers=as_role("ground"))
+        ground = ground_response.json()
+
+        # Crew sees every operational milestone so far, including the 13:00 hold.
+        assert steps(crew) == [
+            (60, "monitor", "incident_opened", "INSUFFICIENT_EVIDENCE", None, "crew"),
+            (480, "ground", "advice_queued", "queued", None, "crew"),
+            (600, "monitor", "incident_opened", "INSUFFICIENT_EVIDENCE", None, "crew"),
+            (780, "relay", "advice_received", "held", "STALE_BASIS", "crew"),
+        ]
+        scrubber_case = crew["trace"][0]["case_id"]
+        assert scrubber_case.startswith("inc-") and crew["trace"][1]["case_id"] == "advice-op-demo-013"
+
+        # Ground has only v102 (observed 01:00): the scrubber case and its own advice.
+        # The 10:00 power case and the 13:00 disposition have not been delivered.
+        assert ground["packet"]["snapshot_id"] == "ground-v102"
+        assert steps(ground) == steps(crew)[:2]
+        assert ground["trace"][0]["case_id"] == scrubber_case
+
+        advance("to-15", 5, 900)
+        ground_900 = client.get(f"{url}/ground", headers=as_role("ground"))
+        assert ground_900.json()["packet"]["snapshot_id"] == "ground-v103"
+        assert [r["step"] for r in ground_900.json()["trace"]] == [
+            "incident_opened", "advice_queued", "incident_opened"]
+
+        crew_text = client.get(f"{url}/crew", headers=as_role("crew")).json()["trace"].__repr__()
+        for text in (ground_response.text, ground_900.text, crew_text):
+            # No private case, no raw tool input or evidence, no undelivered disposition for Ground.
+            for marker in (case["case_id"], case["drill_id"], "SIM-01", "evt-scrubber-degraded",
+                           "evt-power-drops", "removal_m3_h", "component_id", "basis_snapshot_id"):
+                assert marker not in text, marker
+        for text in (ground_response.text, ground_900.text):
+            assert "advice_received" not in text and "STALE_BASIS" not in text

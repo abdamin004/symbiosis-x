@@ -3,6 +3,7 @@ import { fixtureFor } from "../../api/fixtures.js";
 import { CREW_HEALTH_FIXTURE } from "../../api/crewHealthFixture.js";
 import CrewHealthPanel from "../crew/CrewHealthPanel.jsx";
 import RadiationContext from "../crew/RadiationContext.jsx";
+import GroundHealthStatus from "../ground/GroundHealthStatus.jsx";
 import ServiceStatus from "./ServiceStatus.jsx";
 
 const ROLE_TITLES = { crew: "Crew console", ground: "Ground console" };
@@ -92,6 +93,8 @@ export default function MissionConsole({ role }) {
       )}
 
       {snapshot.delivery && <DeliveryPanel delivery={snapshot.delivery} />}
+
+      {role === "ground" && <GroundHealthStatus cases={snapshot.health_cases ?? []} />}
     </main>
   );
 }

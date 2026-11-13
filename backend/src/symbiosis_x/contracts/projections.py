@@ -119,12 +119,36 @@ class AcceptedCO2(Quantity):
     event_id: Identifier
 
 
+class TraceRecord(Contract):
+    """One allowlisted operational milestone. It carries no tool input, evidence or private data."""
+
+    case_id: Identifier
+    mission_s: NonnegativeInt
+    actor: Literal["monitor", "ground", "relay"]
+    step: Literal["incident_opened", "fault_linked", "advice_queued", "advice_received"]
+    result: Identifier
+    reason_code: Identifier | None = None
+    next_owner: Literal["crew", "commander"] | None = None
+
+
+class GroundCaseStatus(Contract):
+    """The approved health case packet as Ground received it, plus Ground's own acknowledgment."""
+
+    case_alias: Identifier
+    review_priority: Literal["urgent", "routine"]
+    status: Literal["open", "acknowledged"]
+    delivered_at_s: NonnegativeInt
+    ground_ack: Literal["pending", "acknowledged"]
+    ground_acknowledged_at_s: NonnegativeInt | None = None
+
+
 class CurrentCrewView(RunView):
     role: Literal["crew"] = "crew"
     decision_rev: NonnegativeInt
     co2: AcceptedCO2 | None
     health_profile: AstronautHealthProfile
     health_assessment: dict | None = None
+    trace: list[TraceRecord] = []
 
 
 class GroundPacket(Contract):
@@ -145,3 +169,5 @@ class DeliveredTelemetry(Contract):
 class CurrentGroundView(RunView):
     role: Literal["ground"] = "ground"
     packet: DeliveredTelemetry | None
+    trace: list[TraceRecord] = []
+    health_cases: list[GroundCaseStatus] = []
