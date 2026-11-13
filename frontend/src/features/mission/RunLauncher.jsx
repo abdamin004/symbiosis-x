@@ -26,7 +26,6 @@ export default function RunLauncher({ run: initialRun }) {
       const receipt = await startRun({ start_id: pending.current.start, scenario_id: scenarioId, scenario_version: scenarioVersion, seed: Number(seed) });
       setRun({ runId: receipt.run_id, scenarioId: receipt.scenario_id, seed: receipt.seed, mission_s: receipt.mission_s, step: receipt.step });
       setActiveRunId(receipt.run_id);
-      setActiveRunId(receipt.run_id);
       pending.current.start = null;
       setNotice("Run started. Crew and Ground now share this run ID.");
     } catch (e) { setError(e.message); }
