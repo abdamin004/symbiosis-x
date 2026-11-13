@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { readRunView } from "../../api/client.js";
 import CheckInForm from "../crew/CheckInForm.jsx";
+import CrewHealthDashboard from "../crew/CrewHealthDashboard.jsx";
 
 function time(seconds) {
   const m = String(Math.floor(seconds / 60)).padStart(2, "0");
@@ -31,12 +32,7 @@ export default function LiveMissionConsole({ role, runId }) {
         <p className="mt-2 text-sm">Run <strong data-testid="console-run-id">{view.run_id}</strong> · Mission time {time(view.mission_s)} · {view.scenario_id} v{view.scenario_version}</p>
       </header>
       {role === "crew" ? <>
-        <section className="mt-6 rounded-lg border border-slate-200 bg-white p-4">
-          <h2 className="font-semibold">Private Crew health profile</h2>
-          <p className="mt-2 text-sm">Crew ID: {view.health_profile?.crew_id ?? "Unknown"} · Synthetic data</p>
-          <p className="mt-2 text-sm">Assessment: {view.health_assessment?.personal?.status ?? "No assessment available"}</p>
-          <div className="mt-3 flex flex-wrap gap-4"><Link className="text-sm font-semibold text-selection underline" to={"/runs/" + encodeURIComponent(runId) + "/crew/measure"}>Take a measurement</Link><Link className="text-sm font-semibold text-red-700 underline" to={"/runs/" + encodeURIComponent(runId) + "/crew/emergency"}>Open Emergency Assist</Link></div>
-        </section>
+        <CrewHealthDashboard runId={runId} view={view} />
         <CheckInForm runId={runId} crewId={view.health_profile?.crew_id ?? "SIM-01"} />
       </> : <section className="mt-6 rounded-lg border border-slate-200 bg-white p-4">
         <h2 className="font-semibold">Latest delivered snapshot</h2>
