@@ -16,7 +16,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;
 body{isolation:isolate}
 main{width:min(1060px,calc(100% - 48px));margin:0 auto;padding:clamp(2rem,8vh,6rem) 0 4rem}
 h1,h2,p{margin:0}
-h1{font-size:clamp(3.3rem,9vw,7.4rem);font-weight:650;line-height:.94;letter-spacing:-.075em}
+h1{font-size:clamp(3rem,7vw,5.4rem);font-weight:650;line-height:.94;letter-spacing:-.075em}
 h2{font-size:clamp(1.8rem,5vw,3.2rem);font-weight:550;line-height:1.08;letter-spacing:-.045em}
 .muted{color:var(--muted)}
 .brand{color:var(--light);font-size:.8rem;letter-spacing:.16em;margin-bottom:.7rem}
@@ -38,18 +38,28 @@ button:focus-visible{outline:2px solid var(--light);outline-offset:4px}
 #projection-value{margin:.75rem 0 .15rem;color:#c9dfff;font-size:clamp(1.45rem,4vw,2.35rem);font-variant-numeric:tabular-nums}
 #projection-evidence{color:var(--muted);font-size:.93rem}
 #run-key{overflow-wrap:anywhere;font: .83rem ui-monospace,monospace;color:var(--muted);margin-top:.65rem}
-.rooms{margin-top:3rem;display:grid;grid-template-columns:minmax(9rem,1fr) minmax(0,3fr);gap:clamp(1rem,5vw,4rem)}
-nav{display:grid;align-content:start;gap:.15rem}
-.room{border-radius:7px;padding:.48rem .7rem;text-align:left;color:var(--muted)}
-.room:hover,.room[aria-pressed=true]{color:var(--ink);background:#9d93ff22}
-.detail{padding:.3rem 0 0}
-.detail p{margin:.65rem 0;color:var(--muted);max-width:42ch}
-ul{list-style:none;padding:0;margin:1rem 0}
-li{display:flex;justify-content:space-between;gap:1rem;padding:.52rem 0;color:var(--ink)}
-li span:last-child{font-size:.9rem;color:var(--muted)}
-li [data-status=live]{color:#a6dcff}
-li [data-status=replay]{color:#c6baff}
-@media(max-width:600px){main{width:calc(100% - 32px)}header{grid-template-columns:1fr}.rooms{grid-template-columns:1fr;margin-top:2rem}nav{display:flex;flex-wrap:wrap}.room{padding:.35rem .55rem}}
+a{color:var(--light);text-underline-offset:.2em}
+.tabs,.rooms,.replay-controls{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.tabs{margin:1.25rem 0 .8rem}
+.tabs button,.rooms button,.replay-controls button{padding:.4rem .68rem;border-radius:7px;color:var(--muted)}
+button[aria-pressed=true]{color:var(--ink);background:#9d93ff22}
+.workspace{margin-top:2rem}
+.workspace h2{font-size:1.65rem}
+#replay-panel{margin:1rem 0 1.5rem;padding:1rem 0;border-block:1px solid #a3a0ff2b}
+.replay-controls input{flex:1;min-width:120px;accent-color:var(--light)}
+#replay-caption{margin:.6rem 0;color:#c9dfff}
+#replay-crew{margin-top:.65rem;display:flex;flex-wrap:wrap;gap:.4rem 1rem;color:var(--muted)}
+#replay-crew input{accent-color:var(--light)}
+.rooms{margin:1rem 0}
+.systems{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:1.05rem 1.6rem}
+.system{padding:.8rem 0 .3rem;border-top:1px solid #a3a0ff38}
+.system h3{font-size:.95rem;font-weight:550;margin:0;color:var(--ink)}
+.system .value{font-size:clamp(1.15rem,3vw,1.65rem);color:#c9dfff;margin:.28rem 0;font-variant-numeric:tabular-nums}
+.system .evidence,.system .insight{font-size:.85rem;color:var(--muted)}
+.system .evidence{color:var(--light);margin-bottom:.28rem}
+.workspace ul{list-style:none;padding:0;margin:1rem 0}
+.workspace li{padding:.34rem 0}
+@media(max-width:600px){main{width:calc(100% - 32px)}header{grid-template-columns:1fr}.workspace{margin-top:1.5rem}}
 </style>
 </head>
 <body>
@@ -75,21 +85,51 @@ li [data-status=replay]{color:#c6baff}
     </div>
     <p id="run-key"></p>
   </section>
-  <div class="rooms">
-    <nav id="rooms" aria-label="Spacecraft rooms"></nav>
-    <section class="detail" aria-labelledby="room-name">
-      <h2 id="room-name"></h2>
-      <p id="room-function"></p>
-      <ul id="systems"></ul>
+  <section class="workspace" aria-label="Digital twin screens">
+    <nav class="tabs" id="screens" aria-label="Main screens">
+      <button type="button" data-screen="launcher">Run Launcher</button>
+      <button type="button" data-screen="crew">Crew Health</button>
+      <button type="button" data-screen="measure">Take Measurement</button>
+      <button type="button" data-screen="emergency">Emergency Assist</button>
+      <button type="button" data-screen="ground">Ground</button>
+    </nav>
+    <section id="screen-content" aria-labelledby="screen-title">
+      <h2 id="screen-title"></h2>
+      <p class="muted" id="screen-note"></p>
+      <ul id="screen-items"></ul>
     </section>
-  </div>
+    <section id="replay-panel" aria-labelledby="replay-title">
+      <h2 id="replay-title">Travel replay</h2>
+      <div class="replay-controls">
+        <button type="button" id="play-replay">Play travel replay</button>
+        <button type="button" id="next-checkpoint">Next checkpoint</button>
+        <button type="button" id="reset-replay">Reset replay</button>
+        <button type="button" id="live-systems" hidden>Show live readings</button>
+        <input id="checkpoint" type="range" min="0" value="0" aria-label="Travel checkpoint">
+      </div>
+      <p id="replay-caption"></p>
+      <p class="muted">Cabin values come from the Python model. Scrubber faults and power changes follow the replay scenario.</p>
+      <div id="replay-crew" role="group" aria-label="Confirm reduced activity at 06:00"></div>
+    </section>
+    <section aria-labelledby="systems-title">
+      <h2 id="systems-title">Ship systems</h2>
+      <nav class="rooms" id="rooms" aria-label="Filter by spacecraft room"></nav>
+      <p id="room-function" class="muted"></p>
+      <div id="systems" class="systems"></div>
+    </section>
+  </section>
 </main>
 <script type="application/json" id="room-catalog">__ROOM_CATALOG__</script>
 <script>
 const byId = id => document.getElementById(id);
-const rooms = JSON.parse(byId("room-catalog").textContent).rooms;
-const systemStates = {live:"Live pilot", replay:"Replay only", planned:"Planned"};
-const roomButtons = [];
+const catalog = JSON.parse(byId("room-catalog").textContent);
+const rooms = catalog.rooms;
+let liveView = null;
+let selectedRoom = null;
+let frameIndex = 0;
+let replayMode = false;
+let timer = null;
+const reducedCrew = new Set();
 const runStorageKey = "symbiosis-x:nominal-run";
 let run = null;
 try {
@@ -102,34 +142,170 @@ let startId = null;
 let advanceId = null;
 let working = false;
 
-function selectRoom(room) {
-  byId("room-name").textContent = room.name;
-  byId("room-function").textContent = room.function;
-  byId("systems").replaceChildren(...room.systems.map(system => {
-    const row = document.createElement("li");
-    const name = document.createElement("span");
-    const status = document.createElement("span");
-    name.textContent = system.name;
-    status.textContent = systemStates[system.status];
-    status.dataset.status = system.status;
-    if (system.entity_id) row.dataset.entityId = system.entity_id;
-    row.append(name, status);
-    return row;
-  }));
-  roomButtons.forEach(button => button.setAttribute("aria-pressed", button.dataset.roomId === room.room_id));
+const screens = {
+  launcher: ["Run Launcher", "Start or advance a live nominal run. Use the travel replay to inspect the scripted fault sequence."],
+  crew: ["Crew Health", "The live Crew view shows the accepted cabin sample. Crew activity controls below affect the synthetic replay."],
+  measure: ["Take Measurement", "Seven measurement types are registered. Saving readings is planned."],
+  emergency: ["Emergency Assist", "Onboard training drills and acknowledgment are planned."],
+  ground: ["Ground", "The live Ground view shows only delivered evidence from this run."],
+};
+
+function selectScreen(key) {
+  const [title, note] = screens[key];
+  byId("screen-title").textContent = title;
+  byId("screen-note").textContent = note;
+  byId("screen-items").replaceChildren();
+  byId("screen-items").hidden = key !== "measure";
+  if (key === "measure") {
+    for (const metric of catalog.metrics) {
+      const item = document.createElement("li");
+      const inputs = metric.required_values ?? metric.required_fields
+        ?? metric.accepted_forms?.map(form => form.join(" + "));
+      const details = [metric.unit, inputs?.join(" or "), metric.required_context?.join(", ")]
+        .filter(Boolean).join(" · ");
+      item.textContent = metric.label + (details ? " · " + details : "");
+      byId("screen-items").append(item);
+    }
+  }
+  document.querySelectorAll("[data-screen]").forEach(button => {
+    button.setAttribute("aria-pressed", button.dataset.screen === key);
+  });
+  if (key === "crew" || key === "ground") {
+    viewpoint = key;
+    stopReplay();
+    replayMode = false;
+    readView();
+  }
 }
 
-for (const room of rooms) {
+function systemReading(system, frame) {
+  const replayCo2 = frame.co2.toFixed(2) + " ppm";
+  const launchPacket = catalog.ground;
+  const packet = liveView?.packet;
+  const readings = {
+    clock: [run ? formatTime(run.mission_s) : "Ready to start", "Live run"],
+    navigation: [frame.time === 0 ? "Departure checkpoint" : "Outbound transit", "Scripted phase · ETA planned"],
+    air: [replayCo2, "Replay · " + formatTime(frame.time)],
+    activity: [frame.generation.toFixed(3) + " m³/h CO₂", "Replay · Four astronauts"],
+    co2: [replayCo2, "Replay · " + catalog.sensor.source_id],
+    scrubber: [frame.removal.toFixed(0) + " m³/h", frame.removal < 20 ? "Replay · Degraded" : "Replay · Nominal"],
+    power: [frame.power.toFixed(2) + " kW", frame.power < 0.40 ? "Replay · Low headroom" : "Replay · Nominal"],
+    health: [catalog.metrics.length + " measurement types", "Catalog ready"],
+    relay: [frame.time >= launchPacket.delivery.received_at_s ? "Delivered · " + launchPacket.snapshot_id : "Awaiting replay packet", "Replay · Ground"],
+  };
+  if (!replayMode && liveView && (system.key === "air" || system.key === "co2")) {
+    const observation = viewpoint === "crew" ? liveView.co2 : packet?.co2;
+    return observation
+      ? [observation.value.toFixed(2) + " ppm", "Live " + viewpoint + " · observed " + formatTime(observation.observed_at_s)]
+      : [viewpoint === "ground" ? "Awaiting Ground delivery" : "No cabin sample yet", "Live " + viewpoint];
+  }
+  if (!replayMode && liveView?.role === "ground" && system.key === "relay") {
+    return packet ? ["Delivered · " + formatTime(packet.delivery.received_at_s), "Live Ground · age " + formatTime(packet.delivery.age_s)]
+      : ["Awaiting Ground delivery", "Live Ground"];
+  }
+  return readings[system.key] ?? ["Model pending", "Planned"];
+}
+
+function renderReplay() {
+  const key = catalog.crew_ids.filter(id => reducedCrew.has(id)).join(",");
+  const frame = catalog.replays[key][frameIndex];
+  byId("checkpoint").value = frameIndex;
+  byId("live-systems").hidden = !replayMode || !run;
+  byId("checkpoint").setAttribute("aria-valuetext", formatTime(frame.time) + " " + frame.label);
+  byId("replay-caption").textContent = "Replay " + formatTime(frame.time) + " · " + frame.label + " · Cabin " + frame.co2.toFixed(2) + " ppm";
+  byId("play-replay").textContent = timer ? "Pause travel replay" : "Play travel replay";
+  byId("next-checkpoint").disabled = frameIndex === catalog.replays[""].length - 1;
+  const chosen = selectedRoom ? [selectedRoom] : rooms;
+  byId("room-function").textContent = selectedRoom?.function ?? "";
+  byId("systems").replaceChildren(...chosen.flatMap(room => room.systems.map(system => {
+    const widget = document.createElement("article");
+    widget.className = "system";
+    if (system.entity_id) widget.dataset.entityId = system.entity_id;
+    const [value, evidence] = systemReading(system, frame);
+    const heading = document.createElement("h3");
+    heading.textContent = system.name;
+    const rows = [["value", value], ["evidence", room.name + " · " + evidence], ["insight", system.insight]];
+    widget.append(heading, ...rows.map(([kind, text]) => {
+      const row = document.createElement("p");
+      row.className = kind;
+      row.textContent = text;
+      return row;
+    }));
+    return widget;
+  })));
+}
+
+function stopReplay() {
+  clearInterval(timer);
+  timer = null;
+}
+
+function nextCheckpoint() {
+  replayMode = true;
+  const last = catalog.replays[""].length - 1;
+  frameIndex = Math.min(frameIndex + 1, last);
+  if (frameIndex === last) stopReplay();
+  renderReplay();
+}
+
+for (const room of [null, ...rooms]) {
   const button = document.createElement("button");
   button.type = "button";
-  button.className = "room";
-  button.dataset.roomId = room.room_id;
-  button.textContent = room.name;
-  button.addEventListener("click", () => selectRoom(room));
-  roomButtons.push(button);
+  button.textContent = room?.name ?? "All rooms";
+  button.setAttribute("aria-pressed", room === null);
+  button.addEventListener("click", () => {
+    selectedRoom = room;
+    byId("rooms").querySelectorAll("button").forEach(item => item.setAttribute("aria-pressed", item === button));
+    renderReplay();
+  });
   byId("rooms").append(button);
 }
-selectRoom(rooms[0]);
+for (const id of catalog.crew_ids) {
+  const label = document.createElement("label");
+  const input = document.createElement("input");
+  input.type = "checkbox";
+  input.addEventListener("change", () => {
+    replayMode = true;
+    if (input.checked) reducedCrew.add(id);
+    else reducedCrew.delete(id);
+    renderReplay();
+  });
+  label.append(input, " " + id + " reduced activity at 06:00");
+  byId("replay-crew").append(label);
+}
+byId("checkpoint").max = catalog.replays[""].length - 1;
+byId("checkpoint").addEventListener("input", event => {
+  stopReplay();
+  replayMode = true;
+  frameIndex = Number(event.target.value);
+  renderReplay();
+});
+byId("next-checkpoint").addEventListener("click", nextCheckpoint);
+byId("reset-replay").addEventListener("click", () => {
+  stopReplay();
+  replayMode = true;
+  frameIndex = 0;
+  reducedCrew.clear();
+  byId("replay-crew").querySelectorAll("input").forEach(input => { input.checked = false; });
+  renderReplay();
+});
+byId("live-systems").addEventListener("click", () => {
+  stopReplay();
+  replayMode = false;
+  readView();
+});
+byId("play-replay").addEventListener("click", () => {
+  if (timer) stopReplay();
+  else {
+    replayMode = true;
+    if (frameIndex === catalog.replays[""].length - 1) frameIndex = 0;
+    timer = setInterval(nextCheckpoint, 1800);
+  }
+  renderReplay();
+});
+document.querySelectorAll("[data-screen]").forEach(button => {
+  button.addEventListener("click", () => selectScreen(button.dataset.screen));
+});
 
 let demoTokens = null;
 
@@ -172,6 +348,8 @@ const formatTime = seconds => {
 
 async function readView() {
   if (!run) return;
+  liveView = null;
+  renderReplay();
   const version = ++readVersion;
   const activeRun = run.run_id;
   const role = viewpoint;
@@ -182,6 +360,8 @@ async function readView() {
   try {
     const view = await requestRun("/api/v1/runs/" + encodeURIComponent(activeRun) + "/" + role, role);
     if (version !== readVersion || view.run_id !== activeRun) return;
+    liveView = view;
+    renderReplay();
     byId("clock").textContent = formatTime(view.mission_s);
     const packet = role === "ground" ? view.packet : null;
     const reading = role === "crew" ? view.co2 : packet?.co2;
@@ -240,6 +420,8 @@ async function execute(command) {
   updateControls();
   try {
     run = await command();
+    stopReplay();
+    replayMode = false;
     saveRun();
     showRun();
     await readView();
@@ -270,10 +452,14 @@ byId("advance").addEventListener("click", () => {
 for (const role of ["crew", "ground"]) {
   byId(role + "-view").addEventListener("click", () => {
     viewpoint = role;
+    stopReplay();
+    replayMode = false;
     readView();
   });
 }
 byId("refresh-view").addEventListener("click", readView);
+selectScreen("launcher");
+renderReplay();
 if (run) {
   showRun();
   updateControls();
