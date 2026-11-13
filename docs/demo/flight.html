@@ -374,6 +374,37 @@ button[aria-pressed=true]{background:#3d315e}
 #navigation-mini canvas,#navigation-track{display:block;width:100%;border-radius:6px}
 #navigation-mini small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.68rem;color:#c7d7ed}
 #orbit-dialog{width:min(680px,calc(100% - 1.5rem))}
+.launch-field[data-view=launch]::before{background:linear-gradient(90deg,#091421ae,transparent 37%,transparent 63%,#091421ae)}
+.pad-checkout{display:grid;grid-template-columns:minmax(235px,296px) minmax(0,1fr) minmax(260px,350px);align-items:center;gap:1rem;padding:calc(var(--launch-clearance,100px) + .7rem) clamp(.75rem,2.4vw,2.4rem) 1rem}
+.pad-checkout .launch-board{width:auto;margin:0;max-height:calc(100svh - var(--launch-clearance,100px) - 2rem);background:linear-gradient(140deg,#152538ed,#101a2be8);border-color:#8dabc849}
+.pad-checkout .launch-board:first-child{grid-column:1}
+.pad-checkout .launch-board:last-child{grid-column:3}
+.pad-checkout .launch-heading{margin-bottom:.7rem}
+.pad-checkout h2{margin-top:.2rem}
+.pad-checkout #startup-status{grid-template-columns:1fr;margin:.6rem 0}
+.pad-checkout #startup-status li{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:.45rem;background:#1e3544}
+.startup-symbol{color:#a1bed4}
+#startup-status [data-state=starting] .startup-symbol,#launch-jobs [data-state=working] .checkout-job-status{color:#ffd0a0}
+#startup-status [data-state=online] .startup-symbol,#launch-jobs [data-state=verified] .checkout-job-status{color:#9cebd0}
+#launch-jobs progress{grid-column:1/-1;width:100%;height:.4rem;accent-color:#9cebd0}
+#launch-jobs [data-state=working] .crew-face,#startup-status [data-state=starting] .startup-symbol{animation:checkout-pulse 1.15s ease-in-out infinite alternate}
+#launch-jobs [data-state=verified] .crew-face{outline:1px solid #9cebd0;outline-offset:2px;border-radius:50%}
+@keyframes checkout-pulse{from{opacity:.45}to{opacity:1;filter:drop-shadow(0 0 4px #ffc18f)}}
+@media(prefers-reduced-motion:reduce){#launch-jobs [data-state=working] .crew-face,#startup-status [data-state=starting] .startup-symbol{animation:none}}
+@media(max-width:850px){
+  .pad-checkout{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;padding-top:0;gap:.7rem}
+  .pad-checkout .launch-board:last-child{grid-column:2}
+  .pad-checkout .launch-board{max-height:none}
+  .launch-field[data-view=launch]{display:flex;flex-direction:column;align-items:stretch;height:auto}
+  .launch-field[data-view=launch] .launch-visual{position:sticky;top:0;height:clamp(260px,50svh,440px);z-index:1}
+}
+@media(max-width:560px){.pad-checkout{grid-template-columns:1fr}.pad-checkout .launch-board:last-child{grid-column:1}}
+#flight-tutorial{width:min(480px,calc(100% - 1.5rem))}
+.tutorial-art{display:grid;place-items:center;height:118px;background:radial-gradient(ellipse,#243b55,#101b30 72%);border-radius:8px;margin:.6rem 0 1rem}
+.tutorial-art .icon{width:49px;height:49px;color:#a3ddd9}
+.tutorial-nav{display:flex;gap:.4rem;align-items:center;margin-top:1.15rem}
+#tutorial-step{margin-right:auto;color:#a9bad6;font-size:.8rem}
+#tutorial-next{background:#abdcd6;color:#132632;font-weight:700}
 .hud,.launch-hud{position:fixed;inset:0 0 auto;z-index:10;pointer-events:none;background:linear-gradient(180deg,#080c1bde,transparent);box-shadow:none}
 .hud button,.hud a,.launch-hud button,.launch-hud a{pointer-events:auto}
 .ribbon{gap:.35rem .65rem;text-shadow:0 1px 8px #090b19}
@@ -670,6 +701,17 @@ __HUD_ICONS__
     <li>After insertion, use Flight command to approach, capture, verify the hatch, and return.</li>
   </ol>
 </dialog>
+<dialog id="flight-tutorial" class="mission-dialog" aria-labelledby="tutorial-title">
+  <div class="tutorial-art" id="tutorial-art" aria-hidden="true"></div>
+  <h2 id="tutorial-title"></h2>
+  <p id="tutorial-copy"></p>
+  <div class="tutorial-nav">
+    <span id="tutorial-step"></span>
+    <button type="button" id="tutorial-back">Back</button>
+    <form method="dialog"><button value="skip">Skip</button></form>
+    <button type="button" id="tutorial-next">Next</button>
+  </div>
+</dialog>
 <dialog id="orbit-dialog" class="mission-dialog" aria-labelledby="orbit-title">
   <div class="dialog-top"><h2 id="orbit-title">Orbit map</h2><form method="dialog"><button>Close</button></form></div>
   <canvas id="navigation-track" width="560" height="300" role="img" aria-label="Earth, spacecraft trajectory and station orbit"></canvas>
@@ -705,6 +747,7 @@ __HUD_ICONS__
       <button id="launch-briefing" type="button">Briefing</button>
       <button id="launch-open-missions" type="button" hidden>Game menu</button>
       <button id="launch-open-objectives" type="button" hidden>Objectives</button>
+      <button id="pad-audio" type="button" aria-pressed="true">Voice cues</button>
       <a href="/mission">Mission control</a>
     </div>
   </nav>
@@ -727,17 +770,20 @@ __HUD_ICONS__
         <button class="replay-game" id="open-flight-replay" type="button">ISS research replay</button>
       </div>
     </section>
-    <section class="launch-board" id="pad-controls" aria-labelledby="launch-title" hidden>
+    <div class="pad-checkout" id="pad-controls" hidden>
+    <section class="launch-board" aria-labelledby="launch-title">
       <header class="launch-heading">
         <h1 id="launch-title" tabindex="-1">Asteria Launch</h1><p id="launch-subtitle"></p>
       </header>
-      <ol id="launch-stack" aria-label="Rocket stage stack"></ol>
-      <div id="launch-controls">
       <section id="launch-systems" aria-labelledby="launch-systems-title">
-        <h2 id="launch-systems-title">Bring Asteria online</h2>
+        <h2 id="launch-systems-title">Ship systems</h2>
         <ul id="startup-status"></ul>
         <button id="startup" type="button"><svg class="icon" aria-hidden="true"><use href="#hud-zap"/></svg> Start ship systems</button>
       </section>
+      <ol id="launch-stack" aria-label="Rocket stage stack"></ol>
+    </section>
+    <section class="launch-board" id="pad-command" aria-label="Launch command">
+      <div id="launch-controls">
       <div id="launch-crew-checks">
         <h2>Crew checklist</h2>
         <p>Choose the qualified crew portrait on each check. Play advances their work.</p>
@@ -811,6 +857,7 @@ __HUD_ICONS__
       </div>
       </div>
     </section>
+    </div>
   </div>
 </section>
 </main>

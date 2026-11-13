@@ -4,6 +4,7 @@ function createLaunchScene(canvas) {
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
   let phase = "pad", separated = false, elapsed = 0, burning = false, ignition = null, transition = null, frame;
   let separation = null;
+  let checkout = null;
   let previous = {rise:0, drift:0, tilt:0, camera:0, space:0};
   const padPose = previous;
   let daylight = {angle:.8,altitude:.7,light:1};
@@ -141,10 +142,15 @@ function createLaunchScene(canvas) {
     rect("#273542",-91,-253,33,6);
     rect("#536674",-78,-274,3,21);
     ellipse("#ff9875",-76,-274,2,2);
-    const reach=28*(1-away);
+    const reach=36;
     for(const level of [-179,-103]) {
-      rect("#344652",-65,level,9+reach,8);
-      rect("#a4a19a",-65,level,9+reach,1);
+      ctx.save();
+      ctx.translate(-65,level);
+      ctx.rotate(away*1.34);
+      rect("#344652",0,0,9+reach,8);
+      rect("#a4a19a",0,0,9+reach,1);
+      ellipse("#ddc4a0",2,4,3,3);
+      ctx.restore();
     }
     rect("#26313e",-96,-5,41,5);
     for (const level of [-200,-152,-104,-56]) {
@@ -228,6 +234,40 @@ function createLaunchScene(canvas) {
     return {rise:250,drift:34,tilt:.78,camera:128,space:1,booster:1};
   }
 
+  function drawCheckout(x,y,s) {
+    const {systems,crew,time,power} = checkout;
+    const lamp = ctx.createRadialGradient(x,y-145*s,4,x,y-145*s,85*s);
+    lamp.addColorStop(0,`rgba(112,232,223,${power*.38})`);
+    lamp.addColorStop(1,"#9fe7ef00");
+    ellipse(lamp,x,y-145*s,90*s,130*s);
+    ctx.font="600 11px system-ui";
+    for (const [i,system] of systems.entries()) {
+      if (system.state === "off") continue;
+      const color = system.state === "online" ? "#a6f8db" : "#ffce94";
+      const level = y-(221-i*25)*s;
+      const edge = x+19*s;
+      const end = x+72*s;
+      ctx.globalAlpha = system.state === "starting" && !reduced.matches ? .6+.35*Math.sin(time*1.6)**2 : 1;
+      line(color,1,[[edge,level],[end,level]]);
+      ellipse(color,edge,level,3,3);
+      rect("#112536",end,level-8,35,16);
+      ctx.fillStyle=color;
+      ctx.fillText(system.label,end+4,level+4);
+    }
+    ctx.globalAlpha=1;
+    for (const [i,person] of crew.entries()) {
+      if (person.state === "idle") continue;
+      const color = person.state === "verified" ? "#9cebd0" : "#ffce94";
+      const level = y-(222-i*23)*s;
+      const start = x-108*s;
+      line(color,1,[[start+44,level],[x-20*s,level]]);
+      rect("#162437",start,level-8,44,16);
+      rect(color,start,level+6,44*person.progress,2);
+      ctx.fillStyle=color;
+      ctx.fillText(person.state === "verified" ? "✓ "+person.label : person.label,start+3,level+3);
+    }
+  }
+
   function draw(now) {
     const w=canvas.clientWidth, h=canvas.clientHeight;
     if(!w || !h) return;
@@ -239,10 +279,15 @@ function createLaunchScene(canvas) {
     ctx.setTransform(dpr,0,0,dpr,0,0);
     const target=poseFor();
     const t=transition ? clamp((now-transition.start)/transition.duration) : 1;
-    const ease=phase==="ascent" && elapsed===0 ? t*t*(3-2*t) : 1-(1-t)**3;
-    const pose=Object.fromEntries(Object.keys(target).map(key=>[key,mix(transition?.from[key]??target[key],target[key],ease)]));
+    const liftoff = phase==="ascent" && elapsed===0;
+    const lift = clamp((t-.33)/.67);
+    const ease=liftoff ? lift*lift*(3-2*lift) : 1-(1-t)**3;
+    const ignitionProgress = ignition === null ? 1 : clamp((now-ignition)/1000);
+    const holdAtPad = phase === "ascent" && elapsed === 0 && ignitionProgress < .85;
+    const pose=Object.fromEntries(Object.keys(target).map(key=>[key,mix(transition?.from[key]??target[key],target[key],holdAtPad ? 0 : ease)]));
     previous=pose;
-    const shipX=w*(w<610?.63:.66), ground=h*.79, s=Math.min(h/605,1.48);
+    const centered = canvas.closest(".launch-field")?.dataset.view === "launch";
+    const shipX=w*(centered ? .5 : w<610?.63:.66), ground=h*.79, s=Math.min(h/605,1.48);
     if (separation !== null) pose.booster = clamp((now-separation)/1250);
     const upperBurn = phase === "upper" && separation !== null && now-separation > 450 && now-separation < 1500;
     const thrust=phase==="ascent" && burning || upperBurn;
@@ -251,16 +296,18 @@ function createLaunchScene(canvas) {
       ctx.save();
       ctx.globalAlpha=1-pose.space;
       terrain(w,h,ground+pose.camera,shipX);
-      gantry(shipX,ground+pose.camera,s,clamp(pose.rise/60));
+      const release = ignition === null ? clamp(pose.rise/60) : clamp((ignitionProgress-.38)/.47);
+      gantry(shipX,ground+pose.camera,s,release);
       if(daylight.light<1) rect("rgba(4,12,35,"+(1-daylight.light)*.35+")",0,ground+pose.camera-60,w,h-ground+60);
       ctx.restore();
     }
     rocket(shipX,ground,s,pose,reduced.matches?0:now,thrust);
+    if (checkout && phase === "pad") drawCheckout(shipX,ground,s);
     if(ignition!==null && phase==="ascent" && !reduced.matches) {
       const age=(now-ignition)/1000;
       if(age<4) {
         for(let i=0;i<40;i++) {
-          const life=clamp((age-rand(i+430)*.53)/3.35);
+          const life=clamp((age-.85-rand(i+430)*.53)/3.35);
           if(life===0 || life===1) continue;
           const x=shipX+(rand(i+315)-.5)*s*(32+life*358);
           const y=ground+pose.camera+s*(4-life*(9+rand(i+212)*58));
@@ -298,7 +345,10 @@ function createLaunchScene(canvas) {
   }
   new ResizeObserver(refresh).observe(canvas);
   reduced.addEventListener("change",()=>{transition=null; ignition=null; refresh();});
-  return {show,setSky(light) {
+  return {show,setCheckout(value) {
+    checkout = value;
+    refresh();
+  },setSky(light) {
     daylight = light;
     refresh();
   }};

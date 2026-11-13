@@ -31,7 +31,16 @@ test("Asteria hands off to the crew canvas and returns to Earth in one saved mis
   const button = name => page.getByRole("button", { name, exact: true });
 
   const start = button("Start mission");
-  if (await start.isVisible()) await start.click();
+  if (await start.isVisible()) {
+    await start.click();
+    const tutorial = page.locator("#flight-tutorial");
+    await expect(tutorial.getByRole("heading")).toHaveText("Your mission");
+    for (const title of ["Bring the ship online","Verify the crew checklist","Clear the pad"]) {
+      await tutorial.getByRole("button", {name:"Next"}).click();
+      await expect(tutorial.getByRole("heading")).toHaveText(title);
+    }
+    await tutorial.getByRole("button", {name:"Open checkout"}).click();
+  }
   await expect(page.locator("#launch-status")).toHaveText("Launchpad");
 
   await button("Briefing").click();
@@ -43,6 +52,7 @@ test("Asteria hands off to the crew canvas and returns to Earth in one saved mis
   }
   await expect(button("Arm countdown")).toBeDisabled();
   await button("Start ship systems").click();
+  await expect(page.locator("#startup-status [data-state=starting]")).toHaveCount(1);
   const advance = async count => {
     for (let i = 0; i < count; i++) await button("Advance 15 s").click();
   };
@@ -51,8 +61,10 @@ test("Asteria hands off to the crew canvas and returns to Earth in one saved mis
   await transport.getByRole("button", { name:"Cycle launch speed" }).click();
   await transport.getByRole("button", { name:"Cycle launch speed" }).click();
   await transport.getByRole("button", { name:"Play", exact:true }).click();
-  await expect(button("Arm countdown")).toBeEnabled({ timeout:6000 });
+  await expect(button("Arm countdown")).toBeEnabled({ timeout:9000 });
   await expect(page.locator("#startup-status")).toHaveAttribute("data-online", "true");
+  await expect(page.locator("#startup-status [data-state=online]")).toHaveCount(4);
+  await expect(page.locator("#launch-jobs [data-state=verified]")).toHaveCount(3);
   await transport.getByRole("button", { name:"Pause", exact:true }).click();
   await button("Arm countdown").click();
   await expect(liftoff).toBeDisabled();
