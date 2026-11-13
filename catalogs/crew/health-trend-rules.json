@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "rules_version": "health-trends-v1",
+  "synthetic_data_only": true,
+  "window_s": 3600,
+  "minimum_samples": 3,
+  "comparability_context": {
+    "heart_rate": ["activity"],
+    "blood_pressure": ["method", "posture"],
+    "glucose": ["method", "meal_context"],
+    "temperature": ["method", "site"],
+    "sleep": [],
+    "mood": ["scale_id"]
+  },
+  "disclaimer": "Descriptive synthetic trend for onboard review. Not a diagnosis or medical advice."
+}
