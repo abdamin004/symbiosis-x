@@ -7,6 +7,7 @@ import CheckInForm from "../crew/CheckInForm.jsx";
 import { CrewHealthDashboard } from "../crew/CrewHealthPanel.jsx";
 import RadiationContext from "../crew/RadiationContext.jsx";
 import { HEALTH_METRICS } from "../../api/healthCatalog.js";
+import AdvisoryForm from "../ground/AdvisoryForm.jsx";
 import GroundSnapshot from "../ground/GroundSnapshot.jsx";
 import AgentStatusStrip from "../workflow/AgentStatusStrip.jsx";
 import TraceTimeline from "../workflow/TraceTimeline.jsx";
@@ -73,7 +74,10 @@ export default function LiveMissionConsole({ role, runId }) {
           </section>
           <RadiationContext />
         </details>
-      </> : <GroundSnapshot packet={view.packet} missionS={view.mission_s} />}
+      </> : <>
+        <GroundSnapshot packet={view.packet} missionS={view.mission_s} />
+        <AdvisoryForm runId={runId} packet={view.packet} closed={view.status === "closed"} />
+      </>}
       <AgentStatusStrip trace={view.trace ?? []} />
       <TraceTimeline trace={view.trace ?? []} />
     </main>

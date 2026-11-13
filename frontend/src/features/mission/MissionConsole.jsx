@@ -5,6 +5,7 @@ import CrewHealthPanel from "../crew/CrewHealthPanel.jsx";
 import CheckInForm from "../crew/CheckInForm.jsx";
 import RadiationContext from "../crew/RadiationContext.jsx";
 import GroundHealthStatus from "../ground/GroundHealthStatus.jsx";
+import AdvisoryForm from "../ground/AdvisoryForm.jsx";
 import GroundSnapshot, { packetFromGroundFixture } from "../ground/GroundSnapshot.jsx";
 import ServiceStatus from "./ServiceStatus.jsx";
 import LiveMissionConsole from "./LiveMissionConsole.jsx";
@@ -107,7 +108,10 @@ export default function MissionConsole({ role }) {
       )}
 
       {role === "ground" && (
-        <GroundSnapshot packet={packetFromGroundFixture(snapshot)} missionS={snapshot.mission_s} />
+        <>
+          <GroundSnapshot packet={packetFromGroundFixture(snapshot)} missionS={snapshot.mission_s} />
+          <AdvisoryForm runId={runId} packet={packetFromGroundFixture(snapshot)} />
+        </>
       )}
 
       {role === "ground" && <GroundHealthStatus cases={snapshot.health_cases ?? []} />}

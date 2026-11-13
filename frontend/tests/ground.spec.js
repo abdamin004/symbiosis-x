@@ -73,3 +73,59 @@ test("Ground keeps the empty state until the first live delivery", async ({ page
   await expect(page.getByTestId("ground-received")).toHaveText("15:00");
   await expect(page.getByTestId("ground-age")).toHaveText("05:00");
 });
+
+test("advice uses displayed delivered snapshot", async ({ page }) => {
+  const tokens = { facilitator: "fac-token", crew: "crew-token", ground: "ground-token" };
+  const requests = [];
+  let reply = "queued";
+  await page.route("**/api/v1/demo/session", (route) => route.fulfill({ json: tokens }));
+  await page.route(`**/api/v1/runs/${ground.run_id}/ground/advisories`, (route) => {
+    const body = route.request().postDataJSON();
+    requests.push({ body, authorization: route.request().headers().authorization });
+    if (reply === "lost") return route.abort("connectionreset");
+    if (reply === "rejected") return route.fulfill({ status: 409, json: { detail: "BASIS_NOT_DELIVERED" } });
+    return route.fulfill({ json: {
+      operation_id: body.operation_id, run_id: ground.run_id, status: "queued",
+      candidate_id: body.candidate_id, basis_snapshot_id: body.basis_snapshot_id,
+      basis_decision_rev: 102, issued_at_s: ground.mission_s, deliver_at_s: ground.mission_s + 300,
+    } });
+  });
+
+  await page.goto(`/runs/${ground.run_id}/ground`);
+  const displayed = await page.getByTestId("ground-basis-snapshot").textContent();
+  expect(displayed).toBe("ground-v102");
+  const form = page.getByTestId("advisory-form");
+  await expect(form.getByTestId("advisory-basis")).toHaveText(displayed);
+  await form.getByLabel("Start standby scrubber").check();
+
+  // The first send is lost; the retry reuses its operation ID, so the server queues it once.
+  reply = "lost";
+  await form.getByRole("button", { name: "Queue advice" }).click();
+  await expect(form.getByTestId("advisory-rejected")).toBeVisible();
+  reply = "queued";
+  await form.getByRole("button", { name: "Queue advice" }).click();
+
+  const receipt = form.getByTestId("advisory-receipt");
+  await expect(receipt).toHaveAttribute("data-status", "queued");
+  await expect(form.getByTestId("advisory-status")).toHaveText("Queued");
+  await expect(form.getByTestId("advisory-receipt-basis")).toHaveText("ground-v102 · v102");
+  await expect(form.getByTestId("advisory-due")).toHaveText("18:00");
+  await expect(form.getByTestId("advisory-rejected")).toHaveCount(0);
+
+  expect(requests).toHaveLength(2);
+  for (const { body, authorization } of requests) {
+    expect(authorization).toBe("Bearer ground-token");
+    expect(body.basis_snapshot_id).toBe(displayed);
+    expect(body.candidate_id).toBe("start_standby");
+  }
+  expect(requests[1].body.operation_id).toBe(requests[0].body.operation_id);
+
+  // A rejected basis shows the server's reason in the form, not a receipt.
+  reply = "rejected";
+  await form.getByLabel("Hold course").check();
+  await form.getByRole("button", { name: "Queue advice" }).click();
+  await expect(form.getByTestId("advisory-rejected")).toContainText("BASIS_NOT_DELIVERED");
+  await expect(form.getByTestId("advisory-receipt")).toHaveCount(0);
+  // Approval stays with Crew: Ground has no approve control.
+  await expect(page.getByRole("button", { name: /approve/i })).toHaveCount(0);
+});
