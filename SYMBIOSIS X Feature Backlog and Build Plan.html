@@ -1,19 +1,21 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SYMBIOSIS X — Feature Backlog and Build Plan</title>
 <style>
-:root{color-scheme:dark;--bg:#101820;--panel:#192a34;--line:#43606d;--ink:#f0f6f2;--dim:#c0d1d5;--green:#a7edca;--blue:#b6d6fb;--amber:#ffca8c}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,sans-serif}p,h1,h2,h3{margin:0}a{color:var(--green);text-underline-offset:.2em}button,select,textarea{font:inherit;color:inherit;background:#233946;border:1px solid #678592;border-radius:6px;padding:7px 10px}button{cursor:pointer}button:hover{border-color:var(--green)}:focus-visible{outline:2px solid white;outline-offset:3px}.wrap{width:min(1230px,calc(100% - 42px));margin:auto}header{padding:clamp(45px,7vw,87px) 0 37px;background:radial-gradient(ellipse at 84% 15%,#2a4a43,transparent 67%);border-bottom:1px solid var(--line)}h1{font-size:clamp(2.9rem,7vw,6.1rem);line-height:1;letter-spacing:-.07em;margin:9px 0 18px}h2{font-size:clamp(1.8rem,4vw,3.05rem);letter-spacing:-.05em;line-height:1.08;margin-bottom:12px}h3{font-size:1.08rem;line-height:1.25;margin-bottom:6px}.lead{max-width:780px;font-size:1.13rem;color:#dceae7}.meta,.ticket-id{font:650 .76rem/1.4 ui-monospace,monospace;letter-spacing:.07em;color:var(--green);text-transform:uppercase}.intro,.note{color:var(--dim)}.intro{max-width:920px;margin-bottom:16px}.note{font-size:.89rem}nav{display:flex;flex-wrap:wrap;gap:8px 22px;padding:13px 0;font-size:.9rem}nav a{text-decoration:none}main>section{border-top:1px solid var(--line);padding:35px 0;scroll-margin-top:10px}.flow,.grid{display:grid;gap:10px;margin:11px 0}.flow{grid-template-columns:repeat(4,minmax(0,1fr));list-style:none;padding:0}.flow li,.card,details{background:var(--panel);border:1px solid var(--line);border-radius:9px}.flow li,.card{padding:13px}.flow li{position:relative}.flow li+li::before{content:"›";color:var(--green);position:absolute;left:-11px;top:38%;font-weight:bold}.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}.note-box{border-left:3px solid var(--blue);background:#1b2d37;padding:10px 12px;margin:12px 0}.toolbar{display:flex;flex-wrap:wrap;align-items:end;gap:9px;margin:13px 0}.toolbar label{display:flex;flex-direction:column;gap:4px}.toolbar label span{font-size:.82rem;color:var(--dim)}.toolbar select,.toolbar button{font-size:.9rem}details{margin:8px 0;scroll-margin-top:11px}summary{cursor:pointer;padding:12px 14px}summary .ticket-id{margin-right:9px}summary strong{margin-right:8px}.chip{font-size:.74rem;font-weight:650;display:inline-block;border:1px solid #688794;border-radius:5px;padding:0 6px;color:var(--blue);margin:0 4px 3px 0}.chip.expand{color:var(--amber)}.ticket-body{padding:2px 14px 13px}.ticket-body p+p{margin-top:7px}.ticket-body button{font-size:.82rem;margin:8px 7px 0 0}.ticket-body textarea{display:block;width:100%;min-height:130px;margin-top:9px}code{color:var(--blue);overflow-wrap:anywhere}ul{margin:7px 0;padding-left:20px}.links{display:flex;flex-wrap:wrap;gap:8px 19px;margin-top:13px}[hidden]{display:none!important}
+.wireframe{min-width:0;scroll-margin-top:12px}.wire{display:grid;gap:6px;padding:9px;margin:10px 0;background:#101d25;border:1px solid #526f7a;border-radius:8px;font-size:.8rem}.wire-top{display:flex;justify-content:space-between;gap:5px;color:#a7edca;font-weight:700}.wire-item{background:#253d49;border:1px solid #54707c;padding:7px;border-radius:4px;min-width:0}.wire-item small{display:block;color:#d2e3e5}.wire-item.accent{border-color:#91d5b6}.wire-cols{display:grid;gap:6px;grid-template-columns:1fr 1fr}.sequence-group{background:#192a34;border:1px solid #43606d;border-radius:9px;margin:8px 0}.sequence-group ul{padding:0 25px 10px 34px}.sequence-group li{margin:4px 0}.sequence-group summary{font-weight:700}.seq-dep{display:block;color:#c0d1d5;font-size:.82rem}
+
+:root{color-scheme:dark;--bg:#101820;--panel:#192a34;--line:#43606d;--ink:#f0f6f2;--dim:#c0d1d5;--green:#a7edca;--blue:#b6d6fb;--amber:#ffca8c}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,sans-serif}p,h1,h2,h3{margin:0}a{color:var(--green);text-underline-offset:.2em}button,select,textarea{font:inherit;color:inherit;background:#233946;border:1px solid #678592;border-radius:6px;padding:7px 10px}button{cursor:pointer}button:hover{border-color:var(--green)}:focus-visible{outline:2px solid white;outline-offset:3px}.wrap{width:min(1230px,calc(100% - 42px));margin:auto}header{padding:clamp(45px,7vw,87px) 0 37px;background:radial-gradient(ellipse at 84% 15%,#2a4a43,transparent 67%);border-bottom:1px solid var(--line)}h1{font-size:clamp(2.9rem,7vw,6.1rem);line-height:1;letter-spacing:-.07em;margin:9px 0 18px}h2{font-size:clamp(1.8rem,4vw,3.05rem);letter-spacing:-.05em;line-height:1.08;margin-bottom:12px}h3{font-size:1.08rem;line-height:1.25;margin-bottom:6px}.lead{max-width:780px;font-size:1.13rem;color:#dceae7}.meta,.ticket-id{font:650 .76rem/1.4 ui-monospace,monospace;letter-spacing:.07em;color:var(--green);text-transform:uppercase}.intro,.note{color:var(--dim)}.intro{max-width:920px;margin-bottom:16px}.note{font-size:.89rem}nav{display:flex;flex-wrap:wrap;gap:8px 22px;padding:13px 0;font-size:.9rem}nav a{text-decoration:none}main>section{border-top:1px solid var(--line);padding:35px 0;scroll-margin-top:10px}.flow,.grid{display:grid;gap:10px;margin:11px 0}.flow{grid-template-columns:repeat(4,minmax(0,1fr));list-style:none;padding:0}.flow li,.card,details{background:var(--panel);border:1px solid var(--line);border-radius:9px}.flow li,.card{padding:13px}.flow li{position:relative}.flow li+li::before{content:"›";color:var(--green);position:absolute;left:-11px;top:38%;font-weight:bold}.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}.note-box{border-left:3px solid var(--blue);background:#1b2d37;padding:10px 12px;margin:12px 0}.toolbar{display:flex;flex-wrap:wrap;align-items:end;gap:9px;margin:13px 0}.toolbar label{display:flex;flex-direction:column;gap:4px}.toolbar label span{font-size:.82rem;color:var(--dim)}.toolbar select,.toolbar button{font-size:.9rem}details{margin:8px 0;scroll-margin-top:11px}summary{cursor:pointer;padding:12px 14px}summary .ticket-id{margin-right:9px}summary strong{margin-right:8px}.chip{font-size:.74rem;font-weight:650;display:inline-block;border:1px solid #688794;border-radius:5px;padding:0 6px;color:var(--blue);margin:0 4px 3px 0}.chip.expand{color:var(--amber)}.summary-check{display:block;color:var(--dim);font-size:.85rem;margin:5px 0 0 19px}.ticket-body{padding:2px 14px 13px}.ticket-body p+p{margin-top:7px}.ticket-body button{font-size:.82rem;margin:8px 7px 0 0}.ticket-body textarea{display:block;width:100%;min-height:130px;margin-top:9px}code{color:var(--blue);overflow-wrap:anywhere}ul{margin:7px 0;padding-left:20px}.links{display:flex;flex-wrap:wrap;gap:8px 19px;margin-top:13px}[hidden]{display:none!important}
 @media(max-width:820px){.flow{display:flex;overflow:auto;padding-bottom:6px}.flow li{flex:0 0 195px}}
 @media(max-width:650px){.wrap{width:calc(100% - 26px)}.grid,.grid.two{grid-template-columns:1fr}main>section{padding:26px 0}}
 @media print{details[hidden]{display:block!important}.toolbar,nav,.ticket-body button{display:none}.ticket-body{display:block}}
 </style></head><body>
-<header><div class="wrap"><p class="meta">SYMBIOSIS X / Build handoff · 12 November 2026</p><h1>Feature backlog</h1><p class="lead">A build order and pullable tickets for the six-person team. Start with one shared flight run. Add the incident, Crew and Ground handoff, and release evidence in that order.</p></div></header>
-<nav class="wrap" aria-label="Sections"><a href="#plan">Build plan</a><a href="#first">First tickets</a><a href="#tickets">Ticket board</a><a href="#release">Release checks</a></nav>
+<header><div class="wrap"><p class="meta">SYMBIOSIS X / Build handoff · 13 November 2026</p><h1>Feature backlog</h1><p class="lead">Small tickets for the six-person team, each with a focused change, exact files and a named test or review check. Start with one shared flight run. Add the incident, Crew and Ground handoff, and release evidence in that order.</p></div></header>
+<nav class="wrap" aria-label="Sections"><a href="#plan">Build plan</a><a href="SYMBIOSIS%20X%2030-Second%20Demo%20Brief.html">30-second demo</a><a href="#first">First tickets</a><a href="#pages">Page mockups</a><a href="#sequence">Build sequence</a><a href="#tickets">Ticket board</a><a href="#checks">Health and merge checks</a><a href="#incoming">Incoming data</a><a href="#judging">Judging evidence</a><a href="#release">Release checks</a></nav>
 <main class="wrap">
 <section id="plan"><h2>Build in four checkpoints</h2>
 <p class="intro"><strong>Sprint goal.</strong> Start and advance a seeded flight on one host, show Crew and delayed Ground views, and demonstrate an auditable Crew decision. Team A integrates simulation and backend. Team B integrates crew, agents and the React views.</p>
 <ol class="flow" aria-label="Build and integration plan">
-<li><p class="meta">Start</p><h3>Agree on the boundary</h3><p class="note">Freeze the first payload examples and scenario ID. Start the backend, deck, cabin, crew and workflow modules in parallel.</p></li>
-<li><p class="meta">First slice</p><h3>Start → step → read</h3><p class="note">Run one mission through FastAPI and SQLite. Read separate Crew and Ground projections. Connect the route, deck and first accepted sensors.</p></li>
+<li><p class="meta">Start</p><h3>Agree on the boundary</h3><p class="note">Agree the first examples and scenario ID. Prepare the SQLite migration while cabin, crew, deck and workflow owners start in parallel.</p></li>
+<li><p class="meta">First slice</p><h3>Start → step → read</h3><p class="note">Run one mission through FastAPI and SQLite. Add live and ready probes, then connect both role views to the run.</p></li>
 <li><p class="meta">Golden run</p><h3>Replay the complete handoff</h3><p class="note">Combine cabin faults, power rules, the command gate, agent status, Relay and both views. Check the stale advice and separate accepted retry.</p></li>
 <li><p class="meta">Release</p><h3>Rehearse from the tag</h3><p class="note">Export backup frames, verify privacy and role views on two laptops, then prepare the subtitled demo and submission.</p></li>
 </ol>
@@ -27,25 +29,80 @@
 <div class="grid">
 <article class="card"><h3>Mohamed</h3><p class="note"><a href="#SX-01A">SX-01A · Freeze examples</a>. Share the golden fixture ID and identify the producer and consumer of each payload.</p></article>
 <article class="card"><h3>Ahmed</h3><p class="note"><a href="#SX-03">SX-03 · Cabin and power</a>. Start the pure model and check the 100 m³ reference.</p></article>
-<article class="card"><h3>Sama</h3><p class="note"><a href="#SX-05A">SX-05A · Run service</a>. Prepare the app and migration while the team agrees on payloads.</p></article>
+<article class="card"><h3>Sama</h3><p class="note"><a href="#SX-21A">SX-21A · Backend bootstrap</a>, then <a href="#SX-05D">SX-05D · SQLite schema</a>.</p></article>
 <article class="card"><h3>Abdelrahman</h3><p class="note"><a href="#SX-07A">SX-07A · Workflow runner</a>. Build trigger and tool boundaries against example events.</p></article>
 <article class="card"><h3>Jana</h3><p class="note"><a href="#SX-04A">SX-04A · Confirmed activity</a>. Provide one sample event and get Ahmed to validate the cabin input.</p></article>
 <article class="card"><h3>Suhad</h3><p class="note"><a href="#SX-08A">SX-08A · 2D deck</a>. Port the original SVG in React JSX and build against the fixtures.</p></article>
 </div>
 <p class="note">Members can prepare these tickets in parallel. Dependencies on SX-01A mean the example payload needs agreement before those changes are integrated. Use the planned owner as the default and coordinate any reassignment on the shared board.</p>
 </section>
+<section id="pages"><h2>Three pages for the first release</h2>
+<p class="intro">These wireframes show where each feature goes. The same run ID connects Crew and Ground. The deck inspector and case trace live inside the consoles. Facilitator controls appear only in a session with that capability.</p>
+<div class="grid">
+<article class="card wireframe" id="page-launch"><span class="meta">Page 1 · /</span><h3>Run launcher</h3>
+<div class="wire"><div class="wire-top">SYMBIOSIS X <span>Service ready</span></div><div class="wire-item"><b>Start a mission</b><small>SX-01 golden · seed 4242</small></div><div class="wire-item accent">Start run</div><div class="wire-cols"><div class="wire-item">Open Crew</div><div class="wire-item">Open Ground</div></div><div class="wire-item">Run ID · Reset run</div></div>
+<p class="note"><a href="#SX-08C">Page shell</a> · <a href="#SX-08D">Run controls</a> · <a href="#SX-20C">Health badge</a></p></article>
+<article class="card wireframe" id="page-crew"><span class="meta">Page 2 · /runs/:runId/crew</span><h3>Crew console</h3>
+<div class="wire"><div class="wire-top">CREW <span>13:00 · v103</span></div><div class="wire-item">Flight phase · Next waypoint · ETA</div><div class="wire-cols"><div class="wire-item"><b>2D ship and layers</b><small>Cabin · Power · Asset inspector</small></div><div class="wire-item"><b>Private crew health</b><small>Baseline · Check-in · RadLab context</small></div></div><div class="wire-item accent">Candidate checks → Crew approval → Receipt</div><div class="wire-item">Agent status and case timeline</div></div>
+<p class="note"><a href="#SX-08A">2D deck</a> · <a href="#SX-09A">Crew health</a> · <a href="#SX-09C">Approval</a> · <a href="#SX-10">Case trace</a></p></article>
+<article class="card wireframe" id="page-ground"><span class="meta">Page 3 · /runs/:runId/ground</span><h3>Ground console</h3>
+<div class="wire"><div class="wire-top">GROUND <span>Delivered v102</span></div><div class="wire-item">Observed 01:00 · Received 06:00 · Age 12 min</div><div class="wire-cols"><div class="wire-item"><b>Same 2D ship</b><small>Delivered values · 0.60 kW</small></div><div class="wire-item"><b>Link and packets</b><small>Last received · Delivery status</small></div></div><div class="wire-item accent">Advise standby on v102 → Queued receipt</div><div class="wire-item">Disposition pending delivery</div></div>
+<p class="note"><a href="#SX-09B">Snapshot panel</a> · <a href="#SX-09D">Advisory form</a> · <a href="#SX-22F">Role-safe trace</a></p></article>
+</div>
+<p class="note">Empty states are part of the design. Ground can show “No packet received”, Crew can show an unknown reading, and both pages can show service unreachable while keeping mission data and simulated link status distinct. The wireframes illustrate the golden checkpoint. <a href="SYMBIOSIS%20X%20Flight%20Simulation%20Design.html#console">Open the existing interactive deck reference</a></p>
+</section>
+<section id="sequence"><h2>Build sequence and handoffs</h2>
+<p class="intro">The numbers follow dependencies. Work can run in parallel when its linked prerequisites are ready. A prerequisite governs live integration. Suhad can build later screens against agreed examples while the API is in progress. Use the sequence to decide the next pull, and use the shared Git board to track actual status and reassignment.</p>
+<div id="sequence-list"></div>
+<p class="note-box note"><strong>Protect the demo.</strong> Use the <a href="SYMBIOSIS%20X%2030-Second%20Demo%20Brief.html">30-second brief</a> to choose the next priority. Prioritize role views, Crew health, immutable Ground snapshots, stale-advice hold and the golden replay. Use the existing seeded fallback if new data is late. Keep advanced models and automatic stepping in Expansion. When a dependency changes, update the affected ticket, test and reviewer together on the shared board.</p>
+</section>
 <section id="tickets"><h2>Pull a ticket</h2>
-<p class="intro">Filter by member or checkpoint, then expand a ticket and copy it into the shared Git issue board. This HTML is the planning copy. Claim the issue and track <strong>Ready → Doing → Review → Integrated</strong> in the team’s shared board. JSON export carries ticket IDs, owners, dependencies and acceptance checks for other tools.</p>
+<p class="intro">All tickets are shown in build order. Filter by member or checkpoint, or open every card to review the full implementation plan. Each card shows what to change and how to check it. Expand a card for the files to edit, the test file and the exact check to run or add. This HTML is the planning copy. Claim the issue and track <strong>Ready → Doing → Review → Integrated</strong> in the team’s shared board. JSON export carries ticket IDs, owners, dependencies and acceptance checks for other tools.</p>
 <div class="toolbar" role="group" aria-label="Filter or export the backlog">
 <label><span>Owner</span><select id="owner"><option value="">Everyone</option></select></label>
 <label><span>Checkpoint</span><select id="milestone"><option value="">All checkpoints</option></select></label>
-<button id="export" type="button">Download all tickets as JSON</button>
+<button id="expand" type="button">Expand all shown</button><button id="collapse" type="button">Collapse all</button><button id="export" type="button">Download all tickets as JSON</button>
 </div>
 <p class="note" id="count" aria-live="polite"></p><div id="board"></div>
 </section>
+<section id="checks"><h2>Build health and tests with the first slice</h2>
+<p class="intro">These are implementation tickets and planned checks. The probes report whether the application can serve a demo. The ship’s simulated faults stay on the mission dashboard.</p>
+<div class="grid">
+<article class="card"><h3>Service responds</h3><p class="note"><a href="#SX-20A">SX-20A · GET /health/live</a> returns 200 when FastAPI responds. It does not read SQLite, tick the mission clock or require an active run.</p></article>
+<article class="card"><h3>Service can start a run</h3><p class="note"><a href="#SX-20B">SX-20B · GET /health/ready</a> checks the already initialized SQLite store, expected migration revision and valid golden manifest. Return 200 or 503 with bounded check codes. Reading readiness cannot create a database or mutate a run.</p></article>
+<article class="card"><h3>Operator sees the difference</h3><p class="note"><a href="#SX-20C">SX-20C · Service status</a> distinguishes starting, ready and unreachable. A scrubber fault, Relay blackout or missing organizer data does not make the app unready.</p></article>
+</div>
+<ol class="flow" aria-label="Feature testing and merge cycle">
+<li><p class="meta">Feature branch</p><h3>Run the focused check</h3><p class="note">Start from the ticket’s file list. Add its named test or record its manual evidence. Tests use temporary SQLite files and checked-in synthetic or sourced fixtures.</p></li>
+<li><p class="meta">Before merge</p><h3>Run the shared check</h3><p class="note"><a href="#SX-20D">SX-20D</a> adds <code>python3 scripts/check.py</code>. Run backend tests, schema examples and the React build locally and in GitHub Actions when available.</p></li>
+<li><p class="meta">Candidate merge</p><h3>Verify both views</h3><p class="note">Run the same check on each merged team branch and the combined candidate. Start and step a seeded run, verify ready, then run <a href="#SX-18D">golden API replay</a> and <a href="#SX-20E">two-role browser smoke</a> once available.</p></li>
+<li><p class="meta">Release tag</p><h3>Repeat from a clean checkout</h3><p class="note">Record commit, scenario version, seed and pass/fail. Hold a failed merge or revert the isolated change and rerun. Tag the revision after the checks pass.</p></li>
+</ol>
+<p class="note-box note"><strong>Keep the proofs separate.</strong> Golden replay checks stale advice at 13:00 and the delivered Ground values. Command tests independently prove a stale or expired approval applies zero effects and a fresh retry applies once across restart. Check privacy on the actual Ground, Relay and shared outputs. A test that did not run stays unverified.</p>
+<p class="note"><a href="https://fastapi.tiangolo.com/tutorial/testing/">FastAPI TestClient</a> · <a href="https://playwright.dev/docs/test-assertions">Playwright assertions</a> · <a href="https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python">GitHub Actions Python testing</a></p>
+</section>
+<section id="incoming"><h2>When the event data arrives</h2>
+<p class="intro">Start the core build with the current seeded fixtures. Pull this sequence when a dataset is available. The new variant does not replace the reference demo.</p>
+<ol class="flow" aria-label="Incoming data checks">
+<li><h3><a href="#SX-12">Log the source</a></h3><p class="note">Mohamed records provenance, allowed use, units, timebase, coverage, gaps and privacy. Classify the input as archive context, replay, model parameter or comparison.</p></li>
+<li><h3><a href="#SX-12B">Map one row</a></h3><p class="note">Ahmed or Jana maps a representative sample to the observation envelope with Sama reviewing. Keep the original UTC and any explicit replay offset. Unclear inputs stay pending.</p></li>
+<li><h3><a href="#SX-12C">Replay a separate case</a></h3><p class="note">Sama pins a new fixture and expected outputs. Run it twice and rerun the golden case before merging the adapter.</p></li>
+<li><h3><a href="#SX-12D">Check the role boundary</a></h3><p class="note">Abdelrahman and Jana verify the private marker stays onboard. Keep raw private or restricted data out of shared Git. Commit approved or synthetic examples.</p></li>
+</ol>
+</section>
+<section id="judging"><h2>What to show the judges</h2>
+<p class="intro">Use the five criteria in the <a href="Official%20Event%20Sources/2026-Cairo-Judging-Guidelines.pdf">Cairo participant judging guide</a>. Show one piece of evidence for each in the existing demo or submission.</p>
+<div class="grid">
+<article class="card"><h3>Impact</h3><p class="note">Show how the Crew view helps an astronaut or operator understand a change from their personal baseline and identify who should review it. <a href="#SX-09A">Crew context</a></p></article>
+<article class="card"><h3>Creativity</h3><p class="note">Show Crew v103 beside Ground v102 and explain how the system stops a stale recommendation from becoming a command. <a href="#SX-07D">Stale advice</a></p></article>
+<article class="card"><h3>Validity</h3><p class="note">Reproduce the seeded scenario. Show why standby is blocked, the zero-effect rejection, and a separate apply-once check. <a href="#SX-06B">Commit test</a></p></article>
+<article class="card"><h3>Relevance</h3><p class="note">Name the astronaut health monitoring challenge. Show where the NASA RadLab series provides mission radiation context and label the astronaut readings as synthetic. <a href="#SX-19">Archive context</a></p></article>
+<article class="card"><h3>Presentation</h3><p class="note">Start with the crew review, follow the cabin and Ground decision on the map, and finish with the outcome. Open all submission links outside the owner session. <a href="#SX-11E">Submission check</a></p></article>
+</div>
+</section>
 <section id="release"><h2>Definition of done and release checks</h2>
 <div class="grid two">
-<article class="card"><h3>Before merging a ticket</h3><p class="note">Name the dependency and affected consumer. Attach the passing fixture or test. Have the owning team review the diff. Verify model logic at the API boundary or UI behavior in the actual screen, depending on the ticket. Record known gaps with their own issue.</p></article>
+<article class="card"><h3>Before merging a ticket</h3><p class="note">Name the dependency and affected consumer. Attach the passing fixture or test. Have the named reviewer check the diff. Verify model logic at the API boundary or UI behavior in the actual screen, depending on the ticket. Record known gaps with their own issue.</p></article>
 <article class="card"><h3>Before tagging the release</h3><p class="note">Verify nominal, stale advice and fresh retry from a clean checkout. Test exact Ground snapshot values and private-field exclusion. Rehearse both browser sessions on one host and the offline backup. Test playback and English subtitles before final submission.</p></article>
 </div>
 <p class="note-box note"><strong>Golden replay.</strong> Five display beats at 00:00, 01:00, 08:00, 10:00 and 13:00. Relay also delivers at 06:00 and 15:00. At 13:00 Crew is on v103 with 0.20 kW and Ground remains on v102 with 0.60 kW. The stale advisory produces zero applied effects. The separate fresh approval test applies once.</p>
@@ -55,28 +112,93 @@
 <script type="application/json" id="ticket-data">[
   {
     "id": "SX-01A",
-    "title": "Freeze kickoff examples and demo contract",
+    "title": "Publish four example payloads",
     "owner": "Mohamed",
     "reviewers": [
-      "Sama",
-      "Abdelrahman",
-      "Suhad"
+      "Sama"
     ],
     "milestone": "Start",
     "deps": [],
     "paths": [
-      "contracts/examples/",
-      "docs/decisions/"
+      "contracts/examples/crew-v103.json",
+      "contracts/examples/ground-v102.json",
+      "contracts/examples/candidate-results.json",
+      "contracts/examples/action-receipts.json"
     ],
-    "build": "Agree IDs, role payloads, timebase, quality and authority. Publish Crew v103, Ground v102, candidate and receipt examples plus the golden scenario ID.",
-    "done": "All consumers acknowledge the same example revision. Ground v102 and Crew v103 include the correct distinct values."
+    "build": "Save Crew, Ground, plan and receipt examples.",
+    "done": "All four examples validate against the agreed schema.",
+    "test": {
+      "path": "backend/tests/integration/test_contract_examples.py",
+      "name": "test_examples_match_role_schemas",
+      "method": "Validate four fixtures; reject Crew-only fields in a Ground example.",
+      "command": "python -m pytest backend/tests/integration/test_contract_examples.py::test_examples_match_role_schemas -q"
+    },
+    "sequence": 1,
+    "surface": "Kickoff contracts",
+    "implementation": "Use the four examples to agree on units, revision, role scope and typed reason codes. Sama wires the schema and Suhad uses these as mock responses.",
+    "page_ids": []
   },
   {
-    "id": "SX-05A",
-    "title": "Boot the shared FastAPI and SQLite run",
+    "id": "SX-21A",
+    "title": "Bootstrap the backend package",
     "owner": "Sama",
     "reviewers": [
-      "Mohamed",
+      "Mohamed"
+    ],
+    "milestone": "Start",
+    "deps": [],
+    "paths": [
+      "backend/src/symbiosis_x/main.py",
+      "backend/pyproject.toml"
+    ],
+    "build": "Register FastAPI and pin the test dependencies. Export an app factory that can use a temporary database.",
+    "done": "The app imports and its OpenAPI document loads.",
+    "test": {
+      "path": "backend/tests/integration/test_bootstrap.py",
+      "name": "test_app_loads",
+      "method": "Instantiate the app and GET /openapi.json.",
+      "command": "python -m pytest backend/tests/integration/test_bootstrap.py::test_app_loads -q"
+    },
+    "sequence": 2,
+    "surface": "Backend or test runner",
+    "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
+    "page_ids": []
+  },
+  {
+    "id": "SX-03",
+    "title": "Model cabin CO₂",
+    "owner": "Ahmed",
+    "reviewers": [
+      "Sama"
+    ],
+    "milestone": "Start",
+    "deps": [
+      "SX-01A"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/simulation/spacecraft/atmosphere.py"
+    ],
+    "build": "Implement the pure 100 m³ cabin model.",
+    "done": "The golden estimate at 13:00 is about 2,063.74 ppm.",
+    "test": {
+      "path": "backend/tests/unit/test_atmosphere.py",
+      "name": "test_golden_cabin_estimate",
+      "method": "Check nominal equilibrium and compare T+13 against 2,063.74 ppm within fixture tolerance.",
+      "command": "python -m pytest backend/tests/unit/test_atmosphere.py::test_golden_cabin_estimate -q"
+    },
+    "sequence": 3,
+    "surface": "Crew and Ground deck · Cabin layer",
+    "implementation": "Expose model outputs to the sensor producer only. Keep simulator truth test-only. The deck reads accepted or delivered values through Sama’s projections.",
+    "page_ids": [
+      "page-crew",
+      "page-ground"
+    ]
+  },
+  {
+    "id": "SX-04A",
+    "title": "Send confirmed crew activity",
+    "owner": "Jana",
+    "reviewers": [
       "Ahmed"
     ],
     "milestone": "Start",
@@ -84,55 +206,27 @@
       "SX-01A"
     ],
     "paths": [
-      "backend/src/symbiosis_x/main.py",
-      "backend/src/symbiosis_x/storage/",
-      "backend/src/symbiosis_x/api/runs.py"
-    ],
-    "build": "Wire one writer, migrations and role context. Start a seeded stub run and serve initial Crew and Ground payloads.",
-    "done": "Fresh database migrates. Start returns a run ID. Crew and Ground reads return typed examples and GET leaves mission time unchanged."
-  },
-  {
-    "id": "SX-03",
-    "title": "Model cabin CO₂, scrubber and power",
-    "owner": "Ahmed",
-    "reviewers": [
-      "Sama"
-    ],
-    "milestone": "Start",
-    "deps": [
-      "SX-01A"
-    ],
-    "paths": [
-      "backend/src/symbiosis_x/simulation/spacecraft/atmosphere.py",
-      "backend/src/symbiosis_x/simulation/spacecraft/electrical.py",
-      "backend/tests/unit/"
-    ],
-    "build": "Build pure atmosphere and power functions. Use the current 100 m³ golden assumption. Model primary removal 20 → 4 m³/h and headroom 0.60 → 0.20 kW.",
-    "done": "Nominal balance is near 2,000 ppm. The golden model yields about 2,063.74 ppm at 13:00. A 0.40 kW standby request cannot pass at 0.20 kW."
-  },
-  {
-    "id": "SX-04A",
-    "title": "Confirm crew activity with a stable event",
-    "owner": "Jana",
-    "reviewers": [
-      "Ahmed",
-      "Sama"
-    ],
-    "milestone": "Start",
-    "deps": [
-      "SX-01A"
-    ],
-    "paths": [
       "backend/src/symbiosis_x/crew/activity.py",
-      "catalogs/crew/synthetic-roster.json",
-      "contracts/examples/"
+      "catalogs/crew/synthetic-roster.json"
     ],
-    "build": "Emit a confirmed synthetic activity with crew, modeled zone, mode and time. Keep planned activity separate.",
-    "done": "A planned exercise leaves the source term unchanged. Confirmed activity changes it once and a repeated event cannot double count a person."
+    "build": "Emit one accepted crew activity event with mode and zone.",
+    "done": "Planned work leaves cabin generation unchanged. Confirmed activity updates it once.",
+    "test": {
+      "path": "backend/tests/unit/test_crew_activity.py",
+      "name": "test_only_confirmed_activity_changes_generation",
+      "method": "Compare planned, confirmed and repeated activity inputs.",
+      "command": "python -m pytest backend/tests/unit/test_crew_activity.py::test_only_confirmed_activity_changes_generation -q"
+    },
+    "sequence": 4,
+    "surface": "Crew console · Activity evidence",
+    "implementation": "Jana sends a confirmed crew ID, activity mode and modeled zone. Ahmed consumes the accepted event once. The first release can use a scheduled scenario trigger to demonstrate confirmation.",
+    "page_ids": [
+      "page-crew"
+    ]
   },
   {
     "id": "SX-07A",
-    "title": "Build the bounded workflow runner",
+    "title": "Run one allowlisted agent tool",
     "owner": "Abdelrahman",
     "reviewers": [
       "Sama"
@@ -142,19 +236,115 @@
       "SX-01A"
     ],
     "paths": [
-      "backend/src/symbiosis_x/workflows/dispatcher.py",
       "backend/src/symbiosis_x/workflows/runner.py",
       "backend/src/symbiosis_x/workflows/tools.py"
     ],
-    "build": "Register typed triggers and tool allowlists. Return intents to Sama’s writer. Make retry and step limits policy inputs.",
-    "done": "Duplicate trigger does not produce a second intent. Denied tool or exhausted budget ends with a reason and no plant effect."
+    "build": "Add the dispatcher and tool permission check.",
+    "done": "A denied tool produces a reason and zero plant effects.",
+    "test": {
+      "path": "backend/tests/unit/test_agent_runner.py",
+      "name": "test_denied_tool_has_no_plant_effect",
+      "method": "Submit a denied tool and check the typed reason and unchanged plant.",
+      "command": "python -m pytest backend/tests/unit/test_agent_runner.py::test_denied_tool_has_no_plant_effect -q"
+    },
+    "sequence": 5,
+    "surface": "Backend · Agent dispatch",
+    "implementation": "Register the tool name, agent allowlist and trigger key. Return typed intents for Sama’s writer. Unit-test a denied tool before adding incident and relay behavior.",
+    "page_ids": []
   },
   {
     "id": "SX-08A",
-    "title": "Render the original 2D deck from fixtures",
+    "title": "Draw the 2D deck",
     "owner": "Suhad",
     "reviewers": [
-      "Ahmed",
+      "Ahmed"
+    ],
+    "milestone": "Start",
+    "deps": [
+      "SX-01A"
+    ],
+    "paths": [
+      "frontend/src/features/deck/ShipDeck.jsx",
+      "frontend/src/features/deck/AssetInspector.jsx"
+    ],
+    "build": "Port the original SVG and one clickable device in React JSX.",
+    "done": "Pointer and keyboard open the same device inspector.",
+    "test": {
+      "path": "frontend/tests/deck.spec.js",
+      "name": "keyboard and pointer select the same asset",
+      "method": "Open the bus with click and Enter; assert the inspector ID matches.",
+      "command": "cd frontend && npx playwright test tests/deck.spec.js -g \"keyboard and pointer select the same asset\""
+    },
+    "sequence": 6,
+    "surface": "Crew and Ground consoles · Shared deck",
+    "implementation": "Render shared asset IDs and focusable SVG markers. Keep selection local. Pass role-scoped values from the container and keep fixture mode until SX-08B.",
+    "page_ids": [
+      "page-crew",
+      "page-ground"
+    ]
+  },
+  {
+    "id": "SX-05D",
+    "title": "Create the SQLite schema",
+    "owner": "Sama",
+    "reviewers": [
+      "Mohamed"
+    ],
+    "milestone": "Start",
+    "deps": [
+      "SX-21A"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/storage/migrations/001_initial.sql"
+    ],
+    "build": "Create the initial run, event, message, snapshot and receipt tables.",
+    "done": "An empty database migrates, reopens and reports the expected schema revision.",
+    "test": {
+      "path": "backend/tests/integration/test_migrations.py",
+      "name": "test_empty_database_migrates_and_reopens",
+      "method": "Apply migration to a temporary SQLite file and reopen at the expected revision.",
+      "command": "python -m pytest backend/tests/integration/test_migrations.py::test_empty_database_migrates_and_reopens -q"
+    },
+    "sequence": 7,
+    "surface": "Backend · Initial SQLite migration",
+    "implementation": "Create runs, events, operations, messages and snapshots with run-scoped keys. Keep migrations separate from probe reads.",
+    "page_ids": []
+  },
+  {
+    "id": "SX-21B",
+    "title": "Freeze event and response models",
+    "owner": "Mohamed",
+    "reviewers": [
+      "Sama"
+    ],
+    "milestone": "Start",
+    "deps": [
+      "SX-01A",
+      "SX-21A"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/contracts/events.py",
+      "backend/src/symbiosis_x/contracts/commands.py",
+      "backend/src/symbiosis_x/contracts/projections.py"
+    ],
+    "build": "Define Pydantic models for the shared envelope, operation IDs, Crew/Ground responses and receipts. Preserve separate time, sequence and decision revision fields.",
+    "done": "All published examples validate and Ground fields are explicitly listed.",
+    "test": {
+      "path": "backend/tests/integration/test_contract_examples.py",
+      "name": "test_published_examples_validate",
+      "method": "Validate the four checked-in examples; reject an unexpected private Ground field.",
+      "command": "python -m pytest backend/tests/integration/test_contract_examples.py::test_published_examples_validate -q"
+    },
+    "sequence": 8,
+    "surface": "Backend or test runner",
+    "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
+    "page_ids": []
+  },
+  {
+    "id": "SX-08C",
+    "title": "Add run launcher and role routes",
+    "owner": "Suhad",
+    "reviewers": [
       "Mohamed"
     ],
     "milestone": "Start",
@@ -162,81 +352,214 @@
       "SX-01A"
     ],
     "paths": [
-      "frontend/src/features/deck/",
-      "frontend/src/ui/",
-      "frontend/src/api/validateFixture.js"
+      "frontend/src/App.jsx",
+      "frontend/src/features/mission/RunLauncher.jsx",
+      "frontend/src/features/mission/MissionConsole.jsx",
+      "frontend/vite.config.js"
     ],
-    "build": "Port the 800×405 cutaway into React JSX. Link asset IDs to the inspector, layers and status labels. Use Tailwind and fixture responses.",
-    "done": "Keyboard and pointer open the same device. One visual zone may reference the common cabin model. Unknown readings stay labeled at phone width."
+    "build": "Create /, /runs/:runId/crew and /runs/:runId/ground using example JSON. Set Vite proxies for /api and /health. Keep role navigation separate from authorization.",
+    "done": "Both dashboard routes load with the same example run ID.",
+    "test": {
+      "path": "frontend/tests/smoke.spec.js",
+      "name": "launch links keep the same run ID",
+      "method": "Open both role links using fixtures and verify the route and shell.",
+      "command": "cd frontend && npx playwright test tests/smoke.spec.js -g \"launch links keep the same run ID\""
+    },
+    "sequence": 9,
+    "surface": "Run launcher and both console routes",
+    "implementation": "Create the three route shells and fixture links. Configure development proxies for /api and /health. Move live commands to SX-08D.",
+    "page_ids": [
+      "page-launch"
+    ]
   },
   {
-    "id": "SX-02",
-    "title": "Run mission phase, clock and ETA",
+    "id": "SX-05E",
+    "title": "Wire the SQLite connection and transactions",
+    "owner": "Sama",
+    "reviewers": [
+      "Mohamed"
+    ],
+    "milestone": "Start",
+    "deps": [
+      "SX-05D",
+      "SX-21A"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/storage/sqlite.py",
+      "backend/src/symbiosis_x/storage/repository.py"
+    ],
+    "build": "Open the configured local DB, apply migrations at startup, and expose a transaction boundary for the run writer.",
+    "done": "An interrupted transaction leaves no partial command or receipt.",
+    "test": {
+      "path": "backend/tests/integration/test_migrations.py",
+      "name": "test_transaction_rolls_back",
+      "method": "Use a temporary file, raise before commit, reopen and confirm no partial records.",
+      "command": "python -m pytest backend/tests/integration/test_migrations.py::test_transaction_rolls_back -q"
+    },
+    "sequence": 10,
+    "surface": "Backend or test runner",
+    "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
+    "page_ids": []
+  },
+  {
+    "id": "SX-05A",
+    "title": "Start a run",
+    "owner": "Sama",
+    "reviewers": [
+      "Mohamed"
+    ],
+    "milestone": "Start",
+    "deps": [
+      "SX-21B",
+      "SX-05E"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/api/runs.py"
+    ],
+    "build": "Start a versioned seeded run at zero with a stable start ID. Use a small nominal fixture first. The integrated golden registry arrives in SX-22E.",
+    "done": "A fresh database returns a run ID and mission time zero.",
+    "test": {
+      "path": "backend/tests/integration/test_runs.py",
+      "name": "test_start_seed_at_zero",
+      "method": "POST a seeded run; assert run ID, zero clock and correct scenario ID.",
+      "command": "python -m pytest backend/tests/integration/test_runs.py::test_start_seed_at_zero -q"
+    },
+    "sequence": 11,
+    "surface": "Run launcher · Start",
+    "implementation": "Return a run ID, scenario ID and zero mission time. Return the same run for the same start request and reject a reused ID with a different request.",
+    "page_ids": [
+      "page-launch"
+    ]
+  },
+  {
+    "id": "SX-03B",
+    "title": "Check standby power",
     "owner": "Ahmed",
     "reviewers": [
-      "Sama",
-      "Suhad"
+      "Sama"
     ],
     "milestone": "First slice",
     "deps": [
-      "SX-03"
+      "SX-01A"
     ],
     "paths": [
-      "backend/src/symbiosis_x/simulation/clock.py",
-      "backend/src/symbiosis_x/simulation/spacecraft/navigation.py",
-      "scenarios/"
+      "backend/src/symbiosis_x/simulation/spacecraft/electrical.py"
     ],
-    "build": "Return scheduled phase, next waypoint and ETA basis from pure flight inputs. Apply due scenario events in mission time. Hold phase when readiness is unmet.",
-    "done": "The same run inputs reproduce the phase sequence. A held phase shows a conditional ETA. The route plan changes only on a new approved revision."
+    "build": "Compare standby demand with available headroom.",
+    "done": "0.40 kW standby is blocked at 0.20 kW.",
+    "test": {
+      "path": "backend/tests/unit/test_electrical.py",
+      "name": "test_standby_blocked_at_point_two_kw",
+      "method": "Compare 0.40 kW demand against 0.20 kW headroom; expect a blocked reason.",
+      "command": "python -m pytest backend/tests/unit/test_electrical.py::test_standby_blocked_at_point_two_kw -q"
+    },
+    "sequence": 12,
+    "surface": "Both consoles · Power layer",
+    "implementation": "Accept headroom and candidate demand in kW. Return the required and available values and an explicit blocked or unknown reason. Feed the result to the planner.",
+    "page_ids": [
+      "page-crew",
+      "page-ground"
+    ]
+  },
+  {
+    "id": "SX-02",
+    "title": "Show phase and next waypoint",
+    "owner": "Ahmed",
+    "reviewers": [
+      "Sama"
+    ],
+    "milestone": "First slice",
+    "deps": [
+      "SX-01A"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/simulation/spacecraft/navigation.py"
+    ],
+    "build": "Return planned phase, next waypoint and schedule-based ETA.",
+    "done": "The same seed reproduces the phase and ETA sequence.",
+    "test": {
+      "path": "backend/tests/unit/test_navigation.py",
+      "name": "test_seed_repeats_phase_and_eta",
+      "method": "Replay the same phase checkpoints; assert ETA basis and phase hold behavior.",
+      "command": "python -m pytest backend/tests/unit/test_navigation.py::test_seed_repeats_phase_and_eta -q"
+    },
+    "sequence": 13,
+    "surface": "Both consoles · Phase and ETA",
+    "implementation": "Read mission time and planned checkpoints. Return the current phase, next checkpoint and scheduled ETA. When readiness holds a phase, keep the plan unchanged and return a conditional ETA.",
+    "page_ids": [
+      "page-crew",
+      "page-ground"
+    ]
   },
   {
     "id": "SX-05B",
-    "title": "Persist advance, reset and event ordering",
+    "title": "Advance one mission step",
     "owner": "Sama",
     "reviewers": [
-      "Ahmed",
-      "Abdelrahman"
+      "Ahmed"
     ],
     "milestone": "First slice",
     "deps": [
       "SX-05A"
     ],
     "paths": [
-      "backend/src/symbiosis_x/application/runs.py",
-      "backend/src/symbiosis_x/storage/repository.py",
-      "backend/tests/integration/"
+      "backend/src/symbiosis_x/api/runs.py",
+      "backend/src/symbiosis_x/application/runs.py"
     ],
-    "build": "Implement one authoritative scheduler and atomic step/reset. At equal mission time apply scenario changes and observations before delivery, then checks and commits. Separate event sequence from decision revision.",
-    "done": "Same advance ID returns its prior receipt. Two different requests for one cursor yield one advance. Reset closes the old run, and a restart preserves state."
+    "build": "Wire POST /api/v1/runs/{id}/advance to persist one cursor step with a stable advance ID. Use a stub scenario handler until SX-22E composes the real plant and Relay.",
+    "done": "Retrying an advance ID returns its receipt without a second step.",
+    "test": {
+      "path": "backend/tests/integration/test_runs.py",
+      "name": "test_duplicate_advance_returns_one_receipt",
+      "method": "Send the same advance ID twice; assert one cursor change. Reject a competing request. Use a facilitator session for protected advance; test role enforcement with SX-22A.",
+      "command": "python -m pytest backend/tests/integration/test_runs.py::test_duplicate_advance_returns_one_receipt -q"
+    },
+    "sequence": 14,
+    "surface": "Run launcher · Step",
+    "implementation": "The route invokes one SQLite-backed cursor change. The handler receives expected cursor and advance ID. Keep a stale cursor conflict distinct from a successful duplicate retry.",
+    "page_ids": [
+      "page-launch"
+    ]
   },
   {
     "id": "SX-17",
-    "title": "Register devices, sample sensors and reduce state",
+    "title": "Register the first sensor",
     "owner": "Ahmed",
     "reviewers": [
-      "Jana",
-      "Sama"
+      "Jana"
     ],
     "milestone": "First slice",
     "deps": [
-      "SX-03",
-      "SX-04A"
+      "SX-01A",
+      "SX-03"
     ],
     "paths": [
-      "catalogs/sx01/",
-      "backend/src/symbiosis_x/telemetry/",
-      "backend/src/symbiosis_x/twin/aggregate.py"
+      "catalogs/sx01/components.json",
+      "catalogs/sx01/sensors.json",
+      "backend/src/symbiosis_x/telemetry/sampling.py"
     ],
-    "build": "Map CO₂ sensor, scrubber and bus to stable IDs. Produce canonical observations with units, quality and mission timestamps. Coordinate the acceptance and rollup adapter with Sama.",
-    "done": "Valid samples update their device and zone. Stale, missing or out-of-order samples do not silently replace accepted readings. No simulator truth enters a role payload."
+    "build": "Map the CO₂ sensor to a stable cabin ID and canonical unit.",
+    "done": "One sample resolves to the same cabin ID in the deck and twin.",
+    "test": {
+      "path": "backend/tests/unit/test_telemetry.py",
+      "name": "test_co2_sensor_resolves_cabin_id",
+      "method": "Validate that the reading’s source resolves to the registered cabin and unit.",
+      "command": "python -m pytest backend/tests/unit/test_telemetry.py::test_co2_sensor_resolves_cabin_id -q"
+    },
+    "sequence": 15,
+    "surface": "Both consoles · Asset catalog",
+    "implementation": "Declare cabin-01 and its CO₂ sensor with the supported unit and sample period. Produce canonical source, entity and quality fields for the twin and deck.",
+    "page_ids": [
+      "page-crew",
+      "page-ground"
+    ]
   },
   {
     "id": "SX-04B",
-    "title": "Add private check-ins and personal baseline",
+    "title": "Save a private check-in",
     "owner": "Jana",
     "reviewers": [
-      "Sama",
-      "Suhad"
+      "Sama"
     ],
     "milestone": "First slice",
     "deps": [
@@ -244,65 +567,667 @@
       "SX-05A"
     ],
     "paths": [
-      "backend/src/symbiosis_x/crew/wellbeing.py",
-      "backend/src/symbiosis_x/api/crew.py",
-      "contracts/examples/"
+      "backend/src/symbiosis_x/crew/wellbeing.py"
     ],
-    "build": "Add one synthetic profile, timestamped baseline observations and a private check-in. Document the proposed alert rule and missing sample behavior.",
-    "done": "Authorized Crew can read the private record and see unknown for missing data. A check-in neither changes cabin state nor advances the operational decision revision."
+    "build": "Record one fictional symptom in the onboard lane.",
+    "done": "Crew can read the note and the operational decision revision stays unchanged.",
+    "test": {
+      "path": "backend/tests/unit/test_wellbeing.py",
+      "name": "test_private_record_does_not_change_operation_revision",
+      "method": "Record one synthetic note and compare the operational basis before and after.",
+      "command": "python -m pytest backend/tests/unit/test_wellbeing.py::test_private_record_does_not_change_operation_revision -q"
+    },
+    "sequence": 16,
+    "surface": "Crew console · Private data store",
+    "implementation": "Use synthetic fixture records only. Store note, mission timestamp and authorized crew reference in the private lane. Keep that lane out of operational revision updates.",
+    "page_ids": [
+      "page-crew"
+    ]
+  },
+  {
+    "id": "SX-19",
+    "title": "Validate one RadLab export",
+    "owner": "Jana",
+    "reviewers": [
+      "Suhad"
+    ],
+    "milestone": "First slice",
+    "deps": [
+      "SX-01A"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/crew/radiation.py",
+      "contracts/examples/radlab-instrument-series.json"
+    ],
+    "build": "Validate and export one reviewed public archive series as JSON. Keep detector, UTC, quantity, units and source. Suhad consumes this static asset in Crew.",
+    "done": "Rows are parsed and traceable to the archive. Missing data stays a gap.",
+    "test": {
+      "path": "backend/tests/unit/test_radiation.py",
+      "name": "test_archive_keeps_detector_utc_and_unit",
+      "method": "Parse a small sourced export; preserve quantity, detector, unit and UTC coverage.",
+      "command": "python -m pytest backend/tests/unit/test_radiation.py::test_archive_keeps_detector_utc_and_unit -q"
+    },
+    "sequence": 17,
+    "surface": "Crew console · Archive data producer",
+    "implementation": "Publish one reviewed instrument export. Suhad consumes the approved static JSON. Preserve detector, unit, UTC, coverage and gaps.",
+    "page_ids": [
+      "page-crew"
+    ]
+  },
+  {
+    "id": "SX-18A",
+    "title": "Freeze the golden scenario",
+    "owner": "Ahmed",
+    "reviewers": [
+      "Mohamed"
+    ],
+    "milestone": "First slice",
+    "deps": [
+      "SX-01A"
+    ],
+    "paths": [
+      "scenarios/sx01-golden-v1.json",
+      "scenarios/expected/sx01-golden-v1.json"
+    ],
+    "build": "Write the five beats, internal delivery times, seed and model version in the fixture.",
+    "done": "The manifest validates without a running app.",
+    "test": {
+      "path": "backend/tests/unit/test_scenario_manifest.py",
+      "name": "test_golden_manifest_validates",
+      "method": "Check seed/version, integer mission seconds and all display and delivery beats.",
+      "command": "python -m pytest backend/tests/unit/test_scenario_manifest.py::test_golden_manifest_validates -q"
+    },
+    "sequence": 18,
+    "surface": "Run launcher · Scenario selector",
+    "implementation": "Write the canonical demo manifest. Pin 100 m³, seed 4242 and the seven reference timestamps. Store expected role values separately from scenario inputs.",
+    "page_ids": [
+      "page-launch"
+    ]
+  },
+  {
+    "id": "SX-20A",
+    "title": "Expose the live probe",
+    "owner": "Sama",
+    "reviewers": [
+      "Mohamed"
+    ],
+    "milestone": "First slice",
+    "deps": [
+      "SX-05A"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/api/health.py",
+      "backend/src/symbiosis_x/main.py"
+    ],
+    "build": "Add GET /health/live to report that FastAPI is responding.",
+    "done": "Returns 200 without touching SQLite or moving mission time.",
+    "test": {
+      "path": "backend/tests/integration/test_health.py",
+      "name": "test_live_does_not_require_ready_store",
+      "method": "With unavailable SQLite, assert /health/live still returns 200.",
+      "command": "python -m pytest backend/tests/integration/test_health.py::test_live_does_not_require_ready_store -q"
+    },
+    "sequence": 19,
+    "surface": "Service · Liveness",
+    "implementation": "Mount the liveness route during app bootstrap. Return a small status payload without accessing the store or clock.",
+    "page_ids": [
+      "page-launch"
+    ]
+  },
+  {
+    "id": "SX-20D",
+    "title": "Run the same checks locally and in CI",
+    "owner": "Mohamed",
+    "reviewers": [
+      "Sama"
+    ],
+    "milestone": "First slice",
+    "deps": [
+      "SX-21A",
+      "SX-08C"
+    ],
+    "paths": [
+      "scripts/check.py",
+      ".github/workflows/checks.yml"
+    ],
+    "build": "Add a local check command and GitHub Actions wrapper. Start with schema/unit/build checks; add required replay and browser modes as the suites land. Release fails if any required suite is missing.",
+    "done": "A failing check returns a nonzero exit locally and blocks the PR check when GitHub is available.",
+    "test": {
+      "path": ".github/workflows/checks.yml",
+      "name": "Local and CI smoke parity",
+      "method": "Run the check command, then inject a local failing assertion and verify nonzero exit.",
+      "command": "Record the manual review in .github/workflows/checks.yml."
+    },
+    "sequence": 20,
+    "surface": "Developer workflow · Local and CI",
+    "implementation": "Run the same check entry point on each laptop. Enable suites as they land and make replay and browser smoke required for the release.",
+    "page_ids": []
+  },
+  {
+    "id": "SX-22A",
+    "title": "Resolve Crew, Ground and facilitator roles",
+    "owner": "Sama",
+    "reviewers": [
+      "Abdelrahman"
+    ],
+    "milestone": "First slice",
+    "deps": [
+      "SX-21B"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/api/roles.py",
+      "backend/src/symbiosis_x/main.py"
+    ],
+    "build": "Resolve roles from a server-issued demo session or token. Define Facilitator for run changes, Crew for private reads and approval, Ground for delivered reads and advice.",
+    "done": "A URL or request body cannot grant a role.",
+    "test": {
+      "path": "backend/tests/integration/test_roles.py",
+      "name": "test_ground_cannot_act_as_crew",
+      "method": "Use a Ground session on a Crew-only route; expect 403 even when the request claims Crew.",
+      "command": "python -m pytest backend/tests/integration/test_roles.py::test_ground_cannot_act_as_crew -q"
+    },
+    "sequence": 21,
+    "surface": "Backend or test runner",
+    "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
+    "page_ids": []
+  },
+  {
+    "id": "SX-05C",
+    "title": "Reset the saved run",
+    "owner": "Sama",
+    "reviewers": [
+      "Mohamed"
+    ],
+    "milestone": "First slice",
+    "deps": [
+      "SX-05B"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/application/runs.py"
+    ],
+    "build": "Close the old run and create the new run atomically.",
+    "done": "After restart the old run is readable and closed to writes.",
+    "test": {
+      "path": "backend/tests/integration/test_runs.py",
+      "name": "test_reset_closes_old_run",
+      "method": "Reopen the SQLite file and verify the old run is readable and closed to new writes.",
+      "command": "python -m pytest backend/tests/integration/test_runs.py::test_reset_closes_old_run -q"
+    },
+    "sequence": 22,
+    "surface": "Run launcher · Reset",
+    "implementation": "Close the old run and return a new run ID. Preserve audit reads. Suhad updates both console links in SX-08D.",
+    "page_ids": [
+      "page-launch"
+    ]
+  },
+  {
+    "id": "SX-17B",
+    "title": "Reject stale sensor samples",
+    "owner": "Sama",
+    "reviewers": [
+      "Ahmed"
+    ],
+    "milestone": "First slice",
+    "deps": [
+      "SX-17"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/twin/reducer.py"
+    ],
+    "build": "Keep the last valid sample and show its quality and age.",
+    "done": "A stale or out-of-order sample cannot overwrite the latest accepted value.",
+    "test": {
+      "path": "backend/tests/unit/test_reducer.py",
+      "name": "test_stale_sample_cannot_replace_accepted_value",
+      "method": "Send a newer valid sample, then an older one; keep the accepted value and timestamp.",
+      "command": "python -m pytest backend/tests/unit/test_reducer.py::test_stale_sample_cannot_replace_accepted_value -q"
+    },
+    "sequence": 23,
+    "surface": "Both consoles · Accepted readings",
+    "implementation": "Order each signal by observation time and stable event order. Preserve the latest good value while exposing invalid or missing evidence explicitly. Test before wiring the reducer to the run.",
+    "page_ids": [
+      "page-crew"
+    ]
+  },
+  {
+    "id": "SX-04C",
+    "title": "Show one personal baseline alert",
+    "owner": "Jana",
+    "reviewers": [
+      "Ahmed"
+    ],
+    "milestone": "First slice",
+    "deps": [
+      "SX-04B"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/crew/wellbeing.py"
+    ],
+    "build": "Expose one explainable synthetic deviation rule and the last good reading.",
+    "done": "The sample fixture shows an alert with its reason. Missing evidence shows unknown.",
+    "test": {
+      "path": "backend/tests/unit/test_wellbeing.py",
+      "name": "test_baseline_alert_and_unknown",
+      "method": "Replay valid out-of-band samples and a missing sample; assert reason and unknown.",
+      "command": "python -m pytest backend/tests/unit/test_wellbeing.py::test_baseline_alert_and_unknown -q"
+    },
+    "sequence": 24,
+    "surface": "Crew console · Baseline alert",
+    "implementation": "Jana evaluates documented synthetic readings and returns the signal, reason, quality and last good sample. Suhad renders this in SX-09A.",
+    "page_ids": [
+      "page-crew"
+    ]
+  },
+  {
+    "id": "SX-20B",
+    "title": "Expose the ready probe",
+    "owner": "Sama",
+    "reviewers": [
+      "Mohamed"
+    ],
+    "milestone": "First slice",
+    "deps": [
+      "SX-20A",
+      "SX-05D",
+      "SX-18A"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/api/health.py"
+    ],
+    "build": "Add GET /health/ready to check SQLite, schema revision and the golden manifest.",
+    "done": "Returns 200 when ready and 503 with a safe reason code if a required check fails.",
+    "test": {
+      "path": "backend/tests/integration/test_health.py",
+      "name": "test_ready_checks_schema_without_advancing_run",
+      "method": "Assert 200 for migrated store, 503 for unready dependency and unchanged cursor on probes. Test missing manifest and schema mismatch; return a bounded reason without filesystem paths.",
+      "command": "python -m pytest backend/tests/integration/test_health.py::test_ready_checks_schema_without_advancing_run -q"
+    },
+    "sequence": 25,
+    "surface": "Service · Readiness",
+    "implementation": "Read the initialized database schema revision and registered golden manifest. Report unavailable, mismatched or missing state with a small public reason code. Never create a database or run in this read.",
+    "page_ids": [
+      "page-launch"
+    ]
+  },
+  {
+    "id": "SX-22B",
+    "title": "Serve the Crew projection",
+    "owner": "Sama",
+    "reviewers": [
+      "Jana"
+    ],
+    "milestone": "First slice",
+    "deps": [
+      "SX-05A",
+      "SX-22A"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/api/crew.py",
+      "backend/src/symbiosis_x/application/projections.py"
+    ],
+    "build": "Implement GET /api/v1/runs/{id}/crew with current revision, mission time, accepted metrics and authorized optional private context.",
+    "done": "An authorized Crew session reads its current run without advancing time.",
+    "test": {
+      "path": "backend/tests/integration/test_projections.py",
+      "name": "test_crew_read_keeps_clock",
+      "method": "Read as Crew, verify role shape and compare the clock before and after.",
+      "command": "python -m pytest backend/tests/integration/test_projections.py::test_crew_read_keeps_clock -q"
+    },
+    "sequence": 26,
+    "surface": "Backend or test runner",
+    "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
+    "page_ids": [
+      "page-crew"
+    ]
+  },
+  {
+    "id": "SX-22C",
+    "title": "Serve the delivered Ground projection",
+    "owner": "Sama",
+    "reviewers": [
+      "Abdelrahman"
+    ],
+    "milestone": "First slice",
+    "deps": [
+      "SX-05A",
+      "SX-22A"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/api/ground.py",
+      "backend/src/symbiosis_x/application/projections.py"
+    ],
+    "build": "Implement GET /api/v1/runs/{id}/ground from stored delivered packets. Return an explicit no-packet state until Relay delivers. The golden seed initializes v100.",
+    "done": "A response never substitutes current Crew values for absent or older evidence.",
+    "test": {
+      "path": "backend/tests/integration/test_projections.py",
+      "name": "test_ground_has_no_onboard_fallback",
+      "method": "Give the run newer Crew data but no delivery. Ground returns an empty or previous delivered view.",
+      "command": "python -m pytest backend/tests/integration/test_projections.py::test_ground_has_no_onboard_fallback -q"
+    },
+    "sequence": 27,
+    "surface": "Backend or test runner",
+    "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
+    "page_ids": [
+      "page-ground"
+    ]
   },
   {
     "id": "SX-08B",
-    "title": "Connect flight route and deck to a real run",
+    "title": "Read a real run in React",
     "owner": "Suhad",
     "reviewers": [
-      "Ahmed",
+      "Ahmed"
+    ],
+    "milestone": "First slice",
+    "deps": [
+      "SX-08A",
+      "SX-08C",
+      "SX-02",
+      "SX-22B",
+      "SX-22C"
+    ],
+    "paths": [
+      "frontend/src/api/useRunProjection.js"
+    ],
+    "build": "Wire the role-scoped projection hook and map the route and deck to one run. Abort prior requests on run or role change. The first Ground response may have no delivered packet.",
+    "done": "Start → step → read both roles on the same run. GET never ticks the clock.",
+    "test": {
+      "path": "frontend/tests/smoke.spec.js",
+      "name": "reading projections does not tick mission time",
+      "method": "Step once, reload each view, and assert reads leave mission time unchanged. A late response from a previous role or run cannot overwrite the current view.",
+      "command": "cd frontend && npx playwright test tests/smoke.spec.js -g \"reading projections does not tick mission time\""
+    },
+    "sequence": 28,
+    "surface": "Crew and Ground consoles · Route and deck",
+    "implementation": "Consume the role-specific GET responses in one hook. Render phase and ETA in the shell. Cancel or ignore a response when the run or role changes.",
+    "page_ids": [
+      "page-crew",
+      "page-ground"
+    ]
+  },
+  {
+    "id": "SX-04D",
+    "title": "Wire the private check-in API",
+    "owner": "Sama",
+    "reviewers": [
+      "Jana"
+    ],
+    "milestone": "First slice",
+    "deps": [
+      "SX-04B",
+      "SX-22B"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/api/crew.py"
+    ],
+    "build": "Validate and persist a private check-in through the real Crew route.",
+    "done": "An authorized Crew round trip works. Ground cannot read or write it.",
+    "test": {
+      "path": "backend/tests/integration/test_crew_checkins.py",
+      "name": "test_checkin_round_trip_is_crew_only",
+      "method": "POST and read back as Crew. Reject unauthorized Ground access.",
+      "command": "python -m pytest backend/tests/integration/test_crew_checkins.py::test_checkin_round_trip_is_crew_only -q"
+    },
+    "sequence": 29,
+    "surface": "Crew console · Check-in API",
+    "implementation": "Validate a synthetic check-in at POST /api/v1/runs/{id}/crew/check-ins. Persist it through the single writer and return its authorized record ID. Reject a Ground session.",
+    "page_ids": [
+      "page-crew"
+    ]
+  },
+  {
+    "id": "SX-20C",
+    "title": "Show service health in the header",
+    "owner": "Suhad",
+    "reviewers": [
       "Sama"
     ],
     "milestone": "First slice",
     "deps": [
       "SX-08A",
-      "SX-02",
-      "SX-05B",
-      "SX-17"
+      "SX-20B"
     ],
     "paths": [
-      "frontend/src/features/mission/",
-      "frontend/src/api/client.js",
-      "frontend/src/api/useRunProjection.js"
+      "frontend/src/features/mission/ServiceStatus.jsx"
     ],
-    "build": "Use the real role projection for the flight route, mission clock and layer inspector. Reuse shared SVG and format ETA from the server.",
-    "done": "Start → step → read Crew and Ground on one run. Reads never tick time. Selecting a deck asset does not change the run."
+    "build": "Show Ready, Starting or Unreachable separately from cabin and Ground link states.",
+    "done": "Loss of the service shows Unreachable. Simulated Ground outage does not.",
+    "test": {
+      "path": "frontend/tests/smoke.spec.js",
+      "name": "service health is separate from simulated relay",
+      "method": "Fail the probe then simulate a relay outage; assert distinct labels.",
+      "command": "cd frontend && npx playwright test tests/smoke.spec.js -g \"service health is separate from simulated relay\""
+    },
+    "sequence": 30,
+    "surface": "All three pages · Service badge",
+    "implementation": "Show the same badge in the launcher and shared console shell. Distinguish an HTTP readiness failure from lost browser connectivity and simulated relay loss.",
+    "page_ids": [
+      "page-launch",
+      "page-crew",
+      "page-ground"
+    ]
+  },
+  {
+    "id": "SX-08D",
+    "title": "Wire facilitator start and step buttons",
+    "owner": "Suhad",
+    "reviewers": [
+      "Sama"
+    ],
+    "milestone": "First slice",
+    "deps": [
+      "SX-08B",
+      "SX-05C",
+      "SX-22A"
+    ],
+    "paths": [
+      "frontend/src/features/mission/RunLauncher.jsx",
+      "frontend/src/features/mission/FacilitatorControls.jsx",
+      "frontend/src/api/client.js"
+    ],
+    "build": "Call start and advance with stable request IDs. Reuse the returned run ID for both views. Provide reset with a new run ID; relink the screens.",
+    "done": "Facilitator steps once; Crew and Ground reload the same run. Their sessions cannot step it.",
+    "test": {
+      "path": "frontend/tests/smoke.spec.js",
+      "name": "facilitator starts and steps one shared run",
+      "method": "Use separate browser sessions and verify the clock and access response.",
+      "command": "cd frontend && npx playwright test tests/smoke.spec.js -g \"facilitator starts and steps one shared run\""
+    },
+    "sequence": 31,
+    "surface": "Operator console",
+    "implementation": "Use the start, advance and reset API from facilitator controls. Reuse the returned run ID for both console links and redirect links after reset. Preserve stable IDs across retries.",
+    "page_ids": [
+      "page-launch"
+    ]
   },
   {
     "id": "SX-06",
-    "title": "Evaluate plans and gate crew commands",
+    "title": "Evaluate three response options",
     "owner": "Sama",
     "reviewers": [
-      "Ahmed",
-      "Abdelrahman"
+      "Ahmed"
     ],
     "milestone": "Golden run",
     "deps": [
-      "SX-05B",
-      "SX-17"
+      "SX-03",
+      "SX-03B",
+      "SX-17B"
     ],
     "paths": [
-      "backend/src/symbiosis_x/twin/forecast.py",
-      "backend/src/symbiosis_x/twin/constraints.py",
-      "backend/src/symbiosis_x/application/commit.py",
-      "backend/src/symbiosis_x/api/decisions.py"
+      "backend/src/symbiosis_x/twin/constraints.py"
     ],
-    "build": "Evaluate hold, standby and allowed reduced activity from accepted state. Commit only after checking authority, freshness, basis, policy and power. Persist the stable receipt.",
-    "done": "Known no-feasible differs from insufficient evidence. Stale or rejected approval applies zero effects. A fresh retry returns the same receipt and applies once across restart."
+    "build": "Return feasibility and a reason for hold, standby and permitted activity change.",
+    "done": "Known no-feasible and missing-evidence cases return different outcomes.",
+    "test": {
+      "path": "backend/tests/unit/test_planner.py",
+      "name": "test_known_constraints_differ_from_missing_evidence",
+      "method": "Compare a blocked candidate set with a missing-signal case; assert different codes.",
+      "command": "python -m pytest backend/tests/unit/test_planner.py::test_known_constraints_differ_from_missing_evidence -q"
+    },
+    "sequence": 32,
+    "surface": "Crew console · Plan evaluation",
+    "implementation": "Evaluate the three existing candidates against accepted cabin, power, permissions and evidence. Return candidate, result, reason and basis. Preserve unknown versus no-feasible.",
+    "page_ids": [
+      "page-crew"
+    ]
+  },
+  {
+    "id": "SX-07C",
+    "title": "Deliver immutable Ground snapshots",
+    "owner": "Abdelrahman",
+    "reviewers": [
+      "Sama"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-07A",
+      "SX-05B",
+      "SX-22C"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/workflows/relay.py"
+    ],
+    "build": "Queue the operational snapshot and publish it when due.",
+    "done": "At 13:00, Ground v102 still reads 0.60 kW. It receives v103 at 15:00.",
+    "test": {
+      "path": "backend/tests/integration/test_relay.py",
+      "name": "test_ground_keeps_delivered_values_until_new_packet",
+      "method": "Assert Ground v102/0.60 kW at 13:00 and v103/0.20 kW at 15:00.",
+      "command": "python -m pytest backend/tests/integration/test_relay.py::test_ground_keeps_delivered_values_until_new_packet -q"
+    },
+    "sequence": 33,
+    "surface": "Ground console · Delivered ship",
+    "implementation": "Store the immutable operational packet with snapshot ID, basis, observation time and due time. The Ground projection reads only delivered records.",
+    "page_ids": [
+      "page-ground"
+    ]
+  },
+  {
+    "id": "SX-09A",
+    "title": "Show Crew health context",
+    "owner": "Suhad",
+    "reviewers": [
+      "Jana"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-08B",
+      "SX-04C",
+      "SX-04D"
+    ],
+    "paths": [
+      "frontend/src/features/crew/CrewHealthPanel.jsx"
+    ],
+    "build": "Render the baseline alert, its reason and separate cabin context.",
+    "done": "Crew sees the synthetic alert and can explain why it fired.",
+    "test": {
+      "path": "frontend/tests/crew.spec.js",
+      "name": "Crew can read the alert reason",
+      "method": "Assert the baseline alert, evidence quality and separate environmental context.",
+      "command": "cd frontend && npx playwright test tests/crew.spec.js -g \"Crew can read the alert reason\""
+    },
+    "sequence": 34,
+    "surface": "Crew console · Private health panel",
+    "implementation": "Show one synthetic baseline, one alert and its reason, plus the cabin reading on a separate line. Keep missing measurements visibly unknown.",
+    "page_ids": [
+      "page-crew"
+    ]
+  },
+  {
+    "id": "SX-18C",
+    "title": "Verify seeded sensor noise",
+    "owner": "Ahmed",
+    "reviewers": [
+      "Mohamed"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-17",
+      "SX-18A"
+    ],
+    "paths": [
+      "scenarios/variants/sensor-noise.json"
+    ],
+    "build": "Add one noisy sensor case with a stable per-sensor stream.",
+    "done": "The same seed reproduces the sample trace. Changing seed changes samples under the same input history.",
+    "test": {
+      "path": "backend/tests/unit/test_sampling.py",
+      "name": "test_seed_repeats_sensor_trace",
+      "method": "Compare equal seeds and one alternate seed under the same history.",
+      "command": "python -m pytest backend/tests/unit/test_sampling.py::test_seed_repeats_sensor_trace -q"
+    },
+    "sequence": 35,
+    "surface": "Scenario or component data",
+    "implementation": "Register a versioned input with stable IDs, units and provenance. Keep the expected test result separate from the input and rerun the reference case.",
+    "page_ids": []
+  },
+  {
+    "id": "SX-09E",
+    "title": "Wire Crew check-in form",
+    "owner": "Suhad",
+    "reviewers": [
+      "Jana"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-04D",
+      "SX-08B"
+    ],
+    "paths": [
+      "frontend/src/features/crew/CheckInForm.jsx",
+      "frontend/src/api/client.js"
+    ],
+    "build": "Send a synthetic check-in to the authorized Crew route, then refresh the personal panel.",
+    "done": "The entered note appears in Crew and is absent from Ground.",
+    "test": {
+      "path": "frontend/tests/crew.spec.js",
+      "name": "Crew can submit a private check-in",
+      "method": "Submit a synthetic marker and verify confirmation in Crew only.",
+      "command": "cd frontend && npx playwright test tests/crew.spec.js -g \"Crew can submit a private check-in\""
+    },
+    "sequence": 36,
+    "surface": "Operator console",
+    "implementation": "Place this in the linked run shell and wire only the authorized response fields. Use the fixture until the listed backend dependencies pass.",
+    "page_ids": [
+      "page-crew"
+    ]
+  },
+  {
+    "id": "SX-06B",
+    "title": "Commit an authorized command once",
+    "owner": "Sama",
+    "reviewers": [
+      "Ahmed"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-06",
+      "SX-05C"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/application/commit.py"
+    ],
+    "build": "Check Crew role, evidence basis, freshness and feasibility before one atomic effect.",
+    "done": "A valid retry returns one receipt and one effect. A stale command causes zero effects.",
+    "test": {
+      "path": "backend/tests/integration/test_actions.py",
+      "name": "test_fresh_retry_applies_once_after_restart",
+      "method": "Apply, restart and retry for one effect. Run a separate stale/expired case for zero effects. Include expiry with unchanged decision revision.",
+      "command": "python -m pytest backend/tests/integration/test_actions.py::test_fresh_retry_applies_once_after_restart -q"
+    },
+    "sequence": 37,
+    "surface": "Crew console · Approval gate",
+    "implementation": "Check current role, revision, policy, expiry and evidence. Store the committed action and stable receipt atomically. Read the prior receipt on same-request retry. Reused ID with different normalized input conflicts.",
+    "page_ids": [
+      "page-crew"
+    ]
   },
   {
     "id": "SX-07B",
-    "title": "Connect Monitor and Planner handoffs",
+    "title": "Open one incident and route a plan",
     "owner": "Abdelrahman",
     "reviewers": [
-      "Sama",
-      "Jana"
+      "Sama"
     ],
     "milestone": "Golden run",
     "deps": [
@@ -311,60 +1236,29 @@
     ],
     "paths": [
       "backend/src/symbiosis_x/workflows/monitor.py",
-      "backend/src/symbiosis_x/workflows/planner.py",
-      "backend/src/symbiosis_x/workflows/incident.py"
+      "backend/src/symbiosis_x/workflows/planner.py"
     ],
-    "build": "Open one owned incident from accepted equipment evidence. Request missing evidence within policy. Ask Sama’s planner and publish reason and next owner.",
-    "done": "Repeated trigger leaves one incident. Known constraints and missing evidence produce distinct outputs. The agent cannot commit a plant action."
-  },
-  {
-    "id": "SX-07C",
-    "title": "Deliver snapshots and recheck Ground advice",
-    "owner": "Abdelrahman",
-    "reviewers": [
-      "Sama",
-      "Suhad"
-    ],
-    "milestone": "Golden run",
-    "deps": [
-      "SX-07A",
-      "SX-05B"
-    ],
-    "paths": [
-      "backend/src/symbiosis_x/workflows/relay.py",
-      "backend/src/symbiosis_x/application/projections.py",
-      "backend/src/symbiosis_x/api/ground.py"
-    ],
-    "build": "Queue allowed immutable snapshots. Stamp observation time and receipt time. Receive advisory and recheck its cited basis and expiry. Disposition uses separate delivery.",
-    "done": "At 13:00 Ground v102 still shows 0.60 kW, while Crew v103 shows 0.20. Advice is held with zero applied effects. Ground receives v103 at 15:00."
-  },
-  {
-    "id": "SX-09A",
-    "title": "Wire the private Crew review and approval panel",
-    "owner": "Suhad",
-    "reviewers": [
-      "Jana",
-      "Sama"
-    ],
-    "milestone": "Golden run",
-    "deps": [
-      "SX-08B",
-      "SX-04B",
-      "SX-06"
-    ],
-    "paths": [
-      "frontend/src/features/crew/"
-    ],
-    "build": "Show baseline, quality and last good time. Display options, constraint reasons and approval receipt. Use one operation ID across retries.",
-    "done": "Only the Crew projection supplies private data. Rejected approval shows the real reason. Retry resolves the same receipt."
+    "build": "Have Monitor deduplicate the fault and request Sama’s planner.",
+    "done": "Repeating the fault leaves one incident with a named next owner.",
+    "test": {
+      "path": "backend/tests/integration/test_monitor.py",
+      "name": "test_repeated_fault_opens_one_case",
+      "method": "Repeat the same trigger; assert one incident and one named next owner.",
+      "command": "python -m pytest backend/tests/integration/test_monitor.py::test_repeated_fault_opens_one_case -q"
+    },
+    "sequence": 38,
+    "surface": "Both consoles · Operational incident",
+    "implementation": "Link the accepted fault event to one incident and delegate evaluation to Sama’s planner. Store next owner, result and explanation in the case. Keep private wellbeing follow-up separate.",
+    "page_ids": [
+      "page-crew"
+    ]
   },
   {
     "id": "SX-09B",
-    "title": "Wire Ground received view and advice",
+    "title": "Show Ground snapshot age",
     "owner": "Suhad",
     "reviewers": [
-      "Abdelrahman",
-      "Sama"
+      "Abdelrahman"
     ],
     "milestone": "Golden run",
     "deps": [
@@ -372,189 +1266,607 @@
       "SX-07C"
     ],
     "paths": [
-      "frontend/src/features/ground/"
+      "frontend/src/features/ground/GroundSnapshot.jsx"
     ],
-    "build": "Show the last delivered deck and basis, sample age, link state and advisory status. Submit advice against the selected delivered snapshot.",
-    "done": "Browser connectivity and simulated link state are distinguishable. No onboard disposition appears before its own delivery."
+    "build": "Render the delivered basis, values and age.",
+    "done": "Ground v102 stays at 0.60 kW while Crew shows 0.20 kW.",
+    "test": {
+      "path": "frontend/tests/ground.spec.js",
+      "name": "Ground shows delivered basis and sample age",
+      "method": "Verify old power, revision and sample age are displayed from the delivered projection.",
+      "command": "cd frontend && npx playwright test tests/ground.spec.js -g \"Ground shows delivered basis and sample age\""
+    },
+    "sequence": 39,
+    "surface": "Ground console · Delivered snapshot panel",
+    "implementation": "Show observation time, receive time, sample age, and the value from the delivered packet. The empty state stays visible before the first delivery.",
+    "page_ids": [
+      "page-ground"
+    ]
   },
   {
-    "id": "SX-10",
-    "title": "Connect agent status and BPM case trace",
+    "id": "SX-07E",
+    "title": "Queue a Ground advisory",
     "owner": "Abdelrahman",
     "reviewers": [
-      "Suhad",
+      "Sama"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-07C"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/api/ground.py"
+    ],
+    "build": "Accept an advisory citing a snapshot already delivered to this Ground session.",
+    "done": "The receipt carries the cited basis and due time. An undelivered basis is rejected.",
+    "test": {
+      "path": "backend/tests/integration/test_ground_advisory.py",
+      "name": "test_advice_is_queued_on_delivered_basis",
+      "method": "Assert the receipt retains delivered basis; reject a snapshot never delivered.",
+      "command": "python -m pytest backend/tests/integration/test_ground_advisory.py::test_advice_is_queued_on_delivered_basis -q"
+    },
+    "sequence": 40,
+    "surface": "Backend or test runner",
+    "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
+    "page_ids": [
+      "page-ground"
+    ]
+  },
+  {
+    "id": "SX-19B",
+    "title": "Plot the archive series in Crew",
+    "owner": "Suhad",
+    "reviewers": [
+      "Jana"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-19",
+      "SX-09A"
+    ],
+    "paths": [
+      "frontend/src/features/crew/RadiationContext.jsx"
+    ],
+    "build": "Render the reviewed instrument series as a separately labeled chart.",
+    "done": "The chart shows source and units, preserves gaps and does not label it as personal dose.",
+    "test": {
+      "path": "frontend/tests/crew.spec.js",
+      "name": "archive chart shows source and missing gaps",
+      "method": "Assert the archive label and unit. Verify a data gap and no personal-dose label.",
+      "command": "cd frontend && npx playwright test tests/crew.spec.js -g \"archive chart shows source and missing gaps\""
+    },
+    "sequence": 41,
+    "surface": "Crew console · Radiation panel",
+    "implementation": "Load the reviewed public instrument JSON. Show detector, unit and UTC range beside the chart and preserve missing intervals. Label it archival instrument context.",
+    "page_ids": [
+      "page-crew"
+    ]
+  },
+  {
+    "id": "SX-07D",
+    "title": "Hold stale Ground advice",
+    "owner": "Abdelrahman",
+    "reviewers": [
+      "Sama"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-07E"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/workflows/relay.py"
+    ],
+    "build": "Classify advisory basis, delivery and expiry at intake. Record a disposition through the journal. This path cannot call the plant command API.",
+    "done": "At 13:00, v102 advice is held against v103 with zero applied effects.",
+    "test": {
+      "path": "backend/tests/integration/test_relay.py",
+      "name": "test_stale_advisory_held_without_plant_effect",
+      "method": "Deliver v102 advice against v103 and assert held disposition with zero applied effects.",
+      "command": "python -m pytest backend/tests/integration/test_relay.py::test_stale_advisory_held_without_plant_effect -q"
+    },
+    "sequence": 42,
+    "surface": "Crew console · Advice disposition",
+    "implementation": "Classify stale, expired or valid advice at onboard receipt. Valid advice can enter Crew review. Crew authorization is a separate request handled by the gate.",
+    "page_ids": [
+      "page-crew"
+    ]
+  },
+  {
+    "id": "SX-09D",
+    "title": "Add the Ground advisory form",
+    "owner": "Suhad",
+    "reviewers": [
+      "Abdelrahman"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-09B",
+      "SX-07E"
+    ],
+    "paths": [
+      "frontend/src/features/ground/AdvisoryForm.jsx"
+    ],
+    "build": "Send a candidate against the selected delivered snapshot and display the queued receipt.",
+    "done": "The request uses the displayed snapshot ID and shows the server receipt.",
+    "test": {
+      "path": "frontend/tests/ground.spec.js",
+      "name": "advice uses displayed delivered snapshot",
+      "method": "Submit on v102 and assert the request basis and the displayed queued receipt.",
+      "command": "cd frontend && npx playwright test tests/ground.spec.js -g \"advice uses displayed delivered snapshot\""
+    },
+    "sequence": 43,
+    "surface": "Ground console · Advisory form",
+    "implementation": "Send the selected candidate and delivered snapshot ID. Show queued or rejected status in the form. Approval stays in the Crew console.",
+    "page_ids": [
+      "page-ground"
+    ]
+  },
+  {
+    "id": "SX-22D",
+    "title": "Expose plan evaluation and command receipts",
+    "owner": "Sama",
+    "reviewers": [
+      "Suhad"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-06B",
+      "SX-22A"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/api/decisions.py",
+      "backend/src/symbiosis_x/contracts/commands.py"
+    ],
+    "build": "Wire POST /plans/evaluate, POST /actions and GET /actions/{operation_id} under the run route. Map results to typed reasons, role checks and stable receipts.",
+    "done": "Evaluation is read-only. A valid retry resolves its original receipt. Same ID with different input conflicts.",
+    "test": {
+      "path": "backend/tests/integration/test_decision_routes.py",
+      "name": "test_evaluate_commit_and_lookup",
+      "method": "Assert no mutation on evaluate; verify receipt lookup, wrong role and mismatched payload.",
+      "command": "python -m pytest backend/tests/integration/test_decision_routes.py::test_evaluate_commit_and_lookup -q"
+    },
+    "sequence": 44,
+    "surface": "Backend or test runner",
+    "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
+    "page_ids": [
+      "page-crew"
+    ]
+  },
+  {
+    "id": "SX-22E",
+    "title": "Compose the golden mission step",
+    "owner": "Sama",
+    "reviewers": [
+      "Ahmed"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-05B",
+      "SX-18A",
+      "SX-17B",
+      "SX-03B",
+      "SX-07B",
+      "SX-07D",
+      "SX-22B",
+      "SX-22C",
+      "SX-04A"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/application/runs.py",
+      "backend/src/symbiosis_x/simulation/scenario.py",
+      "backend/src/symbiosis_x/workflows/dispatcher.py"
+    ],
+    "build": "Register the scenario and pure handlers. At each mission timestamp reduce due plant and sensor events, deliver due messages, then evaluate pending intent. Commit related events in one writer.",
+    "done": "Jumping to 13:00 processes intervening events and power precedes same-time advice evaluation.",
+    "test": {
+      "path": "backend/tests/integration/test_runs.py",
+      "name": "test_compose_applies_due_events_in_order",
+      "method": "Step across queued deliveries and assert the journal order, decision basis and no duplicate effects.",
+      "command": "python -m pytest backend/tests/integration/test_runs.py::test_compose_applies_due_events_in_order -q"
+    },
+    "sequence": 45,
+    "surface": "Backend or test runner",
+    "implementation": "Compose the approved manifest and domain handlers in the single writer. Merge due state changes and observation acceptance before delivering packets and checking queued requests. Send only accepted readings to the projection.",
+    "page_ids": [
+      "page-crew",
+      "page-ground"
+    ]
+  },
+  {
+    "id": "SX-22F",
+    "title": "Publish an allowlisted case trace",
+    "owner": "Abdelrahman",
+    "reviewers": [
       "Sama"
     ],
     "milestone": "Golden run",
     "deps": [
       "SX-07B",
-      "SX-07C"
+      "SX-07D",
+      "SX-22B",
+      "SX-22C"
     ],
     "paths": [
-      "backend/src/symbiosis_x/workflows/",
       "backend/src/symbiosis_x/application/projections.py",
-      "frontend/src/features/workflow/"
+      "backend/src/symbiosis_x/contracts/projections.py"
     ],
-    "build": "Agree the minimal trace/status payload. Suhad renders actor, basis, reason, next owner and step times. Link case events to the affected asset.",
-    "done": "Show actual 5m downlink, 2m receipt-to-issue and 5m uplink on the golden replay. Open work stays open. Private details and raw tool arguments are excluded."
+    "build": "Embed one operational trace in the role responses. Carry case ID, elapsed mission time, actor, result and next owner. Ground sees only delivered trace records.",
+    "done": "Ground never sees an undelivered disposition, raw tool input or private metadata.",
+    "test": {
+      "path": "backend/tests/integration/test_projections.py",
+      "name": "test_trace_filters_by_role_and_delivery",
+      "method": "Populate a private case and an undelivered disposition and verify both are excluded from Ground.",
+      "command": "python -m pytest backend/tests/integration/test_projections.py::test_trace_filters_by_role_and_delivery -q"
+    },
+    "sequence": 46,
+    "surface": "Backend or test runner",
+    "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
+    "page_ids": [
+      "page-crew",
+      "page-ground"
+    ]
   },
   {
-    "id": "SX-19",
-    "title": "Show a separate archived RadLab timeline",
-    "owner": "Jana",
+    "id": "SX-09F",
+    "title": "List candidate checks in Crew",
+    "owner": "Suhad",
     "reviewers": [
-      "Suhad",
-      "Mohamed"
-    ],
-    "milestone": "Golden run",
-    "deps": [
-      "SX-04B",
-      "SX-08A"
-    ],
-    "paths": [
-      "backend/src/symbiosis_x/crew/radiation.py",
-      "frontend/src/features/crew/",
-      "docs/acceptance.md"
-    ],
-    "build": "Use a documented instrument export and hand Suhad the timestamped series with spacecraft, detector, quantity, unit and UTC coverage.",
-    "done": "Chart labels source and gaps. Radiation remains archive context separate from SIM-01 and from planner inputs."
-  },
-  {
-    "id": "SX-18A",
-    "title": "Version scenarios and prove seeded sensor replay",
-    "owner": "Ahmed",
-    "reviewers": [
-      "Mohamed",
       "Sama"
     ],
     "milestone": "Golden run",
     "deps": [
-      "SX-02",
-      "SX-17",
-      "SX-05B"
+      "SX-08B",
+      "SX-22D"
     ],
     "paths": [
-      "scenarios/sx01-golden-v1.json",
-      "scenarios/variants/",
-      "scenarios/expected/",
-      "backend/tests/integration/"
+      "frontend/src/features/crew/CandidateList.jsx",
+      "frontend/src/api/client.js"
     ],
-    "build": "Freeze the golden defaults with the team. Create nominal, fresh-standby, constrained and sensor-quality fixtures. Keep expected assertions separate. Use stable per-sensor random streams.",
-    "done": "Same seed reproduces observation traces. A changed noise seed affects observation noise with the same command history. The golden run preserves the internal 06:00 and 15:00 deliveries."
+    "build": "Call the read-only planner endpoint. Show candidate availability, reason codes and compared values.",
+    "done": "At 13:00 standby shows 0.40 kW required and 0.20 kW available.",
+    "test": {
+      "path": "frontend/tests/crew.spec.js",
+      "name": "standby shows its power constraint",
+      "method": "Assert the real response reasons appear without changing plant state.",
+      "command": "cd frontend && npx playwright test tests/crew.spec.js -g \"standby shows its power constraint\""
+    },
+    "sequence": 47,
+    "surface": "Operator console",
+    "implementation": "Place this in the linked run shell and wire only the authorized response fields. Use the fixture until the listed backend dependencies pass.",
+    "page_ids": [
+      "page-crew"
+    ]
+  },
+  {
+    "id": "SX-09C",
+    "title": "Show the Crew approval receipt",
+    "owner": "Suhad",
+    "reviewers": [
+      "Jana"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-09F",
+      "SX-22D"
+    ],
+    "paths": [
+      "frontend/src/features/crew/ApprovalPanel.jsx"
+    ],
+    "build": "Send one Crew approval with a stable operation ID, render its receipt, and recover an uncertain response by receipt lookup.",
+    "done": "Retry uses the same operation ID and resolves the same receipt.",
+    "test": {
+      "path": "frontend/tests/crew.spec.js",
+      "name": "approval retries use the same operation ID",
+      "method": "Retry one request and assert the original receipt and reason are rendered.",
+      "command": "cd frontend && npx playwright test tests/crew.spec.js -g \"approval retries use the same operation ID\""
+    },
+    "sequence": 48,
+    "surface": "Crew console · Approval and receipt",
+    "implementation": "Use the selected eligible candidate and current evidence basis. Render the server decision. For uncertain delivery, look up the original operation ID.",
+    "page_ids": [
+      "page-crew"
+    ]
+  },
+  {
+    "id": "SX-10",
+    "title": "Show one agent handoff",
+    "owner": "Suhad",
+    "reviewers": [
+      "Abdelrahman"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-22F",
+      "SX-08B"
+    ],
+    "paths": [
+      "frontend/src/features/workflow/AgentStatusStrip.jsx",
+      "frontend/src/features/workflow/TraceTimeline.jsx"
+    ],
+    "build": "Display one case status with actor, reason and next owner.",
+    "done": "Crew shows the hold at 13:00. The shared trace excludes private fields.",
+    "test": {
+      "path": "frontend/tests/workflow.spec.js",
+      "name": "case card shows the hold reason and next owner",
+      "method": "Open the 13:00 milestone and inspect the linked case and role-allowed output.",
+      "command": "cd frontend && npx playwright test tests/workflow.spec.js -g \"case card shows the hold reason and next owner\""
+    },
+    "sequence": 49,
+    "surface": "Crew and Ground consoles · Case timeline",
+    "implementation": "Mount the agent status strip and a compact trace in each console. Use the role-filtered case payload. Keep the graph editor and richer BPM analysis for later.",
+    "page_ids": [
+      "page-crew",
+      "page-ground"
+    ]
+  },
+  {
+    "id": "SX-18D",
+    "title": "Automate the golden replay",
+    "owner": "Mohamed",
+    "reviewers": [
+      "Sama"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-22E",
+      "SX-22D",
+      "SX-22F"
+    ],
+    "paths": [
+      "backend/tests/integration/test_golden_replay.py"
+    ],
+    "build": "Run the saved scenario through the real API and compare both projections.",
+    "done": "At 13:00 Ground reads v102/0.60 kW, Crew reads v103/0.20 kW, and the stale advisory applies zero effects.",
+    "test": {
+      "path": "backend/tests/integration/test_golden_replay.py",
+      "name": "test_golden_replay_through_api",
+      "method": "Use a fresh database; run the real endpoints and compare both snapshots and effect count.",
+      "command": "python -m pytest backend/tests/integration/test_golden_replay.py::test_golden_replay_through_api -q"
+    },
+    "sequence": 50,
+    "surface": "Backend or test runner",
+    "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
+    "page_ids": []
+  },
+  {
+    "id": "SX-20E",
+    "title": "Test a two-role browser run",
+    "owner": "Suhad",
+    "reviewers": [
+      "Mohamed"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-08D",
+      "SX-20C",
+      "SX-18D",
+      "SX-09B",
+      "SX-09D",
+      "SX-09E",
+      "SX-10"
+    ],
+    "paths": [
+      "frontend/tests/smoke.spec.js"
+    ],
+    "build": "Launch the app with a fresh SQLite file and open separate Crew and Ground sessions.",
+    "done": "The sessions share a run ID, show correct snapshot values, and exclude the private panel on Ground.",
+    "test": {
+      "path": "frontend/tests/smoke.spec.js",
+      "name": "two roles share a run without sharing private state",
+      "method": "Use separate sessions and a temporary store; assert one run ID and different projections.",
+      "command": "cd frontend && npx playwright test tests/smoke.spec.js -g \"two roles share a run without sharing private state\""
+    },
+    "sequence": 51,
+    "surface": "All three pages · Browser smoke",
+    "implementation": "Use separate Crew, Ground and facilitator sessions against one temporary store. Start and step from the launcher, then inspect both consoles and one advice flow.",
+    "page_ids": [
+      "page-launch",
+      "page-crew",
+      "page-ground"
+    ]
   },
   {
     "id": "SX-18B",
-    "title": "Export backup frames from the integrated run",
+    "title": "Export five backup frames",
     "owner": "Mohamed",
     "reviewers": [
-      "Ahmed",
-      "Suhad"
+      "Ahmed"
     ],
     "milestone": "Release",
     "deps": [
-      "SX-18A",
-      "SX-07C",
+      "SX-18D",
       "SX-09A",
       "SX-09B"
     ],
     "paths": [
-      "scenarios/expected/",
-      "docs/acceptance.md",
-      "frontend/src/features/mission/"
+      "scenarios/expected/sx01-golden-storyboard.json",
+      "frontend/src/features/mission/BackupReplay.jsx"
     ],
-    "build": "Generate five display frames from the tagged run. Preserve scenario versions, seed and role-scoped evidence. Document how to play the offline backup.",
-    "done": "Fresh golden replay matches saved frames at each beat. The offline backup opens without the API. No private fields appear in the shareable Ground frames."
+    "build": "Generate frames from the passing golden replay.",
+    "done": "The offline backup plays without the service and matches all five reference beats.",
+    "test": {
+      "path": "backend/tests/integration/test_storyboard.py",
+      "name": "test_saved_frames_match_golden_run",
+      "method": "Compare exported frames with a fresh replay. Open the offline player in a browser.",
+      "command": "python -m pytest backend/tests/integration/test_storyboard.py::test_saved_frames_match_golden_run -q"
+    },
+    "sequence": 52,
+    "surface": "Offline fallback · Five frames",
+    "implementation": "Generate role-scoped frames from the passing integrated replay, attach the seed and model version, and open the saved frames in the backup player.",
+    "page_ids": []
   },
   {
     "id": "SX-11A",
-    "title": "Verify privacy, idempotency and the golden replay",
+    "title": "Prove privacy at the actual boundary",
     "owner": "Mohamed",
     "reviewers": [
-      "Sama",
-      "Abdelrahman",
-      "Jana"
+      "Sama"
     ],
     "milestone": "Release",
     "deps": [
-      "SX-06",
+      "SX-04D",
       "SX-07C",
-      "SX-09A",
-      "SX-09B",
-      "SX-10",
-      "SX-18A"
+      "SX-22F"
     ],
     "paths": [
-      "backend/tests/integration/",
-      "docs/acceptance.md"
+      "backend/tests/integration/test_privacy.py"
     ],
-    "build": "Run nominal, golden, separate successful retry and rejected approval cases. Inject a synthetic marker through the actual private API and inspect all shared outputs.",
-    "done": "Ground packet matches the delivered revision and values. Shared trace and logs omit the marker and private metadata. Golden stale advice and a failed commit each produce zero effects."
+    "build": "Add a private marker through the Crew API and inspect Ground and shared output.",
+    "done": "Crew can read it. Ground, Relay and shared logs omit its text and private metadata.",
+    "test": {
+      "path": "backend/tests/integration/test_privacy.py",
+      "name": "test_private_marker_absent_from_shared_outputs",
+      "method": "Write via Crew API; inspect delivered Ground, Relay payload, shared trace and logs.",
+      "command": "python -m pytest backend/tests/integration/test_privacy.py::test_private_marker_absent_from_shared_outputs -q"
+    },
+    "sequence": 53,
+    "surface": "Backend or test runner",
+    "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
+    "page_ids": []
+  },
+  {
+    "id": "SX-11D",
+    "title": "Write the project description",
+    "owner": "Mohamed",
+    "reviewers": [
+      "Sama"
+    ],
+    "milestone": "Release",
+    "deps": [
+      "SX-01A"
+    ],
+    "paths": [
+      "README.md"
+    ],
+    "build": "Explain who benefits, what the prototype proves and where NASA data enters.",
+    "done": "The draft names the challenge, uses source links and labels simulation assumptions.",
+    "test": {
+      "path": "README.md",
+      "name": "Project description review",
+      "method": "Check challenge alignment, stakeholder benefit, NASA provenance and fixture labels.",
+      "command": "Record the manual review in README.md."
+    },
+    "sequence": 54,
+    "surface": "Submission · Project description",
+    "implementation": "Draft challenge relevance and evidence while features are being built. Update claims and links after the release rehearsal.",
+    "page_ids": []
   },
   {
     "id": "SX-11B",
-    "title": "Rehearse and release on the demo laptop",
+    "title": "Rehearse one tagged release",
     "owner": "Mohamed",
     "reviewers": [
-      "Abdelrahman",
-      "Suhad"
+      "Abdelrahman"
     ],
     "milestone": "Release",
     "deps": [
       "SX-11A",
       "SX-18B",
-      "SX-19"
+      "SX-19B",
+      "SX-09C",
+      "SX-09D",
+      "SX-20E",
+      "SX-20D"
     ],
     "paths": [
-      "README.md",
       "docs/acceptance.md"
     ],
-    "build": "Test a clean checkout of the candidate release with separate browser sessions on the shared host, then rehearse the single-laptop fallback. Attach evidence and tag the passing revision.",
-    "done": "Two views reference the same run with distinct roles. Backup frames open, the demo script follows the five beats, and the team can reproduce the build from the release tag."
+    "build": "Open Crew and Ground from a clean checkout on the demo host.",
+    "done": "Both views share the run. The offline backup opens.",
+    "test": {
+      "path": "docs/acceptance.md",
+      "name": "Tagged release rehearsal",
+      "method": "Record commit, seed and browser evidence for two roles and the one-laptop fallback.",
+      "command": "Record the manual review in docs/acceptance.md."
+    },
+    "sequence": 55,
+    "surface": "Build or submission evidence",
+    "implementation": "Record the result with the tested commit and fixture. Link the evidence for the named reviewer.",
+    "page_ids": []
   },
   {
     "id": "SX-11C",
-    "title": "Package the submission and 30-second story",
+    "title": "Record the demo video",
     "owner": "Mohamed",
     "reviewers": [
-      "Suhad",
-      "Abdelrahman"
+      "Suhad"
     ],
     "milestone": "Release",
     "deps": [
       "SX-11B"
     ],
     "paths": [
-      "README.md",
       "docs/acceptance.md"
     ],
-    "build": "Collect P6 screen clips and record the reference story. Include English subtitles, project page draft, dataset/source links and submission checklist.",
-    "done": "The recording opens with subtitles, shows the same released behavior and has correct source labels. Check submission assets against the team’s confirmed event instructions."
+    "build": "Record the team’s 30-second clip and add English subtitles.",
+    "done": "Video opens, subtitles read correctly and the recording matches the release.",
+    "test": {
+      "path": "docs/acceptance.md",
+      "name": "Video playback and subtitles",
+      "method": "Open the final file, read captions, and compare claims and screens to the release.",
+      "command": "Record the manual review in docs/acceptance.md."
+    },
+    "sequence": 56,
+    "surface": "Build or submission evidence",
+    "implementation": "Record the result with the tested commit and fixture. Link the evidence for the named reviewer.",
+    "page_ids": []
+  },
+  {
+    "id": "SX-11E",
+    "title": "Check submission links and disclosure",
+    "owner": "Mohamed",
+    "reviewers": [
+      "Sama"
+    ],
+    "milestone": "Release",
+    "deps": [
+      "SX-11C",
+      "SX-11D"
+    ],
+    "paths": [
+      "docs/acceptance.md"
+    ],
+    "build": "Open links outside the owner session and verify applicable AI-use disclosure.",
+    "done": "Every submitted link opens and disclosure matches the official instructions.",
+    "test": {
+      "path": "docs/acceptance.md",
+      "name": "Signed-out link and disclosure check",
+      "method": "Open every submission link from a separate session and review applicable disclosure.",
+      "command": "Record the manual review in docs/acceptance.md."
+    },
+    "sequence": 57,
+    "surface": "Build or submission evidence",
+    "implementation": "Record the result with the tested commit and fixture. Link the evidence for the named reviewer.",
+    "page_ids": []
   },
   {
     "id": "SX-12",
-    "title": "Adapt newly supplied data",
+    "title": "Log one received dataset",
     "owner": "Mohamed",
     "reviewers": [
-      "Ahmed",
-      "Jana",
-      "Sama"
+      "Ahmed"
     ],
     "milestone": "Expansion",
-    "deps": [
-      "SX-17",
-      "SX-18A"
-    ],
+    "deps": [],
     "paths": [
-      "backend/src/symbiosis_x/telemetry/adapters.py",
-      "scenarios/variants/",
-      "docs/decisions/"
+      "docs/data/intake.md"
     ],
-    "build": "Record provenance, units, timebase, coverage and privacy. Add an adapter and a separate fixture.",
-    "done": "Missing data stays explicit. The new fixture validates and the original golden case still passes."
+    "build": "Record source, permitted use, version or hash, units, timebase, coverage and privacy.",
+    "done": "A sample row is traceable. Ambiguous inputs remain pending.",
+    "test": {
+      "path": "docs/data/intake.md",
+      "name": "One-row provenance review",
+      "method": "Trace one sample to source, permission, version/hash, unit and time; mark gaps pending.",
+      "command": "Record the manual review in docs/data/intake.md."
+    },
+    "sequence": 58,
+    "surface": "Data intake · Separate replay scenario",
+    "implementation": "Keep the original data and source evidence separate. Publish only the approved adapter output or synthetic test sample. Preserve the reference demo and retest its output.",
+    "page_ids": []
   },
   {
     "id": "SX-13",
-    "title": "Extend atmosphere and electrical models",
+    "title": "Add one extra subsystem signal",
     "owner": "Ahmed",
     "reviewers": [
       "Sama"
@@ -565,19 +1877,28 @@
       "SX-18A"
     ],
     "paths": [
-      "backend/src/symbiosis_x/simulation/spacecraft/",
-      "catalogs/sx01/"
+      "backend/src/symbiosis_x/simulation/spacecraft/atmosphere.py",
+      "catalogs/sx01/sensors.json"
     ],
-    "build": "Add evidence-supported O₂, pressure, feeder isolation or energy one at a time, each with units and dependencies.",
-    "done": "Each added model has a nominal and a fault test. An unsupported quantity is labeled scripted or unknown."
+    "build": "Add one supported pressure signal as the first extra reading. If the team picks another signal, update its file and test with the reviewer.",
+    "done": "The new signal has units and a missing-data check.",
+    "test": {
+      "path": "backend/tests/unit/test_subsystem_signal.py",
+      "name": "test_new_signal_keeps_unit_and_quality",
+      "method": "Check one nominal sample and one missing sample for the chosen subsystem.",
+      "command": "python -m pytest backend/tests/unit/test_subsystem_signal.py::test_new_signal_keeps_unit_and_quality -q"
+    },
+    "sequence": 59,
+    "surface": "Backend or test runner",
+    "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
+    "page_ids": []
   },
   {
     "id": "SX-14",
-    "title": "Model docking and transfer",
+    "title": "Add the hatch readiness check",
     "owner": "Ahmed",
     "reviewers": [
-      "Sama",
-      "Suhad"
+      "Sama"
     ],
     "milestone": "Expansion",
     "deps": [
@@ -585,40 +1906,27 @@
       "SX-08B"
     ],
     "paths": [
-      "backend/src/symbiosis_x/simulation/spacecraft/mechanical.py",
-      "scenarios/variants/",
-      "frontend/src/features/mission/"
+      "backend/src/symbiosis_x/simulation/spacecraft/mechanical.py"
     ],
-    "build": "Use a separate mission case to model mechanical capture, verified seal, hatch and crew/cargo movement.",
-    "done": "Unknown seal holds transfer and gas exchange after capture. Crew and cargo generate separate receipts."
-  },
-  {
-    "id": "SX-15",
-    "title": "Add server-driven play, pause and injection",
-    "owner": "Sama",
-    "reviewers": [
-      "Suhad",
-      "Abdelrahman"
-    ],
-    "milestone": "Expansion",
-    "deps": [
-      "SX-05B",
-      "SX-08B"
-    ],
-    "paths": [
-      "backend/src/symbiosis_x/application/runs.py",
-      "frontend/src/features/mission/"
-    ],
-    "build": "Route autoplay, pause and permitted fault injection through the same writer as manual step. Confirm command shapes first.",
-    "done": "Pause stops ticks. Facilitation permissions are enforced by the server. Injection has an audit record."
+    "build": "Separate mechanical capture from verified hatch authorization.",
+    "done": "An unknown seal leaves the hatch closed.",
+    "test": {
+      "path": "backend/tests/unit/test_mechanical.py",
+      "name": "test_unknown_seal_blocks_hatch",
+      "method": "Apply capture and unknown seal evidence; hatch and transfer stay held.",
+      "command": "python -m pytest backend/tests/unit/test_mechanical.py::test_unknown_seal_blocks_hatch -q"
+    },
+    "sequence": 60,
+    "surface": "Backend or test runner",
+    "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
+    "page_ids": []
   },
   {
     "id": "SX-16",
-    "title": "Compare workflow variants and agent quality",
+    "title": "Compare agent trace variants",
     "owner": "Abdelrahman",
     "reviewers": [
-      "Mohamed",
-      "Suhad"
+      "Mohamed"
     ],
     "milestone": "Expansion",
     "deps": [
@@ -626,12 +1934,167 @@
       "SX-18A"
     ],
     "paths": [
-      "backend/src/symbiosis_x/workflows/",
-      "frontend/src/features/workflow/",
-      "docs/acceptance.md"
+      "backend/src/symbiosis_x/workflows/trace.py"
     ],
-    "build": "Compare seeded traces and agent outcomes. Evaluate any learned advisory against deterministic checks.",
-    "done": "Reports distinguish elapsed and open intervals and compare false alerts and escalation lead time without granting action authority."
+    "build": "Compare event timing across two saved runs.",
+    "done": "The report distinguishes open intervals from completed intervals.",
+    "test": {
+      "path": "backend/tests/unit/test_trace.py",
+      "name": "test_open_interval_has_no_end_time",
+      "method": "Compare an open step and a completed step without treating open time as zero.",
+      "command": "python -m pytest backend/tests/unit/test_trace.py::test_open_interval_has_no_end_time -q"
+    },
+    "sequence": 61,
+    "surface": "Backend or test runner",
+    "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
+    "page_ids": []
+  },
+  {
+    "id": "SX-15B",
+    "title": "Drive optional automatic steps",
+    "owner": "Sama",
+    "reviewers": [
+      "Suhad"
+    ],
+    "milestone": "Expansion",
+    "deps": [
+      "SX-05B",
+      "SX-18D"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/application/runs.py",
+      "backend/src/symbiosis_x/api/runs.py"
+    ],
+    "build": "Use the same idempotent advance command in a facilitator-controlled driver.",
+    "done": "Automatic and manual advance cannot apply the same cursor twice.",
+    "test": {
+      "path": "backend/tests/integration/test_runs.py",
+      "name": "test_driver_shares_advance_cursor",
+      "method": "Compete manual and automatic calls at one cursor and verify one effect.",
+      "command": "python -m pytest backend/tests/integration/test_runs.py::test_driver_shares_advance_cursor -q"
+    },
+    "sequence": 62,
+    "surface": "Backend or test runner",
+    "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
+    "page_ids": [
+      "page-launch"
+    ]
+  },
+  {
+    "id": "SX-15",
+    "title": "Add facilitator pause",
+    "owner": "Sama",
+    "reviewers": [
+      "Suhad"
+    ],
+    "milestone": "Expansion",
+    "deps": [
+      "SX-15B"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/application/runs.py"
+    ],
+    "build": "Pause automatic ticks through the existing writer.",
+    "done": "The simulated clock stops until resumed.",
+    "test": {
+      "path": "backend/tests/integration/test_runs.py",
+      "name": "test_pause_stops_automatic_advance",
+      "method": "Pause the server driver and verify the stored clock remains fixed until resume.",
+      "command": "python -m pytest backend/tests/integration/test_runs.py::test_pause_stops_automatic_advance -q"
+    },
+    "sequence": 63,
+    "surface": "Expansion · Facilitator controls",
+    "implementation": "Add pause once the optional driver is wired in SX-15B. Pausing the simulation must leave the last role projections readable.",
+    "page_ids": [
+      "page-launch"
+    ]
+  },
+  {
+    "id": "SX-12B",
+    "title": "Normalize one approved sample",
+    "owner": "Ahmed",
+    "reviewers": [
+      "Sama",
+      "Jana"
+    ],
+    "milestone": "Expansion",
+    "deps": [
+      "SX-12",
+      "SX-17"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/telemetry/adapters.py",
+      "backend/tests/fixtures/data/organizer-small.json"
+    ],
+    "build": "Map an approved sample to the observation envelope and preserve time and provenance.",
+    "done": "Known units normalize. Ambiguous units or bad times are rejected. Missing values remain unknown.",
+    "test": {
+      "path": "backend/tests/unit/test_data_adapter.py",
+      "name": "test_sample_normalizes_or_reports_quality",
+      "method": "Check mapped unit and timestamp, reject ambiguous units, and preserve missing as unknown.",
+      "command": "python -m pytest backend/tests/unit/test_data_adapter.py::test_sample_normalizes_or_reports_quality -q"
+    },
+    "sequence": 64,
+    "surface": "Data intake · Separate replay scenario",
+    "implementation": "Keep the original data and source evidence separate. Publish only the approved adapter output or synthetic test sample. Preserve the reference demo and retest its output.",
+    "page_ids": []
+  },
+  {
+    "id": "SX-12C",
+    "title": "Replay a separate incoming-data case",
+    "owner": "Sama",
+    "reviewers": [
+      "Ahmed"
+    ],
+    "milestone": "Expansion",
+    "deps": [
+      "SX-12B",
+      "SX-18D"
+    ],
+    "paths": [
+      "scenarios/variants/organizer-replay.json",
+      "scenarios/expected/organizer-replay.json"
+    ],
+    "build": "Add a versioned opt-in scenario and its expected outputs.",
+    "done": "The new case repeats deterministically and the original golden case retains its exact revisions, snapshot values and zero stale-advice effects.",
+    "test": {
+      "path": "backend/tests/integration/test_organizer_replay.py",
+      "name": "test_variant_replays_without_golden_changes",
+      "method": "Run both variants twice; compare outputs and assert the original golden fixture is untouched.",
+      "command": "python -m pytest backend/tests/integration/test_organizer_replay.py::test_variant_replays_without_golden_changes -q"
+    },
+    "sequence": 65,
+    "surface": "Incoming data · Replay and regression",
+    "implementation": "Pin the new variant and expected outputs. Run it twice and then run the canonical demo. Compare delivered revisions and applied effect counts.",
+    "page_ids": []
+  },
+  {
+    "id": "SX-12D",
+    "title": "Test privacy on imported data",
+    "owner": "Abdelrahman",
+    "reviewers": [
+      "Jana"
+    ],
+    "milestone": "Expansion",
+    "deps": [
+      "SX-12C",
+      "SX-11A"
+    ],
+    "paths": [
+      "backend/tests/integration/test_data_projection.py"
+    ],
+    "build": "Replay a synthetic private marker through the import boundary.",
+    "done": "Crew gets authorized data. Ground, Relay and shared exports omit the marker and its private metadata.",
+    "test": {
+      "path": "backend/tests/integration/test_data_projection.py",
+      "name": "test_imported_private_marker_stays_onboard",
+      "method": "Compare Crew, Ground, Relay and shared trace against the marker and metadata.",
+      "command": "python -m pytest backend/tests/integration/test_data_projection.py::test_imported_private_marker_stays_onboard -q"
+    },
+    "sequence": 66,
+    "surface": "Data intake · Separate replay scenario",
+    "implementation": "Keep the original data and source evidence separate. Publish only the approved adapter output or synthetic test sample. Preserve the reference demo and retest its output.",
+    "page_ids": []
   }
 ]</script>
 <script>
@@ -641,6 +2104,8 @@ const owner = document.getElementById("owner");
 const milestone = document.getElementById("milestone");
 const count = document.getElementById("count");
 const cards = new Map();
+const checkpointNames = ["Start","First slice","Golden run","Release","Expansion"];
+
 
 function element(tag, text, className) {
   const node = document.createElement(tag);
@@ -649,7 +2114,7 @@ function element(tag, text, className) {
   return node;
 }
 
-for (const [select, values] of [[owner,["Mohamed","Ahmed","Sama","Abdelrahman","Jana","Suhad"]],[milestone,["Start","First slice","Golden run","Release","Expansion"]]]) {
+for (const [select, values] of [[owner,["Mohamed","Ahmed","Sama","Abdelrahman","Jana","Suhad"]],[milestone,checkpointNames]]) {
   for (const value of values) {
     const option = element("option",value);
     option.value = value;
@@ -662,11 +2127,17 @@ function issueText(t) {
     "## " + t.id + " · " + t.title,
     "**Owner** " + t.owner,
     "**Reviewers** " + t.reviewers.join(", "),
-    "**Checkpoint** " + t.milestone,
+    "**Build order** " + t.sequence + " · " + t.milestone,
+    "**Page or service** " + t.surface,
     "**Depends on** " + (t.deps.join(", ") || "Kickoff agreement"),
     "**Paths** " + t.paths.map(path=>"`"+path+"`").join(", "),
     "### Build",
     t.build,
+    t.implementation,
+    "### Test or review",
+    "- [ ] `" + t.test.path + "` · " + t.test.name,
+    t.test.method,
+    t.test.command,
     "### Acceptance",
     "- [ ] " + t.done,
     "### Evidence",
@@ -702,9 +2173,10 @@ for (const ticket of tickets) {
   const card = element("details");
   card.id = ticket.id;
   const summary = element("summary");
-  summary.append(element("span",ticket.id,"ticket-id"),element("strong",ticket.title),
+  summary.append(element("span",String(ticket.sequence).padStart(2,"0")+" · "+ticket.id,"ticket-id"),element("strong",ticket.title),
     element("span",ticket.owner,"chip"),
-    element("span",ticket.milestone,"chip"+(ticket.milestone==="Expansion"?" expand":"")));
+    element("span",ticket.milestone,"chip"+(ticket.milestone==="Expansion"?" expand":"")),
+    element("span",ticket.build+" Check: "+ticket.done,"summary-check"));
   const body = element("div",null,"ticket-body");
   const depends = field("Depends on",ticket.deps.length?"":"Kickoff agreement");
   ticket.deps.forEach((id,i)=>{
@@ -713,7 +2185,7 @@ for (const ticket of tickets) {
     link.href = "#"+id;
     depends.append(link);
   });
-  const paths = field("Paths","");
+  const paths = field("Files to edit","");
   ticket.paths.forEach((path,i)=>{
     if (i) paths.append(document.createTextNode(" · "));
     paths.append(element("code",path));
@@ -725,8 +2197,21 @@ for (const ticket of tickets) {
   fallback.readOnly = true;
   fallback.setAttribute("aria-label",ticket.id+" issue text");
   copy.addEventListener("click",()=>showIssue(ticket,fallback,copy));
-  body.append(field("Reviewers",ticket.reviewers.join(", ")),depends,paths,
-    field("Build",ticket.build),field("Acceptance",ticket.done),copy,fallback);
+  const test = field("Test file","");
+  test.append(element("code",ticket.test.path),document.createTextNode(" · "+ticket.test.name));
+  const placements = field("Wireframes","");
+  for (const id of ticket.page_ids) {
+    const link = element("a",document.querySelector("#"+id+" h3").textContent);
+    link.href = "#"+id;
+    if (placements.querySelector("a")) placements.append(document.createTextNode(" · "));
+    placements.append(link);
+  }
+  placements.hidden = ticket.page_ids.length === 0;
+  const command = field("Run","");
+  command.append(element("code",ticket.test.command));
+  body.append(field("Page or service",ticket.surface),placements,field("Implementation",ticket.implementation),
+    field("Reviewers",ticket.reviewers.join(", ")),depends,paths,
+    test,field("Check",ticket.test.method),command,copy,fallback);
   card.append(summary,body);
   cards.set(ticket.id,card);
   board.append(card);
@@ -754,11 +2239,30 @@ function openLinkedTicket() {
   card.scrollIntoView({block:"start"});
 }
 
+const sequence = document.getElementById("sequence-list");
+for (const stage of checkpointNames) {
+  const group = element("details",null,"sequence-group");
+  const entries = tickets.filter(ticket=>ticket.milestone===stage);
+  group.open = stage==="Start" || stage==="First slice";
+  group.append(element("summary",stage+" · "+entries.length+" tickets"));
+  const list = element("ul");
+  for (const ticket of entries) {
+    const row = element("li");
+    const link = element("a",String(ticket.sequence).padStart(2,"0")+" · "+ticket.id+" "+ticket.title);
+    link.href = "#"+ticket.id;
+    row.append(link,element("span",ticket.owner+" · "+(ticket.deps.length?"After "+ticket.deps.join(", "):"Can start independently"),"seq-dep"));
+    list.append(row);
+  }
+  group.append(list);
+  sequence.append(group);
+}
+document.getElementById("expand").addEventListener("click",()=>{for(const card of cards.values())if(!card.hidden)card.open=true;});
+document.getElementById("collapse").addEventListener("click",()=>{for(const card of cards.values())card.open=false;});
 owner.addEventListener("change",filter);
 milestone.addEventListener("change",filter);
 window.addEventListener("hashchange",openLinkedTicket);
 document.getElementById("export").addEventListener("click",()=>{
-  const file = new Blob([JSON.stringify({schema_version:1,project:"SYMBIOSIS X",tickets},null,2)+"\n"],{type:"application/json"});
+  const file = new Blob([JSON.stringify({schema_version:3,project:"SYMBIOSIS X",tickets},null,2)+"\n"],{type:"application/json"});
   const link = element("a");
   link.href = URL.createObjectURL(file);
   link.download = "symbiosis-x-feature-backlog.json";
