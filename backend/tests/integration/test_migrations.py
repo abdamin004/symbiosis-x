@@ -88,7 +88,7 @@ def test_transaction_rolls_back(tmp_path):
         assert restarted.get("/openapi.json").status_code == 200
 
     with closing(sqlite3.connect(path)) as reopened:
-        assert reopened.execute("PRAGMA user_version").fetchone() == (4,)
+        assert reopened.execute("PRAGMA user_version").fetchone() == (5,)
         assert reopened.execute("SELECT run_id FROM runs").fetchall() == [("run-01",)]
         assert reopened.execute("SELECT event_id FROM events").fetchall() == []
         assert reopened.execute("SELECT operation_id FROM operations").fetchall() == []
@@ -105,7 +105,7 @@ def test_migration_upgrades_revision_one_and_enforces_integer_clock(tmp_path):
     migrate(path)
     repository = Repository(path)
     with repository.write() as connection:
-        assert connection.execute("PRAGMA user_version").fetchone()[0] == 4
+        assert connection.execute("PRAGMA user_version").fetchone()[0] == 5
         assert connection.execute("SELECT run_id FROM runs").fetchone()[0] == "run-01"
 
     with pytest.raises(sqlite3.IntegrityError, match="integer"):
