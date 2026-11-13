@@ -1,4 +1,4 @@
-"""SX-04B: a private check-in is readable by Crew and leaves operations unchanged."""
+"""SX-04B/SX-04C: private check-ins and the personal baseline alert."""
 
 import json
 import sys
@@ -10,13 +10,18 @@ import pytest
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "backend" / "src"))
 from symbiosis_x.crew.activity import CrewActivityState, generation_m3_h
+from symbiosis_x.crew.profile import load_profile
 from symbiosis_x.crew.wellbeing import (
+    SIM01_BASELINE_REPLAY,
+    HeartRateSample,
     OnboardState,
     OperationalBasis,
     PrivateCheckIn,
     PrivateLane,
+    evaluate_baseline,
     read_check_ins,
     record_check_in,
+    resting_hr_rule,
 )
 
 MARKER = "SX01_PRIVATE_CREW_MARKER"
@@ -97,3 +102,77 @@ def test_check_in_validation_and_idempotency():
         record_check_in(state, replace(check_in, mission_s=-1))
     with pytest.raises(ValueError, match="note"):
         record_check_in(state, replace(check_in, note="  "))
+
+
+def sim01_rule():
+    baseline = load_profile().baselines[0]
+    assert (baseline.metric, baseline.unit, baseline.value) == ("heart_rate", "bpm", 72)
+    return resting_hr_rule(baseline.value)
+
+
+def test_baseline_alert_and_unknown():
+    rule = sim01_rule()
+    valid = SIM01_BASELINE_REPLAY[:-1]
+    missing = SIM01_BASELINE_REPLAY[-1]
+    assert all(s.synthetic and s.quality == "valid" for s in valid)
+    assert missing.quality == "unavailable" and missing.value_bpm is None
+
+    alert = evaluate_baseline(valid, rule, crew_id="SIM-01", now_s=780)
+    assert alert.signal == "alert"
+    assert alert.reason_code == "RESTING_HR_ABOVE_BASELINE"
+    assert "95, 97, 98 bpm" in alert.reason and "72 bpm personal baseline" in alert.reason
+    assert alert.quality == "valid"
+    assert alert.threshold_bpm == 92
+    assert alert.evidence_ids == ("hr-sim01-0660", "hr-sim01-0720", "hr-sim01-0780")
+    assert alert.last_good_sample.sample_id == "hr-sim01-0780"
+    assert alert.visibility == "onboard_private"
+
+    unknown = evaluate_baseline(SIM01_BASELINE_REPLAY, rule, crew_id="SIM-01", now_s=840)
+    assert unknown.signal == "unknown"
+    assert unknown.reason_code == "LATEST_SAMPLE_MISSING"
+    assert unknown.quality == "unavailable"
+    assert unknown.last_good_sample == valid[-1]
+    assert unknown.last_good_sample.value_bpm == 98
+    assert unknown.evidence_ids == ()
+
+
+def test_baseline_rule_counts_only_consecutive_fresh_resting_samples():
+    rule = sim01_rule()
+    replay = SIM01_BASELINE_REPLAY[:-1]
+
+    two = evaluate_baseline(replay[:3], rule, crew_id="SIM-01", now_s=720)
+    assert (two.signal, two.reason_code) == ("within_baseline", "NOT_ENOUGH_CONSECUTIVE_SAMPLES")
+    calm = evaluate_baseline(replay[:1], rule, crew_id="SIM-01", now_s=600)
+    assert (calm.signal, calm.reason_code) == ("within_baseline", "WITHIN_BASELINE")
+    assert evaluate_baseline(replay, rule, crew_id="SIM-01", now_s=780 + 181).reason_code == "LATEST_SAMPLE_STALE"
+    assert evaluate_baseline((), rule, crew_id="SIM-01", now_s=0).reason_code == "NO_SAMPLES"
+    # Samples after now_s are not yet known.
+    assert evaluate_baseline(replay, rule, crew_id="SIM-01", now_s=720).signal == "within_baseline"
+
+    gap = (*replay[:3], replace(replay[3], sample_id="late", mission_s=900))
+    assert evaluate_baseline(gap, rule, crew_id="SIM-01", now_s=900).signal == "within_baseline"
+    exercise = (replay[0], replace(replay[1], activity="exercise"), *replay[2:])
+    assert evaluate_baseline(exercise, rule, crew_id="SIM-01", now_s=780).signal == "within_baseline"
+    latest_exercise = (*replay[:3], replace(replay[3], activity="exercise"))
+    assert evaluate_baseline(latest_exercise, rule, crew_id="SIM-01", now_s=780).reason_code == (
+        "LATEST_SAMPLE_NOT_AT_REST")
+    suspect = (*replay[:3], replace(replay[3], quality="suspect"))
+    result = evaluate_baseline(suspect, rule, crew_id="SIM-01", now_s=780)
+    assert (result.signal, result.reason_code) == ("unknown", "LATEST_SAMPLE_NOT_VALID")
+    assert result.last_good_sample.sample_id == "hr-sim01-0720"
+
+
+def test_baseline_rejects_foreign_or_non_synthetic_samples():
+    rule = sim01_rule()
+    sample = SIM01_BASELINE_REPLAY[0]
+    for bad, message in (
+        (replace(sample, crew_id="SIM-02"), "crew member"),
+        (replace(sample, synthetic=False), "synthetic"),
+        (replace(sample, unit="bps"), "bpm"),
+        (replace(sample, value_bpm=None), "finite"),
+        (replace(sample, value_bpm=float("nan")), "finite"),
+        (replace(sample, mission_s=-1), "mission seconds"),
+    ):
+        with pytest.raises(ValueError, match=message):
+            evaluate_baseline((bad,), rule, crew_id="SIM-01", now_s=600)
+    assert isinstance(sample, HeartRateSample)
