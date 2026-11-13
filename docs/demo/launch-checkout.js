@@ -19,6 +19,13 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
   };
   const padLabel = " on a concrete launchpad by the service road, hangar and tank farm";
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+  const narrowCheckout = matchMedia("(max-width:850px)");
+  const checkoutProgress = find("launch-checkout-progress");
+  function placeCheckoutProgress() {
+    find(narrowCheckout.matches ? "pad-controls" : "pad-command").prepend(checkoutProgress);
+  }
+  narrowCheckout.addEventListener("change",placeCheckoutProgress);
+  placeCheckoutProgress();
   const fresh = mission => ({time:0,jobs:{},hold:false,startupAt:null,armed:null,ignition:null,separation:null,insertion:null,aborted:false,phasing:null,capture:null,retreat:null,approachHeld:false,sealAt:null,pressureAt:null,hatchAt:null,transferAt:null,researchAt:null,
     archivedAt:null,departedAt:null,deorbitAt:null,landedAt:null,recoveredAt:null,systemsCheckAt:null,
     transferArrival:null,matchedAt:null,
@@ -56,10 +63,10 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
   let tutorialPage = 0;
   let voiceEnabled = true;
   const pages = [
-    ["map","Your mission","Launch with four crew. Establish orbit, complete the mission objectives, and bring the crew home."],
-    ["zap","Bring the ship online","Start ship systems on the left. The electrical bus, hydraulics, oxygen supply and CO₂ scrubber light up as they come online."],
-    ["users","Verify the crew checklist","Assign each check using the crew portraits on the right. Press Play to advance their work. Green checks show which jobs are verified."],
-    ["activity","Clear the pad","Arm the countdown when checkout is complete. Once the timer clears, choose Launch and watch the tower arms release."],
+    {title:"Your mission", copy:()=>config.objective, draw:drawMissionRoute},
+    {title:"Bring the ship online", copy:()=>`Start ship systems, then press Play. Allow ${config.pad.startup_s} seconds on the launch clock for all four systems to come online.`, draw:drawStartupLesson},
+    {title:"Assign astronauts to checks", copy:()=>"In Crew checklist, select the astronaut’s portrait on each row. Press Play and wait for all checks to show Verified.", draw:drawCrewLesson},
+    {title:"Clear the pad", copy:()=>"When ship systems are online and the crew checks are verified, use the launch controls below Crew checklist.", draw:drawLaunchLesson},
   ];
   let tick, countdown;
   let state;
@@ -88,14 +95,115 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     navigation = createFlightNavigation(mission.navigation,navigationHosts);
     buildMissionControls();
   }
+  function tutorialElement(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text) node.textContent = text;
+    return node;
+  }
+  function tutorialControl(label, icon) {
+    const control = tutorialElement("span","tutorial-control",label);
+    if (icon) setIcon(control,icon," "+label);
+    return control;
+  }
+  function tutorialLocation(label, location) {
+    const block = tutorialElement("span","tutorial-location");
+    block.append(tutorialElement("strong",null,label),tutorialElement("span",null,location));
+    return block;
+  }
+  function drawMissionRoute() {
+    const stages = [
+      ["tutorial-launch","Launch",`Lift off in ${config.ship} and separate the booster.`],
+      ["tutorial-orbit","Orbit",`Establish a ${insertion.target_periapsis_km} × ${insertion.apoapsis_km} km parking orbit.`],
+      ...(rendezvous ? [
+        ["tutorial-dock","Rendezvous & dock","Match the ISS orbit, capture and verify the hatch."],
+        ["flask-conical","Research","Deliver the kit and verify the crew’s research samples."],
+      ] : [
+        ["clipboard-list","Systems checkout","Assign Ivo to verify the orbital systems."],
+      ]),
+      ["tutorial-recovery","Recovery","Deorbit, land and confirm crew recovery on Earth."],
+    ];
+    const route = tutorialElement("ol","tutorial-route");
+    route.setAttribute("role","list");
+    route.setAttribute("aria-label","Mission route");
+    for (const [icon,label,detail] of stages) {
+      const stage = tutorialElement("li");
+      const marker = tutorialElement("span","tutorial-route-icon");
+      setIcon(marker,icon,"");
+      stage.append(marker,tutorialElement("strong",null,label),tutorialElement("small",null,detail));
+      route.append(stage);
+    }
+    return route;
+  }
+  function tutorialTransport() {
+    const transport = tutorialElement("div","tutorial-transport");
+    transport.append(tutorialLocation("Launch time controls","Top of the screen"),tutorialControl("Play","play"));
+    return transport;
+  }
+  function drawStartupLesson() {
+    const console = tutorialElement("div","tutorial-console");
+    const panel = tutorialElement("div","tutorial-systems");
+    const head = tutorialElement("div","tutorial-systems-head");
+    head.append(tutorialLocation("Ship systems","Left panel · first panel on mobile"),tutorialControl("Start ship systems","zap"));
+    const readouts = tutorialElement("ul","tutorial-startup");
+    readouts.setAttribute("role","list");
+    for (const {name,icon} of systems) {
+      const row = tutorialElement("li");
+      setIcon(row,icon,"");
+      row.append(tutorialElement("strong",null,name),tutorialElement("small",null,"✓ Online"));
+      readouts.append(row);
+    }
+    panel.append(head,readouts);
+    console.append(panel,tutorialTransport());
+    return console;
+  }
+  function drawCrewLesson() {
+    const panel = tutorialElement("div","tutorial-console");
+    const checks = tutorialElement("ul","tutorial-checks");
+    checks.setAttribute("role","list");
+    const icons = {restraints:"users",engine:"activity",link:"radio"};
+    for (const job of config.jobs) {
+      const row = tutorialElement("li");
+      const cue = tutorialElement("span","tutorial-check-icon");
+      setIcon(cue,icons[job.id] ?? "clipboard-list","");
+      const details = tutorialElement("span","tutorial-job");
+      details.append(tutorialElement("strong",null,job.title),tutorialElement("small",null,job.station+" · "+job.duration_s+" s"));
+      const assignee = crew.find(person=>person.name===job.crew);
+      const control = tutorialControl("Assign "+job.crew.split(" ")[0]);
+      control.prepend(assignee.portrait());
+      row.append(cue,details,control);
+      checks.append(row);
+    }
+    const states = tutorialElement("div","tutorial-states");
+    states.append(tutorialElement("span",null,"Awaiting assignment"),tutorialElement("span",null,"→ In progress"),tutorialElement("span",null,"→ ✓ Verified"));
+    panel.append(tutorialLocation("Crew checklist","Right panel · below Ship systems on mobile"),checks,tutorialTransport(),states);
+    return panel;
+  }
+  function drawLaunchLesson() {
+    const steps = tutorialElement("ol","tutorial-liftoff");
+    steps.setAttribute("role","list");
+    for (const [label,icon,detail] of [
+      ["Arm countdown","",`Start the ${countdown}-second countdown.`],
+      ["Play","play","Run the countdown in Launch time controls."],
+      ["Launch","tutorial-launch",`Commit liftoff once the countdown clears.`],
+    ]) {
+      const row = tutorialElement("li");
+      row.append(tutorialControl(label,icon),tutorialElement("small",null,detail));
+      steps.append(row);
+    }
+    return steps;
+  }
   function drawTutorial() {
-    const [icon,title,copy] = pages[tutorialPage];
-    setIcon(find("tutorial-art"),icon,"");
+    const {title,copy,draw} = pages[tutorialPage];
+    find("tutorial-context").textContent = config.title+" · "+config.ship;
     find("tutorial-title").textContent = title;
-    find("tutorial-copy").textContent = copy;
+    find("tutorial-copy").textContent = copy();
+    find("tutorial-art").replaceChildren(draw());
     find("tutorial-step").textContent = (tutorialPage+1)+" / "+pages.length;
     find("tutorial-back").disabled = tutorialPage === 0;
     find("tutorial-next").textContent = tutorialPage === pages.length-1 ? "Open checkout" : "Next";
+    find("tutorial-title").focus();
+    tutorial.querySelector(".tutorial-content").scrollTop = 0;
   }
   function showCheckoutTutorial() {
     let seen = false;
@@ -104,6 +212,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     tutorialPage = 0;
     drawTutorial();
     tutorial.showModal();
+    find("tutorial-title").focus();
   }
   find("tutorial-next").addEventListener("click",()=>{
     if (tutorialPage === pages.length-1) tutorial.close("complete");
@@ -661,6 +770,41 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     return flight.reserve === undefined ? "Upper stage standby" : flight.reserve+" game units";
   }
 
+  function renderLaunchStack(flight) {
+    const booster = state.separation !== null ? "Separated" : state.aborted ? "Engine off"
+      : flight.phase === "Booster ascent" ? "Firing" : state.ignition !== null ? "Burnout" : "Attached";
+    const upper = activeBurn?.kind === "insertion" ? "Firing" : state.aborted ? "Engine off"
+      : state.insertion !== null ? "In orbit" : state.separation !== null ? "Coasting" : "Attached";
+    for (const [id, label] of [["capsule","Attached"],["upper",upper],["booster",booster]]) {
+      const stage = stageRows.get(id);
+      if (!stage) continue;
+      stage.item.dataset.state = label.toLowerCase();
+      stage.status.textContent = label;
+    }
+  }
+
+  function renderCheckoutProgress(online, crewReady) {
+    checkoutProgress.hidden = state.ignition !== null;
+    if (state.ignition !== null) return;
+    const total = config.jobs.length;
+    const done = config.jobs.filter(job=>state.jobs[job.id]?.due <= state.time).length;
+    find("launch-crew-progress").max = total;
+    find("launch-crew-progress").value = done;
+    const count = done+" of "+total+" checks done · "+(total-done)+" remaining";
+    const blockers = [];
+    if (state.hold) blockers.push("release launch hold");
+    if (!online) blockers.push(state.startupAt === null ? "start ship systems" : "finish ship startup");
+    if (!crewReady) blockers.push(config.jobs.some(job=>!state.jobs[job.id]) ? "assign remaining checks" : "finish crew checks");
+    const seconds = state.armed === null ? 0 : state.armed+countdown-state.time;
+    const gate = blockers.length ? "Arm blocked · "+blockers.join(" · ")
+      : state.armed === null ? "Ready to arm · choose Arm countdown"
+      : seconds > 0 ? "Launch blocked · "+seconds+" s left in countdown"
+      : "Ready for liftoff · choose Launch";
+    for (const [id,value] of [["launch-crew-count",count],["launch-checklist",gate]]) {
+      if (find(id).textContent !== value) find(id).textContent = value;
+    }
+  }
+
   function render(animate = true) {
     if (state.ignition === null && playback !== "pad") updatePadClock(state.time);
     const launchPlaying = playback === "pad" || ascentPlaying;
@@ -676,7 +820,9 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
       find("pad-light").textContent = flightState().phase;
     }
     const startup = find("startup-status");
-    startup.dataset.online = String(systemsReady());
+    const online = systemsReady();
+    const crewReady = ready();
+    startup.dataset.online = String(online);
     find("startup").disabled = state.startupAt !== null || state.ignition !== null;
     find("launch-systems").hidden = state.ignition !== null;
     find("launch-time").textContent = Math.floor(state.time / 60) + ":" + String(state.time % 60).padStart(2, "0");
@@ -696,14 +842,14 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     orbit.hidden = state.separation === null || state.aborted ||
       (state.insertion !== null && activeBurn?.kind !== "insertion");
     if (!orbit.hidden) paintOrbit(orbit, state.insertion === null ? 0 : burnProgress(performance.now()));
-    find("launch-stack").dataset.ignited = String(flight.phase === "Booster ascent");
-    find("launch-stack").querySelector("[data-stage=booster]").hidden = state.separation !== null;
+    renderLaunchStack(flight);
+    renderCheckoutProgress(online,crewReady);
     find("launch-go").hidden = state.ignition !== null;
     find("launch-separate").hidden = !flight.separate;
     find("launch-insert").hidden = !flight.insert;
     find("launch-arm").hidden = state.ignition !== null || state.armed !== null;
-    find("launch-arm").disabled = state.hold || !systemsReady() || !ready();
-    find("launch-go").disabled = state.hold || !systemsReady() || !ready() || state.armed === null || state.time < state.armed+countdown;
+    find("launch-arm").disabled = state.hold || !online || !crewReady;
+    find("launch-go").disabled = find("launch-arm").disabled || state.armed === null || state.time < state.armed+countdown;
     find("launch-step").disabled = demo.active || !canAdvance();
     find("launch-crew-checks").hidden = state.ignition !== null;
     find("launch-research").hidden = state.transferAt === null || state.researchAt !== null;
@@ -759,8 +905,6 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     find("launch-hold").hidden = state.ignition !== null;
     find("launch-hold").textContent = state.hold ? "Release hold" : "Hold launch";
     find("launch-hold").setAttribute("aria-pressed", String(state.hold));
-    find("launch-checklist").textContent = state.hold ? "Commander hold"
-      : ready() ? "Crew checks verified" : "Waiting for crew checks";
     for (const job of config.jobs) {
       const record = state.jobs[job.id];
       const row = rows.get(job.id);
@@ -958,8 +1102,16 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     if (!event.repeat) steer(...direction);
   });
   const objectiveRows = new Map();
+  const stageRows = new Map();
+  const stagePurposes = {
+    capsule:"Carries crew and returns them to Earth",
+    upper:"Places the capsule into orbit",
+    booster:"Provides thrust for liftoff",
+  };
+  const jobIcons = {restraints:"users",engine:"activity",link:"radio"};
   function buildMissionControls() {
     objectiveRows.clear();
+    stageRows.clear();
     rows.clear();
     for (const id of ["mission-objective-list","guide-track","launch-stack","launch-jobs"]) find(id).replaceChildren();
     for (const objective of config.sequence.objectives) {
@@ -978,11 +1130,21 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
       const item = document.createElement("li");
       item.className = "launch-stage";
       item.dataset.stage = stage.id;
+      const shape = document.createElement("span");
+      shape.className = "launch-stage-shape";
+      shape.setAttribute("aria-hidden","true");
+      const copy = document.createElement("div");
+      copy.className = "launch-stage-copy";
       const name = document.createElement("strong");
       const detail = document.createElement("small");
+      const status = document.createElement("span");
+      status.className = "launch-stage-status";
       name.textContent = stage.name;
-      detail.textContent = stage.detail;
-      item.append(name,detail);
+      detail.textContent = stage.id === "upper" && !rendezvous
+        ? "Carries the crew into orbit and back to Earth" : stagePurposes[stage.id] ?? stage.detail;
+      copy.append(name,detail,status);
+      item.append(shape,copy);
+      stageRows.set(stage.id,{item,status});
       find("launch-stack").append(item);
     }
     for (const job of config.jobs) {
@@ -990,7 +1152,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
       const title = document.createElement("strong");
       const status = document.createElement("span");
       const assign = document.createElement("button");
-      title.textContent = job.title;
+      setIcon(title,jobIcons[job.id] ?? "clipboard-list",job.title);
       assign.type = "button";
       const assignee = crew.find(person=>person.name===job.crew);
       const assignedLabel = document.createElement("span");

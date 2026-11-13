@@ -32,7 +32,10 @@ test("Horizon burns into orbit, reaches ISS and returns to Earth in one saved mi
   await button("New run").click();
   const tutorial = page.locator("#flight-tutorial");
   await expect(tutorial.getByRole("heading")).toHaveText("Your mission");
-  for (const title of ["Bring the ship online","Verify the crew checklist","Clear the pad"]) {
+  await expect(tutorial.getByRole("list",{name:"Mission route"}).getByRole("listitem")).toHaveText([
+    /Launch.*Horizon/, /Orbit.*175 × 185 km/, /Rendezvous & dock.*ISS/, /Research/, /Recovery/,
+  ]);
+  for (const title of ["Bring the ship online","Assign astronauts to checks","Clear the pad"]) {
     await tutorial.getByRole("button", {name:"Next"}).click();
     await expect(tutorial.getByRole("heading")).toHaveText(title);
   }
@@ -197,6 +200,50 @@ test("Horizon burns into orbit, reaches ISS and returns to Earth in one saved mi
   await expect(page).toHaveURL(missionUrl);
   await button("Open orbit minimap").click();
   await expect(navigation.locator("#navigation-reserve")).toContainText("9 cold-gas pulses");
+});
+
+test("Kestrel onboarding shows its own route and checkout controls on mobile", async ({ page }) => {
+  await page.setViewportSize({width:320,height:568});
+  await page.route(url => url.pathname === "/flight", route => route.fulfill({ contentType: "text/html", body: flightHtml }));
+  await page.goto("/flight");
+  await page.getByRole("radio",{name:"Orbital Systems Checkout"}).check();
+  await page.getByRole("button",{name:"New run"}).click();
+  const tutorial = page.getByRole("dialog");
+  const next = tutorial.getByRole("button",{name:"Next",exact:true});
+  const heading = tutorial.getByRole("heading");
+  const assertLayout = async () => {
+    expect(await tutorial.evaluate(dialog=>dialog.scrollWidth <= dialog.clientWidth)).toBe(true);
+    await expect(tutorial.getByRole("button",{name:"Skip"})).toBeInViewport();
+  };
+
+  await expect(tutorial).toContainText("Orbital Systems Checkout · Kestrel");
+  await expect(tutorial.getByRole("list",{name:"Mission route"}).getByRole("listitem")).toHaveText([
+    /Launch.*Kestrel/, /Orbit.*160 × 170 km/, /Systems checkout/, /Recovery/,
+  ]);
+  await assertLayout();
+  await next.click();
+  await expect(heading).toBeFocused();
+  await expect(tutorial.getByRole("listitem")).toHaveText([
+    /Electrical bus.*Online/, /Hydraulics.*Online/, /Oxygen supply.*Online/, /CO₂ scrubber.*Online/,
+  ]);
+  await expect(tutorial).toContainText("Start ship systems");
+  await expect(tutorial).toContainText("Launch time controls");
+  await assertLayout();
+
+  await next.click();
+  await expect(tutorial.getByRole("listitem")).toHaveText([
+    /Verify restraints and suit seals.*Assign Sana/,
+    /Confirm propulsion readiness.*Assign Ivo/,
+    /Read back range clearance.*Assign Noor/,
+  ]);
+  await expect(tutorial.locator(".crew-face")).toHaveCount(3);
+  await expect(tutorial).toContainText("Verified");
+  await assertLayout();
+  await tutorial.getByRole("button",{name:"Back"}).click();
+  await expect(heading).toHaveText("Bring the ship online");
+  await tutorial.getByRole("button",{name:"Skip"}).click();
+  await expect(tutorial).toBeHidden();
+  await expect(page.getByRole("button",{name:"Start ship systems"})).toBeEnabled();
 });
 
 test("the exterior workflow recalls on link loss and verifies a later repair once", async ({ page }) => {

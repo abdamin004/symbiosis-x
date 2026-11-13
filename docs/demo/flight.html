@@ -294,8 +294,6 @@ button[aria-pressed=true]{background:#3d315e}
 .launch-heading p,.launch-board p{color:#bfcbd3;font-size:.83rem;margin:.25rem 0}
 .launch-board h2{font-size:.95rem;margin-top:.75rem}
 .launch-board .choices{gap:.35rem}
-.launch-board #launch-stack .launch-stage{padding:.38rem .24rem}
-.launch-board #launch-stack small{font-size:.65rem}
 .launch-board .choices button,#launch-jobs button{font-size:.8rem;background-color:#233448}
 .launch-board .choices button:hover:not(:disabled),#launch-jobs button:hover:not(:disabled){background-color:#334a5c}
 #launch-go:not(:disabled){background-color:#ffc18f}
@@ -311,15 +309,39 @@ button[aria-pressed=true]{background:#3d315e}
   .game-menu{padding-top:.85rem}
   .launch-board{max-height:none;overflow:visible;margin-top:.7rem}
 }
-#launch-stack{display:flex;gap:.3rem;justify-content:center;margin:.65rem 0 0;padding:0;list-style:none;text-align:center}
-.launch-stage{margin:2px auto;padding:.6rem .25rem;background:linear-gradient(90deg,#273858,#536c90 48%,#273858);border:1px solid #91a8cb}
-.launch-stage{flex:1;border-radius:6px;font-size:.78rem}
-.launch-stage[data-stage=booster]{border-bottom:3px solid #8394b1}
-#launch-stack[data-ignited=true] [data-stage=booster]{border-bottom-color:#ffc68b;box-shadow:0 7px 17px #ff954e90}
+#launch-stack-panel{margin-top:.75rem}
+.checkout-readout{color:#a9c6db;font-size:.65rem;font-weight:700;letter-spacing:.075em;text-transform:uppercase}
+#launch-systems-title,#launch-stack-panel h2,#launch-checkout-progress h2{
+  display:flex;align-items:baseline;justify-content:space-between;gap:.35rem;margin:0}
+#launch-stack{margin:.42rem 0 0;padding:0;list-style:none}
+.launch-stage{--stage-color:#b7cdf2;display:grid;grid-template-columns:2.85rem minmax(0,1fr);align-items:stretch;font-size:.8rem}
+.launch-stage[data-stage=upper]{--stage-color:#a1ddd3}
+.launch-stage[data-stage=booster]{--stage-color:#f6c29d}
+.launch-stage-shape{position:relative;display:grid;place-items:center}
+.launch-stage-shape::before{content:"";width:1.8rem;height:calc(100% - 2px);box-sizing:border-box;
+  background:linear-gradient(90deg,#172536,var(--stage-color) 50%,#172536);border:1px solid var(--stage-color)}
+.launch-stage[data-stage=capsule] .launch-stage-shape::before,.launch-stage:first-child[data-stage=upper] .launch-stage-shape::before{
+  border-radius:62% 62% 2px 2px;width:1.55rem}
+.launch-stage[data-stage=booster] .launch-stage-shape::before{
+  width:2.35rem;clip-path:polygon(12% 0,88% 0,88% 67%,100% 100%,0 100%,12% 67%)}
+.launch-stage[data-state=separated] .launch-stage-shape::before{height:calc(100% - .65rem);align-self:end;opacity:.37}
+.launch-stage[data-state=firing] .launch-stage-shape{filter:drop-shadow(0 0 5px #ffaf79)}
+.launch-stage-copy{position:relative;padding:.16rem 0 .27rem .65rem;line-height:1.22}
+.launch-stage-copy::before{content:"";position:absolute;top:.62rem;left:0;width:.45rem;border-top:1px solid var(--stage-color)}
+.launch-stage-status{display:block;color:var(--stage-color);font-size:.68rem}
 .launch-stage small,#launch-jobs small{display:block;color:#d7e2fa;font-size:.72rem}
+#launch-checkout-progress{position:sticky;top:0;z-index:1;margin:0 0 .55rem;padding:.5rem .6rem;
+  border:1px solid #587892;border-radius:6px;background:#15283a}
+#launch-checkout-progress progress{display:block;width:100%;height:.4rem;margin:.3rem 0;accent-color:#9cebd0}
+#launch-checkout-progress p{margin:.18rem 0;font-size:.75rem}
+#launch-checklist{color:#ffd0a0}
+@media(max-width:850px){
+  #launch-checkout-progress{position:relative;grid-column:1/-1;margin:0}
+}
 #launch-jobs{padding:0;list-style:none;display:grid;gap:.4rem}
-#launch-jobs li{display:grid;grid-template-columns:1fr auto;gap:.2rem .5rem;font-size:.82rem}
-#launch-jobs strong,#launch-jobs small{grid-column:1/-1}
+#launch-jobs li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.2rem .5rem;font-size:.82rem}
+#launch-jobs strong{display:flex;align-items:flex-start;gap:.32rem}
+#launch-jobs strong .icon{width:.93rem;height:.93rem;margin-top:.1rem;color:#9dd7ff}
 .checkout-job-status{align-self:center;color:var(--blue)}
 .checkout-controls{align-items:center}
 #launch-time{color:var(--blue);font:700 .9rem ui-monospace,monospace;margin-right:.2rem}
@@ -443,8 +465,8 @@ button[aria-pressed=true]{background:#3d315e}
 .launch-field[data-view=launch]::before{background:linear-gradient(90deg,#091421ae,transparent 37%,transparent 63%,#091421ae)}
 .pad-checkout{display:grid;grid-template-columns:minmax(235px,296px) minmax(0,1fr) minmax(260px,350px);align-items:center;gap:1rem;padding:calc(var(--launch-clearance,100px) + .7rem) clamp(.75rem,2.4vw,2.4rem) 1rem}
 .pad-checkout .launch-board{width:auto;margin:0;max-height:calc(100svh - var(--launch-clearance,100px) - 2rem);background:linear-gradient(140deg,#152538ed,#101a2be8);border-color:#8dabc849}
-.pad-checkout .launch-board:first-child{grid-column:1}
-.pad-checkout .launch-board:last-child{grid-column:3}
+.pad-checkout #launch-stack-board{grid-column:1}
+.pad-checkout #pad-command{grid-column:3}
 .pad-checkout .launch-heading{margin-bottom:.7rem}
 .pad-checkout h2{margin-top:.2rem}
 .pad-checkout #startup-status{grid-template-columns:1fr;margin:.6rem 0}
@@ -459,18 +481,97 @@ button[aria-pressed=true]{background:#3d315e}
 @media(prefers-reduced-motion:reduce){#launch-jobs [data-state=working] .crew-face,#startup-status [data-state=starting] .startup-symbol{animation:none}}
 @media(max-width:850px){
   .pad-checkout{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;padding-top:0;gap:.7rem}
-  .pad-checkout .launch-board:last-child{grid-column:2}
+  .pad-checkout #pad-command{grid-column:2}
   .pad-checkout .launch-board{max-height:none}
   .launch-field[data-view=launch]{display:flex;flex-direction:column;align-items:stretch;height:auto}
   .launch-field[data-view=launch] .launch-visual{position:sticky;top:0;height:clamp(260px,50svh,440px);z-index:1}
 }
-@media(max-width:560px){.pad-checkout{grid-template-columns:1fr}.pad-checkout .launch-board:last-child{grid-column:1}}
-#flight-tutorial{width:min(480px,calc(100% - 1.5rem))}
-.tutorial-art{display:grid;place-items:center;height:118px;background:radial-gradient(ellipse,#243b55,#101b30 72%);border-radius:8px;margin:.6rem 0 1rem}
-.tutorial-art .icon{width:49px;height:49px;color:#a3ddd9}
-.tutorial-nav{display:flex;gap:.4rem;align-items:center;margin-top:1.15rem}
-#tutorial-step{margin-right:auto;color:#a9bad6;font-size:.8rem}
-#tutorial-next{background:#abdcd6;color:#132632;font-weight:700}
+@media(max-width:560px){.pad-checkout{grid-template-columns:1fr}.pad-checkout #pad-command{grid-column:1}}
+#flight-tutorial{
+  width:min(730px,calc(100% - 1.5rem));padding:0;overflow:hidden;
+  border-color:#48647e;background:#101b2c;box-shadow:0 20px 70px #040913c9
+}
+.tutorial-frame{display:flex;flex-direction:column;max-height:calc(100dvh - 24px)}
+.tutorial-content{overflow:auto;min-height:0;padding:clamp(.85rem,3vw,1.5rem);overscroll-behavior:contain}
+#tutorial-context{margin:0 0 .3rem;color:#9cebd0;font-size:.75rem;font-weight:700;letter-spacing:.06em}
+#tutorial-title{font-size:clamp(1.3rem,4.6vw,1.8rem);line-height:1.15}
+#tutorial-copy{margin:.5rem 0 .9rem;color:#c7d6eb}
+.tutorial-content ol,.tutorial-content ul{padding:0;margin:0;list-style:none}
+ol.tutorial-route{
+  display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:.55rem;
+  padding:1rem .75rem;border:1px solid #35536a;border-radius:10px;
+  background:radial-gradient(ellipse at 50% 0,#24465a,#13263a 80%)
+}
+.tutorial-route li{position:relative;display:grid;justify-items:center;align-content:start;text-align:center;gap:.25rem}
+.tutorial-route li:not(:last-child)::after{
+  content:"";position:absolute;top:21px;left:calc(50% + 27px);right:calc(-50% + 18px);height:1px;
+  background:#78acbc
+}
+.tutorial-route li:not(:last-child)::before{
+  content:"";position:absolute;top:18px;right:calc(-50% + 18px);width:6px;height:6px;
+  border-top:1px solid #78acbc;border-right:1px solid #78acbc;transform:rotate(45deg)
+}
+.tutorial-route-icon{
+  display:grid;place-items:center;width:44px;height:44px;border:1px solid #79a8bc;border-radius:50%;
+  margin-bottom:.2rem;background:#13283a;color:#a3e7ec
+}
+.tutorial-route-icon .icon{width:23px;height:23px;stroke-width:1.55}
+.tutorial-route strong,.tutorial-checks strong,.tutorial-startup strong,.tutorial-liftoff strong{font-size:.83rem;line-height:1.25}
+.tutorial-route small,.tutorial-checks small,.tutorial-liftoff small,.tutorial-location{font-size:.75rem;color:#b8cce3}
+.tutorial-console{display:grid;gap:.55rem}
+.tutorial-transport,.tutorial-systems,.tutorial-checks li,.tutorial-liftoff li{
+  border:1px solid #345169;border-radius:8px;background:#162a3d;padding:.6rem .7rem
+}
+.tutorial-transport,.tutorial-systems-head,.tutorial-checks li,.tutorial-liftoff li{display:flex;align-items:center;gap:.55rem}
+.tutorial-transport,.tutorial-systems-head,.tutorial-checks li{justify-content:space-between}
+.tutorial-location{display:grid;gap:.04rem}
+.tutorial-location strong{color:#eff7ff}
+.tutorial-control{
+  display:inline-flex;align-items:center;justify-content:center;gap:.35rem;flex:none;border-radius:5px;
+  background:#284758;color:#e2f6ff;padding:.3rem .5rem;font-size:.75rem;font-weight:700
+}
+.tutorial-control .icon{width:.9rem;height:.9rem}
+.tutorial-control .crew-face{width:25px;height:25px}
+.tutorial-systems-head .tutorial-control{background:#b5e2dc;color:#112632}
+ul.tutorial-startup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.35rem;margin-top:.55rem}
+.tutorial-startup li{display:flex;align-items:center;gap:.4rem;padding:.4rem;background:#102031;border-radius:5px}
+.tutorial-startup li > .icon,.tutorial-check-icon{color:#a3dcf8}
+.tutorial-startup small{margin-left:auto;color:#9cebd0;font-size:.72rem}
+.tutorial-checks,.tutorial-liftoff{display:grid;gap:.35rem}
+.tutorial-check-icon{display:grid;place-items:center;width:27px;height:27px;flex:none;border-radius:6px;background:#243f53}
+.tutorial-job{display:grid;gap:.1rem;flex:1;min-width:0}
+.tutorial-states{display:flex;flex-wrap:wrap;gap:.3rem .65rem;align-items:center;font-size:.75rem}
+.tutorial-states span:last-child{color:#9cebd0}
+.tutorial-states span:nth-child(2){color:#ffd0a0}
+.tutorial-liftoff li{justify-content:flex-start}
+.tutorial-nav{
+  display:flex;gap:.4rem;align-items:center;justify-content:flex-end;flex-wrap:wrap;
+  padding:.65rem clamp(.85rem,3vw,1.5rem);border-top:1px solid #31475f;background:#101b2c
+}
+.tutorial-nav button{min-height:44px;background:#23374d}
+.tutorial-nav button:hover:not(:disabled){background:#304a64}
+#tutorial-step{margin-right:auto;color:#b8cce3;font-size:.8rem}
+#tutorial-next{background:#b5e2dc;color:#112632;font-weight:700}
+#tutorial-next:hover{background:#d1f3ed}
+@media(max-width:600px){
+  .tutorial-route{grid-auto-flow:row;grid-auto-rows:auto;gap:.55rem}
+  .tutorial-route li{grid-template-columns:36px minmax(0,1fr);justify-items:start;text-align:left;gap:.05rem .7rem;align-content:center;min-height:41px}
+  .tutorial-route-icon{grid-row:span 2;align-self:center;width:36px;height:36px;margin:0}
+  .tutorial-route-icon .icon{width:20px;height:20px}
+  .tutorial-route li:not(:last-child)::after{top:calc(50% + 18px);bottom:calc(-50% + 9px);left:17px;right:auto;width:1px;height:auto}
+  .tutorial-route li:not(:last-child)::before{display:none}
+}
+@media(max-width:420px){
+  ul.tutorial-startup{grid-template-columns:1fr}
+  .tutorial-checks li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:.25rem .45rem}
+  .tutorial-check-icon{grid-row:span 2}
+  .tutorial-job{display:contents}
+  .tutorial-job strong{grid-column:2/-1}
+  .tutorial-job small{grid-column:2}
+  .tutorial-checks .tutorial-control{justify-self:end}
+  .tutorial-nav{gap:.25rem;padding-inline:.65rem}
+  .tutorial-nav button{font-size:.875rem;padding-inline:.45rem}
+}
 .hud,.launch-hud{position:fixed;inset:0 0 auto;z-index:10;pointer-events:none;background:linear-gradient(180deg,#080c1bde,transparent);box-shadow:none}
 .hud button,.hud a,.launch-hud button,.launch-hud a{pointer-events:auto}
 .ribbon{gap:.35rem .65rem;text-shadow:0 1px 8px #090b19}
@@ -585,6 +686,15 @@ button[aria-pressed=true]{background:#3d315e}
 #flight-instrument:has(#navigation-mini:focus-visible) #navigation-help{color:#fff;outline:1px solid var(--blue)}
 .launch-field[data-view=launch] .pad-checkout #pad-command{align-self:start;margin-top:var(--pad-guide-offset,0px);
   max-height:max(8rem,calc(100svh - var(--launch-clearance,100px) - var(--pad-guide-offset,0px) - 2.4rem))}
+@media(min-width:851px){
+  .launch-field[data-view=launch] .pad-checkout #launch-stack-board{
+    align-self:start;max-height:calc(100svh - var(--launch-clearance,100px) - 1rem)}
+  #launch-stack-board .launch-heading h1{font-size:1.55rem}
+  #launch-stack-board #launch-systems{padding:.3rem 0 .55rem}
+  #launch-stack-board #startup-status{margin:.4rem 0 .55rem}
+  #launch-stack-board #startup-status li{padding-block:.2rem}
+  #pad-command:has(#launch-checkout-progress:not([hidden])){scroll-padding-top:7.5rem}
+}
 @media(max-width:850px){
   .launch-field[data-view=launch] .pad-checkout #pad-command{margin-top:0;max-height:none}
 }
@@ -935,16 +1045,38 @@ __HUD_ICONS__
   </form>
 </dialog>
 <dialog id="flight-tutorial" class="mission-dialog" aria-labelledby="tutorial-title">
-  <div class="tutorial-art" id="tutorial-art" aria-hidden="true"></div>
-  <h2 id="tutorial-title"></h2>
-  <p id="tutorial-copy"></p>
-  <div class="tutorial-nav">
-    <span id="tutorial-step"></span>
-    <button type="button" id="tutorial-back">Back</button>
-    <form method="dialog"><button value="skip">Skip</button></form>
-    <button type="button" id="tutorial-next">Next</button>
+  <div class="tutorial-frame">
+    <div class="tutorial-content">
+      <p id="tutorial-context"></p>
+      <h2 id="tutorial-title" tabindex="-1"></h2>
+      <p id="tutorial-copy"></p>
+      <div id="tutorial-art"></div>
+    </div>
+    <div class="tutorial-nav">
+      <span id="tutorial-step"></span>
+      <button type="button" id="tutorial-back">Back</button>
+      <form method="dialog"><button value="skip">Skip</button></form>
+      <button type="button" id="tutorial-next">Next</button>
+    </div>
   </div>
 </dialog>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="hud-tutorial-launch" viewBox="0 0 24 24">
+    <path d="M12 2c3 3 4 6 4 10v5H8v-5c0-4 1-7 4-10Z M8 12l-4 5v3l4-2m8-6 4 5v3l-4-2m-6 2-1 2m3-2v2m2-2 1 2"/>
+    <circle cx="12" cy="10" r="1.4"/>
+  </symbol>
+  <symbol id="hud-tutorial-orbit" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="6"/>
+    <ellipse cx="12" cy="12" rx="11" ry="3.8" transform="rotate(-30 12 12)"/>
+    <circle cx="19" cy="5" r="1.8" fill="currentColor" stroke="none"/>
+  </symbol>
+  <symbol id="hud-tutorial-dock" viewBox="0 0 24 24">
+    <path d="M12 3v12m-7-8h14M3 4h4v6H3zm14 0h4v6h-4zM9 11h6m-3 6v4m-3-2 3-2 3 2"/>
+  </symbol>
+  <symbol id="hud-tutorial-recovery" viewBox="0 0 24 24">
+    <path d="M3 10a9 9 0 0 1 18 0H3Zm0 0 8 8m10-8-8 8m-5-8 3 8m5-8-3 8m-3 0h4l2 4H8l2-4Z"/>
+  </symbol>
+</svg>
 <dialog id="end-mission-dialog" class="mission-dialog" aria-labelledby="end-mission-title">
   <div class="dialog-top"><h2 id="end-mission-title">End this mission?</h2></div>
   <div id="end-mission-confirm">
@@ -1073,24 +1205,34 @@ __HUD_ICONS__
       <p id="campaign-notice" role="status"></p>
     </section>
     <div class="pad-checkout" id="pad-controls" hidden>
-    <section class="launch-board" aria-labelledby="launch-title">
+    <section class="launch-board" id="launch-stack-board" aria-labelledby="launch-title">
       <header class="launch-heading">
         <h1 id="launch-title" tabindex="-1">Launch checkout</h1><p id="launch-subtitle"></p>
       </header>
       <section id="launch-systems" aria-labelledby="launch-systems-title">
-        <h2 id="launch-systems-title">Ship systems</h2>
+        <h2 id="launch-systems-title">Ship systems <span class="checkout-readout">Readouts</span></h2>
         <ul id="startup-status"></ul>
         <button id="startup" type="button"><svg class="icon" aria-hidden="true"><use href="#hud-zap"/></svg> Start ship systems</button>
       </section>
-      <ol id="launch-stack" aria-label="Rocket stage stack"></ol>
+      <section id="launch-stack-panel" aria-labelledby="launch-stack-title">
+        <h2 id="launch-stack-title">Rocket stack <span class="checkout-readout">Readout</span></h2>
+        <ol id="launch-stack" aria-label="Rocket stage stack"></ol>
+      </section>
     </section>
     <section class="launch-board" id="pad-command" aria-label="Launch command">
+      <section id="launch-checkout-progress" aria-labelledby="launch-checkout-progress-title">
+        <h2 id="launch-checkout-progress-title">Checkout progress <span class="checkout-readout">Readout</span></h2>
+        <progress id="launch-crew-progress" aria-label="Crew checks verified"></progress>
+        <div role="status">
+          <p id="launch-crew-count"></p>
+          <p id="launch-checklist"></p>
+        </div>
+      </section>
       <div id="launch-controls">
       <div id="launch-crew-checks">
         <h2>Crew checklist</h2>
-        <p>Choose the qualified crew portrait on each check. Play advances their work.</p>
+        <p>Use the Assign buttons to start checks. Play advances their work.</p>
         <ul id="launch-jobs"></ul>
-        <p id="launch-checklist"></p>
       </div>
       <dl class="launch-readouts command-status">
         <div><dt>Flight phase</dt><dd id="launch-status" role="status"></dd></div>
@@ -1152,8 +1294,8 @@ __HUD_ICONS__
         <output id="launch-time" aria-label="Mission elapsed time"></output>
         <button id="launch-step" type="button">Advance 15 s</button>
         <button id="launch-hold" type="button" aria-pressed="false">Hold launch</button>
-        <button id="launch-arm" type="button">Arm countdown</button>
-        <button id="launch-go" type="button">Launch</button>
+        <button id="launch-arm" type="button" aria-describedby="launch-checklist">Arm countdown</button>
+        <button id="launch-go" type="button" aria-describedby="launch-checklist">Launch</button>
         <button id="launch-separate" type="button" hidden>Separate booster</button>
         <button id="launch-insert" type="button" hidden>Commit orbital insertion</button>
         <button id="launch-abort" type="button" hidden>Abort ascent</button>
