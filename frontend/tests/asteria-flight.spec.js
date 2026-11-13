@@ -274,6 +274,26 @@ test("the exterior workflow recalls on link loss and verifies a later repair onc
   await expect(checkpoint).toHaveAccessibleDescription(/Exterior inspection is due/);
 });
 
+test("airlock rehearsal shows pressure and interlocks without moving the mission clock", async ({ page }) => {
+  await page.emulateMedia({reducedMotion:"reduce"});
+  await page.route(url=>url.pathname==="/flight",route=>route.fulfill({contentType:"text/html",body:flightHtml}));
+  await page.goto("/flight?view=replay");
+  const clock = await page.locator("#hud-clock").innerText();
+  await page.getByRole("button",{name:"Atmosphere",exact:true}).click();
+  const dialog = page.getByRole("dialog",{name:"Atmosphere rehearsal"});
+  const hatches = dialog.locator("#airlock-readings");
+  await expect(hatches).toContainText("Inner hatch open · Outer hatch sealed");
+  await dialog.getByRole("button",{name:"Depressurize chamber"}).click();
+  await expect(hatches).toContainText("Inner hatch sealed · Outer hatch open");
+  await expect(dialog.locator("#airlock-gases")).toContainText(/Airlock · 0\./);
+  await expect(dialog.locator("#airlock-exposure")).toContainText("Keep unsuited crew out");
+  await dialog.getByRole("button",{name:"Repressurize chamber"}).click();
+  await expect(hatches).toContainText("Inner hatch open · Outer hatch sealed");
+  await expect(dialog.locator("#airlock-exposure")).toContainText("within rehearsal limits");
+  await dialog.getByRole("button",{name:"Close"}).click();
+  await expect(page.locator("#hud-clock")).toHaveText(clock);
+});
+
 test("ISS replay portraits and pawns open crew anatomy with evidence for the selected region", async ({ page }) => {
   await page.setViewportSize({ width: 620, height: 820 });
   await page.route(url => url.pathname === "/flight", route => route.fulfill({ contentType: "text/html", body: flightHtml }));

@@ -413,6 +413,13 @@ button[aria-pressed=true]{background:#3d315e}
 @media(max-width:850px){.launch-field[data-view=launch] .pad-checkout .launch-board{max-height:none}}
 #orbit-dialog{width:min(680px,calc(100% - 1.5rem))}
 #process-dialog{width:min(670px,calc(100% - 1.5rem))}
+#airlock-dialog{width:min(620px,calc(100% - 1.5rem))}
+#airlock-particles{width:100%;height:auto;display:block;background:#0b1329;border-radius:8px;margin:.6rem 0}
+#airlock-gases{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem;margin:.6rem 0}
+#airlock-gases section{background:#1b2744;border-radius:8px;padding:.55rem}
+#airlock-gases h3{font-size:.86rem}
+#airlock-gases p,#airlock-readings{font-variant-numeric:tabular-nums}
+#show-airlock{padding:.08rem .25rem;text-align:left;color:var(--blue);background:#243059}
 #process-diagram{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:.4rem;padding:0;list-style:none}
 #process-diagram li{padding:.55rem;background:#223451;border-radius:6px;font-size:.8rem}
 #process-diagram li[data-reached=true]{box-shadow:inset 3px 0 #9cebd0}
@@ -633,6 +640,7 @@ __HUD_ICONS__
   </div>
   <div class="mission-resources" id="mission-resources" role="group" aria-label="Mission resources">
     <span><svg class="icon" aria-hidden="true"><use href="#hud-wind"/></svg><output id="resource-air"></output></span>
+    <button type="button" id="show-airlock">Atmosphere</button>
     <span><svg class="icon" aria-hidden="true"><use href="#hud-zap"/></svg><output id="resource-power"></output></span>
     <span><svg class="icon" aria-hidden="true"><use href="#hud-users"/></svg><output id="resource-crew"></output></span>
     <span><svg class="icon" aria-hidden="true"><use href="#hud-package"/></svg><output id="resource-meals"></output></span>
@@ -857,6 +865,16 @@ __HUD_ICONS__
   <div class="dialog-top"><h2 id="mission-objective-title">Mission objectives</h2><form method="dialog"><button>Close</button></form></div>
   <p id="mission-objective-next"></p>
   <ol id="mission-objective-list" class="objective-list"></ol>
+</dialog>
+<dialog id="airlock-dialog" class="mission-dialog" aria-labelledby="airlock-title">
+  <div class="dialog-top"><h2 id="airlock-title">Atmosphere rehearsal</h2><form method="dialog"><button>Close</button></form></div>
+  <p>Cycle the empty chamber to compare it with the cabin. Dots represent the gas inventory.</p>
+  <p>O₂ <span style="color:#78dcff">●</span> · N₂ <span style="color:#c4adff">●</span> · CO₂ <span style="color:#ffc27d">●</span></p>
+  <canvas id="airlock-particles" width="560" height="128" role="img" aria-label="Cabin and airlock gas particles"></canvas>
+  <div id="airlock-gases"></div>
+  <p id="airlock-readings" role="status"></p>
+  <p id="airlock-exposure"></p>
+  <button type="button" id="airlock-cycle">Depressurize chamber</button>
 </dialog>
 <dialog id="process-dialog" class="mission-dialog" aria-labelledby="process-title">
   <div class="dialog-top"><h2 id="process-title">Ship workflows</h2><form method="dialog"><button>Close</button></form></div>
@@ -2946,6 +2964,79 @@ function openProcesses(mode) {
   renderProcess(currentFrame());
 }
 element("show-processes").addEventListener("click",()=>openProcesses(crewMode()));
+const airlockDialog = element("airlock-dialog");
+const airlockCycle = element("airlock-cycle");
+const airlockFrames = data.airlock;
+const gasColors = [["n2_partial_kpa","#c4adff"],["o2_partial_kpa","#78dcff"],["co2_partial_kpa","#ffc27d"]];
+let airlockIndex = 0;
+let airlockTimer;
+function paintAirlock() {
+  const {rooms,time,phase,vented_mol,workload_cue} = airlockFrames[airlockIndex];
+  const canvas = element("airlock-particles");
+  const particles = canvas.getContext("2d");
+  particles.clearRect(0,0,560,128);
+  element("airlock-gases").replaceChildren(...rooms.map((room,index)=>{
+    const offset = index*280;
+    particles.fillStyle = "#1b2744";
+    particles.fillRect(offset+6,6,268,116);
+    for (const [key,color] of gasColors) {
+      const count = Math.round(room[key]*2);
+      particles.fillStyle = color;
+      for (let i=0;i<count;i++) {
+        const x = (i*73+Math.round(room[key]*13)+(reducedMotion.matches ? 0 : time*7))%250;
+        const y = (i*i*19+Math.round(room[key]*17)+(reducedMotion.matches ? 0 : time*3))%100;
+        particles.fillRect(offset+15+x,14+y,2,2);
+      }
+    }
+    const card = document.createElement("section");
+    const name = document.createElement("h3");
+    name.textContent = room.compartment_id+" · "+room.total_pressure_kpa.toFixed(2)+" kPa";
+    const mix = document.createElement("p");
+    mix.textContent = "Partial pressure · O₂ "+room.o2_partial_kpa.toFixed(2)+" · N₂ "+
+      room.n2_partial_kpa.toFixed(2)+" · CO₂ "+room.co2_partial_kpa.toFixed(2)+" kPa";
+    card.append(name,mix);
+    return card;
+  }));
+  element("airlock-readings").textContent = "Inner hatch "+(phase==="inner_open" ? "open" : "sealed")+
+    " · Outer hatch "+(phase==="outer_open" ? "open" : "sealed")+" · Vented "+vented_mol.toFixed(1)+" mol";
+  element("airlock-exposure").textContent = workload_cue === "ease_workload"
+    ? "Crew workload preview · Keep unsuited crew out of the chamber."
+    : "Crew workload preview · Chamber atmosphere within rehearsal limits.";
+  const action = {depressurizing:"Depressurizing…",pressurizing:"Repressurizing…",outer_open:"Repressurize chamber"};
+  airlockCycle.textContent = airlockIndex===0 ? "Depressurize chamber" : action[phase] ?? "Reset rehearsal";
+}
+element("show-airlock").addEventListener("click",()=>{
+  paintAirlock();
+  airlockDialog.showModal();
+});
+airlockCycle.addEventListener("click",()=>{
+  if (airlockIndex === airlockFrames.length-1) {
+    airlockIndex = 0;
+    paintAirlock();
+    return;
+  }
+  let destination = airlockFrames.length-1;
+  if (airlockIndex===0) destination = airlockFrames.findIndex(frame=>frame.phase==="outer_open");
+  if (reducedMotion.matches) {
+    airlockIndex = destination;
+    paintAirlock();
+    return;
+  }
+  airlockCycle.disabled = true;
+  airlockTimer = setInterval(()=>{
+    airlockIndex++;
+    paintAirlock();
+    if (airlockIndex===destination) {
+      clearInterval(airlockTimer);
+      airlockCycle.disabled = false;
+    }
+  },140);
+});
+airlockDialog.addEventListener("close",()=>{
+  clearInterval(airlockTimer);
+  airlockIndex = 0;
+  airlockCycle.disabled = false;
+});
 element("eva-antenna").addEventListener("click",()=>{
   selectedProcess = "eva";
   openProcesses(crewMode());
