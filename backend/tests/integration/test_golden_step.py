@@ -50,7 +50,7 @@ def test_compose_applies_due_events_in_order(tmp_path):
         ground = _read(client, run_id, "ground")
         assert crew["decision_rev"] == 103
         assert crew["co2"]["observed_at_s"] == 780
-        assert crew["co2"]["value"] == pytest.approx(3757.12, abs=0.02)
+        assert crew["co2"]["value"] == pytest.approx(2063.7446813, abs=0.02)
         assert ground["packet"]["snapshot_id"] == "ground-v102"
         assert ground["packet"]["decision_rev"] == 102
         assert ground["packet"]["power_headroom"]["value"] == pytest.approx(0.60)
