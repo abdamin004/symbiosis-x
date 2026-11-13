@@ -65,7 +65,9 @@ def test_private_checkin_is_persisted_and_role_restricted(tmp_path):
 
         # Crew-private content is not exposed through the operational Ground projection.
         auth(client, credentials["ground"])
-        assert client.get(f"/api/v1/runs/{run_id}/ground").status_code in (200, 404)
+        ground_view = client.get(f"/api/v1/runs/{run_id}/ground")
+        assert ground_view.status_code == 200, ground_view.text
+        assert CHECK_IN["note"] not in ground_view.text
         assert client.get(f"{url}/{CHECK_IN['check_in_id']}").status_code == 403
         assert client.post(url, json=CHECK_IN).status_code == 403
 
