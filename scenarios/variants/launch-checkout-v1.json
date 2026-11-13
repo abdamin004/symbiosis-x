@@ -132,7 +132,12 @@
       {
         "id": "hatch",
         "label": "Verify seal and pressure before transfer",
-        "planned_s": null
+        "planned_s": 180
+      },
+      {
+        "id": "transfer",
+        "label": "Hand off the research kit",
+        "planned_s": 180
       },
       {
         "id": "return",
@@ -140,5 +145,10 @@
         "planned_s": null
       }
     ]
+  },
+  "docking": {
+    "evidence_valid_s": 30,
+    "seal": "Verified",
+    "pressure": "Matched"
   }
 }

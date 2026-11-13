@@ -481,6 +481,21 @@ __HUD_ICONS__
           <div><dt>Hatch</dt><dd id="launch-hatch"></dd></div>
         </dl>
       </div>
+      <div id="launch-docking" hidden>
+        <h3>Station handoff</h3>
+        <p>Simulated checks expire after 30 mission seconds.</p>
+        <dl class="launch-readouts">
+          <div><dt>Docking seal</dt><dd id="launch-seal"></dd></div>
+          <div><dt>Pressure match</dt><dd id="launch-pressure"></dd></div>
+          <div><dt>Research kit</dt><dd id="launch-custody"></dd></div>
+        </dl>
+        <div class="choices">
+          <button id="launch-check-seal" type="button">Check seal</button>
+          <button id="launch-check-pressure" type="button">Compare pressure</button>
+          <button id="launch-open-hatch" type="button">Authorize hatch opening</button>
+          <button id="launch-transfer" type="button" hidden>Hand off research kit</button>
+        </div>
+      </div>
       <div class="choices checkout-controls">
         <output id="launch-time" aria-label="Checkout time"></output>
         <button id="launch-step" type="button">Advance 15 s</button>

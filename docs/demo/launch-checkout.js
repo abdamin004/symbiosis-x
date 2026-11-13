@@ -2,9 +2,10 @@
 function bindLaunchCheckout(config, pauseReplay) {
   const find = id => document.getElementById(id);
   const storageKey = "sx:" + config.id + ":v" + config.version;
-  const fresh = () => ({time:0,jobs:{},hold:false,armed:null,ignition:null,separation:null,insertion:null,aborted:false,phasing:null,capture:null,retreat:null,approachHeld:false});
+  const fresh = () => ({time:0,jobs:{},hold:false,armed:null,ignition:null,separation:null,insertion:null,aborted:false,phasing:null,capture:null,retreat:null,approachHeld:false,sealAt:null,pressureAt:null,hatchAt:null,transferAt:null});
   const ascent = config.ascent;
   const rendezvous = config.rendezvous;
+  const docking = config.docking;
   const tick = ascent.tick_s;
   const countdown = config.sequence.countdown_s;
   let state = fresh();
@@ -56,8 +57,9 @@ function bindLaunchCheckout(config, pauseReplay) {
     const remaining = reserve-rendezvous.phasing_cost;
     const elapsed = (state.capture ?? state.time)-state.phasing;
     const sample = rendezvous.approach.find(point=>point.seconds===elapsed);
-    if (state.capture !== null) return {phase:"Station captured",next:"Hatch secured · seal and pressure checks pending",
-      reserve:remaining,terminal:true,orbit:true,sample};
+    if (state.capture !== null) {
+      return {reserve:remaining,orbit:true,sample,...dockingState()};
+    }
     return {
       phase:state.approachHeld ? "Approach held" : sample.state,
       next:sample.expired ? "Retreat to safe orbit" : sample.capture ? "Capture or retreat" : "Advance approach",
@@ -66,11 +68,28 @@ function bindLaunchCheckout(config, pauseReplay) {
       capture:!state.approachHeld && sample.capture,
     };
   }
+  function evidenceStatus(observedAt, reading) {
+    if (observedAt === null || observedAt < state.capture) return "Unknown";
+    const age = state.time-observedAt;
+    if (age >= docking.evidence_valid_s) return "Expired · recheck required";
+    return reading + " · " + missionStamp(observedAt);
+  }
+
+  function dockingState() {
+    const seal = evidenceStatus(state.sealAt,docking.seal);
+    const pressure = evidenceStatus(state.pressureAt,docking.pressure);
+    if (state.transferAt !== null) return {phase:"Research kit transferred",next:"Prepare station research",terminal:true,seal,pressure};
+    if (state.hatchAt !== null) return {phase:"Transfer authorized",next:"Hand off the research kit",seal,pressure};
+    const canOpen = seal.startsWith("Verified") && pressure.startsWith("Matched");
+    return {phase:"Station captured",next:canOpen ? "Commander can open the hatch" : "Verify seal and pressure",
+      advance:true,canOpen,seal,pressure};
+  }
+
   function renderObjectives(flight) {
     const times = {
       checks:ready() ? Math.max(...config.jobs.map(job=>state.jobs[job.id].due)) : null,
       countdown:state.ignition,separation:state.separation,insertion:state.insertion,
-      phasing:state.phasing,capture:state.capture,
+      phasing:state.phasing,capture:state.capture,hatch:state.hatchAt,transfer:state.transferAt,
     };
     let nextFound = false;
     for (const objective of config.sequence.objectives) {
@@ -80,7 +99,7 @@ function bindLaunchCheckout(config, pauseReplay) {
       if (actual != null) status = "Verified · " + missionStamp(actual);
       else if (objective.planned_s === null) status = "Follow-on phase";
       else if (!nextFound) {
-        const canAdvance = flight.advance || flight.separate || flight.insert || flight.phaseBurn || flight.capture;
+        const canAdvance = flight.advance || flight.separate || flight.insert || flight.phaseBurn || flight.capture || state.hatchAt !== null;
         const held = state.hold || state.approachHeld || (state.ignition !== null && !canAdvance);
         status = flight.terminal ? "Incomplete" : held ? "Held" : "Next";
         nextFound = true;
@@ -121,16 +140,28 @@ function bindLaunchCheckout(config, pauseReplay) {
     find("launch-abort").hidden = state.ignition === null || flight.orbit || flight.terminal;
     find("launch-phasing").hidden = !flight.orbit || state.phasing !== null || flight.terminal;
     find("launch-phasing").disabled = !flight.phaseBurn;
-    find("launch-approach-hold").hidden = !flight.sample || flight.terminal || flight.sample.expired;
+    find("launch-approach-hold").hidden = !flight.sample || state.capture !== null || flight.terminal || flight.sample.expired;
     find("launch-approach-hold").textContent = state.approachHeld ? "Resume approach" : "Hold approach";
     find("launch-approach-hold").setAttribute("aria-pressed",String(state.approachHeld));
-    find("launch-capture").hidden = !flight.sample || flight.terminal;
+    find("launch-capture").hidden = !flight.sample || state.capture !== null || flight.terminal;
     find("launch-capture").disabled = !flight.capture;
-    find("launch-retreat").hidden = !flight.orbit || flight.terminal;
+    find("launch-retreat").hidden = !flight.orbit || state.capture !== null || flight.terminal;
     find("launch-approach").hidden = !flight.orbit;
     find("launch-range").textContent = flight.sample ? flight.sample.range + " game units" : "Awaiting phasing";
     find("launch-closing").textContent = flight.sample ? flight.sample.closing + " units/tick" : "—";
-    find("launch-hatch").textContent = state.capture !== null ? "Secured · verification pending" : "Secured";
+    find("launch-hatch").textContent = state.hatchAt !== null ? "Open · Commander authorized"
+      : state.capture !== null ? "Secured · verification required" : "Secured";
+    find("launch-docking").hidden = state.capture === null;
+    find("launch-seal").textContent = flight.seal ?? "Unknown";
+    find("launch-pressure").textContent = flight.pressure ?? "Unknown";
+    find("launch-custody").textContent = state.transferAt === null ? "On Asteria"
+      : "At station · " + missionStamp(state.transferAt);
+    const checking = state.capture !== null && state.hatchAt === null;
+    find("launch-check-seal").hidden = !checking;
+    find("launch-check-pressure").hidden = !checking;
+    find("launch-open-hatch").hidden = !checking;
+    find("launch-open-hatch").disabled = !flight.canOpen;
+    find("launch-transfer").hidden = state.hatchAt === null || state.transferAt !== null;
     find("launch-track").value = flight.sample ? 100-flight.sample.range : 0;
     find("launch-hold").hidden = state.ignition !== null;
     find("launch-hold").textContent = state.hold ? "Release hold" : "Hold launch";
@@ -275,8 +306,28 @@ function bindLaunchCheckout(config, pauseReplay) {
   });
   find("launch-retreat").addEventListener("click", () => {
     const flight = flightState();
-    if (!flight.orbit || flight.terminal) return;
+    if (!flight.orbit || state.capture !== null || flight.terminal) return;
     state.retreat = state.time;
+    persist();
+    render();
+  });
+  for (const [button,field] of [["launch-check-seal","sealAt"],["launch-check-pressure","pressureAt"]]) {
+    find(button).addEventListener("click", () => {
+      if (state.capture === null || state.hatchAt !== null) return;
+      state[field] = state.time;
+      persist();
+      render();
+    });
+  }
+  find("launch-open-hatch").addEventListener("click", () => {
+    if (state.capture === null || state.hatchAt !== null || !dockingState().canOpen) return;
+    state.hatchAt = state.time;
+    persist();
+    render();
+  });
+  find("launch-transfer").addEventListener("click", () => {
+    if (state.hatchAt === null || state.transferAt !== null) return;
+    state.transferAt = state.time;
     persist();
     render();
   });
