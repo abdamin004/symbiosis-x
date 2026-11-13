@@ -1,5 +1,6 @@
 import { Link, useParams } from "react-router-dom";
 import { fixtureFor } from "../../api/fixtures.js";
+import { isActiveRunId } from "../../api/client.js";
 import { CREW_HEALTH_FIXTURE } from "../../api/crewHealthFixture.js";
 import CrewHealthPanel from "../crew/CrewHealthPanel.jsx";
 import CheckInForm from "../crew/CheckInForm.jsx";
@@ -27,7 +28,7 @@ export default function MissionConsole({ role }) {
   const snapshot = fixtureFor(runId, role);
   const title = ROLE_TITLES[role];
 
-  if (!snapshot) return <LiveMissionConsole role={role} runId={runId} />;
+  if (!snapshot && isActiveRunId(runId)) return <LiveMissionConsole role={role} runId={runId} />;
 
   if (!snapshot) {
     return (
