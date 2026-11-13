@@ -1725,11 +1725,12 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     });
   }
 
-  function orderProvision(action) {
+  function orderProvision(action, details = {}) {
     if (demo.active || view !== "launch" || state.insertion === null || state.recoveredAt !== null) return;
-    if (state.provisionCommands.some(order=>order.time === state.time && order.action === action)) return;
+    if (state.provisionCommands.some(order=>order.time === state.time && order.action === action &&
+      order.target === details.target && order.member === details.member)) return;
     state.provisionCommands = [...state.provisionCommands,{
-      id:"provision-"+state.provisionCommands.length, action, time:state.time,
+      id:"provision-"+state.provisionCommands.length, action, time:state.time, ...details,
     }];
     persist();
     renderView(false);

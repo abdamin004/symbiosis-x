@@ -751,3 +751,90 @@ test("saved vehicle provisions quarantine treated water and accept the station r
   await expect(ledger).toContainText("defer hygiene");
   await expect(value("Awaiting quality verification")).toHaveText("0.000 L");
 });
+
+test("Galley holds a meal lot and requires a separate safety verification", async ({page}) => {
+  await page.route(url=>url.pathname === "/flight",route=>route.fulfill({contentType:"text/html",body:flightHtml}));
+  await page.addInitScript(()=>{
+    if (sessionStorage.getItem("galley-safety-test")) return;
+    sessionStorage.setItem("galley-safety-test","yes");
+    localStorage.setItem("sx:launch-checkout:v1",JSON.stringify({
+      time:3900,jobs:{},ignition:60,separation:105,insertion:135,phasing:150,matchedAt:180,capture:210,
+    }));
+  });
+  await page.emulateMedia({reducedMotion:"reduce"});
+  await page.goto("/flight?view=launch");
+  const button = name=>page.getByRole("button",{name,exact:true});
+  const open = async ()=>button("Provisions").click();
+  const close = async ()=>button("Close provisions").click();
+  const step = page.getByRole("group",{name:"Flight playback"}).getByRole("button",{name:"Advance one mission tick"});
+  const status = page.locator("#galley-status");
+  await open();
+  await expect(status).toContainText("Cleanliness unknown");
+  await button("Isolate potable water lot").click();
+  await expect(page.locator("#galley-evidence")).toContainText("0.500 L held");
+  await expect(button("Verify and release water lot")).toBeDisabled();
+  await button("Report suspected food exposure").click();
+  await expect(status).toContainText("Horizon meal lot A on hold (2 packs)");
+  await button("Assign disinfection").click();
+  await expect(status).toContainText("disinfection in progress");
+  await close();
+  await step.click();
+  await step.click();
+  await open();
+  await expect(status).toContainText("verification due");
+  await expect(button("Verify and release surface")).toBeDisabled();
+  await page.getByLabel("Assigned astronaut").selectOption("1");
+  await button("Verify and release water lot").click();
+  await expect(page.locator("#galley-evidence")).toContainText("Verified and released at T+");
+  await button("Record failed verification").click();
+  await expect(status).toContainText("Held · disinfection due");
+  await button("Assign disinfection").click();
+  await close();
+  await step.click();
+  await step.click();
+  await open();
+  await page.getByLabel("Assigned astronaut").selectOption("0");
+  await button("Verify and release surface").click();
+  await expect(status).toContainText("Inspection recorded");
+  await expect(status).toContainText("meal lot A on hold");
+  await close();
+  await page.reload();
+  await open();
+  await expect(status).toContainText("Inspection recorded");
+  await expect(status).toContainText("meal lot A on hold (2 packs)");
+  await page.locator("#galley-hygiene summary").click();
+  await expect(page.locator("#galley-audit")).toContainText("Verification failed");
+  await expect(page.locator("#galley-audit")).toContainText("Verification passed");
+
+  await close();
+  await page.getByRole("button",{name:"Medical",exact:true}).click();
+  await button("Food exposure review").click();
+  const review = page.getByRole("dialog",{name:"Food exposure review"});
+  await expect(review.locator("#food-exposure-meals li").first()).not.toHaveText("No completed meal records for this lot");
+  const subjects = await review.locator("#food-exposure-meals li").allTextContents();
+  const options = await review.locator("#food-symptom-crew option").allTextContents();
+  const shared = options.filter(name=>subjects.some(meal=>meal.startsWith(name+" ·")));
+  expect(shared.length).toBeGreaterThanOrEqual(2);
+  for (const [index,name] of shared.slice(0,2).entries()) {
+    await review.getByLabel("Astronaut").selectOption({label:name});
+    await review.getByLabel("Observation").selectOption(index ? "stomach" : "nausea");
+    await button("Record private symptom report").click();
+  }
+  await expect(review.locator("#food-exposure-reports li")).toHaveCount(2);
+  await button("Review suspected case").click();
+  await expect(button("Record follow-up recheck")).toBeDisabled();
+  await button("Close review").click();
+  for (let count = 0; count < 4; count++) await step.click();
+  await button("Food exposure review").click();
+  await button("Record follow-up recheck").click();
+  await button("Share food safety status").click();
+  await expect(review).toContainText("Ground delivery pending");
+  await button("Close review").click();
+  await page.locator('[data-map-view="ground"]').dispatchEvent("click");
+  const delivered = page.locator("#ground-food-safety");
+  await expect(delivered).toBeHidden();
+  for (let count = 0; count < 20; count++) await step.click();
+  await expect(delivered).toContainText("Food safety review complete");
+  for (const name of shared) await expect(delivered).not.toContainText(name);
+  await expect(delivered).not.toContainText(/nausea|discomfort|meal lot A/i);
+});

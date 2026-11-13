@@ -174,3 +174,8 @@ python -m pytest backend/tests/unit/test_radiation.py backend/tests/integration/
 The `health-story` v1 fixture compares Mara's preflight mobility, orientation and rest with scripted observations in orbit, reentry and Earth recovery. The authored health story clock starts at T+0. It enters orbit at T+60, reentry at T+900 and recovery at T+960. Flight triggers the last two transitions at the corresponding mission milestones. Orbital exposure accrues while in orbit and remains visible after recovery. The Crew projection owns this context.
 
 NASA's study uses consistent measurements to characterize adaptation across multiple systems. The fixture uses this as research context for comparisons across phases. The observations and times are synthetic training data displayed in the private Crew twin alongside the separate health assessment. [NASA Spaceflight Standard Measures](https://www.nasa.gov/humans-in-space/spaceflight-standard-measures-characterizing-how-humans-adapt-in-space/)
+## Food safety in Horizon
+
+The Horizon training campaign records meal lot usage and surface inspections on its mission clock. A suspected exposure removes held packs from available provisions. A second astronaut verifies cleanup or records a failed check. A failed check keeps the surface on hold. The scenario uses fictional observations and a generic contamination flag.
+
+Medical shows the meal history and each astronaut's reported symptoms in the local Crew campaign. The Ground tab reveals the approved action status after 300 simulated seconds. This campaign uses browser-local saves and a simulated Ground relay. [NASA human-system standards](https://standards.nasa.gov/standard/NASA/NASA-STD-3001-VOL-2)

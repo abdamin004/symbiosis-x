@@ -1371,6 +1371,7 @@ __HUD_ICONS__
       </section>
       <p data-ground="case-outside" hidden></p>
       <p id="ground-health-story" role="status" hidden></p>
+      <p id="ground-food-safety" role="status" hidden></p>
       <p data-ground="advice" role="status"></p>
       <form>
         <label for="map-ground-candidate" data-ground="candidate-label">Candidate</label>
@@ -1499,6 +1500,44 @@ __HUD_ICONS__
     <button type="button" data-provision="replenish">Accept station water receipt</button>
   </div>
   <output id="provisions-receipt" role="status"></output>
+  <section id="galley-hygiene" aria-labelledby="galley-hygiene-title" hidden>
+    <h3 id="galley-hygiene-title">Galley hygiene</h3>
+    <div class="choices">
+      <label>Inspection area <select id="galley-target">
+        <option value="worktop">Galley work surfaces</option><option value="utensils">Shared eating tools</option>
+        <option value="latches">High-touch storage latches</option>
+      </select></label>
+      <label>Assigned astronaut <select id="galley-crew"></select></label>
+    </div>
+    <p id="galley-status" role="status"></p>
+    <dl id="galley-evidence" class="campaign-facts"></dl>
+    <div class="choices" aria-label="Galley safety actions">
+      <button type="button" data-galley="inspect">Record inspection</button>
+      <button type="button" data-galley="clean">Assign routine cleaning</button>
+      <button type="button" data-galley="suspect">Report suspected food exposure</button>
+      <button type="button" data-galley="disinfect">Assign disinfection</button>
+      <button type="button" data-galley="fail">Record failed verification</button>
+      <button type="button" data-galley="pass">Verify and release surface</button>
+      <button type="button" data-galley="hold-water">Isolate potable water lot</button>
+      <button type="button" data-galley="clear-water">Verify and release water lot</button>
+    </div>
+    <details><summary>Hygiene log</summary><ol id="galley-audit"></ol></details>
+  </section>
+</dialog>
+<dialog id="food-safety-medical" class="mission-dialog" aria-labelledby="food-safety-medical-title">
+  <div class="dialog-top"><h2 id="food-safety-medical-title">Food exposure review</h2><form method="dialog"><button>Close review</button></form></div>
+  <p id="food-exposure-inventory"></p>
+  <h3>Shared meal history</h3><ul id="food-exposure-meals"></ul>
+  <h3>Crew symptom reports</h3><ul id="food-exposure-reports"></ul>
+  <div class="choices">
+    <label>Astronaut <select id="food-symptom-crew"></select></label>
+    <label>Observation <select id="food-symptom-choice"><option value="nausea">Nausea</option><option value="stomach">Stomach discomfort</option><option value="none">No symptoms reported</option></select></label>
+    <button type="button" data-food-review="report">Record private symptom report</button>
+    <button type="button" data-food-review="review">Review suspected case</button>
+    <button type="button" data-food-review="recheck">Record follow-up recheck</button>
+    <button type="button" data-food-review="share">Share food safety status</button>
+  </div>
+  <p id="food-exposure-status" role="status"></p>
 </dialog>
 <dialog id="replace-campaign" class="mission-dialog" aria-labelledby="replace-campaign-title">
   <div class="dialog-top"><h2 id="replace-campaign-title">Start a new run?</h2></div>
@@ -1875,6 +1914,7 @@ __FLIGHT_DEMO__
 __FLIGHT_HEALTH_STORY__
 __LAUNCH_CHECKOUT__
 __FLIGHT_CREW__
+__FLIGHT_GALLEY__
 __DOCKING_SCENE__
 __FLIGHT_NAVIGATION__
 __FLIGHT_PROCESSES__
@@ -2049,6 +2089,9 @@ const crewRoutines = createCrewRoutines({
   },
 });
 function crewRoutine(member) {
+  const work = connectedFlight?.provisions && missionTime < (connectedFlight.provisions.departure ?? Infinity)
+    ? crewSession?.galley?.activeJob(member,missionTime) : null;
+  if (work) return work;
   const ownJob = crewSession?.crew[member]?.active;
   if (ownJob) return ownJob;
   const visit = crewSession?.crew.find(person=>person.active?.checkup === member)?.active;
@@ -2072,6 +2115,7 @@ function updateCrewRoutines(frame) {
   crewSession = crewRoutines.update(mode,connectedFlight?.crewStarted ?? 0,frame.time,revision,
     campaign ? {...campaign,powerAt} : null);
   if (campaign && element("provisions-dialog").open) renderProvisions(campaign);
+  if (campaign && foodDialog.open) renderFoodReview();
 }
 const equipmentButtons = new Map();
 const fixtureFootprints = {
@@ -3102,6 +3146,7 @@ function renderStation(roomId,frame) {
   station.hidden = !advisor;
   if (!advisor) {stationContext.key=null;return;}
   const medical = roomId === "medical-01";
+  const foodReviewAvailable = medical && Boolean(crewSession?.galley?.incident());
   element("medical-crew").hidden = !medical;
   const sample = data.history[data.crew[medicalCrew]][index];
   if (medical) setChoices("medical-crew",medicalCrew);
@@ -3111,7 +3156,7 @@ function renderStation(roomId,frame) {
     const run = taskAt("bench",frame.time);
     if (run) rows.push(["Latest experiment",frame.time<run.finishes ? run.action + " · in progress" : run.result]);
   }
-  const key = JSON.stringify([roomId,rows]);
+  const key = JSON.stringify([roomId,rows,foodReviewAvailable]);
   if (key === stationContext.key) return;
   stationContext.key = key;
   const dl = element("station-evidence");
@@ -3120,8 +3165,9 @@ function renderStation(roomId,frame) {
     dt.textContent = label; dd.textContent = value;
     return [dt,dd];
   }));
-  if (stationActions.dataset.room === roomId) return;
-  stationActions.dataset.room = roomId;
+  const stationActionKey = roomId + ":" + foodReviewAvailable;
+  if (stationActions.dataset.room === stationActionKey) return;
+  stationActions.dataset.room = stationActionKey;
   stationActions.replaceChildren();
   function action(icon,label,handler) {
     const button = document.createElement("button");
@@ -3136,6 +3182,7 @@ function renderStation(roomId,frame) {
     render();
   }
   if (medical) {
+    if (foodReviewAvailable) action("clipboard-list","Food exposure review",openFoodReview);
     action("activity","Review vitals",event=>profile("vitals",event.currentTarget));
     action("clipboard-list","Record crew check-in",event=>profile("needs",event.currentTarget));
     action("flask-conical","Research workbench",()=>openFixture(equipment.get("lab")));
@@ -3392,9 +3439,9 @@ function render() {
   evidence.textContent = frame.healthDrill ? frame.healthDrill.co2.value.toFixed(2) +
     " ppm cabin CO₂ · T+" + clock(frame.healthDrill.co2.observed_at_s) + " · scrubber " +
     frame.healthDrill.flow_m3_h + " m³/h · " + frame.healthDrill.source : "";
-  updateGround(frame);
   updateProcedureQueue(frame);
   updateCrewRoutines(frame);
+  updateGround(frame);
   const antenna = element("eva-antenna");
   const exterior = routineJob(frame,"eva");
   const repaired = connectedFlight?.timedDemo
@@ -4194,6 +4241,111 @@ function openProcesses(mode, modal = true) {
 element("show-processes").addEventListener("click",()=>openProcesses(crewMode()));
 const provisionsDialog = element("provisions-dialog");
 const provisionActions = [...document.querySelectorAll("[data-provision]")];
+const galleyActions = [...document.querySelectorAll("[data-galley]")];
+const galleyTarget = element("galley-target");
+const galleyCrew = element("galley-crew");
+const foodDialog = element("food-safety-medical");
+const foodCrew = element("food-symptom-crew");
+const foodActions = [...document.querySelectorAll("[data-food-review]")];
+for (const [member, character] of characters.entries()) {
+  galleyCrew.add(new Option(character.name, String(member)));
+  foodCrew.add(new Option(character.name, String(member)));
+}
+
+function renderFoodReview() {
+  const incident = crewSession?.galley?.incident();
+  if (!incident) return;
+  const member = Number(foodCrew.value);
+  const review = incident.review;
+  element("food-exposure-inventory").textContent = "Suspected food exposure · " + incident.batch + " isolated at T+" + clock(incident.time);
+  for (const [id, entries, empty] of [
+    ["food-exposure-meals",incident.meals,"No completed meal records for this lot"],
+    ["food-exposure-reports",incident.reports,"No symptoms recorded"],
+  ]) {
+    const rows = entries.map(entry=>characters[entry.member].name + " · T+" + clock(entry.time) + (entry.symptom ? " · " + entry.symptom : ""));
+    element(id).replaceChildren(...(rows.length ? rows : [empty]).map(line=>{
+      const li = document.createElement("li"); li.textContent = line; return li;
+    }));
+  }
+  const relay = incident.relay;
+  element("food-exposure-status").textContent = relay ? (missionTime >= relay.deliverAt ? "Ground received operational status" : "Ground delivery pending · T+" + clock(relay.deliverAt))
+    : review?.rechecked != null ? "Follow-up recorded · T+" + clock(review.rechecked)
+    : review ? "Onboard review assigned to " + characters[review.member].name + " · Recheck due at T+" + clock(review.recheckDue)
+    : "Awaiting onboard review";
+  const available = {
+    report:review?.rechecked == null && incident.meals.some(entry=>entry.member === member) && !incident.reports.some(entry=>entry.member === member),
+    review:!review && incident.reports.length > 0,
+    recheck:review && review.rechecked == null && missionTime >= review.recheckDue,
+    share:review?.rechecked != null && !relay,
+  };
+  for (const button of foodActions) button.disabled = !available[button.dataset.foodReview];
+}
+
+function openFoodReview() {
+  launchMission.stopForProvisions();
+  renderFoodReview();
+  foodDialog.showModal();
+}
+
+foodCrew.addEventListener("change",renderFoodReview);
+for (const button of foodActions) button.addEventListener("click",() => {
+  launchMission.orderProvision("galley-" + button.dataset.foodReview, {
+    target:"worktop",member:Number(foodCrew.value),symptom:element("food-symptom-choice").value,
+  });
+});
+
+function renderGalley(galley) {
+  element("galley-hygiene").hidden = !galley;
+  if (!galley) return;
+  const target = galleyTarget.value;
+  const surface = galley.surfaces.get(target);
+  const member = Number(galleyCrew.value);
+  const incident = galley.incident();
+  element("galley-status").textContent = galley.status(surface,missionTime) +
+    (incident ? " · Suspected exposure, " + incident.batch + " on hold (" + incident.heldPacks + " packs)" : "");
+  const facts = [
+    ["Last cleaning", surface.completed == null ? "No completed record" : "T+" + clock(surface.completed)],
+    ["Next inspection due", "T+" + clock(surface.due)],
+    ["Next routine cleaning", "T+" + clock(surface.nextCleaning)],
+    ["Assigned astronaut", surface.job ? characters[surface.job.member].name : "None"],
+    ["Verification", surface.verification ? "Requires a second astronaut" : surface.verified == null ? "No result" : surface.verified],
+  ];
+  if (incident && target === "worktop") facts.push(["Incident observation",incident.observation]);
+  const waterLot = galley.waterLot();
+  if (waterLot) facts.push(["Potable water lot A",waterLot.releasedAt == null
+    ? (waterLot.heldMl / 1000).toFixed(3) + " L held · independent check due"
+    : "Verified and released at T+" + clock(waterLot.releasedAt)]);
+  element("galley-evidence").replaceChildren(...facts.flatMap(([label,value]) => {
+    const dt = document.createElement("dt"), dd = document.createElement("dd");
+    dt.textContent = label;
+    dd.textContent = value;
+    return [dt,dd];
+  }));
+  const verificationReady = surface.verification && surface.verification.member !== member;
+  const available = {
+    inspect:!surface.job && !surface.verification && !surface.held,
+    clean:!surface.job && !surface.verification && !surface.held && !galley.activeJob(member,missionTime),
+    suspect:target === "worktop" && !incident && !surface.job && !surface.verification,
+    disinfect:surface.held && !surface.job && !surface.verification && !galley.activeJob(member,missionTime),
+    fail:verificationReady,
+    pass:verificationReady,
+    "hold-water":!waterLot && crewSession.provisions.stock.potable > 0,
+    "clear-water":galley.canClearWater(member,missionTime),
+  };
+  for (const button of galleyActions) button.disabled = !available[button.dataset.galley];
+  element("galley-audit").replaceChildren(...galley.audit.slice(-20).reverse().map(entry => {
+    const li = document.createElement("li");
+    li.textContent = "T+" + clock(entry.time) + " · " + characters[entry.member].short + " · " + entry.event + " · " + entry.detail;
+    return li;
+  }));
+}
+
+for (const control of [galleyTarget,galleyCrew]) {
+  control.addEventListener("change",() => renderGalley(crewSession?.galley));
+}
+for (const button of galleyActions) button.addEventListener("click",() => {
+  launchMission.orderProvision("galley-" + button.dataset.galley, {target:galleyTarget.value,member:Number(galleyCrew.value)});
+});
 
 function renderProvisions(campaign) {
   const ledger = crewSession.provisions;
@@ -4222,6 +4374,7 @@ function renderProvisions(campaign) {
   const receipt = target.receipts.get(latest?.id);
   element("provisions-receipt").textContent = receipt ? receipt.reason ??
     (latest.action === "replenish" ? "Station water credited to the return capsule" : "Provision action recorded") : "";
+  renderGalley(returned ? null : crewSession.galley);
   for (const button of provisionActions) {
     button.disabled = Boolean(campaign.commands.some(order=>order.time === Math.floor(missionTime) && order.action === button.dataset.provision));
     if (button.dataset.provision === "replenish") button.disabled ||= campaign.transferAt == null || returned;
@@ -4394,6 +4547,11 @@ const groundPanel = bindFlightGround({
   clock, workflow:flightWorkflow, replayPacket:data.replay_ground, rehearsal:data.health_drill, redraw:render,
 });
 function updateGround(frame) {
+  const foodStatus = element("ground-food-safety");
+  const foodRelay = connectedFlight?.provisions && crewSession?.galley?.incident()?.relay;
+  const foodDelivered = foodRelay && frame.time >= foodRelay.deliverAt;
+  foodStatus.hidden = !foodDelivered;
+  foodStatus.textContent = foodDelivered ? foodRelay.status + " · Received T+" + clock(foodRelay.deliverAt) : "";
   const mode = groundFlightContext?.mode ?? "menu";
   const relayRunId = mode === "replay" ? flightHealthRun : null;
   const campaign = groundFlightContext?.campaign;
