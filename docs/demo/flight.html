@@ -117,7 +117,7 @@ button[aria-pressed=true]{background:#3d315e}
 #profile-tabs .icon{width:.82rem;height:.82rem;margin-right:.28rem;color:var(--violet)}
 @media(max-width:720px){.ship{margin-inline:0;width:100%}}
 @media(max-width:520px){#widget-shelf{top:calc(100% + 6.25rem)}}
-#map-widget{width:min(280px,calc(100% - 20px))}#workflow-widget{width:320px}.route-map{width:100%;display:block}.route-map circle{fill:#b0bdfa}.route-map #ship-position{fill:#e8ccff;stroke:#fbf4ff}
+#workflow-widget{width:320px}.route-map{width:100%;display:block}.route-map circle{fill:#b0bdfa}.route-map #ship-position{fill:#e8ccff;stroke:#fbf4ff}
 
 .control-deck a{margin-left:auto;font-size:.85rem}
 #phase{color:var(--muted);font-size:.78rem}
@@ -164,8 +164,6 @@ button[aria-pressed=true]{background:#3d315e}
 .map-systems div{padding:.35rem .25rem;background:#1d2646;border-radius:5px}
 .map-systems small{display:block;font-size:.65rem;color:var(--muted)}
 .map-systems strong{font:600 .75rem ui-monospace,monospace;color:var(--blue)}
-#lock-map{font-size:.72rem;padding:.2rem .42rem}
-#map-widget{max-height:min(57dvh,350px)}
 .panel{background:linear-gradient(150deg,#141c36f5,#090e22f7 72%);box-shadow:0 12px 34px #0008,inset 0 1px #788ac04d}
 .widget-bar{padding-bottom:.36rem;border-bottom:1px solid #828fc12c}
 .profile-data{grid-template-columns:minmax(0,1fr) minmax(0,1.08fr)}
@@ -224,8 +222,6 @@ button[aria-pressed=true]{background:#3d315e}
 .map-systems div{padding:.35rem .25rem;background:#1d2646;border-radius:5px}
 .map-systems small{display:block;font-size:.65rem;color:var(--muted)}
 .map-systems strong{font:600 .75rem ui-monospace,monospace;color:var(--blue)}
-#lock-map{font-size:.72rem;padding:.2rem .42rem}
-#map-widget{max-height:min(57dvh,350px)}
 .panel{background:linear-gradient(150deg,#141c36f5,#090e22f7 72%);box-shadow:0 12px 34px #0008,inset 0 1px #788ac04d}
 .widget-bar{padding-bottom:.36rem;border-bottom:1px solid #828fc12c}
 .profile-data{grid-template-columns:minmax(0,1fr) minmax(0,1.08fr)}
@@ -370,12 +366,6 @@ button[aria-pressed=true]{background:#3d315e}
 .region-card h3{margin:.2rem 0;font-size:.95rem}
 .region-card small{color:var(--muted);font-size:.72rem}
 .region-card strong{color:var(--blue);font-size:.85rem}
-.objective-list{margin:.8rem 0;padding-left:1.6rem}
-.objective-list li{padding:.35rem .6rem;margin:.25rem 0;background:#202c48;border-left:3px solid #4c5d83}
-.objective-list li[data-status=next]{border-color:var(--violet)}
-.objective-list li[data-status=held]{border-color:#ffb37f}
-.objective-list li[data-status=verified]{border-color:#8ed9bc}
-.objective-list small{display:block;color:var(--muted)}
 #mission-command-widget{width:min(350px,calc(100% - 20px));max-height:min(65vh,580px)}
 #mission-command-widget .launch-readouts div{grid-template-columns:95px 1fr}
 #mission-command-widget #launch-time,#mission-command-widget #launch-step{display:none}
@@ -422,7 +412,8 @@ button[aria-pressed=true]{background:#3d315e}
 #navigation-mini canvas{display:block;width:100%;border-radius:inherit}
 #navigation-track{display:block;width:100%;border-radius:6px}
 #flight-instrument small,#flight-instrument button:not(#navigation-mini){font-size:.68rem}
-#navigation-help{background:#0b1428ed;border-radius:4px;padding:.1rem .3rem}
+#navigation-help{position:absolute;bottom:100%;width:14rem;clip-path:inset(50%);
+  background:#0b1428ed;border-radius:4px;padding:.1rem .3rem}
 #navigation-heading,#navigation-caption{max-width:210px;background:#0b1428ed;border-radius:4px;padding:.15rem .35rem}
 .instrument-actions{display:flex;align-items:center;gap:.25rem}
 .instrument-actions button{padding:.2rem .35rem;background:#111a32ed}
@@ -634,14 +625,24 @@ ul.tutorial-startup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));g
 .guide-track i{height:3px;flex:1;border-radius:3px;background:#7e93c341}
 .guide-track [data-step=complete]{background:#96dac9}
 .guide-track [data-step=current]{background:var(--guide-color);box-shadow:0 0 7px var(--guide-color)}
-#guide-phase{font-size:.66rem;font-weight:700;color:var(--guide-color);letter-spacing:.04em}
-#guide-next{font-size:clamp(.9rem,1.3vw,1.05rem);line-height:1.28;font-weight:740;color:#f1f5ff;margin:.16rem 0 .28rem}
-#guide-detail{font-size:.75rem;line-height:1.36;color:#c4cee5}
+.guide-body{display:grid;grid-template-columns:3.75rem minmax(0,1fr);align-items:center;gap:.52rem}
+.guide-illustration{display:block;width:100%;height:auto;aspect-ratio:72/58;color:var(--guide-color);background:#0b1429;border:1px solid #8ea2d042;border-radius:8px}
+.guide-illustration .scene{display:none}
+.guide-illustration[data-scene=checkout] .scene-checkout,.guide-illustration[data-scene=ascent] .scene-ascent,
+.guide-illustration[data-scene=separation] .scene-separation,.guide-illustration[data-scene=insertion] .scene-insertion,
+.guide-illustration[data-scene=coast] .scene-coast,.guide-illustration[data-scene=approach] .scene-approach,
+.guide-illustration[data-scene=docking] .scene-docking,.guide-illustration[data-scene=recovery] .scene-recovery{display:inline}
+.guide-illustration .reference{stroke:#8199bd}
+.guide-illustration .solid{fill:currentColor;stroke:none}
+#guide-phase{font-size:.66rem;font-weight:700;color:var(--guide-color);line-height:1.25}
+#guide-next{font-size:clamp(.9rem,1.3vw,1.05rem);line-height:1.2;font-weight:740;color:#f1f5ff;margin-top:.14rem}
+#guide-detail{font-size:.75rem;line-height:1.32;color:#c4cee5;margin-top:.35rem}
+#guide-detail:empty{display:none}
 .guide-actions{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.55rem}
 .guide-actions button{font-size:.7rem;padding:.26rem .47rem;background:#202e50;color:#e6ecff}
 .guide-actions button:hover{background:#344471}
 #guide-focus{background:#32336a;color:#f0ebff}
-.stage[data-asteria=true] #show-objectives,#launch-open-objectives{display:none}
+#launch-open-objectives{display:none}
 .stage[data-asteria=true] .ribbon .resource{position:absolute;clip-path:inset(50%);width:1px;height:1px;overflow:hidden}
 #mission-command-widget .command-status{display:none}
 .command-resource{grid-column:1/-1;min-width:0}
@@ -683,7 +684,7 @@ ul.tutorial-startup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));g
 .stage[data-asteria=true] .control-deck{border:1px solid #9cacf13d}
 .stage[data-asteria=true] #widget-shelf{top:var(--resource-bottom,calc(100% + 10rem))}
 #flight-instrument #navigation-caption{display:none}
-#flight-instrument:has(#navigation-mini:focus-visible) #navigation-help{color:#fff;outline:1px solid var(--blue)}
+#flight-instrument:has(#navigation-mini:focus-visible) #navigation-help{clip-path:none;color:#fff;outline:1px solid var(--blue)}
 .launch-field[data-view=launch] .pad-checkout #pad-command{align-self:start;margin-top:var(--pad-guide-offset,0px);
   max-height:max(8rem,calc(100svh - var(--launch-clearance,100px) - var(--pad-guide-offset,0px) - 2.4rem))}
 @media(min-width:851px){
@@ -704,11 +705,13 @@ ul.tutorial-startup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));g
   .launch-hud .launch-ribbon .launch-nav-actions{flex-wrap:nowrap}
   .hud .ribbon a,.launch-hud .ribbon a{margin-left:0}
   .mission-guide{width:min(13.4rem,calc(100vw - 1.1rem));padding:.45rem .55rem}
-  .mission-guide:has(#demo-banner:not([hidden])) :is(#guide-next,#guide-detail,.guide-actions){display:none}
+  .mission-guide:has(#demo-banner:not([hidden])) :is(#guide-detail,.guide-actions){display:none}
+  .mission-guide:has(#demo-banner:not([hidden])) .guide-body{grid-template-columns:2rem minmax(0,1fr)}
   .stage[data-timed-demo] #personnel-widget{max-height:33dvh}
   .stage[data-timed-demo] #personnel-widget :is(.personnel-actions,.anatomy-tabs,.device-links,#body-regions,.twin-camera){display:none}
   .stage[data-timed-demo] #personnel-widget .body-layout{grid-template-columns:75px minmax(0,1fr)}
   .guide-head{margin-bottom:.26rem}.guide-track{margin-bottom:.3rem}
+  .guide-body{grid-template-columns:2.65rem minmax(0,1fr);gap:.33rem}
   .guide-actions{margin-top:.32rem}.guide-actions button{padding:.2rem .35rem}
   #guide-next{font-size:.84rem}#guide-detail{font-size:.68rem}
   .stage[data-asteria=true] #mission-command-widget{max-height:min(36dvh,270px)}
@@ -739,8 +742,102 @@ ul.tutorial-startup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));g
 }
 @media(max-width:680px) and (max-height:700px){
   .mission-guide{max-height:24dvh;overflow:auto}
+  .mission-guide:has(#demo-banner:not([hidden])){max-height:none}
+  .mission-guide:has(#demo-banner:not([hidden])) #guide-phase{display:none}
   #flight-instrument #navigation-mini{width:63px}
   .stage[data-asteria=true] #mission-command-widget{max-height:28dvh}
+}
+
+/* Keep the itinerary and navigation displays anchored on either side of attitude control. */
+.flight-corner{position:fixed;z-index:8;bottom:max(.55rem,env(safe-area-inset-bottom));border:1px solid #a6b8e138;
+  border-radius:11px;background:linear-gradient(145deg,#19233deb,#0a1125f2);box-shadow:0 8px 24px #0307118c;
+  backdrop-filter:blur(8px);color:#e5eeff}
+#map-widget{left:max(.55rem,env(safe-area-inset-left))}
+#map-widget{width:min(22rem,calc((100vw - 15.5rem)/2));padding:.5rem .65rem}
+#map-widget[data-view=replay]{width:min(17.5rem,calc(100vw - 1.1rem));max-height:48dvh;overflow:auto}
+#map-widget .map-views{margin:.28rem 0}
+#map-widget .map-views button{flex:0 1 auto;min-height:1.5rem;padding:.12rem .32rem}
+#map-widget .minimap-screen{min-height:0;background:none;padding:0}
+#map-widget #deck-map{height:clamp(2.6rem,9dvh,4.6rem)}
+#map-widget .map-systems{grid-template-columns:repeat(auto-fit,minmax(3rem,1fr))}
+#map-widget[data-view=launch] :is([data-map-view=deck],[data-map-view=systems]){display:none}
+#map-widget[data-view=launch] .map-views:not(:has([data-map-view]:not([data-map-view=route],[data-map-view=deck],[data-map-view=systems]))){display:none}
+#map-widget[data-view=replay] #phase{margin-bottom:.25rem}
+#orbit-map-widget{right:max(.55rem,env(safe-area-inset-right));width:min(12.75rem,calc((100vw - 15.5rem)/2));padding:.4rem .48rem}
+#orbit-map-widget button{display:grid;gap:.18rem;width:100%;min-height:44px;text-align:left;padding:.22rem .3rem;background:transparent}
+#orbit-map-widget button:hover{background:#9cbcff15}
+#orbit-map-widget canvas{width:100%;height:clamp(3rem,10dvh,5.4rem);display:block;object-fit:cover;border-radius:5px}
+#orbit-widget-title,.plan-heading h2{font-size:.76rem;font-weight:750;line-height:1.25}
+#orbit-widget-context{color:#a9cce5;font-size:.67rem;line-height:1.25}
+.plan-heading{display:flex;gap:.25rem .5rem;align-items:center;justify-content:space-between;flex-wrap:wrap}
+#map-plan-open{font-size:.71rem;color:#e0d7ff;padding:.2rem .38rem}
+#map-current{display:flex;align-items:center;gap:.38rem;margin:.36rem 0 0;font-size:.75rem;line-height:1.27;min-width:0}
+#map-current .icon{color:var(--violet);width:.84rem;height:.84rem}
+#map-current-copy{min-width:0;overflow-wrap:anywhere}
+#map-current-state{display:block;font-size:.65rem;color:#c3cde8}
+.plan-milestones{display:flex;list-style:none;padding:0;margin:.5rem 0 0}
+.plan-milestones li{--mark:#8297b7;flex:1;min-width:0;position:relative;display:grid;justify-items:center;align-content:start;gap:.22rem;
+  color:#b5c3df;font-size:.61rem;line-height:1.2;text-align:center}
+.plan-milestones li + li::before{content:"";position:absolute;top:.64rem;right:50%;width:100%;height:1px;background:#758ab155}
+.plan-milestones [data-step=complete] + li::before{background:#8cd8be}
+.plan-milestones [data-step=complete]{--mark:#a0e6ca;color:#a0e6ca}
+.plan-milestones [data-step=current]{--mark:#d4c0ff;color:#e4d8ff}
+.plan-milestones [data-step=held],.plan-milestones [data-step=incomplete]{--mark:#ffc98e;color:#ffc98e}
+.plan-mark{position:relative;z-index:1;width:1.35rem;height:1.35rem;display:grid;place-items:center;
+  border:1px solid var(--mark);border-radius:50%;background:#131e35;color:var(--mark)}
+.plan-mark .icon{width:.77rem;height:.77rem}
+.plan-milestones [data-step=current] .plan-mark{background:#342953;box-shadow:0 0 0 2px #c6b0ff3b}
+#mission-objectives{width:min(800px,calc(100vw - 24px))}
+#mission-objective-ship{font-size:.78rem;color:#cbbaff}
+#mission-objective-list{list-style:none;padding:0;margin:.85rem 0 0;display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem}
+.plan-stage{--stage-color:#8393b6;min-width:0;padding:.55rem .62rem;border:1px solid #8196c24a;
+  border-top:2px solid var(--stage-color);border-radius:7px;background:#141f38}
+.plan-stage[data-step=complete]{--stage-color:#97e0c4}
+.plan-stage[data-step=current]{--stage-color:#cdb7ff;background:#222443}
+.plan-stage[data-step=held],.plan-stage[data-step=incomplete]{--stage-color:#ffca94}
+#mission-objectives .plan-stage h3{display:flex;align-items:center;gap:.36rem;color:var(--stage-color);font-size:.86rem;margin:0}
+.plan-stage h3 small{margin-left:auto;color:#c3cee5;font-size:.65rem;text-align:right}
+.plan-tasks{margin:.4rem 0 0;padding:0;list-style:none}
+.plan-tasks li{display:grid;grid-template-columns:1rem minmax(0,1fr);gap:.38rem;padding:.32rem 0;border-top:1px solid #8d9fc626;
+  font-size:.78rem;line-height:1.28}
+.plan-task-icon{color:#a3b5dc;padding-top:.1rem}
+.plan-tasks [data-status=verified] .plan-task-icon{color:#97e0c4}
+.plan-tasks [data-status=next] .plan-task-icon{color:#cdb7ff}
+.plan-tasks :is([data-status=held],[data-status=incomplete]) .plan-task-icon{color:#ffca94}
+.plan-tasks small{display:block;margin-top:.14rem;color:#c0cce6}
+.launch-field[data-view=launch] .pad-checkout{padding-bottom:max(var(--corner-clearance,0px),calc(clamp(116px,16vw,168px)*.6 + 2.8rem))}
+@media(min-width:851px){
+  .launch-field[data-view=launch] .pad-checkout .launch-board{max-height:max(7rem,calc(100svh - var(--launch-clearance,100px) - var(--corner-clearance,0px) - 1.6rem))}
+  .launch-field[data-view=launch] .pad-checkout #pad-command{max-height:max(7rem,calc(100svh - var(--launch-clearance,100px) - var(--pad-guide-offset,0px) - var(--corner-clearance,0px) - 1.6rem))}
+}
+@media(max-width:680px){
+  #map-widget{width:calc((100vw - 8.25rem)/2);padding:.35rem .4rem}
+  #map-widget .map-views{gap:.13rem}
+  #map-widget .map-views button{font-size:.65rem;padding-inline:.2rem}
+  #orbit-map-widget{width:min(8.6rem,calc((100vw - 8.25rem)/2));padding:.26rem}
+  #orbit-map-widget canvas{height:3.3rem}
+  #map-current{font-size:.68rem}
+  #map-current-objective{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+  #map-plan-open{min-height:28px}
+  main:has(.stage[data-timed-demo]) #map-widget :is([data-map-view=deck],[data-map-view=systems]){display:none}
+  main:has(.stage[data-timed-demo]) #map-widget .map-views:not(:has([data-map-view]:not([data-map-view=route],[data-map-view=deck],[data-map-view=systems]))){display:none}
+  .plan-milestones{gap:1px;margin-top:.35rem}
+  .plan-milestones li{font-size:.56rem}
+  .plan-milestones li + li::before{top:.53rem}
+  .plan-mark{width:1.1rem;height:1.1rem}
+  .plan-mark .icon{width:.64rem;height:.64rem}
+  #flight-instrument{width:6.25rem}
+  #flight-instrument #navigation-heading{font-size:.58rem}
+  #navigation-help{width:9rem}
+  .instrument-actions{gap:.1rem}
+  .instrument-actions button{min-width:1.3rem}
+}
+@media(max-width:460px){
+  #mission-objective-list{grid-template-columns:1fr}
+}
+@media(max-width:375px){
+  .plan-milestones li{font-size:.52rem}
 }
 </style>
 </head>
@@ -759,7 +856,6 @@ __HUD_ICONS__
     <button type="button" id="show-briefing">Briefing</button>
     <button type="button" id="show-command" hidden>Flight command</button>
     <button type="button" id="show-missions"></button>
-    <button type="button" id="show-objectives" hidden><svg class="icon" aria-hidden="true"><use href="#hud-clipboard-list"/></svg>Mission objectives</button>
     <button type="button" id="end-mission" class="end-mission"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg>End mission</button>
     <a href="/mission">Mission control</a>
   </div>
@@ -823,39 +919,6 @@ __HUD_ICONS__
     <button id="hold-order" type="button" hidden>Commander · Hold</button>
     <button id="complete-order" type="button" hidden>Ivo · Send inspection report</button>
     </div>
-  </section>
-  <section class="panel" id="map-widget" aria-label="Mission overview">
-    <div class="widget-bar"><button class="move-widget widget-title" type="button" aria-label="Move minimap with drag or arrow keys" disabled><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button><h2>Mission overview</h2><button id="lock-map" type="button" aria-pressed="true" aria-label="Lock minimap position" title="Unlock minimap position" data-widget-lock><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg> <span>Lock</span></button></div>
-    <div class="choices map-views" role="group" aria-label="Mission overview view">
-      <button type="button" data-map-view="route" aria-pressed="true">Route</button>
-      <button type="button" data-map-view="deck" aria-pressed="false">Deck</button>
-      <button type="button" data-map-view="systems" aria-pressed="false">Systems</button>
-    </div>
-    <div class="minimap-screen">
-      <div id="map-route">
-    <svg class="route-map" viewBox="0 0 260 58" aria-hidden="true">
-      <path d="M18 35 Q75 -4 130 17 Q190 -4 242 35" stroke="#8385bd" fill="none"/>
-      <circle cx="18" cy="35" r="4"/><circle cx="130" cy="17" r="4"/><circle cx="242" cy="35" r="4"/>
-      <circle id="ship-position" cx="18" cy="35" r="5"/>
-      <g fill="#bac5e7" font-size="10"><text x="3" y="55">Earth</text><text x="122" y="39">ISS</text><text x="218" y="55">Return</text></g>
-    </svg>
-      </div>
-      <div id="map-deck" hidden><svg id="deck-map" viewBox="170 106 782 270" role="img" aria-label="Ship rooms and crew positions"></svg></div>
-      <div id="map-systems" class="map-systems" hidden>
-        <div><small>Cabin CO₂</small><strong id="map-air"></strong></div>
-        <div><small>Power reserve</small><strong id="map-power"></strong></div>
-        <div><small>Onboard jobs</small><strong id="map-jobs"></strong></div>
-      </div>
-    </div>
-    <p id="map-location"></p>
-    <p id="phase"></p>
-    <div class="overview-time">
-      <output class="clock" id="clock" for="timeline"></output>
-      <button id="next-event" type="button" title="Jump to the next scenario checkpoint">Next event</button>
-      <button id="reset" type="button" aria-label="Reset game" title="Reset game"><svg class="icon" aria-hidden="true"><use href="#hud-rotate-ccw"/></svg></button>
-    </div>
-    <input id="timeline" type="range" min="0" value="0" aria-label="Mission time">
-    <button id="one-hour" type="button" aria-pressed="false" title="Scale the entire mission to one hour of playback">1-hour pacing</button>
   </section>
   <section class="panel" id="inspector-widget" hidden aria-labelledby="focus-name">
     <div class="widget-bar"><button class="move-widget widget-title" type="button" aria-label="Move inspector with drag or arrow keys"><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button><h2 id="focus-name"></h2><button class="widget-close" type="button" aria-label="Close inspector"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button></div>
@@ -986,10 +1049,63 @@ __HUD_ICONS__
 </div>
 </div>
 </section>
+<section class="flight-corner" id="map-widget" aria-labelledby="map-plan-heading" hidden>
+  <div class="plan-heading">
+    <h2 id="map-plan-heading">Mission Overview</h2>
+    <button id="map-plan-open" type="button" aria-haspopup="dialog" aria-controls="mission-objectives">Open plan</button>
+  </div>
+  <div class="choices map-views" role="group" aria-label="Mission overview view">
+    <button type="button" data-map-view="route" aria-pressed="true">Plan</button>
+    <button type="button" data-map-view="deck" aria-pressed="false">Deck</button>
+    <button type="button" data-map-view="systems" aria-pressed="false">Systems</button>
+  </div>
+  <div class="minimap-screen">
+    <div id="map-route">
+      <ol id="map-milestones" class="plan-milestones" aria-label="Mission phases"></ol>
+      <div id="map-replay-route" hidden>
+        <svg class="route-map" viewBox="0 0 260 58" aria-hidden="true">
+          <path d="M18 35 Q75 -4 130 17 Q190 -4 242 35" stroke="#8385bd" fill="none"/>
+          <circle cx="18" cy="35" r="4"/><circle cx="130" cy="17" r="4"/><circle cx="242" cy="35" r="4"/>
+          <circle id="ship-position" cx="18" cy="35" r="5"/>
+          <g fill="#bac5e7" font-size="10"><text x="3" y="55">Earth</text><text x="122" y="39">ISS</text><text x="218" y="55">Return</text></g>
+        </svg>
+      </div>
+    </div>
+    <div id="map-deck" hidden><svg id="deck-map" viewBox="170 106 782 270" role="img" aria-label="Ship rooms and crew positions"></svg></div>
+    <div id="map-systems" class="map-systems" hidden>
+      <div><small>Cabin CO₂</small><strong id="map-air"></strong></div>
+      <div><small>Power reserve</small><strong id="map-power"></strong></div>
+      <div><small>Onboard jobs</small><strong id="map-jobs"></strong></div>
+    </div>
+  </div>
+  <p id="map-current"><span id="map-current-icon"></span><span id="map-current-copy">
+    <strong id="map-current-objective"></strong><small id="map-current-state"></small>
+  </span></p>
+  <div id="map-replay-controls" hidden>
+    <p id="map-location"></p>
+    <p id="phase"></p>
+    <div class="overview-time">
+      <output class="clock" id="clock" for="timeline"></output>
+      <button id="next-event" type="button" title="Jump to the next scenario checkpoint">Next event</button>
+      <button id="reset" type="button" aria-label="Reset game" title="Reset game"><svg class="icon" aria-hidden="true"><use href="#hud-rotate-ccw"/></svg></button>
+    </div>
+    <input id="timeline" type="range" min="0" value="0" aria-label="Mission time">
+    <button id="one-hour" type="button" aria-pressed="false" title="Scale the entire mission to one hour of playback">1-hour pacing</button>
+  </div>
+</section>
+<section class="flight-corner" id="orbit-map-widget" aria-label="Orbital navigation" hidden>
+  <button id="open-orbit-minimap" type="button" aria-label="Open orbit minimap" aria-haspopup="dialog" aria-controls="orbit-dialog">
+    <strong id="orbit-widget-title">Orbit Map</strong>
+    <canvas id="orbit-map-preview" width="180" height="100" aria-hidden="true"></canvas>
+    <small id="orbit-widget-context"></small>
+  </button>
+</section>
 <dialog id="mission-objectives" class="mission-dialog" aria-labelledby="mission-objective-title">
-  <div class="dialog-top"><h2 id="mission-objective-title">Mission objectives</h2><form method="dialog"><button>Close</button></form></div>
+  <div class="dialog-top"><h2 id="mission-objective-title">Flight plan</h2><form method="dialog"><button>Close</button></form></div>
+  <p id="mission-objective-ship"></p>
+  <p id="mission-objective-brief"></p>
   <p id="mission-objective-next"></p>
-  <ol id="mission-objective-list" class="objective-list"></ol>
+  <ol id="mission-objective-list" aria-label="Flight plan phases"></ol>
 </dialog>
 <dialog id="airlock-dialog" class="mission-dialog" aria-labelledby="airlock-title">
   <div class="dialog-top"><h2 id="airlock-title">Atmosphere rehearsal</h2><form method="dialog"><button>Close</button></form></div>
@@ -1126,7 +1242,6 @@ __HUD_ICONS__
   <div class="instrument-actions">
     <button type="button" data-pitch="-15" aria-label="Pitch down">↓</button>
     <button type="button" data-attitude="-15" aria-label="Yaw left">←</button>
-    <button id="open-orbit-minimap" type="button" aria-label="Open orbit minimap">Orbit</button>
     <button type="button" data-attitude="15" aria-label="Yaw right">→</button>
     <button type="button" data-pitch="15" aria-label="Pitch up">↑</button>
   </div>
@@ -1140,8 +1255,64 @@ __HUD_ICONS__
   </div>
   <div id="guide-track" class="guide-track" aria-hidden="true"></div>
   <div id="guide-status" role="status">
-    <p id="guide-phase"></p>
-    <p id="guide-next"></p>
+    <div class="guide-body">
+      <svg id="guide-illustration" class="guide-illustration" viewBox="0 0 72 58" aria-hidden="true" focusable="false"
+        fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <defs>
+          <path id="guide-ship-shape" d="M0-8C4-6 5-2 5 4L0 7l-5-3c0-6 1-10 5-12Z" fill="#253759"/>
+          <g id="guide-station-shape">
+            <path d="M0-13v26M-18 0h36M-4-5h8V5h-8Z"/>
+            <path d="M-18-8h9V8h-9ZM9-8h9V8H9ZM-18-3h9m-9 6h9m18-6h9m-9 6h9" class="reference"/>
+          </g>
+        </defs>
+        <g class="scene scene-checkout">
+          <path class="reference" d="M10 48h52M15 48V21h16m-16 9 11 9-11 9"/>
+          <use href="#guide-ship-shape" transform="translate(35 27) scale(1.5)"/>
+          <path d="M28 32l-3 9h5l5-3 5 3h5l-3-9M47 21l4 4 8-9"/>
+        </g>
+        <g class="scene scene-ascent">
+          <path class="reference" d="M12 48h15m18 0h15M16 32v-9m-3 3 3-3 3 3M56 32v-9m-3 3 3-3 3 3"/>
+          <use href="#guide-ship-shape" transform="translate(36 24) scale(1.5)"/>
+          <path d="M29 28l-4 10 6-3m12-7 4 10-6-3M33 38l3 9 3-9"/>
+        </g>
+        <g class="scene scene-separation">
+          <path class="reference" d="M21 31h9v12l-2 5h-5l-2-5ZM21 43h9m-4-20v-6m-4 4 4 4 4-4"/>
+          <use href="#guide-ship-shape" transform="translate(47 22) rotate(27) scale(1.35)"/>
+          <path d="m42 33-5 7m1-5-1 5 5-1"/>
+        </g>
+        <g class="scene scene-insertion">
+          <path class="reference" d="M7 56a42 42 0 0 1 53 0M9 41c10-11 24-17 39-17" stroke-dasharray="3 4"/>
+          <path d="M9 41C24 21 43 13 61 16"/>
+          <use href="#guide-ship-shape" transform="translate(53 16) rotate(83)"/>
+          <path d="m42 16-6 2m7 2-3 2"/>
+        </g>
+        <g class="scene scene-coast">
+          <circle class="reference" cx="36" cy="30" r="13"/>
+          <path class="reference" d="M25 26c4-3 5 3 8 1s2-6 6-5m1 14c-6 4-9 2-9-2s-3-3-5-2"/>
+          <ellipse cx="36" cy="30" rx="29" ry="19" stroke-dasharray="3 4"/>
+          <use href="#guide-ship-shape" transform="translate(54 15) rotate(105) scale(.8)"/>
+        </g>
+        <g class="scene scene-approach">
+          <use href="#guide-station-shape" transform="translate(53 29) scale(.78)"/>
+          <use href="#guide-ship-shape" transform="translate(15 29) rotate(90)"/>
+          <path class="reference" d="M25 29h12m-4-4 4 4-4 4"/>
+        </g>
+        <g class="scene scene-docking">
+          <use href="#guide-station-shape" transform="translate(44 29)"/>
+          <use href="#guide-ship-shape" transform="translate(19 29) rotate(90)"/>
+          <circle cx="26" cy="29" r="2.3" class="solid"/>
+        </g>
+        <g class="scene scene-recovery">
+          <path d="M16 24a20 20 0 0 1 40 0H16Zm0 0 16 15m24-15L40 39m-10-15 6 15m6-15-6 15"/>
+          <path d="m36 38 7 10H29l7-10Z" fill="#253759"/>
+          <path class="reference" d="M12 53h48"/>
+        </g>
+      </svg>
+      <div>
+        <p id="guide-phase"></p>
+        <p id="guide-next"></p>
+      </div>
+    </div>
     <p id="guide-detail"></p>
   </div>
   <div class="guide-actions">
@@ -2876,13 +3047,20 @@ function setupMinimap() {
     box.append(title);
   }
   duties.forEach((duty,i)=>miniCrew.set(i,glyph("circle",{r:11,fill:duty.color,stroke:"#101528","stroke-width":4})));
-  for (const button of document.querySelectorAll("[data-map-view]")) button.addEventListener("click",()=>{
-    for (const view of document.querySelectorAll("[data-map-view]")) {
-      view.setAttribute("aria-pressed",String(view===button));
-      element("map-"+view.dataset.mapView).hidden = view!==button;
-    }
-    paintFlight(currentFrame());
+  element("map-widget").addEventListener("click",event=>{
+    const button = event.target.closest("[data-map-view]");
+    if (button) selectOverviewTab(button);
   });
+}
+
+function selectOverviewTab(button) {
+  for (const view of element("map-widget").querySelectorAll("[data-map-view]")) {
+    const panel = element("map-"+view.dataset.mapView);
+    if (!panel) continue;
+    view.setAttribute("aria-pressed",String(view===button));
+    panel.hidden = view!==button;
+  }
+  paintFlight(currentFrame());
 }
 function openDigitalTwin(member, trigger) {
   selection = {crew:member};
@@ -3231,13 +3409,18 @@ const playArea = document.querySelector(".play-area");
 const shelf = element("widget-shelf");
 const flightInstrument = element("flight-instrument");
 const missionGuide = element("mission-guide");
-const widgets = createFlightWidgets(overlay,shelf,element("widget-notice"),[flightInstrument,missionGuide]);
+const missionOverview = element("map-widget");
+const orbitWidget = element("orbit-map-widget");
+const cornerWidgets = [missionOverview,orbitWidget];
+const widgets = createFlightWidgets(overlay,shelf,element("widget-notice"),[flightInstrument,missionGuide,...cornerWidgets]);
 const launchHud = document.querySelector(".launch-hud");
 const padTransport = element("pad-transport");
 const layoutFixedControls = new ResizeObserver(() => {
   const launchClearance = launchHud.getBoundingClientRect().bottom;
   element("launch-field").style.setProperty("--launch-clearance", launchClearance+"px");
   element("launch-field").style.setProperty("--pad-guide-offset", missionGuide.offsetHeight+"px");
+  const cornerHeight = Math.max(missionOverview.offsetHeight,orbitWidget.offsetHeight);
+  element("launch-field").style.setProperty("--corner-clearance", (cornerHeight+16)+"px");
   if (!missionGuide.hidden) {
     const controls = element("stage").hidden ? padTransport : controller;
     missionGuide.style.setProperty("--guide-top", Math.ceil(controls.getBoundingClientRect().bottom+8)+"px");
@@ -3245,7 +3428,7 @@ const layoutFixedControls = new ResizeObserver(() => {
   }
   widgets.schedule();
 });
-for (const control of [launchHud,padTransport,controller,missionGuide,flightInstrument]) layoutFixedControls.observe(control);
+for (const control of [launchHud,padTransport,controller,missionGuide,flightInstrument,...cornerWidgets]) layoutFixedControls.observe(control);
 const hudSize = new ResizeObserver(() => {
   const portraitsBottom = element("crew-strip").getBoundingClientRect().bottom;
   const resources = element("mission-resources");
@@ -3261,9 +3444,6 @@ hudSize.observe(document.querySelector(".hud"));
 hudSize.observe(shelf);
 hudSize.observe(element("mission-resources"));
 const ordersWindow = widgets.register(element("workflow-widget"), element("show-workflow"), () => ({x:14,y:35}));
-widgets.register(element("map-widget"),null,() => ({x:14,y:overlay.clientHeight}),{
-  persistent:true,lock:element("lock-map"),
-});
 const inspectorWindow = widgets.register(element("inspector-widget"), element("show-inspector"), () => ({x:overlay.clientWidth - 354,y:overlay.clientHeight - 305}));
 widgets.register(element("crew-widget"), element("show-crew"), () => ({x:overlay.clientWidth - 354,y:14}));
 for (const [offset, kind] of ["personnel", "duty", "needs", "vitals", "devices"].entries()) {
@@ -3351,7 +3531,6 @@ const launchMission = bindLaunchCheckout(data.missions,data.replay_version,{
     }
     element("show-command").hidden = !flight;
     element("show-orbit").hidden = !flight;
-    element("show-objectives").hidden = !flight;
     render();
   },
   onPlayback(playing) {

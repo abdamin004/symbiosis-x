@@ -56,8 +56,8 @@ function createFlightWidgets(overlay, shelf, notice, fixedControls = []) {
       entry.panel.style.maxHeight = "";
       const preferred = entry.position ?? entry.preferred();
       let placed = place(entry,preferred,occupied);
-      if (!placed && entry===focused && entry.compactPriority) {
-        // Keep the selected panel usable on short displays by scrolling its body.
+      if (!placed && entry.compactPriority) {
+        // Keep scrollable panels usable when fixed controls reduce the available space.
         const originalHeight = entry.panel.offsetHeight;
         for (const fraction of [.85,.7,.55,.4]) {
           entry.panel.style.maxHeight = Math.floor(originalHeight*fraction)+"px";

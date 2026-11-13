@@ -57,7 +57,8 @@ test("Horizon burns into orbit, reaches ISS and returns to Earth in one saved mi
   await button("Start ship systems").click();
   await expect(page.locator("#startup-status [data-state=starting]")).toHaveCount(1);
   const advance = async count => {
-    for (let i = 0; i < count; i++) await button("Advance 15 s").click();
+    const tick = button("Advance 15 s").or(button("Advance one mission tick"));
+    for (let i = 0; i < count; i++) await tick.click();
   };
   const liftoff = page.getByRole("button", { name: /^(Commit liftoff|Launch)$/ });
   const transport = page.getByRole("group", { name:"Launch time controls" });
@@ -567,4 +568,86 @@ test("Orbit guidance shows Kestrel during systems checkout", async ({ page }) =>
   await expect(checkpoint).toHaveAccessibleDescription(/Assign Ivo/);
   await page.getByRole("button",{name:"Assign Ivo to orbital systems check"}).click();
   await expect(checkpoint).toHaveAccessibleDescription(/Within 3 mission minutes/);
+});
+
+test("mission plan and orbit map stay in their own corners from checkout through recovery", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const errors = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.route(url => url.pathname === "/flight", route => route.fulfill({ contentType: "text/html", body: flightHtml }));
+  await page.addInitScript(() => {
+    if (!localStorage.getItem("sx:launch-checkout:v1")) {
+      localStorage.setItem("sx:launch-checkout:v1",JSON.stringify({time:15,jobs:{},hold:true}));
+    }
+  });
+  await page.setViewportSize({width:1920,height:1080});
+  await page.goto("/flight?view=launch");
+  const overview = page.getByRole("region", { name:"Mission Overview" });
+  const orbit = page.getByRole("region", { name:"Orbital navigation" });
+  const attitude = page.getByRole("region", { name:"Flight attitude instrument" });
+
+  async function verifyCorners(width, height, steering) {
+    await expect(overview).toBeInViewport({ratio:1});
+    await expect(orbit).toBeInViewport({ratio:1});
+    const left = await overview.boundingBox();
+    const right = await orbit.boundingBox();
+    expect(left.x).toBeLessThan(12);
+    expect(width-right.x-right.width).toBeLessThan(12);
+    expect(height-left.y-left.height).toBeLessThan(12);
+    expect(height-right.y-right.height).toBeLessThan(12);
+    expect(left.x+left.width).toBeLessThan(right.x);
+    if (steering) {
+      const center = await attitude.boundingBox();
+      expect(Math.abs(center.x+center.width/2-width/2)).toBeLessThan(1);
+      expect(left.x+left.width).toBeLessThan(center.x);
+      expect(center.x+center.width).toBeLessThan(right.x);
+    }
+  }
+
+  await verifyCorners(1920,1080,false);
+  await expect(overview.locator('[aria-current="step"]')).toHaveAccessibleName("Checkout · Held");
+  await expect(overview).toContainText("Verify crew and ground station checks");
+  await expect(orbit).toContainText("Pad · trajectory preview");
+  await overview.getByRole("button", { name:"Open plan" }).click();
+  const plan = page.getByRole("dialog", { name:"Flight plan" });
+  await expect(plan).toContainText("Launch Horizon, deliver the research kit to the ISS, and recover the crew on Earth.");
+  await expect(plan.locator(".plan-stage")).toHaveCount(5);
+  await expect(plan.locator("[data-status=held]")).toContainText("Plan T+0:45 · Held");
+  await expect(plan.locator("[data-status=upcoming] svg").first()).toBeVisible();
+  await plan.getByRole("button", { name:"Close" }).click();
+  await expect(overview.getByRole("button", { name:"Open plan" })).toBeFocused();
+  await orbit.getByRole("button", { name:"Open orbit minimap" }).click();
+  const trajectory = page.getByRole("dialog", { name:"Orbit map" });
+  await expect(trajectory).toContainText("Launchpad · dashed insertion reference");
+  await trajectory.getByRole("button", { name:"Close" }).click();
+
+  await page.setViewportSize({width:390,height:660});
+  await page.evaluate(() => {
+    localStorage.setItem("sx:launch-checkout:v1",JSON.stringify({
+      time:135,startupAt:0,ignition:60,separation:105,insertion:135,
+      jobs:{restraints:{due:45},engine:{due:45},link:{due:45}},
+    }));
+  });
+  await page.reload();
+  await verifyCorners(390,660,true);
+  await expect(page.getByRole("group", { name:"Flight playback" })).toBeInViewport();
+  await expect(overview.locator('[aria-current="step"]')).toHaveAccessibleName("Rendezvous · Current");
+  await expect(overview.locator("[data-step=complete]")).toHaveCount(2);
+  await overview.getByRole("button", { name:"Deck" }).click();
+  await expect(overview.getByRole("img", { name:"Ship rooms and crew positions" })).toBeVisible();
+  await overview.getByRole("button", { name:"Plan",exact:true }).click();
+
+  await page.evaluate(() => {
+    const key = "sx:launch-checkout:v1";
+    localStorage.setItem(key,JSON.stringify({...JSON.parse(localStorage.getItem(key)),time:420,
+      phasing:150,matchedAt:180,capture:210,hatchAt:225,transferAt:240,archivedAt:270,
+      departedAt:300,deorbitAt:330,landedAt:390,recoveredAt:420,
+    }));
+  });
+  await page.reload();
+  await verifyCorners(390,660,true);
+  await expect(overview.locator("[data-step=complete]")).toHaveCount(5);
+  await expect(overview).toContainText("Crew safely back on Earth");
+  await expect(orbit).toContainText("Earth recovery");
+  expect(errors).toEqual([]);
 });

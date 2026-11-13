@@ -1,6 +1,6 @@
 function createFlightNavigation(reference, hosts) {
   const minimap = hosts.mini;
-  const large = hosts.large;
+  const {large,preview} = hosts;
   const fields = hosts.fields;
   const tau = Math.PI * 2;
   let snapshot = null;
@@ -15,6 +15,7 @@ function createFlightNavigation(reference, hosts) {
     const ctx = canvas.getContext("2d");
     const {width,height} = canvas;
     const guidance = canvas === hosts.guidance;
+    const compact = canvas === preview;
     const scale = Math.min(width,height)*(guidance ? .31 : .405)/reference.earth;
     const center = [width/2,height/2];
     let waypoint;
@@ -46,8 +47,11 @@ function createFlightNavigation(reference, hosts) {
       ctx.font="600 12px system-ui";
       ctx.fillText(value,x,y);
     }
-    ctx.fillStyle="#090f20";
-    ctx.fillRect(0,0,width,height);
+    if (compact) ctx.clearRect(0,0,width,height);
+    else {
+      ctx.fillStyle="#090f20";
+      ctx.fillRect(0,0,width,height);
+    }
     const globe = ctx.createRadialGradient(width*.45,height*.41,3,...center,reference.earth*scale);
     globe.addColorStop(0,"#35648e");
     globe.addColorStop(1,"#142747");
@@ -182,7 +186,8 @@ function createFlightNavigation(reference, hosts) {
   function show(data) {
     snapshot = data;
     if (!data) return;
-    const craft = paint(large,data);
+    const craft = paint(preview,data);
+    if (large.closest("dialog").open) paint(large,data);
     paintAttitude(data);
     if (!hosts.guidance.hidden) paint(hosts.guidance,data);
     const orbit = data.captured || data.departure !== null || data.matched !== null ? reference.station
@@ -212,7 +217,8 @@ function createFlightNavigation(reference, hosts) {
       : data.departure !== null ? "Departure reference in station orbit"
       : data.matched !== null ? "Matched orbit · final approach uses scripted range"
       : data.transfer !== null ? "Ideal coplanar transfer · fictional station ephemeris"
-      : data.inserted ? "Ideal two-body parking orbit · approach follows the range readout" : "Scripted ascent · dashed insertion reference";
+      : data.inserted ? "Ideal two-body parking orbit · approach follows the range readout"
+      : data.ignition === null ? "Launchpad · dashed insertion reference" : "Scripted ascent · dashed insertion reference";
     for (const button of hosts.attitudeControls) button.disabled = !data.canOrient;
   }
 
