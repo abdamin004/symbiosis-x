@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { advanceRun, createOperationId, resetRun, startRun } from "../../api/client.js";
+import { advanceRun, createOperationId, resetRun, setActiveRunId, startRun } from "../../api/client.js";
 import ServiceStatus from "./ServiceStatus.jsx";
 
 const ROLE_LINKS = [
@@ -25,6 +25,7 @@ export default function RunLauncher({ run: initialRun }) {
     try {
       const receipt = await startRun({ start_id: pending.current.start, scenario_id: scenarioId, scenario_version: scenarioVersion, seed: Number(seed) });
       setRun({ runId: receipt.run_id, scenarioId: receipt.scenario_id, seed: receipt.seed, mission_s: receipt.mission_s, step: receipt.step });
+      setActiveRunId(receipt.run_id);
       pending.current.start = null;
       setNotice("Run started. Crew and Ground now share this run ID.");
     } catch (e) { setError(e.message); }
