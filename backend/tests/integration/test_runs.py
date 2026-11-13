@@ -141,3 +141,43 @@ def test_pause_stops_automatic_advance(tmp_path):
 def test_compose_applies_due_events_in_order(tmp_path):
     from test_golden_step import test_compose_applies_due_events_in_order as verify
     verify(tmp_path)
+
+
+def test_end_mission_closes_run_for_good(tmp_path):
+    database = tmp_path / "runs.sqlite3"
+    with local_client(database) as client:
+        authenticate(client)
+        run_id = client.post("/api/v1/runs", json=START).json()["run_id"]
+        url = f"/api/v1/runs/{run_id}"
+        assert client.post(url + "/advance", json={"advance_id": "a-1", "expected_step": 0}).status_code == 200
+
+        authenticate(client, "crew")
+        assert client.post(url + "/end", json={"end_id": "end-01"}).status_code == 403
+        authenticate(client)
+        ended = client.post(url + "/end", json={"end_id": "end-01"})
+        assert ended.status_code == 200, ended.text
+        receipt = ended.json()
+        assert receipt == {"run_id": run_id, "scenario_id": "nominal", "scenario_version": "1", "seed": 4242,
+                           "mission_s": 60, "step": 1, "end_id": "end-01", "status": "closed"}
+        # A retry returns the same receipt; a different end or any later write is refused.
+        assert client.post(url + "/end", json={"end_id": "end-01"}).json() == receipt
+        assert client.post(url + "/end", json={"end_id": "end-02"}).json() == {"detail": "RUN_CLOSED"}
+        assert client.post(url + "/advance", json={"advance_id": "a-2", "expected_step": 1}).json() == {
+            "detail": "RUN_CLOSED"}
+        assert client.post(url + "/reset", json={"reset_id": "r-1"}).json() == {"detail": "RUN_CLOSED"}
+        assert client.post("/api/v1/runs/missing/end", json={"end_id": "end-01"}).status_code == 404
+
+        # Both roles can still read the ended mission, frozen at the time it ended.
+        for role in ("crew", "ground"):
+            authenticate(client, role)
+            view = client.get(f"{url}/{role}").json()
+            assert (view["status"], view["mission_s"]) == ("closed", 60)
+
+    with local_client(database) as restarted:
+        authenticate(restarted)
+        assert restarted.post(f"/api/v1/runs/{run_id}/end", json={"end_id": "end-01"}).json() == receipt
+        with restarted.app.state.repository.read() as db:
+            assert db.execute("SELECT status FROM runs WHERE run_id = ?", (run_id,)).fetchone()[0] == "closed"
+            assert db.execute(
+                "SELECT count(*) FROM events WHERE run_id = ? AND event_type = 'run.ended'", (run_id,)
+            ).fetchone()[0] == 1

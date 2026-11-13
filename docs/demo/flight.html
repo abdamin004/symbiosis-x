@@ -248,6 +248,12 @@ button[aria-pressed=true]{background:#3d315e}
 .mission-dialog h3{margin:.1rem 0 .4rem}
 .mission-dialog p{color:var(--muted);font-size:.87rem;margin:.35rem 0}
 .dialog-top{display:flex;align-items:start;justify-content:space-between;gap:1rem;margin-bottom:1rem}
+.end-mission{border-color:#ff9c8a66}
+.end-mission-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:.6rem;margin-top:1.1rem}
+.end-mission-go{background:#ffc18f;color:#231d1d;font-weight:760}
+.end-mission-facts{display:grid;grid-template-columns:auto 1fr;gap:.35rem 1.2rem;margin:.8rem 0 0;font-size:.9rem}
+.end-mission-facts dt{color:var(--muted)}
+.end-mission-facts dd{margin:0}
 [hidden]{display:none!important}
 .launch-page{min-height:100dvh;background:#101b29;color:#f5f2eb}
 .launch-ribbon{position:relative;z-index:2;justify-content:space-between;background:#111b27;border-bottom:1px solid #bfc2bc30}
@@ -476,6 +482,7 @@ __HUD_ICONS__
     <button type="button" id="show-command" hidden>Flight command</button>
     <button type="button" id="show-missions"><svg class="icon" aria-hidden="true"><use href="#hud-map"/></svg>Game menu</button>
     <button type="button" id="show-objectives"><svg class="icon" aria-hidden="true"><use href="#hud-clipboard-list"/></svg>Mission objectives</button>
+    <button type="button" id="end-mission" class="end-mission"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg>End mission</button>
     <a href="/mission">Mission control</a>
   </div>
   <div class="mission-resources" id="mission-resources" role="group" aria-label="Mission resources">
@@ -738,6 +745,24 @@ __HUD_ICONS__
     <button type="button" id="tutorial-back">Back</button>
     <form method="dialog"><button value="skip">Skip</button></form>
     <button type="button" id="tutorial-next">Next</button>
+  </div>
+</dialog>
+<dialog id="end-mission-dialog" class="mission-dialog" aria-labelledby="end-mission-title">
+  <div class="dialog-top"><h2 id="end-mission-title">End this mission?</h2></div>
+  <div id="end-mission-confirm">
+    <p>The flight stops here. You can replay it from the start or go back to the game menu.</p>
+    <div class="end-mission-actions">
+      <button id="end-mission-cancel" type="button">Keep flying</button>
+      <button id="end-mission-go" class="end-mission-go" type="button">End mission</button>
+    </div>
+  </div>
+  <div id="end-mission-summary" hidden>
+    <p>Simulated mission summary. Values are the replay state when the mission ended.</p>
+    <dl id="end-mission-facts" class="end-mission-facts"></dl>
+    <div class="end-mission-actions">
+      <button id="end-mission-restart" type="button"><svg class="icon" aria-hidden="true"><use href="#hud-rotate-ccw"/></svg>Replay from start</button>
+      <button id="end-mission-menu" class="end-mission-go" type="button">Back to game menu</button>
+    </div>
   </div>
 </dialog>
 <dialog id="orbit-dialog" class="mission-dialog" aria-labelledby="orbit-title">
@@ -2506,6 +2531,58 @@ const launchMission = bindLaunchCheckout(data.launch,{
     checkIns.clear();
     reduced.clear();
   },
+});
+// End mission: stop the flight, then summarize where it ended and offer a fresh start.
+const endDialog = element("end-mission-dialog");
+let missionEnded = false;
+function showEndStep(ended) {
+  missionEnded = ended;
+  element("end-mission-title").textContent = ended ? "Mission ended" : "End this mission?";
+  element("end-mission-confirm").hidden = ended;
+  element("end-mission-summary").hidden = !ended;
+}
+element("end-mission").addEventListener("click", () => {
+  showEndStep(false);
+  endDialog.showModal();
+  element("end-mission-cancel").focus();
+});
+element("end-mission-cancel").addEventListener("click", () => endDialog.close());
+element("end-mission-go").addEventListener("click", () => {
+  stop();
+  if (connectedPlaying) launchMission.togglePlayback();
+  render();
+  const frame = currentFrame();
+  const facts = [
+    ["Mission time", clock(frame.time)],
+    ["Phase", frame.phase + " · " + frame.vehicle],
+    ["Location", frame.site],
+    ["Cabin CO₂", frame.co2.toFixed(0) + " ppm"],
+    ["Power headroom", frame.power == null ? "Unmodeled" : frame.power.toFixed(2) + " kW"],
+    ["Crew aboard", String(data.crew.length)],
+  ];
+  element("end-mission-facts").replaceChildren(...facts.flatMap(([label, value]) => {
+    const term = document.createElement("dt");
+    const detail = document.createElement("dd");
+    term.textContent = label;
+    detail.textContent = value;
+    return [term, detail];
+  }));
+  showEndStep(true);
+  element("end-mission-restart").focus();
+});
+// An ended mission needs a choice: Escape does not drop back into the stopped flight.
+endDialog.addEventListener("cancel", event => { if (missionEnded) event.preventDefault(); });
+function leaveEndedMission() {
+  endDialog.close();
+  showEndStep(false);
+  if (connectedFlight) launchMission.reset();
+  setMissionTime(0);
+  render();
+}
+element("end-mission-restart").addEventListener("click", leaveEndedMission);
+element("end-mission-menu").addEventListener("click", () => {
+  leaveEndedMission();
+  element("show-missions").click();
 });
 widgets.layout();
 render();
