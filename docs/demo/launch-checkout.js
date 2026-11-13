@@ -1553,7 +1553,8 @@ function missionStamp(seconds) {
 function createMissionPlan(find) {
   const phases = [
     ["Checkout","Pad","clipboard-list",["checks","countdown"]],
-    ["Ascent","Ascent","zap",["separation","insertion"]],
+    ["Ascent","Ascent","zap",["separation"]],
+    ["Orbital insertion","Orbit","map",["insertion"]],
     ["Rendezvous","Dock","radio",["phasing","match","capture","hatch"]],
     ["Station research","ISS","flask-conical",["transfer","research"]],
     ["Orbital systems","Orbit","activity",["systems"]],
