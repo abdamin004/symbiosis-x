@@ -5,7 +5,9 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 
-test("selected portrait keeps its own reading after reload", async ({ page }) => {
+import { startBackend, stopBackend, useBackend } from "./support/backend.js";
+
+async function serveFlight(page) {
   const output = mkdtempSync(join(tmpdir(),"sx-crew-flight-"));
   let html;
   try {
@@ -18,6 +20,10 @@ test("selected portrait keeps its own reading after reload", async ({ page }) =>
     rmSync(output,{recursive:true,force:true});
   }
   await page.route("**/flight?*",route=>route.fulfill({contentType:"text/html",body:html}));
+}
+
+test("selected portrait keeps its own reading after reload", async ({ page }) => {
+  await serveFlight(page);
   await page.route("**/api/v1/demo/session",route=>route.fulfill({
     json:{crew:"crew-token",facilitator:"fac-token",ground:"ground-token"},
   }));
@@ -91,4 +97,85 @@ test("selected portrait keeps its own reading after reload", async ({ page }) =>
   await expect(page.getByText(/Ivo Reyes · SIM-03/)).toBeVisible();
   await expect(page.getByTestId("indicator-heart_rate")).toContainText("Baseline 76 bpm");
   await expect(page.getByTestId("crew-health-assessment")).toHaveCount(0);
+});
+
+test("Sana wearable recheck closes in the same mission", async ({ page, request }) => {
+  const backend = await startBackend("wearable-recheck");
+  try {
+    await serveFlight(page);
+    await useBackend(page, backend.origin);
+    const session = await request.post(backend.origin + "/api/v1/demo/session");
+    expect(session.ok()).toBeTruthy();
+    const tokens = await session.json();
+    const auth = role => ({ Authorization: "Bearer " + tokens[role] });
+    const start = async startId => {
+      const response = await request.post(backend.origin + "/api/v1/runs", {
+        headers: auth("facilitator"),
+        data: { start_id: startId, scenario_id: "crew-wearables", scenario_version: "1", seed: 4242 },
+      });
+      expect(response.ok()).toBeTruthy();
+      return (await response.json()).run_id;
+    };
+    const runId = await start("wearable-browser");
+    const api = run => backend.origin + "/api/v1/runs/" + run;
+    const advance = async (run, startStep, targetStep) => {
+      for (let step = startStep; step < targetStep; step++) {
+        const response = await request.post(api(run) + "/advance", {
+          headers: auth("facilitator"),
+          data: { advance_id: "advance-" + step, expected_step: step },
+        });
+        expect(response.ok()).toBeTruthy();
+      }
+    };
+    await advance(runId, 0, 6);
+    const flight = "/flight?view=replay&run_id=" + runId;
+    await page.goto(flight);
+    await page.getByRole("button", { name: /Inspect Sana Kepler/ }).click();
+    const twin = page.locator("#personnel-widget");
+    const recheck = twin.locator("#wearable-recheck");
+    await expect(recheck).toContainText("On hold · No crewmate is available.");
+    await expect(recheck).toContainText("suspect 132 bpm");
+    await expect(recheck.getByRole("link", { name: "Open Emergency Assist" })).toBeVisible();
+    await twin.getByRole("button", { name: "Gear", exact: true }).click();
+    const gear = page.locator("#devices-widget");
+    await expect(gear).toContainText("motion artifact");
+    await expect(gear).toContainText("0.8 m/s");
+    await gear.getByRole("button", { name: "Close Devices widget" }).click();
+
+    await advance(runId, 6, 7);
+    await expect(recheck).toContainText("Offered · choose a crewmate");
+    await recheck.getByLabel("Crewmate observer").selectOption("SIM-03");
+    await recheck.getByRole("button", { name: "Assign wearable recheck" }).click();
+    await expect(recheck).toContainText("Assigned to Ivo Reyes at T+01:30");
+    const record = recheck.getByRole("button", { name: "Record simulated repeat" });
+    await expect(record).toBeDisabled();
+    await advance(runId, 7, 8);
+    await record.click();
+    await expect(recheck).toContainText("Repeat verified by Ivo Reyes at T+01:40");
+    await expect(recheck).toContainText("suspect 132 bpm");
+    await expect(recheck).toContainText("valid 96 bpm");
+    await twin.getByRole("button", { name: "Vitals", exact: true }).click();
+    await expect(page.locator("#vitals-chart")).toHaveAttribute("aria-label", /132 bpm, suspect.*96 bpm, valid/);
+    await page.reload();
+    await page.getByRole("button", { name: /Inspect Sana Kepler/ }).click();
+    await expect(recheck).toContainText("Repeat verified by Ivo Reyes");
+
+    const replayId = await start("wearable-browser-replay");
+    await advance(replayId, 0, 8);
+    await page.goto("/flight?view=replay&run_id=" + replayId);
+    await page.getByRole("button", { name: /Inspect Sana Kepler/ }).click();
+    await expect(recheck).toContainText("Offered · choose a crewmate");
+    await expect(recheck).toContainText("suspect 132 bpm");
+    await expect(recheck).not.toContainText("96 bpm");
+
+    const ground = await request.get(api(runId) + "/ground", { headers: auth("ground") });
+    expect(ground.ok()).toBeTruthy();
+    expect(await ground.text()).not.toMatch(/wrist-motion|wrist-recheck|MOTION_ARTIFACT|Ivo Reyes/);
+    const privateView = await request.get(api(runId) + "/crew/wearables?crew_id=SIM-02", {
+      headers: auth("ground"),
+    });
+    expect(privateView.status()).toBe(403);
+  } finally {
+    stopBackend(backend);
+  }
 });

@@ -8,11 +8,15 @@ from symbiosis_x.crew.measurements import (
     MeasurementReceipt, SaveMeasurementRequest, read_measurement, save_measurement,
 )
 from symbiosis_x.application.projections import read_crew, read_run
-from symbiosis_x.application.runs import RunNotFound
+from symbiosis_x.application.runs import RunConflict, RunNotFound
+from symbiosis_x.application.wearable_rechecks import (
+    RecheckCommand, RecheckConflict, RecheckNotFound, apply_recheck,
+)
 from symbiosis_x.application.wearables import CrewWearables, read_wearables
 from symbiosis_x.crew.profile import profile_for_crew
 from symbiosis_x.contracts.commands import CaseRelayReceipt, ShareCaseStatusRequest
 from symbiosis_x.contracts.projections import CurrentCrewView
+from symbiosis_x.workflows.monitor import WearableRecheck
 from symbiosis_x.workflows.relay import CaseRelayRejected, queue_case_status
 from symbiosis_x.crew.followup import (
     AcknowledgeReminderRequest,
@@ -64,6 +68,22 @@ def crew_wearables(run_id: str, crew_id: str, request: Request, response: Respon
             return read_wearables(db, run_id, crew_id, run["mission_s"])
     except RunNotFound as error:
         raise HTTPException(404, str(error)) from error
+
+
+@router.post(
+    "/{run_id}/crew/wearables/rechecks/{task_id}",
+    dependencies=[Depends(require_role("crew"))],
+)
+def crew_wearable_recheck(
+    run_id: str, task_id: str, crew_id: str, command: RecheckCommand, request: Request, response: Response,
+) -> WearableRecheck:
+    response.headers["Cache-Control"] = "no-store"
+    try:
+        return apply_recheck(request.app.state.repository, run_id, crew_id, task_id, command)
+    except (RunNotFound, RecheckNotFound) as error:
+        raise HTTPException(404, str(error)) from error
+    except (RunConflict, RecheckConflict) as error:
+        raise HTTPException(409, str(error)) from error
 
 
 @router.post(

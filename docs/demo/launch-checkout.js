@@ -439,6 +439,12 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     const stationWork = missionWork();
     return {missionId:demo.active ? config.id+"-timed-demo" : config.id,timedDemo:demo.active,missionTitle:config.title,time:state.time,phaseStarted,crewStarted:state.insertion,
       frameIndex,visual,advance:!demo.active && canAdvance(),playable:!demo.active && canPlay(),speed,stationWork,
+      recovery:state.deorbitAt === null ? null : {
+        phase:state.recoveredAt !== null ? "recovered" : state.landedAt !== null ? "splashdown"
+          : state.time-state.deorbitAt >= returnPlan.entry_s ? "chutes"
+          : state.time-state.deorbitAt < tick ? "separation" : "entry",
+        start:state.deorbitAt, entry:returnPlan.entry_s, descent:returnPlan.descent_s,
+      },
       command:{phase:flight.phase,next:flight.next,reserve:reserveReadout(flight)},
       checkpoint:demo.active ? null : checkpointApproach(flight),
       steering:state.capture === null && state.deorbitAt === null, yaw:state.attitude,pitch:state.pitch,
@@ -708,6 +714,10 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
 
   function nextControl(flight) {
     if (activeBurn || flight.terminal) return null;
+    if (state.landedAt !== null) return "launch-recover";
+    if (state.deorbitAt !== null) {
+      return state.time >= state.deorbitAt+returnPlan.entry_s+returnPlan.descent_s ? "launch-land" : "play";
+    }
     if (state.ignition === null) {
       if (state.hold) return "launch-hold";
       if (state.startupAt === null) return "startup";
@@ -1547,7 +1557,8 @@ function missionStamp(seconds) {
 function createMissionPlan(find) {
   const phases = [
     ["Checkout","Pad","clipboard-list",["checks","countdown"]],
-    ["Ascent","Ascent","zap",["separation","insertion"]],
+    ["Ascent","Ascent","zap",["separation"]],
+    ["Orbital insertion","Orbit","map",["insertion"]],
     ["Rendezvous","Dock","radio",["phasing","match","capture","hatch"]],
     ["Station research","ISS","flask-conical",["transfer","research"]],
     ["Orbital systems","Orbit","activity",["systems"]],
