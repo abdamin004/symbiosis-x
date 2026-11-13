@@ -21,6 +21,10 @@ function time(seconds) {
 export default function LiveMissionConsole({ role, runId }) {
   const [query] = useSearchParams();
   const crewId = role === "crew" ? query.get("crew_id") : null;
+  return <RunProjection key={JSON.stringify([role, runId, crewId])} role={role} runId={runId} crewId={crewId} />;
+}
+
+function RunProjection({ role, runId, crewId }) {
   const subjectQuery = crewId ? "?crew_id=" + encodeURIComponent(crewId) : "";
   const [view, setView] = useState(null);
   const [error, setError] = useState("");
@@ -29,7 +33,6 @@ export default function LiveMissionConsole({ role, runId }) {
   const [reload, setReload] = useState(0);
   useEffect(() => {
     let active = true;
-    setView(null);
     setError("");
     readRunView(runId, role, crewId).then((result) => {
       if (active) { setView(result); setError(""); }
