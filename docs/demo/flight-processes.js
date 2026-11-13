@@ -16,16 +16,17 @@ const flightProcedures = {
     steps:["Commit ISS transfer","Match station orbit","Capture station","Verify seal and pressure","Authorize hatch","Accept cargo receipt","Archive research","Depart station"]},
 };
 
-function createFlightAllocator({tick,booked,position}) {
+function createFlightAllocator({tick,booked,position,evaScenario}) {
   const key = "sx:flight-procedures:v1";
   const defaults = {version:1,member:2,deadline:360};
   let saved;
   try { saved = JSON.parse(localStorage.getItem(key)); } catch {}
   const configurations = saved?.configurations ?? {};
   const tasks = Array.isArray(saved?.tasks) ? saved.tasks : [];
+  const linkFaults = new Set(Array.isArray(saved?.linkFaults) ? saved.linkFaults : []);
   let nextCase = Number.isSafeInteger(saved?.nextCase) ? saved.nextCase : 1;
   function persist() {
-    try { localStorage.setItem(key,JSON.stringify({configurations,tasks,nextCase})); } catch {}
+    try { localStorage.setItem(key,JSON.stringify({configurations,tasks,nextCase,linkFaults:[...linkFaults]})); } catch {}
   }
   function settings(mode, procedure="shift") {
     const key = procedure === "shift" ? mode : mode+":"+procedure;
@@ -57,7 +58,7 @@ function createFlightAllocator({tick,booked,position}) {
     const assigned = Math.ceil(now/tick)*tick;
     const definition = flightProcedures[procedure];
     const eva = procedure === "eva";
-    const support = eva ? 3 : null;
+    const support = eva ? evaScenario.support_crew : null;
     return {mode,procedure,version,member,support,deadline:start+deadline,queued:now,assigned,
       arrival:assigned+tick,finishes:assigned+(eva ? 7 : 3)*tick,origin:position(member),
       supportOrigin:eva ? position(support) : null,asset:definition.asset,routine:true,
@@ -77,7 +78,7 @@ function createFlightAllocator({tick,booked,position}) {
         [job.assigned+5*tick,"Returning to airlock"]];
       return [[job.queued,"Released · suit-up assigned"],
         ...stages.filter(([time])=>job.recalledAt == null || time < job.recalledAt),
-        [job.recalledAt,"Recall ordered"],
+        [job.recalledAt,job.recallReason ? "Recall ordered · "+job.recallReason : "Recall ordered"],
         [job.finishes,"Crew safely inside"],[job.verifiedAt,"Commander verified antenna service"]]
         .filter(([time])=>time != null && time<=now);
     }
@@ -85,7 +86,18 @@ function createFlightAllocator({tick,booked,position}) {
       [job.finishes,"Result recorded"]].filter(([time])=>time<=now);
   }
   function suit(job,now) {
-    const step = Math.floor(Math.max(0,now-job.assigned)/tick);
+    const elapsed = Math.max(0,Math.floor(now-job.assigned));
+    const step = Math.floor(elapsed/tick);
+    if (!job.mode.endsWith("-timed-demo")) {
+      const recall = job.recalledAt == null || now < job.recalledAt ? null : Math.max(0,job.recalledAt-job.assigned);
+      const profile = recall == null ? evaScenario.nominal : evaScenario.recalls[recall];
+      const {pressure_kpa,inner,outer} = profile[Math.min(profile.length-1,elapsed-(recall ?? 0))];
+      return {
+        oxygen:Math.max(0,evaScenario.oxygen_start_pct-step*evaScenario.oxygen_per_tick_pct),
+        battery:Math.max(0,evaScenario.battery_start_pct-step*evaScenario.battery_per_tick_pct),
+        inner,outer,pressure:pressure_kpa.toFixed(2)+" kPa",tethered:outer && elapsed >= 2*tick,
+      };
+    }
     const returning = job.recalledAt != null || step >= 5;
     const outer = returning ? now < job.finishes-tick && (job.recalledAt == null ||
       job.recalledAt >= job.assigned+2*tick) : step >= 2;
@@ -94,16 +106,45 @@ function createFlightAllocator({tick,booked,position}) {
       inner,outer,pressure:outer ? "Vacuum" : inner ? "Cabin" : "Isolated",
       tethered:outer && now < job.finishes};
   }
-  function recall(job,now) {
+  function recall(job,now,reason) {
     if (job.procedure !== "eva" || job.recalledAt != null || now >= job.finishes) return;
     job.recalledAt = now;
-    job.finishes = Math.min(job.finishes,now+2*tick);
+    job.recallReason = reason;
+    const elapsed = Math.max(0,now-job.assigned);
+    const returnProfile = evaScenario.recalls[elapsed];
+    job.finishes = job.assigned+elapsed+returnProfile.length-1;
     persist();
   }
+
+  function canVerify(job,now) {
+    return job.procedure === "eva" && now >= job.finishes && job.recalledAt == null &&
+      job.verifiedAt == null && suit(job,now).inner;
+  }
+
   function verify(job,now) {
-    if (job.procedure !== "eva" || now < job.finishes || job.recalledAt != null || job.verifiedAt != null) return;
+    if (!canVerify(job,now)) return;
+    const previous = antennaReceipt(job.mode,now);
     job.verifiedAt = now;
+    job.receipt = {id:job.caseId+"-antenna", before_db:previous?.after_db ?? evaScenario.antenna_before_db,
+      after_db:evaScenario.antenna_after_db, mission_s:now};
     persist();
   }
-  return {tasks,settings,configure,problem,allocate,routine,clear,events,recall,verify,suit};
+
+  function antennaReceipt(mode,now) {
+    const job = tasks.findLast(task=>task.mode === mode && task.procedure === "eva" &&
+      task.verifiedAt != null && task.verifiedAt <= now);
+    if (!job) return null;
+    // Saves from the earlier single-effect rehearsal recorded the verification timestamp.
+    return job.receipt ?? {id:job.caseId+"-antenna", before_db:evaScenario.antenna_before_db,
+      after_db:evaScenario.antenna_after_db, mission_s:job.verifiedAt};
+  }
+
+  function setLinkFault(mode,fault) {
+    if (fault) linkFaults.add(mode);
+    else linkFaults.delete(mode);
+    persist();
+  }
+
+  return {tasks,settings,configure,problem,allocate,routine,clear,events,recall,verify,suit,
+    antennaReceipt,canVerify,linkFault:mode=>linkFaults.has(mode),setLinkFault};
 }

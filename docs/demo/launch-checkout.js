@@ -362,6 +362,10 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
         return {phase:"ISS transfer held · antenna unverified",next:"Finish exterior inspection and verify safe return in Workflows",
           reserve,orbit:true,canWaitForCrew:true,exteriorHold:true};
       }
+      if (exteriorDue()) {
+        return {phase:"ISS transfer held · exterior inspection due",next:"Assign the scheduled spacewalk in Workflows",
+          reserve,orbit:true,exteriorHold:true};
+      }
       if (canPhase && state.time < departure) return {phase:"Parking orbit · waiting for ISS window",
         next:"Coast to the departure point · "+missionStamp(departure),reserve,orbit:true,advance:true,warpTo:departure};
       if (!demo.active && state.groundRequired && !campaignGround.cleared(state.groundDirection,state.time)) {
@@ -445,6 +449,9 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
         : {phase:"Atmospheric entry",next:"Complete entry",advance:true};
     }
     if (state.departedAt !== null) return {phase:"Return capsule in orbit",next:"Commit deorbit",canDeorbit:true};
+    if (state.archivedAt !== null && exteriorDue()) {
+      return {phase:"Undocking held · exterior inspection due",next:"Assign the scheduled spacewalk in Workflows",exteriorHold:true};
+    }
     if (state.researchAt === null) return {phase:"Research kit transferred",next:"Assign Sana to station research"};
     if (state.time < state.researchAt+returnPlan.research_s) {
       return {phase:"Station research",next:"Complete Sana’s sampling run",advance:true};
@@ -463,9 +470,17 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
       action:rendezvous ? "Collect paired motion samples at ISS" : "Verify orbital systems"};
   }
 
-  function exteriorEligible(flight) {
-    return Boolean(!demo.active && rendezvous && !activeBurn && !flight.terminal &&
+  function exteriorEligible() {
+    return Boolean(!demo.active && rendezvous && !activeBurn && state.insertion !== null && state.retreat === null &&
       (state.phasing === null || state.hatchAt !== null && state.departedAt === null));
+  }
+
+  function upcomingExteriorHold() {
+    return nextExteriorHold(config.id,state.time,state.insertion,exteriorEligible());
+  }
+
+  function exteriorDue() {
+    return exteriorEligible() && upcomingExteriorHold() <= state.time;
   }
 
   function canvasState(flight) {
@@ -523,7 +538,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
         vehicle:rendezvous ? "asteria" : "kestrel", departure:state.departedAt,
         transferAt:state.transferAt, commands:state.provisionCommands,
       },
-      evaEligible:exteriorEligible(flight),frame:{
+      evaEligible:exteriorEligible(),frame:{
       phase:phases[frameIndex] ?? "Orbit",
       label:flight.phase,site,dock,
       vehicle:state.departedAt !== null ? config.ship + " return capsule" : config.ship,
@@ -533,6 +548,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
 
   function canOrient() {
     return view === "launch" && !activeBurn && state.insertion !== null && state.deorbitAt === null &&
+      (demo.active || !exteriorBusy(config.id,state.time)) &&
       (state.capture === null || state.departedAt !== null) && state.rcs > 0;
   }
 
@@ -641,7 +657,10 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
 
   function advance() {
     if (!canAdvance()) return;
-    state.time = Math.min(state.time+tick,flightState().warpTo ?? Infinity);
+    const flight = flightState();
+    const hold = upcomingExteriorHold();
+    const next = hold > state.time && !flight.exteriorHold ? hold : Infinity;
+    state.time = Math.min(state.time+tick,flight.warpTo ?? Infinity,next);
     persist();
     if (!canPlay()) stopPlayback();
     renderView();
@@ -669,7 +688,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
 
     const target = checkpoint-checkpointLead;
     if (target <= state.time) return {detail:"Within 3 mission minutes of the next checkpoint. Use Advance 15 s."};
-    if (nextExteriorHold(config.id,state.time,state.insertion,exteriorEligible(flight)) <= target) {
+    if (upcomingExteriorHold() <= target) {
       return {detail:"Exterior inspection is due before the approach point. Use Advance 15 s."};
     }
     return {target,detail:"Advance to "+missionStamp(target)+" · checkpoint at "+missionStamp(checkpoint)+"."};
@@ -817,7 +836,8 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     if (state.approachHeld) return "launch-approach-hold";
     if (flight.capture) return "launch-capture";
     if (flight.exteriorHold && flight.advance) return "play";
-    if (!demo.active && antennaUnverified(config.id,state.time) && state.phasing === null) return "show-processes";
+    if (exteriorDue() || !demo.active && state.phasing === null &&
+        antennaUnverified(config.id,state.time)) return "show-processes";
     if (flight.canOpen) return "launch-open-hatch";
     if (state.capture !== null && state.hatchAt === null) {
       return flight.seal.startsWith("Verified") ? "launch-check-pressure" : "launch-check-seal";
@@ -896,6 +916,9 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
         "The docking control unlocks when the ship is close enough and moving slowly."];
       return ["coast",waiting ? "Ivo is checking the ship" : "Play to finish Ivo’s check",
         "Wait for Ivo to verify the ship’s systems."];
+    }
+    if (control === "show-processes" && exteriorDue()) {
+      return ["coast",flight.next,"The scheduled inspection holds the next maneuver."];
     }
     if (guideActions[control]) return guideActions[control];
     if (flight.pad) return ["checkout",flight.next,"Each crew member checks a different part of launch readiness."];
@@ -1036,7 +1059,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     const researchDone = state.researchAt !== null && state.time >= state.researchAt+returnPlan.research_s;
     find("launch-archive").hidden = !researchDone || state.archivedAt !== null;
     find("launch-depart").disabled = propulsion.return < propulsion.costs.departure+propulsion.costs.retrograde;
-    find("launch-depart").hidden = state.archivedAt === null || state.departedAt !== null || Boolean(exteriorBusy(config.id,state.time));
+    find("launch-depart").hidden = state.archivedAt === null || state.departedAt !== null || exteriorDue() || Boolean(exteriorBusy(config.id,state.time));
     find("station-research-board").hidden = state.hatchAt === null || state.departedAt !== null;
     find("station-research-progress").value = state.researchAt === null ? 0 :
       Math.min(100,100*(state.time-state.researchAt)/returnPlan.research_s);
@@ -1154,7 +1177,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
       const destination = activeBurn.destination;
       activeBurn = null;
       if (destination !== undefined) {
-        state.time = destination;
+        state.time = Math.min(destination,upcomingExteriorHold());
         persist();
       }
       renderView();
@@ -1628,8 +1651,10 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     renderView();
   });
   find("launch-coast").addEventListener("click", () => {
-    const destination = flightState().warpTo;
-    if (activeBurn || destination === undefined || demoCoastHeld()) return;
+    const flight = flightState();
+    if (activeBurn || flight.warpTo === undefined || demoCoastHeld()) return;
+    const destination = Math.min(flight.warpTo,upcomingExteriorHold());
+    if (destination <= state.time) return;
     stopPlayback();
     showManeuver("coast",destination);
     persist();

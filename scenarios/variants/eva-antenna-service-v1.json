@@ -1,0 +1,24 @@
+{
+  "id": "eva-antenna-service",
+  "version": 1,
+  "provenance": "Synthetic Horizon vehicle airlock and exterior antenna rehearsal",
+  "mission_id": "launch-checkout",
+  "qualified_crew": [2, 0],
+  "support_crew": 3,
+  "tether_ready": true,
+  "oxygen_start_pct": 100,
+  "battery_start_pct": 100,
+  "oxygen_per_tick_pct": 8,
+  "battery_per_tick_pct": 4,
+  "minimum_release_oxygen_pct": 82,
+  "minimum_release_battery_pct": 51,
+  "oxygen_reserve_pct": 25,
+  "battery_reserve_pct": 20,
+  "minimum_return_margin_s": 30,
+  "antenna_before_db": 2,
+  "antenna_after_db": 8,
+  "seeded_faults": {
+    "suit_link": {"elapsed_s": 45, "comms_ready": false},
+    "suit_reserve": {"elapsed_s": 45, "oxygen_pct": 24}
+  }
+}

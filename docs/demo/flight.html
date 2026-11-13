@@ -1414,6 +1414,8 @@ __HUD_ICONS__
   <button id="process-recall" type="button" hidden>Recall spacewalker</button>
   <button id="process-verify" type="button" hidden>Verify safe return</button>
   <button id="process-comm-check" type="button" hidden>Toggle suit link fault</button>
+  <p id="eva-readiness" hidden></p>
+  <p id="eva-antenna-reading" hidden></p>
   <p id="process-config" role="status"></p>
   <section id="wearable-debrief" hidden aria-labelledby="wearable-debrief-title">
     <h3 id="wearable-debrief-title">Private wearable debrief</h3>
@@ -1936,13 +1938,23 @@ const fixtures = [
 const equipment = new Map(fixtures.map(asset => [asset.id, asset]));
 const allocator = createFlightAllocator({
   tick:TICK_SECONDS,
+  evaScenario:data.eva,
   position(member) { return crewPositions.get(pawns.get(member)); },
   booked(job) {
     if (!job.origin || !equipment.has(job.asset)) return "The assignee or station is unavailable.";
     if (job.procedure === "eva") {
-      if (!connectedFlight?.evaEligible) return "Spacewalk requires Horizon in parking orbit or secured at the station.";
-      if (!job.supportOrigin) return "No airlock support astronaut is available.";
+      if (!connectedFlight?.evaEligible || job.mode !== data.eva.mission_id) {
+        return "Spacewalk requires Horizon in parking orbit or secured at the station.";
+      }
+      if (!data.eva.qualified_crew.includes(job.member) || !job.supportOrigin) return "A qualified spacewalker and airlock watch must be available.";
       if (evaLinkFault()) return "Suit link offline. Restore communications before release.";
+      if (!data.eva.tether_ready) return "Check the tether before releasing the spacewalk.";
+      const suit = allocator.suit(job,job.assigned);
+      if (!suit.inner || suit.outer) return "The airlock must be available before release.";
+      if (suit.oxygen < data.eva.minimum_release_oxygen_pct || suit.battery < data.eva.minimum_release_battery_pct ||
+          job.deadline-job.finishes < data.eva.minimum_return_margin_s) {
+        return "Suit reserve or return margin is below the release limit.";
+      }
     }
     if (tasks.some(other => other.mode === job.mode && other.queued <= job.queued && other.finishes > job.queued &&
       (jobOwns(other,job.member) || (job.support != null && jobOwns(other,job.support)) || other.asset === job.asset))) return "The assignee or station already has a job.";
@@ -2027,8 +2039,7 @@ function activeTask(member, time) {
   return tasks.find(task => task.mode === crewMode() && jobOwns(task,member) && task.queued <= time && time < task.finishes);
 }
 const jobOwns = (job,member)=>job.member===member || job.support===member;
-const evaFaults = new Set();
-const evaLinkFault = ()=>evaFaults.has(crewMode());
+const evaLinkFault = ()=>allocator.linkFault(crewMode());
 function activeEva(time) {
   return tasks.find(job=>job.mode===crewMode() && job.procedure==="eva" && job.queued<=time && time<job.finishes);
 }
@@ -3039,12 +3050,24 @@ function routineDraft(frame, procedure="shift") {
 function canReleaseRoutine(job, frame) {
   return !job || frame.time >= job.finishes && (job.procedure !== "eva" || job.verifiedAt != null || job.recalledAt != null);
 }
+function evaDue(mode,orbitStart,time) {
+  const last = tasks.findLast(job=>job.mode===mode && job.procedure==="eva" && job.queued<=time);
+  const {repeat} = allocator.settings(mode,"eva");
+  return repeat && canReleaseRoutine(last,{time})
+    ? (last?.verifiedAt ?? last?.finishes ?? orbitStart)+repeat : Infinity;
+}
 function updateProcedureQueue(frame) {
   if (!connectedFlight || crewMode().endsWith("-timed-demo")) return;
   const eva = activeEva(frame.time);
-  if (eva && (evaLinkFault() || allocator.suit(eva,frame.time).oxygen <= 25)) allocator.recall(eva,frame.time);
+  if (eva && eva.recalledAt == null) {
+    const {oxygen,battery} = allocator.suit(eva,frame.time);
+    if (evaLinkFault()) allocator.recall(eva,frame.time,"Suit link lost");
+    else if (oxygen <= data.eva.oxygen_reserve_pct || battery <= data.eva.battery_reserve_pct) {
+      allocator.recall(eva,frame.time,"Suit reserve at return limit");
+    }
+  }
   for (const [id, procedure] of Object.entries(flightProcedures)) {
-    if (!procedure.asset) continue;
+    if (!procedure.asset || id === "eva") continue;
     const {repeat} = allocator.settings(crewMode(),id);
     const previous = routineJob(frame,id);
     if (!repeat || !canReleaseRoutine(previous,frame)) continue;
@@ -3070,9 +3093,19 @@ function renderProcess(frame) {
   const exterior = selectedProcess === "eva";
   const evaActive = exterior && routine && frame.time < routine.finishes;
   element("process-recall").hidden = !evaActive || routine.recalledAt != null;
-  element("process-verify").hidden = !exterior || !routine || Boolean(evaActive) || routine.recalledAt != null || routine.verifiedAt != null;
+  element("process-verify").hidden = !exterior || !routine || !allocator.canVerify(routine,frame.time);
   element("process-comm-check").hidden = !exterior || !connectedFlight || !configurable;
   element("process-comm-check").textContent = evaLinkFault() ? "Restore suit link" : "Simulate suit link loss";
+  const showEva = exterior && Boolean(connectedFlight) && configurable;
+  const receipt = showEva ? allocator.antennaReceipt(crewMode(),frame.time) : null;
+  const readiness = element("eva-readiness");
+  readiness.hidden = !showEva || !canRelease;
+  readiness.textContent = reason ? "Release held · "+reason
+    : "Release checks passed · suited operator and airlock watch · pressure matched · comms and tether ready · suitable reserve and return margin";
+  const antennaReading = element("eva-antenna-reading");
+  antennaReading.hidden = !showEva;
+  antennaReading.textContent = receipt ? "Antenna link margin · "+receipt.before_db+" → "+receipt.after_db+
+    " dB · receipt "+receipt.id : "Antenna link margin · "+data.eva.antenna_before_db+" dB · synthetic baseline";
   const crewBoard = duties.map((duty,member)=>station(duty,member)[1]);
   const key = JSON.stringify([processMode,selectedProcess,settings,routine?.caseId,events,reason,crewBoard,evaLinkFault()]);
   if (lastProcessRender === key) return;
@@ -3080,6 +3113,7 @@ function renderProcess(frame) {
   processExport = configurable && routine ? events.map(([mission_s,event],sequence)=>({
     case_id:routine.caseId,procedure:selectedProcess === "shift" ? "life-support-watch" : selectedProcess,version:routine.version,station:routine.asset,
     assignee:data.crew[routine.member],mission_s,event,sequence:sequence+1,
+    ...(routine.receipt && event === "Commander verified antenna service" ? {receipt:routine.receipt} : {}),
   })) : [];
   element("process-export").hidden = !processExport.length;
   element("process-source").textContent = process.source;
@@ -3152,7 +3186,9 @@ function render() {
   updateCrewRoutines(frame);
   const antenna = element("eva-antenna");
   const exterior = routineJob(frame,"eva");
-  const repaired = tasks.some(job=>job.mode===crewMode() && job.procedure==="eva" && job.verifiedAt != null && job.verifiedAt<=frame.time);
+  const repaired = connectedFlight?.timedDemo
+    ? exterior?.verifiedAt != null && exterior.verifiedAt <= frame.time
+    : Boolean(allocator.antennaReceipt(crewMode(),frame.time));
   antenna.hidden = !connectedFlight || !exterior;
   antenna.dataset.repaired = repaired;
   antenna.textContent = repaired ? "Antenna · link verified" : "Antenna · inspection due";
@@ -3416,12 +3452,15 @@ function paintFlight(frame, sceneTime = missionTime) {
       const elapsed = sceneTime-eva.assigned;
       const tick = TICK_SECONDS;
       const outbound = Math.max(0,Math.min(1,(elapsed-2*tick)/tick));
-      const returned = Math.max(0,Math.min(1,(elapsed-5*tick)/(2*tick)));
+      const returned = Math.max(0,Math.min(1,(elapsed-5*tick)/(connectedFlight?.timedDemo ? 2*tick : tick)));
       let exterior = Math.min(outbound,1-returned);
       if (eva.recalledAt != null) {
         const beforeRecall = Math.max(0,Math.min(1,(eva.recalledAt-eva.assigned-2*tick)/tick));
-        exterior = beforeRecall*Math.max(0,(eva.finishes-sceneTime)/(eva.finishes-eva.recalledAt));
+        const returnEnd = Math.min(eva.finishes,eva.recalledAt+tick,eva.assigned+6*tick);
+        const returnLeft = Math.max(0,returnEnd-sceneTime);
+        exterior = beforeRecall*returnLeft/Math.max(1,returnEnd-eva.recalledAt);
       }
+      if (!connectedFlight?.timedDemo && !allocator.suit(eva,sceneTime).outer) exterior = 0;
       if (elapsed >= tick) [x,y] = [281+110*exterior,145-118*exterior];
     }
     const outside = eva?.member === member && y < 100;
@@ -3867,8 +3906,7 @@ element("process-verify").addEventListener("click",()=>{
   render();
 });
 element("process-comm-check").addEventListener("click",()=>{
-  if (evaLinkFault()) evaFaults.delete(crewMode());
-  else evaFaults.add(crewMode());
+  allocator.setLinkFault(crewMode(),!evaLinkFault());
   render();
 });
 function loadProcessSettings() {
@@ -4238,14 +4276,10 @@ const launchMission = bindLaunchCheckout(data.missions,data.replay_version,{
   exteriorBusy:(mode,time)=>tasks.some(job=>job.mode===mode && job.procedure==="eva" &&
     job.queued<=time && time<job.finishes),
   nextExteriorHold:(mode,time,orbitStart,canReleaseExterior)=>{
+    if (!canReleaseExterior) return Infinity;
     const exterior = tasks.filter(job=>job.mode===mode && job.procedure==="eva");
     const queued = Math.min(Infinity,...exterior.filter(job=>job.queued>time).map(job=>job.queued));
-    const {repeat} = allocator.settings(mode,"eva");
-    const last = exterior.findLast(job=>job.queued<=time);
-    // A repeat can release once the latest inspection is complete and cleared.
-    const repeatDue = canReleaseExterior && repeat && canReleaseRoutine(last,{time})
-      ? (last?.verifiedAt ?? last?.finishes ?? orbitStart) + repeat : Infinity;
-    return Math.min(queued,repeatDue);
+    return Math.min(queued,evaDue(mode,orbitStart,time));
   },
   antennaUnverified:(mode,time)=>{
     const last = tasks.findLast(job=>job.mode===mode && job.procedure==="eva" && job.queued<=time);
@@ -4295,7 +4329,7 @@ const launchMission = bindLaunchCheckout(data.missions,data.replay_version,{
   resetCrew(missionId) {
     for (let i = peerChecks.length-1; i >= 0; i--) if (peerChecks[i].mode === missionId) peerChecks.splice(i,1);
     allocator.clear(missionId,-1,{save:!missionId.endsWith("-timed-demo")});
-    evaFaults.delete(missionId);
+    if (!missionId.endsWith("-timed-demo")) allocator.setLinkFault(missionId,false);
     activityModes.delete(missionId);
   },
 });
@@ -4327,6 +4361,9 @@ element("end-mission-go").addEventListener("click", () => {
     ["Power headroom", frame.power == null ? "Unmodeled" : frame.power.toFixed(2) + " kW"],
     ["Crew aboard", String(data.crew.length)],
   ];
+  const antenna = connectedFlight && !connectedFlight.timedDemo && allocator.antennaReceipt(crewMode(),frame.time);
+  if (antenna) facts.push(["Exterior antenna",antenna.before_db+" → "+antenna.after_db+
+    " dB · "+antenna.id+" · T+"+clock(antenna.mission_s)]);
   element("end-mission-facts").replaceChildren(...facts.flatMap(([label, value]) => {
     const term = document.createElement("dt");
     const detail = document.createElement("dd");
