@@ -41,6 +41,41 @@ def test_profile_is_crew_only(tmp_path):
         assert "synthetic.sim-01-health-baseline-v1" not in ground_text
 
 
+def test_selected_crew_health_is_isolated_by_run_and_person(tmp_path):
+    database = tmp_path / "selected-crew.sqlite3"
+    with local_client(database) as client:
+        authenticate(client)
+        first = client.post("/api/v1/runs", json=START).json()["run_id"]
+        second = client.post("/api/v1/runs", json={**START, "start_id": "second"}).json()["run_id"]
+        authenticate(client, "crew")
+        response = client.post(f"/api/v1/runs/{first}/crew/measurements", json={
+            "measurement_id": "sana-reading", "crew_id": "SIM-02", "synthetic": True,
+            "measurement": {"metric": "heart_rate", "value": 73, "unit": "bpm",
+                            "observed_at_s": 0, "source_id": "synthetic.test.sana", "quality": "valid"},
+            "context": {"activity": "rest"},
+        })
+        assert response.status_code == 201
+    with local_client(database) as client:
+        authenticate(client, "crew")
+        def view(run, crew):
+            response = client.get(f"/api/v1/runs/{run}/crew", params={"crew_id": crew})
+            assert response.status_code == 200
+            return response.json()
+        sana = view(first, "SIM-02")
+        ivo = view(first, "SIM-03")
+        assert sana["health_profile"]["baselines"][0]["value"] == 68
+        assert sana["health_assessment"]["crew_id"] == "SIM-02"
+        assert sana["health_assessment"]["evidence"]["value"] == 73
+        assert ivo["health_profile"]["baselines"][0]["value"] == 76
+        assert ivo["health_assessment"] is None
+        assert view(first, "SIM-04")["health_profile"]["baselines"] == []
+        assert view(second, "SIM-02")["health_assessment"] is None
+        assert client.get(f"/api/v1/runs/{first}/crew?crew_id=unknown").status_code == 404
+        authenticate(client, "ground")
+        assert client.get(f"/api/v1/runs/{first}/crew?crew_id=SIM-02").status_code == 403
+        assert "synthetic.test.sana" not in client.get(f"/api/v1/runs/{first}/ground").text
+
+
 def test_assessment_appears_only_in_crew(tmp_path):
     """The same SIM-01 reading is compared independently against two references."""
     with local_client(tmp_path / "assessment.sqlite3") as client:

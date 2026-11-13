@@ -1,9 +1,9 @@
 {
   "id": "launch-checkout",
   "version": 1,
-  "title": "Asteria Launch",
-  "vehicle": "Asteria · three-part launch stack",
-  "objective": "Launch, establish orbit, and capture the station.",
+  "title": "ISS Research and Return",
+  "vehicle": "Horizon · three-part launch stack",
+  "objective": "Launch Horizon, deliver the research kit to the ISS, and recover the crew on Earth.",
   "stages": [
     {
       "id": "capsule",
@@ -27,32 +27,41 @@
       "title": "Verify restraints and suit seals",
       "crew": "Sana Kepler",
       "station": "Crew cabin",
-      "duration_s": 30
+      "duration_s": 30,
+      "purpose": "Confirm the crew can stay secured through ascent."
     },
     {
       "id": "engine",
       "title": "Confirm propulsion readiness",
       "crew": "Ivo Reyes",
       "station": "Engineering",
-      "duration_s": 45
+      "duration_s": 45,
+      "purpose": "Verify the engines and flight controls are ready."
     },
     {
       "id": "link",
       "title": "Read back range clearance",
       "crew": "Noor Okafor",
       "station": "Communications",
-      "duration_s": 30
+      "duration_s": 30,
+      "purpose": "Confirm the simulated range has cleared the launch."
     }
   ],
   "ascent": {
     "burn_s": 45,
     "separation_deadline_s": 90,
-    "minimum_coast_s": 15,
+    "minimum_coast_s": 30,
     "coast_limit_s": 90,
     "reserve_initial": 100,
     "insertion_cost": 55,
     "minimum_reserve": 15,
-    "coast_cost_per_tick": 8
+    "coast_cost_per_tick": 8,
+    "insertion_profile": {
+      "apoapsis_km": 185,
+      "initial_periapsis_km": -45,
+      "target_periapsis_km": 175,
+      "minimum_periapsis_km": 150
+    }
   },
   "rendezvous": {
     "phasing_cost": 9,
@@ -62,7 +71,7 @@
         "seconds": 0,
         "range": 100,
         "closing": 0,
-        "state": "Phasing burn logged"
+        "state": "Station orbit matched · approach ready"
       },
       {
         "seconds": 15,
@@ -117,17 +126,22 @@
       {
         "id": "insertion",
         "label": "Establish stable orbit",
-        "planned_s": 120
+        "planned_s": 135
       },
       {
         "id": "phasing",
-        "label": "Commit station rendezvous",
-        "planned_s": 120
+        "label": "Coast to departure and commit the ISS transfer burn",
+        "planned_s": null
+      },
+      {
+        "id": "match",
+        "label": "Coast to apoapsis and match station orbit",
+        "planned_s": null
       },
       {
         "id": "capture",
         "label": "Capture the station",
-        "planned_s": 165
+        "planned_s": null
       },
       {
         "id": "hatch",
@@ -135,10 +149,60 @@
         "planned_s": null
       },
       {
+        "id": "transfer",
+        "label": "Hand off the research kit",
+        "planned_s": null
+      },
+      {
+        "id": "research",
+        "label": "Complete station research",
+        "planned_s": null
+      },
+      {
+        "id": "departure",
+        "label": "Board the return capsule and depart",
+        "planned_s": null
+      },
+      {
+        "id": "deorbit",
+        "label": "Commit deorbit",
+        "planned_s": null
+      },
+      {
+        "id": "landing",
+        "label": "Land the return capsule",
+        "planned_s": null
+      },
+      {
         "id": "return",
-        "label": "Complete return and recovery",
+        "label": "Confirm Earth recovery",
         "planned_s": null
       }
     ]
-  }
+  },
+  "docking": {
+    "evidence_valid_s": 30,
+    "seal": "Verified",
+    "pressure": "Matched"
+  },
+  "return": {
+    "research_s": 30,
+    "entry_s": 30,
+    "descent_s": 30,
+    "reserve_cost": 12
+  },
+  "pad": {
+    "daylight_cycle_s": 240,
+    "daylight_offset_s": 35,
+    "startup_s": 15
+  },
+  "ship": "Horizon",
+  "seed": 4242,
+  "pacing": "8–12 minutes",
+  "briefing": [
+    "Start ship systems and assign the crew checks. Play advances their work and stops when the countdown can be armed.",
+    "Arm the countdown and commit liftoff. Separate the booster at burnout, then commit insertion when the orbit map shows an eligible window.",
+    "In Flight command, coast to the ISS departure window, commit the transfer burn, coast to apoapsis, and match station orbit. Capture the station and verify seal and pressure before opening the hatch.",
+    "Deliver the kit, complete station research, and return to Earth in the recovery capsule."
+  ]
 }

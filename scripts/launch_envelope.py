@@ -14,6 +14,11 @@ def launch_envelope(config: dict) -> dict:
     if ascent["minimum_coast_s"] > ascent["coast_limit_s"]:
         raise ValueError("Insertion readiness must precede the coast limit")
 
+    insertion = ascent.get("insertion_profile")
+    if insertion and not (insertion["initial_periapsis_km"] < insertion["minimum_periapsis_km"]
+                          <= insertion["target_periapsis_km"] <= insertion["apoapsis_km"]):
+        raise ValueError("The insertion profile must raise periapsis into the stable orbit envelope")
+
     coast = []
     for seconds in range(0, ascent["coast_limit_s"] + 1, TICK_SECONDS):
         reserve = max(0, ascent["reserve_initial"] - seconds // TICK_SECONDS * ascent["coast_cost_per_tick"])

@@ -14,7 +14,7 @@
     },
     {
       "crew_id": "SIM-02",
-      "display_name": "SIM-02 (fictional)",
+      "display_name": "Sana Kepler",
       "zone_id": "cabin-01",
       "initial_mode": "baseline",
       "co2_generation_m3_h": {
@@ -24,7 +24,7 @@
     },
     {
       "crew_id": "SIM-03",
-      "display_name": "SIM-03 (fictional)",
+      "display_name": "Ivo Reyes",
       "zone_id": "cabin-01",
       "initial_mode": "baseline",
       "co2_generation_m3_h": {
@@ -34,7 +34,7 @@
     },
     {
       "crew_id": "SIM-04",
-      "display_name": "SIM-04 (fictional)",
+      "display_name": "Noor Okafor",
       "zone_id": "cabin-01",
       "initial_mode": "baseline",
       "co2_generation_m3_h": {

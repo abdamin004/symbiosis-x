@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "scenario_id": "crew-wearables",
+  "scenario_version": "1",
+  "seed": 4242,
+  "synthetic": true,
+  "visibility": "crew",
+  "delivery_order": [
+    "wrist-rest", "wrist-disconnected", "wrist-restored", "wrist-restored",
+    "wrist-delayed", "back-pod-motion", "wrist-motion"
+  ],
+  "unique_stream_count": 6,
+  "wrist_checkpoints": [
+    {"mission_s": 0, "status": "accepted", "value": 72, "observed_at_s": 0, "age_s": 0, "evidence": null},
+    {"mission_s": 19, "status": "stale", "value": 72, "observed_at_s": 0, "age_s": 19, "evidence": null},
+    {"mission_s": 20, "status": "held", "value": 72, "observed_at_s": 0, "age_s": 20, "evidence": "wrist-disconnected"},
+    {"mission_s": 49, "status": "held", "value": 72, "observed_at_s": 0, "age_s": 49, "evidence": "wrist-disconnected"},
+    {"mission_s": 50, "status": "accepted", "value": 74, "observed_at_s": 50, "age_s": 0, "evidence": null},
+    {"mission_s": 60, "status": "accepted", "value": 74, "observed_at_s": 50, "age_s": 10, "evidence": null},
+    {"mission_s": 71, "status": "stale", "value": 74, "observed_at_s": 50, "age_s": 21, "evidence": null},
+    {"mission_s": 72, "status": "held", "value": 74, "observed_at_s": 50, "age_s": 22, "evidence": "wrist-motion"},
+    {"mission_s": 100, "status": "held", "value": 74, "observed_at_s": 50, "age_s": 50, "evidence": "wrist-motion"}
+  ],
+  "recheck": {
+    "mission_s": 100, "sample_id": "wrist-recheck", "repeat_of_sample_id": "wrist-motion",
+    "status": "accepted", "value": 96, "age_s": 0
+  }
+}

@@ -54,6 +54,17 @@ class ResetReceipt(RunReceipt):
     reset_from_run_id: Identifier
 
 
+class EndRunRequest(Contract):
+    end_id: Identifier
+
+
+class EndReceipt(RunReceipt):
+    """The run is closed for good: it stays readable and every later write gets RUN_CLOSED."""
+
+    end_id: Identifier
+    status: Literal["closed"]
+
+
 CandidateId = Literal["hold_course", "start_standby", "reduce_activity"]
 
 
@@ -192,3 +203,20 @@ class CrewActionReceipt(Contract):
     basis_decision_rev: NonnegativeInt
     current_decision_rev: NonnegativeInt
     applied: bool
+
+
+class ShareCaseStatusRequest(Contract):
+    """Crew approves sending one emergency case's minimal status to Ground."""
+
+    operation_id: Identifier
+
+
+class CaseRelayReceipt(Contract):
+    """What Crew queued for Ground: only the alias, generic priority and status."""
+
+    operation_id: Identifier
+    case_alias: Identifier
+    review_priority: Literal["urgent", "routine"]
+    status: Literal["open", "acknowledged"]
+    issued_at_s: NonnegativeInt
+    deliver_at_s: NonnegativeInt

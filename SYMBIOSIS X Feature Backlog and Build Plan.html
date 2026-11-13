@@ -2685,6 +2685,38 @@
     "implementation": "Keep the original data and source evidence separate. Publish only the approved adapter output or synthetic test sample. Preserve the reference demo and retest its output.",
     "page_ids": [],
     "priority": "Optional"
+  },
+  {
+    "id": "KAN-142",
+    "title": "Simulate pressure-driven cabin exchange and an airlock cycle",
+    "owner": "Mohamed",
+    "reviewers": [
+      "Abdelrahman"
+    ],
+    "milestone": "Expansion",
+    "deps": [
+      "SX-03",
+      "SX-14"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/simulation/spacecraft/cabin_gas.py",
+      "backend/src/symbiosis_x/simulation/spacecraft/airlock.py",
+      "backend/src/symbiosis_x/crew/cabin_exposure.py",
+      "backend/tests/unit/test_airlock.py"
+    ],
+    "build": "Extend KAN-130's dry O₂, N₂ and CO₂ inventories with partial pressures, a pressure-driven airlock cycle and private workload cues.",
+    "done": "Repeated cycles agree, both hatches stay interlocked, and gas losses reconcile per species. The fictional crew cue updates after compartment movement and refill.",
+    "test": {
+      "path": "backend/tests/unit/test_airlock.py",
+      "name": "test_out_and_back_cycle_seals_and_conserves_species",
+      "method": "Verify pressure, power interruption, phase transitions, per-species conservation and private cue recovery. Run the backend regression suites for the golden replay and privacy.",
+      "command": "python -m pytest backend/tests/unit/test_airlock.py backend/tests/unit/test_cabin_gas.py -q"
+    },
+    "sequence": 82,
+    "surface": "Flight simulation · cabin atmosphere",
+    "implementation": "Use Stationeers' contained volumes and interlocked hatches as design references. Python owns the dry, isothermal gas model. A live driver consumes authorized cycle intents from the commit journal and supplies accepted readings to Flight. Particles are decorative. The workload cue stays onboard and separate from voluntary reports.",
+    "page_ids": [],
+    "priority": "Optional"
   }
 ]</script>
 <script>

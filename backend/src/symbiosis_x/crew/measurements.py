@@ -12,7 +12,7 @@ from symbiosis_x.application.runs import RunConflict, RunNotFound, load_active_r
 from symbiosis_x.contracts.events import Contract, Identifier
 from symbiosis_x.contracts.health import HealthMeasurement
 from symbiosis_x.crew.assessment import assess
-from symbiosis_x.crew.profile import load_profile
+from symbiosis_x.crew.profile import AstronautHealthProfile
 from symbiosis_x.storage.repository import Repository
 
 
@@ -140,18 +140,17 @@ def read_measurement(
     return MeasurementReceipt.model_validate(json.loads(row["payload_json"])["receipt"])
 
 
-def latest_crew_assessment(db, run_id: str) -> dict | None:
-    """Assess the latest stored SIM-01 reading for Crew only; never send to Ground."""
-    crew_id = load_profile().crew_id
+def latest_crew_assessment(db, run_id: str, profile: AstronautHealthProfile) -> dict | None:
+    """Assess the selected astronaut’s latest accepted private reading."""
     row = db.execute(
         """SELECT e.payload_json FROM events e
            JOIN health_observations h ON h.run_id = e.run_id AND h.event_id = e.event_id
            WHERE e.run_id = ? AND h.crew_id = ? AND e.visibility = 'crew'
              AND e.event_type = 'crew.health_measurement'
            ORDER BY h.observed_at_s DESC, h.received_at_s DESC, h.event_id DESC LIMIT 1""",
-        (run_id, crew_id),
+        (run_id, profile.crew_id),
     ).fetchone()
     if row is None:
         return None
     receipt = json.loads(row["payload_json"])["receipt"]
-    return asdict(assess(receipt["measurement"], context=receipt["context"]))
+    return asdict(assess(receipt["measurement"], context=receipt["context"], profile=profile))

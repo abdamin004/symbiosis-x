@@ -4,8 +4,10 @@ from hashlib import sha256
 from uuid import uuid4
 
 from symbiosis_x.application.nominal import deliver_nominal_ground, record_nominal_co2
+from symbiosis_x.application.wearables import WEARABLE_SCENARIO, WEARABLE_STEPS_S, record_wearables
+from symbiosis_x.crew.wearable_series import load_wearable_fixture
 from symbiosis_x.contracts.commands import (
-    AdvanceReceipt, AdvanceRunRequest, DriverPauseRequest, DriverPauseReceipt, ResetReceipt, ResetRunRequest, RunReceipt, StartRunRequest,
+    AdvanceReceipt, AdvanceRunRequest, DriverPauseRequest, DriverPauseReceipt, EndReceipt, EndRunRequest, ResetReceipt, ResetRunRequest, RunReceipt, StartRunRequest,
 )
 from symbiosis_x.simulation.scenario import (GOLDEN_SCENARIO, GOLDEN_STEPS_S, ORGANIZER_SCENARIO,
     load_golden_manifest, load_organizer_manifest)
@@ -41,7 +43,7 @@ def next_event_seq(db, run_id: str) -> int:
     ).fetchone()[0]
 
 
-def request_digest(command: StartRunRequest | AdvanceRunRequest | ResetRunRequest) -> str:
+def request_digest(command: StartRunRequest | AdvanceRunRequest | ResetRunRequest | EndRunRequest) -> str:
     return sha256(command.model_dump_json().encode()).hexdigest()
 
 
@@ -67,6 +69,9 @@ def start_run(repository: Repository, command: StartRunRequest, golden_manifest_
                 manifest = load_organizer_manifest()
                 if command.seed != manifest["seed"]:
                     raise RunConflict("ORGANIZER_SEED_MISMATCH")
+            elif scenario == WEARABLE_SCENARIO:
+                if command.seed != load_wearable_fixture()["seed"]:
+                    raise RunConflict("WEARABLE_SEED_MISMATCH")
             elif scenario != NOMINAL_SCENARIO:
                 raise RunNotFound("SCENARIO_NOT_FOUND")
             run_id = uuid4().hex
@@ -101,6 +106,8 @@ def _record_start(db, run_id: str, payload_json: str) -> None:
         seed_golden(db, run_id)
     elif (scenario["scenario_id"], scenario["scenario_version"]) == ORGANIZER_SCENARIO:
         seed_golden(db, run_id, variant=load_organizer_manifest())
+    elif (scenario["scenario_id"], scenario["scenario_version"]) == WEARABLE_SCENARIO:
+        record_wearables(db, run_id, 0)
 
 
 def reset_run(repository: Repository, run_id: str, command: ResetRunRequest) -> ResetReceipt:
@@ -152,6 +159,61 @@ def reset_run(repository: Repository, run_id: str, command: ResetRunRequest) -> 
     return receipt
 
 
+
+def _step_of(run) -> int:
+    """The facilitator step cursor for a run's current mission time."""
+    scenario = (run["scenario_id"], run["scenario_version"])
+    steps = GOLDEN_STEPS_S if scenario in (GOLDEN_SCENARIO, ORGANIZER_SCENARIO) else NOMINAL_STEPS_S
+    if scenario == WEARABLE_SCENARIO:
+        steps = WEARABLE_STEPS_S
+    return steps.index(run["mission_s"]) if run["mission_s"] in steps else 0
+
+
+def end_run(repository: Repository, run_id: str, command: EndRunRequest) -> EndReceipt:
+    """End a mission: close the run at its current mission time without starting another.
+
+    The run stays readable by both roles. Advancing, resetting and every other
+    write then fail with RUN_CLOSED. Retrying the same end_id returns the
+    original receipt.
+    """
+    digest = request_digest(command)
+    with repository.write() as db:
+        run = db.execute("SELECT * FROM runs WHERE run_id = ?", (run_id,)).fetchone()
+        if run is None:
+            raise RunNotFound("RUN_NOT_FOUND")
+        prior = db.execute(
+            """SELECT request_digest, receipt_json FROM operations
+               WHERE run_id = ? AND operation_scope = 'end' AND operation_id = ?""",
+            (run_id, command.end_id),
+        ).fetchone()
+        if prior is not None:
+            if prior["request_digest"] != digest:
+                raise RunConflict("END_ID_REUSED")
+            return EndReceipt.model_validate_json(prior["receipt_json"])
+        if run["status"] != "active":
+            raise RunConflict("RUN_CLOSED")
+
+        receipt = EndReceipt(
+            run_id=run_id, scenario_id=run["scenario_id"], scenario_version=run["scenario_version"],
+            seed=run["seed"], mission_s=run["mission_s"], step=_step_of(run),
+            end_id=command.end_id, status="closed",
+        )
+        db.execute("UPDATE runs SET status = 'closed' WHERE run_id = ?", (run_id,))
+        db.execute(
+            """INSERT INTO events
+               (run_id, event_seq, event_id, event_type, mission_s, visibility, payload_json)
+               VALUES (?, ?, ?, 'run.ended', ?, 'operational', ?)""",
+            (run_id, next_event_seq(db, run_id), f"end:{command.end_id}", run["mission_s"],
+             receipt.model_dump_json()),
+        )
+        db.execute(
+            """INSERT INTO operations (run_id, operation_scope, operation_id, request_digest, receipt_json)
+               VALUES (?, 'end', ?, ?, ?)""",
+            (run_id, command.end_id, digest, receipt.model_dump_json()),
+        )
+    return receipt
+
+
 NOMINAL_STEPS_S = (0, 60)
 
 
@@ -178,24 +240,26 @@ def advance_run(repository: Repository, run_id: str, command: AdvanceRunRequest,
             ).fetchone()
             if paused is not None and paused["paused"]:
                 raise RunConflict("DRIVER_PAUSED")
-        if (run["scenario_id"], run["scenario_version"]) in (GOLDEN_SCENARIO, ORGANIZER_SCENARIO):
+        scenario = (run["scenario_id"], run["scenario_version"])
+        if scenario in (GOLDEN_SCENARIO, ORGANIZER_SCENARIO):
             return _advance_golden(db, run_id, run, command)
-        if (run["scenario_id"], run["scenario_version"]) != NOMINAL_SCENARIO:
+        if scenario not in (NOMINAL_SCENARIO, WEARABLE_SCENARIO):
             raise RunConflict("SCENARIO_NOT_ADVANCEABLE")
         if command.target_mission_s is not None:
             raise RunConflict("TARGET_ONLY_FOR_GOLDEN")
-        if command.expected_step >= len(NOMINAL_STEPS_S) or (
-            NOMINAL_STEPS_S[command.expected_step] != run["mission_s"]
+        steps = WEARABLE_STEPS_S if scenario == WEARABLE_SCENARIO else NOMINAL_STEPS_S
+        if command.expected_step >= len(steps) or (
+            steps[command.expected_step] != run["mission_s"]
         ):
             raise RunConflict("STALE_STEP")
         next_step = command.expected_step + 1
-        if next_step == len(NOMINAL_STEPS_S):
+        if next_step == len(steps):
             raise RunConflict("NO_NEXT_STEP")
 
         receipt = AdvanceReceipt(
             run_id=run_id, scenario_id=run["scenario_id"],
             scenario_version=run["scenario_version"], seed=run["seed"],
-            step=next_step, mission_s=NOMINAL_STEPS_S[next_step], advance_id=command.advance_id,
+            step=next_step, mission_s=steps[next_step], advance_id=command.advance_id,
         )
         db.execute("UPDATE runs SET mission_s = ? WHERE run_id = ?", (receipt.mission_s, run_id))
         db.execute(
@@ -211,7 +275,10 @@ def advance_run(repository: Repository, run_id: str, command: AdvanceRunRequest,
             (run_id, command.advance_id, digest, receipt.model_dump_json()),
         )
         record_nominal_co2(db, run_id, receipt.mission_s)
-        deliver_nominal_ground(db, run_id, receipt.mission_s)
+        if scenario == WEARABLE_SCENARIO:
+            record_wearables(db, run_id, receipt.mission_s, run["mission_s"])
+        else:
+            deliver_nominal_ground(db, run_id, receipt.mission_s)
         deliver_due(db, run_id, receipt.mission_s)
         receive_due_advisories(db, run_id, receipt.mission_s)
     return receipt
