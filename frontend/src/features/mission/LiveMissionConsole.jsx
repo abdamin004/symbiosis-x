@@ -4,6 +4,9 @@ import { readRunView } from "../../api/client.js";
 import ApprovalPanel from "../crew/ApprovalPanel.jsx";
 import CandidateList from "../crew/CandidateList.jsx";
 import CheckInForm from "../crew/CheckInForm.jsx";
+import { CrewHealthDashboard } from "../crew/CrewHealthPanel.jsx";
+import RadiationContext from "../crew/RadiationContext.jsx";
+import { HEALTH_METRICS } from "../../api/healthCatalog.js";
 import AgentStatusStrip from "../workflow/AgentStatusStrip.jsx";
 import TraceTimeline from "../workflow/TraceTimeline.jsx";
 
@@ -46,15 +49,23 @@ export default function LiveMissionConsole({ role, runId }) {
       </header>
       {view.status === "closed" && <p role="status" data-testid="console-run-ended" className="mt-4 rounded bg-slate-100 p-3 text-sm text-slate-700">Mission ended at {time(view.mission_s)}. This view is read only.</p>}
       {role === "crew" ? <>
-        <section className="mt-6 rounded-lg border border-slate-200 bg-white p-4">
-          <h2 className="font-semibold">Private Crew health profile</h2>
-          <p className="mt-2 text-sm">Crew ID: {view.health_profile?.crew_id ?? "Unknown"} · Synthetic data</p>
-          <p className="mt-2 text-sm">Assessment: {view.health_assessment?.personal?.status ?? "No assessment available"}</p>
-          <div className="mt-3 flex flex-wrap gap-4"><Link className="text-sm font-semibold text-selection underline" to={"/runs/" + encodeURIComponent(runId) + "/crew/measure"}>Take a measurement</Link><Link className="text-sm font-semibold text-red-700 underline" to={"/runs/" + encodeURIComponent(runId) + "/crew/emergency"}>Open Emergency Assist</Link></div>
+        <CrewHealthDashboard profile={view.health_profile} assessment={view.health_assessment} metrics={HEALTH_METRICS}
+          measureHref={"/runs/" + encodeURIComponent(runId) + "/crew/measure"}
+          emergencyHref={"/runs/" + encodeURIComponent(runId) + "/crew/emergency"} />
+        <section className="mt-6 rounded-lg border border-sky-200 bg-sky-50 p-4" data-testid="live-cabin-context">
+          <h2 className="font-semibold">Cabin context</h2>
+          <p className="mt-1 text-sm text-slate-700">{view.co2
+            ? <>CO₂ <strong>{Math.round(view.co2.value)} {view.co2.unit}</strong> · observed {time(view.co2.observed_at_s)}</>
+            : "Cabin CO₂ is unknown; no accepted reading is available yet."}</p>
+          <p className="mt-1 text-xs text-slate-500">Shown separately from Crew Health; it does not establish a cause for a health status.</p>
         </section>
         <CandidateList runId={runId} selected={selected} onSelect={view.status === "closed" ? undefined : setSelected} onPlan={onPlan} refreshKey={reload} />
         {view.status !== "closed" && plan && <ApprovalPanel runId={runId} plan={plan} candidateId={selected} onReceipt={onReceipt} />}
         <CheckInForm runId={runId} crewId={view.health_profile?.crew_id ?? "SIM-01"} />
+        <details className="mt-6 rounded-lg border border-slate-200 bg-white p-4" data-testid="supporting-context">
+          <summary className="cursor-pointer font-semibold">Supporting context: archived radiation data</summary>
+          <RadiationContext />
+        </details>
       </> : <section className="mt-6 rounded-lg border border-slate-200 bg-white p-4">
         <h2 className="font-semibold">Latest delivered snapshot</h2>
         {view.packet ? <dl className="mt-2 grid grid-cols-2 gap-2 text-sm">
