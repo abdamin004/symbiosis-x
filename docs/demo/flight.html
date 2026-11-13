@@ -406,6 +406,10 @@ button[aria-pressed=true]{background:#3d315e}
 .profile-data meter,.duty-progress{width:100%;height:.55rem;accent-color:#a3e8c8}
 .profile-data dd:has(meter){min-width:5.5rem}
 .profile-data dd meter{display:block}
+#docking-view{margin:.35rem 0 .55rem}
+#docking-view canvas{display:block;width:100%;border-radius:6px}
+#docking-caption{font-size:.74rem;color:#bfe1ed}
+#station-research-board progress{width:100%;height:.5rem;accent-color:#a3e8c8}
 @media(max-width:800px){.mission-resources{top:calc(100% + 4.2rem)}#widget-shelf{top:calc(100% + 7.6rem)}}
 @media(max-width:660px){
   .launch-field{height:auto}
@@ -459,6 +463,10 @@ __HUD_ICONS__
       <h2 id="mission-command-title">Flight command</h2>
       <button class="widget-close" type="button" aria-label="Close flight command"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button>
     </div>
+    <figure id="docking-view" hidden>
+      <canvas id="docking-scene" width="760" height="320" role="img" aria-label="Exterior view of Asteria and the International Space Station"></canvas>
+      <figcaption id="docking-caption"></figcaption>
+    </figure>
   </section>
   <section class="panel" id="workflow-widget" hidden aria-labelledby="workflow-title">
     <div class="widget-bar"><button class="move-widget widget-title" type="button" aria-label="Move orders with drag or arrow keys"><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button><h2 id="workflow-title">Onboard orders</h2><button class="widget-close" type="button" aria-label="Close orders"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button></div>
@@ -745,6 +753,16 @@ __HUD_ICONS__
           <button id="launch-transfer" type="button" hidden>Hand off research kit</button>
         </div>
       </div>
+      <section id="station-research-board" aria-labelledby="station-research-title" hidden>
+        <h3 id="station-research-title">ISS research objectives</h3>
+        <ol>
+          <li>Transfer the research kit</li>
+          <li>Collect wristband and back-pod samples with Sana</li>
+          <li>Verify and archive the paired sample</li>
+        </ol>
+        <progress id="station-research-progress" max="100" value="0" aria-label="Station research progress"></progress>
+        <p id="station-research-status"></p>
+      </section>
       <div class="choices checkout-controls">
         <output id="launch-time" aria-label="Mission elapsed time"></output>
         <button id="launch-step" type="button">Advance 15 s</button>
@@ -757,6 +775,7 @@ __HUD_ICONS__
         <button id="launch-capture" type="button" hidden>Capture station</button>
         <button id="launch-retreat" type="button" hidden>Retreat to orbit</button>
         <button id="launch-research" type="button" hidden>Assign Sana to station research</button>
+        <button id="launch-archive" type="button" hidden>Verify and archive research</button>
         <button id="launch-depart" type="button" hidden>Seal hatch and board return capsule</button>
         <button id="launch-deorbit" type="button" hidden>Commit deorbit</button>
         <button id="launch-land" type="button" hidden>Confirm landing</button>
@@ -776,6 +795,7 @@ __FLIGHT_STATIONS__
 __LAUNCH_SCENE__
 __LAUNCH_CHECKOUT__
 __FLIGHT_CREW__
+__DOCKING_SCENE__
 </script>
 <script>
 const element = id => document.getElementById(id);
@@ -852,6 +872,7 @@ function station(duty, member) {
   const groundWork = member === 2 && groundInspection(currentFrame());
   if (groundWork && time >= groundWork.assigned) return ["life-support-01",
     time < groundWork.arrival ? "Walking to the scrubber rack" : "Inspect life support for the Commander"];
+  if (member === 1 && connectedFlight?.stationWork) return ["medical-01","Collect paired motion samples at ISS"];
   const waiting = peerChecks.find(check => check.mode === crewMode() && check.member === member && check.requested <= time && time < check.due);
   if (waiting) return [waiting.room,"Available for crew observation"];
   const job = crewRoutine(member);
@@ -1750,12 +1771,13 @@ function render() {
     const [roomId, task] = station(duty,i);
     const button = pawns.get(i);
     const crewCheck = peerWork(i,frame.time);
+    const research = i === 1 && connectedFlight?.stationWork;
     const work = activeTask(i, frame.time) || (i === 2 && groundInspection(frame));
     const asset = work && frame.time >= work.assigned ? equipment.get(work.asset) : null;
     const travelling = asset && frame.time < work.arrival;
     const sharedWork = !asset && ["Docked","Station research","Recovery"].includes(frame.phase);
     const routine = crewRoutine(i);
-    const statusIcon = crewCheck ? "users" : (work ? equipment.get(work.asset).icon : routine ? equipment.get(routine.asset).icon
+    const statusIcon = crewCheck ? "users" : research ? "flask-conical" : (work ? equipment.get(work.asset).icon : routine ? equipment.get(routine.asset).icon
       : sharedWork ? "users" : roomIcons[roomId]);
     const marker = button.querySelector(".action-marker");
     const badge = portraits.get(i).querySelector(".crew-status");
@@ -1763,7 +1785,7 @@ function render() {
       setIcon(marker.querySelector("i"),statusIcon,""); setIcon(badge,statusIcon,"");
       badge.dataset.icon = statusIcon;
     }
-    marker.hidden = !work && !routine && !crewCheck;
+    marker.hidden = !work && !routine && !crewCheck && !research;
     marker.style.color = travelling || sharedWork ? "#bed6ff" : "";
     button.setAttribute("aria-label", characters[i].name + " " + duty.role + " · " + task);
     button.title = "Open digital twin · " + task;
@@ -1832,7 +1854,8 @@ function crewMotion(member, frame) {
     return {origin:task.origin,destination:stationPoint(room,member,asset),
       start:task.assigned,end:task.arrival,activity:frame.time >= task.arrival ? "work" : "move"};
   }
-  const job = crewRoutine(member);
+  const job = member === 1 && connectedFlight?.stationWork
+    ? {asset:"lab",previous:"stores",...connectedFlight.stationWork} : crewRoutine(member);
   if (job) {
     const asset = equipment.get(job.asset);
     const previous = equipment.get(job.previous);
@@ -1872,7 +1895,7 @@ function paintFlight(frame, sceneTime = missionTime) {
     button.style.setProperty("--stride",pose.toFixed(2));
     button.style.setProperty("--facing",facing);
     const job = peerWork(member,frame.time) || activeTask(member,frame.time) ||
-      (member === 2 && inspection) || crewRoutine(member);
+      (member === 2 && inspection) || (member === 1 && connectedFlight?.stationWork) || crewRoutine(member);
     if (job) {
       const start = job.assigned ?? job.requested;
       const end = job.finishes ?? job.due;

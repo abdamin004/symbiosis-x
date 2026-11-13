@@ -91,9 +91,14 @@ test("Asteria hands off to the crew canvas and returns to Earth in one saved mis
 
   const command = page.getByRole("region", { name: "Flight command" });
   await command.getByRole("button", { name: "Commit phasing", exact: true }).click();
+  await expect(page.locator("#docking-view")).toBeVisible();
+  await button("Hold approach").click();
+  await expect(page.locator("#docking-caption")).toContainText("Approach held");
+  await button("Resume approach").click();
   await expect(button("Capture station")).toBeDisabled();
   await advance(3);
   await button("Capture station").click();
+  await expect(page.locator("#docking-caption")).toContainText("Docking contact");
   const authorize = button("Authorize hatch opening");
   await expect(authorize).toBeDisabled();
   await button("Check seal").click();
@@ -107,7 +112,11 @@ test("Asteria hands off to the crew canvas and returns to Earth in one saved mis
   await button("Hand off research kit").click();
   await button("Assign Sana to station research").click();
   await advance(2);
+  await expect(button("Seal hatch and board return capsule")).toBeHidden();
+  await button("Verify and archive research").click();
+  await expect(page.locator("#station-research-status")).toContainText("Paired sample archived");
   await button("Seal hatch and board return capsule").click();
+  await expect(page.locator("#docking-caption")).toContainText("Undocking");
   await button("Commit deorbit").click();
   await advance(4);
   await button("Confirm landing").click();
