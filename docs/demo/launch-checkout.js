@@ -235,9 +235,9 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     audio ??= new Audio();
     audio.resume().catch(()=>{});
   }
-  function sound(from,to,duration,volume=.075) {
+  function sound(from,to,duration,volume=.075,delay=0) {
     if (!voiceEnabled || audio?.state !== "running") return;
-    const time = audio.currentTime, oscillator = audio.createOscillator(), gain = audio.createGain();
+    const time = audio.currentTime+delay, oscillator = audio.createOscillator(), gain = audio.createGain();
     oscillator.type = from < 180 ? "triangle" : "sine";
     oscillator.frequency.setValueAtTime(from,time);
     oscillator.frequency.exponentialRampToValueAtTime(to,time+duration);
@@ -1433,7 +1433,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     },
     busy:()=>Boolean(activeBurn || ascentPlaying),
     soundCue(seconds) {
-      const cues = {36:[520,310,.24],74:[290,470,.2],94:[320,410,.16],223:[400,640,.36]};
+      const cues = {36:[520,310,.24],74:[290,470,.2],94:[320,410,.16],220:[155,47,.48,.10],223:[400,640,.36]};
       if (cues[seconds]) sound(...cues[seconds]);
     },
     paintScene:onDemoFrame,
@@ -1536,6 +1536,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     state.ignition = state.time;
     unlockAudio();
     sound(65,104,1.25,.14);
+    sound(440,147,.17,.055,.57);
     ascentPlaying = true;
     persist();
     renderView();
