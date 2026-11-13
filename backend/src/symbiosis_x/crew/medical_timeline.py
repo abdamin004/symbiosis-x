@@ -28,15 +28,24 @@ class MedicalCase(Contract):
     events: list[TimelineEntry]
 
 
+class GeneticsNote(Contract):
+    crew_id: Identifier
+    inherited_trait: str
+    expression_observation: str
+
+
 class MedicalTimeline(Contract):
     schema_version: Literal[1]
     source_id: Literal["synthetic.medical-timeline-v1"]
     cases: list[MedicalCase]
+    genetics_note: GeneticsNote | None = None
 
 
 def read_medical_timeline(crew_id: str, mission_s: int) -> MedicalTimeline:
     timeline = MedicalTimeline.model_validate_json(FIXTURE_PATH.read_text(encoding="utf-8"))
     timeline.cases = [case for case in timeline.cases if case.crew_id == crew_id]
+    if timeline.genetics_note and timeline.genetics_note.crew_id != crew_id:
+        timeline.genetics_note = None
     for case in timeline.cases:
         case.events = [event for event in case.events if event.at_s <= mission_s]
     return timeline

@@ -145,6 +145,9 @@ test("Mara's live Flight twin explains review and shares only a delayed case sta
   await expect(timeline).toContainText("camera view is unavailable");
   await timeline.getByRole("button",{name:"Illness check-in"}).click();
   await expect(timeline).toContainText("fatigue persists");
+  await page.getByText("Genetics and spaceflight research", {exact:true}).click();
+  await expect(page.getByText("The training record has no gene expression assay result", {exact:false})).toBeVisible();
+  await expect(page.getByRole("link", {name:/OSD-575 v3/})).toHaveAttribute("href", /\/OSD-575$/);
   await page.getByRole("link",{name:"Open collapse drill"}).click();
   await expect(page.getByLabel("Choose scripted drill")).toHaveValue("drill-collapse-v1");
   expect(errors).toEqual([]);
