@@ -183,6 +183,31 @@ button[aria-pressed=true]{background:#3d315e}
 .profile-cards strong .icon,.personnel-actions .icon{width:.75rem;height:.75rem;margin-right:.25rem}
 .profile-cards p{font-size:.73rem;margin:.15rem 0 0}
 .personnel-actions{margin:.55rem 0 0}
+.mission-dialog{width:min(720px,calc(100vw - 24px));max-height:calc(100dvh - 24px);color:var(--ink);border:1px solid #656b9d;background:#10172e;border-radius:14px;padding:1rem 1.2rem}
+.mission-dialog::backdrop{background:#030510c9}
+.mission-dialog h3{margin:.1rem 0 .4rem}
+.mission-dialog p{color:var(--muted);font-size:.87rem;margin:.35rem 0}
+.dialog-top{display:flex;align-items:start;justify-content:space-between;gap:1rem;margin-bottom:1rem}
+.mission-options,.launch-board{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.8rem}
+.mission-options article,#launch-jobs li{background:#212d49;padding:.7rem;border-radius:8px}
+.mission-options button{margin-top:.45rem}
+.launch-board{grid-template-columns:minmax(160px,.75fr) minmax(0,1.3fr)}
+.launch-stack-area{display:grid;place-items:center;min-height:270px;background:radial-gradient(ellipse,#34355c,#11172f 72%);border-radius:9px}
+#launch-stack{width:min(160px,95%);margin:0;padding:0;list-style:none;text-align:center}
+.launch-stage{margin:2px auto;padding:.6rem .25rem;background:linear-gradient(90deg,#273858,#536c90 48%,#273858);border:1px solid #91a8cb}
+.launch-stage[data-stage=capsule]{width:72%;padding-top:1.1rem;border-radius:45% 45% 3px 3px}
+.launch-stage[data-stage=upper]{width:83%;min-height:60px}
+.launch-stage[data-stage=booster]{width:94%;min-height:76px;border-bottom:5px solid #8394b1}
+#launch-stack[data-ignited=true] [data-stage=booster]{border-bottom-color:#ffc68b;box-shadow:0 7px 17px #ff954e90}
+.launch-stage small,#launch-jobs small{display:block;color:#d7e2fa;font-size:.72rem}
+#launch-jobs{padding:0;list-style:none;display:grid;gap:.4rem}
+#launch-jobs li{display:grid;grid-template-columns:1fr auto;gap:.2rem .5rem;font-size:.82rem}
+#launch-jobs strong,#launch-jobs small{grid-column:1/-1}
+.checkout-job-status{align-self:center;color:var(--blue)}
+.checkout-controls{align-items:center}
+#launch-time{color:var(--blue);font:700 .9rem ui-monospace,monospace;margin-right:.2rem}
+#launch-go{background:#4a3d7c}
+@media(max-width:540px){.mission-options,.launch-board{grid-template-columns:1fr}.launch-stack-area{min-height:240px}}
 </style>
 </head>
 <body>
@@ -194,6 +219,7 @@ __HUD_ICONS__
     <button type="button" id="show-inspector" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#hud-activity"/></svg>Inspector</button>
     <button type="button" id="show-crew" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#hud-users"/></svg>Crew</button>
     <button type="button" id="show-workflow" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#hud-clipboard-list"/></svg>Orders</button>
+    <button type="button" id="show-missions"><svg class="icon" aria-hidden="true"><use href="#hud-map"/></svg>Missions</button>
     <a href="/mission">Mission control</a>
   </div>
   <nav class="crew-strip" id="crew-strip" aria-label="Astronaut portraits"></nav>
@@ -349,12 +375,43 @@ __HUD_ICONS__
 </div>
 </div>
 </section>
+<dialog id="mission-menu" class="mission-dialog" aria-labelledby="mission-menu-title">
+  <div class="dialog-top"><h2 id="mission-menu-title">Missions</h2><form method="dialog"><button>Close</button></form></div>
+  <div class="mission-options">
+    <article><h3>ISS Research Replay</h3><p>Outbound capsule · ISS laboratory · return capsule</p>
+      <form method="dialog"><button>Return to Flight replay</button></form></article>
+    <article><h3>Launch Checkout</h3><p>Prepare Asteria and clear first-stage ignition.</p>
+      <button id="open-checkout" type="button">Open Launch Checkout</button></article>
+  </div>
+</dialog>
+<dialog id="launch-checkout" class="mission-dialog" aria-labelledby="launch-title">
+  <div class="dialog-top"><div><h2 id="launch-title">Launch Checkout</h2><p id="launch-subtitle"></p></div>
+    <form method="dialog"><button>Close</button></form></div>
+  <div class="launch-board">
+    <div class="launch-stack-area">
+      <ol id="launch-stack" aria-label="Rocket stage stack"></ol>
+    </div>
+    <div>
+      <h3>Crew checklist</h3>
+      <ul id="launch-jobs"></ul>
+      <p id="launch-status" role="status"></p>
+      <div class="choices checkout-controls">
+        <output id="launch-time" aria-label="Checkout time"></output>
+        <button id="launch-step" type="button">Advance 15 s</button>
+        <button id="launch-hold" type="button" aria-pressed="false">Hold launch</button>
+        <button id="launch-go" type="button">Commit ignition</button>
+        <button id="launch-reset" type="button">Reset checkout</button>
+      </div>
+    </div>
+  </div>
+</dialog>
 </main>
 <script type="application/json" id="flight-data">__FLIGHT_DATA__</script>
 <script>
 __FLIGHT_WORKFLOW__
 __FLIGHT_WIDGETS__
 __FLIGHT_STATIONS__
+__LAUNCH_CHECKOUT__
 </script>
 <script>
 const element = id => document.getElementById(id);
@@ -1456,6 +1513,7 @@ for (const button of document.querySelectorAll("[data-personnel-view]")) {
   });
 }
 setupMinimap();
+bindLaunchCheckout(data.launch,()=>{stop();render();});
 widgets.layout();
 render();
 </script>
