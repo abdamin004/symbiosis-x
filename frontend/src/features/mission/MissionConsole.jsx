@@ -97,6 +97,9 @@ export default function MissionConsole({ role }) {
             <Link className="text-sm font-semibold text-selection underline" to={`/runs/${encodeURIComponent(runId)}/crew/measure`}>
               Take a measurement
             </Link>
+            <Link className="ml-4 text-sm font-semibold text-red-700 underline" to={`/runs/${encodeURIComponent(runId)}/crew/emergency`}>
+              Open Emergency Assist
+            </Link>
           </p>
           <RadiationContext />
         </>
