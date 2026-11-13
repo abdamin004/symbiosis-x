@@ -35,6 +35,9 @@ test("live Crew Health shows private profile, comparisons and supporting context
   await expect(dashboard.getByTestId("radlab-context")).toBeVisible();
   await expect(page.getByRole("link", { name: "Take a measurement" })).toHaveAttribute("href", "/runs/run-live/crew/measure");
   await expect(page.getByRole("link", { name: "Emergency Assist" })).toHaveAttribute("href", "/runs/run-live/crew/emergency");
+  await page.route("**/api/v1/runs/run-live/ground", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ run_id: "run-live", scenario_id: "sx01-golden", scenario_version: "1", mission_s: 600, packet: null, trace: [], health_cases: [] }) }));
   await page.goto("/runs/run-live/ground");
+  await expect(page.getByTestId("console-shell")).toHaveAttribute("data-role", "ground");
   await expect(page.getByTestId("crew-health-dashboard")).toHaveCount(0);
+  await expect(page.getByText("SIM-01 (fictional)")).toHaveCount(0);
 });
