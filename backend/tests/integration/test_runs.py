@@ -33,3 +33,28 @@ def test_start_seed_at_zero(tmp_path):
     with closing(sqlite3.connect(database)) as db:
         assert db.execute("SELECT run_id, mission_s FROM runs").fetchall() == [(receipt["run_id"], 0)]
         assert db.execute("SELECT event_type FROM events").fetchall() == [("run.started",)]
+
+
+def test_duplicate_advance_returns_one_receipt(tmp_path):
+    database = tmp_path / "runs.sqlite3"
+    with local_client(database) as client:
+        original = client.post("/api/v1/runs", json=START).json()
+        url = f"/api/v1/runs/{original['run_id']}/advance"
+        advance = {"advance_id": "advance-01", "expected_step": 0}
+        response = client.post(url, json=advance)
+        assert response.status_code == 200
+        receipt = response.json()
+        assert receipt == {**original, "step": 1, "mission_s": 60, "advance_id": "advance-01"}
+        assert client.post(url, json={**advance, "advance_id": "competing"}).json() == {"detail": "STALE_STEP"}
+        assert client.post(url, json={**advance, "expected_step": 1}).json() == {"detail": "ADVANCE_ID_REUSED"}
+        assert client.post(url, json={"advance_id": "new", "expected_step": 1}).json() == {"detail": "NO_NEXT_STEP"}
+        assert client.post(url, json=advance, headers={"Origin": "http://elsewhere.test"}).status_code == 403
+    with local_client(database) as restarted:
+        assert restarted.post(url, json=advance).json() == receipt
+        assert restarted.post("/api/v1/runs", json=START).json() == original
+    with closing(sqlite3.connect(database)) as db:
+        assert db.execute("SELECT mission_s, decision_rev FROM runs").fetchall() == [(60, 0)]
+        assert db.execute("SELECT event_seq, event_type FROM events ORDER BY event_seq").fetchall() == [
+            (1, "run.started"), (2, "run.advanced"),
+        ]
+        assert db.execute("SELECT count(*) FROM operations").fetchone() == (1,)
