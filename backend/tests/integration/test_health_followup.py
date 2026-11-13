@@ -100,6 +100,42 @@ def test_reminder_uses_personal_schedule(tmp_path):
         assert (reminders["blood_pressure"]["status"], reminders["blood_pressure"]["deferred_by_emergency"]) == (
             "acknowledged", False)
 
+        # Once the responder acknowledges the emergency, routine reminders resume.
+        emergency_ack = client.post(
+            f"{url}/crew/emergencies/{case['case_id']}/acknowledgment",
+            headers=role("crew"), json={"acknowledged_by": "SIM-02"},
+        )
+        assert emergency_ack.status_code == 200, emergency_ack.text
+        view = followup()
+        assert view["precedence"] == "routine" and view["emergency"] is None
+        assert all(not reminder["deferred_by_emergency"] for reminder in view["reminders"])
+
         # Reminders are Crew-private: Ground's projection carries none of them.
         ground = client.get(f"{url}/ground", headers=role("ground")).text
         assert "health_followup" not in ground and "rem-SIM-01" not in ground
+
+
+def test_reminder_schedule_starts_from_acceptance_time(tmp_path):
+    """A delayed sample starts its personal interval when Crew accepts it, not when observed."""
+    with local_client(tmp_path / "followup-received-time.sqlite3") as client:
+        tokens = client.post("/api/v1/demo/session").json()
+        role = lambda who: {"Authorization": "Bearer " + tokens[who]}  # noqa: E731
+        run = client.post("/api/v1/runs", json={**GOLDEN, "start_id": "followup-received-time"},
+                          headers=role("facilitator"))
+        run_id = run.json()["run_id"]
+        url = f"/api/v1/runs/{run_id}"
+
+        to_60 = client.post(f"{url}/advance", headers=role("facilitator"),
+                            json={"advance_id": "received-to-60", "expected_step": 0})
+        assert to_60.status_code == 200 and to_60.json()["mission_s"] == 60
+        reading = heart_rate("delayed-hr", 95, 0)
+        saved = client.post(f"{url}/crew/measurements", headers=role("crew"), json=reading)
+        assert saved.status_code == 201 and saved.json()["received_at_s"] == 60
+
+        to_360 = client.post(f"{url}/advance", headers=role("facilitator"),
+                             json={"advance_id": "received-to-360", "expected_step": 1,
+                                   "target_mission_s": 360})
+        assert to_360.status_code == 200 and to_360.json()["mission_s"] == 360
+        crew = client.get(f"{url}/crew", headers=role("crew")).json()
+        hr = next(item for item in crew["health_followup"]["reminders"] if item["metric"] == "heart_rate")
+        assert (hr["last_accepted_at_s"], hr["due_at_s"], hr["status"]) == (60, 360, "due")

@@ -61,7 +61,7 @@ def reminder_id(crew_id: str, metric: str, due_at_s: int) -> str:
 
 def _last_accepted(db: Connection, run_id: str, crew_id: str, metric: str) -> int | None:
     row = db.execute(
-        """SELECT MAX(h.observed_at_s) FROM health_observations h
+        """SELECT MAX(h.received_at_s) FROM health_observations h
            JOIN events e ON e.run_id = h.run_id AND e.event_id = h.event_id
            WHERE h.run_id = ? AND h.crew_id = ? AND h.metric = ? AND h.quality = 'valid'
              AND e.event_type = 'crew.health_measurement'""",
@@ -82,7 +82,8 @@ def _acknowledgments(db: Connection, run_id: str) -> dict[str, dict]:
 def _emergency(db: Connection, run_id: str, crew_id: str) -> dict | None:
     row = db.execute(
         """SELECT case_id, kind, opened_at_s FROM emergency_cases
-           WHERE run_id = ? AND subject_crew_id = ? ORDER BY opened_at_s, case_id LIMIT 1""",
+           WHERE run_id = ? AND subject_crew_id = ? AND acknowledged_at_s IS NULL
+           ORDER BY opened_at_s, case_id LIMIT 1""",
         (run_id, crew_id),
     ).fetchone()
     return dict(row) if row else None
