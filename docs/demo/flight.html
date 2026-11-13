@@ -406,8 +406,8 @@ button[aria-pressed=true]{background:#3d315e}
 #demo-banner{display:flex;align-items:center;flex-wrap:wrap;gap:.25rem .4rem;margin-top:.52rem;padding-top:.45rem;border-top:1px solid #8ea2d042}
 #demo-banner button{font-size:.68rem;white-space:nowrap;padding:.25rem .36rem}
 #demo-time{font:650 .7rem ui-monospace,monospace;color:var(--blue)}
-#demo-status:not([data-stopped]){position:absolute;width:1px;height:1px;clip-path:inset(50%);overflow:hidden}
-#demo-status[data-stopped]{flex-basis:100%;font-size:.72rem;color:#ffcb95}
+#demo-status{flex-basis:100%;font-size:.75rem;font-weight:680;color:#e5edff}
+#demo-status[data-stopped]{color:#ffcb95}
 .launch-field[data-view=launch] .pad-checkout{padding-bottom:calc(clamp(116px,16vw,168px)*.6 + 2.8rem)}
 .launch-field[data-view=launch] .pad-checkout .launch-board{max-height:calc(100svh - var(--launch-clearance,100px) - clamp(116px,16vw,168px)*.6 - 3rem)}
 @media(max-width:850px){.launch-field[data-view=launch] .pad-checkout .launch-board{max-height:none}}
@@ -572,6 +572,10 @@ button[aria-pressed=true]{background:#3d315e}
   .launch-hud .launch-ribbon .launch-nav-actions{flex-wrap:nowrap}
   .hud .ribbon a,.launch-hud .ribbon a{margin-left:0}
   .mission-guide{width:min(13.4rem,calc(100vw - 1.1rem));padding:.45rem .55rem}
+  .mission-guide:has(#demo-banner:not([hidden])) :is(#guide-next,#guide-detail,.guide-actions){display:none}
+  .stage[data-timed-demo] #personnel-widget{max-height:33dvh}
+  .stage[data-timed-demo] #personnel-widget :is(.personnel-actions,.anatomy-tabs,.device-links,#body-regions,.twin-camera){display:none}
+  .stage[data-timed-demo] #personnel-widget .body-layout{grid-template-columns:75px minmax(0,1fr)}
   .guide-head{margin-bottom:.26rem}.guide-track{margin-bottom:.3rem}
   .guide-actions{margin-top:.32rem}.guide-actions button{padding:.2rem .35rem}
   #guide-next{font-size:.84rem}#guide-detail{font-size:.68rem}
@@ -981,7 +985,7 @@ __HUD_ICONS__
   </div>
   <div id="demo-banner" role="group" aria-label="Timed mission demo" hidden>
     <output id="demo-time" aria-label="Demo elapsed time" aria-live="off"></output>
-    <span id="demo-status"></span>
+    <span id="demo-status" role="status"></span>
     <button type="button" id="demo-pause">Pause demo</button>
     <button type="button" id="demo-exit">Exit demo</button>
   </div>
@@ -1032,7 +1036,7 @@ __HUD_ICONS__
         <div><strong>ISS Research Replay</strong><p>Scripted checkpoints · self-paced</p></div>
         <button id="open-flight-replay" type="button">Open replay</button>
       </div>
-      <button id="start-timed-demo" type="button">Run 4-minute mission demo</button>
+      <button id="start-timed-demo" type="button">Run 3-minute mission demo</button>
       <p id="campaign-notice" role="status"></p>
     </section>
     <div class="pad-checkout" id="pad-controls" hidden>
@@ -1147,6 +1151,7 @@ __FLIGHT_WIDGETS__
 __FLIGHT_STATIONS__
 __LAUNCH_SCENE__
 __FLIGHT_MISSIONS__
+__FLIGHT_DEMO__
 __LAUNCH_CHECKOUT__
 __FLIGHT_CREW__
 __DOCKING_SCENE__
@@ -1668,21 +1673,25 @@ function setupBodyMap() {
     });
   }
   element("request-peer-check").addEventListener("click",()=>{
-    if (element("request-peer-check").disabled) return;
-    const member = profileMembers.get("personnel");
-    const requested = Math.floor(missionTime);
-    const observer = availableObserver(member,requested);
-    const room = crewPositions.get(pawns.get(member)).room;
-    const arrival = nextTick(requested) + TICK_SECONDS;
-    for (let i = peerChecks.length-1; i >= 0; i--) {
-      if (peerChecks[i].mode === crewMode() && peerChecks[i].requested > requested) peerChecks.splice(i,1);
-    }
-    peerChecks.push({mode:crewMode(),member,observer,region:selectedRegion,requested,arrival,
-      due:arrival + TICK_SECONDS,origin:crewPositions.get(pawns.get(observer)),room});
-    if (connectedFlight) launchMission.refreshCrewWork();
-    render();
+    if (!element("request-peer-check").disabled) requestPeerCheck(profileMembers.get("personnel"),selectedRegion);
   });
 }
+function requestPeerCheck(member, region) {
+  const requested = Math.floor(missionTime);
+  const observer = availableObserver(member,requested);
+  if (observer === undefined) return false;
+  const room = crewPositions.get(pawns.get(member)).room;
+  const arrival = nextTick(requested) + TICK_SECONDS;
+  for (let i = peerChecks.length-1; i >= 0; i--) {
+    if (peerChecks[i].mode === crewMode() && peerChecks[i].requested > requested) peerChecks.splice(i,1);
+  }
+  peerChecks.push({mode:crewMode(),member,observer,region,requested,arrival,
+    due:arrival + TICK_SECONDS,origin:crewPositions.get(pawns.get(observer)),room});
+  if (connectedFlight) launchMission.refreshCrewWork();
+  render();
+  return true;
+}
+
 function renderAnatomyLayer() {
   const suit = activeLayer === "suit";
   anatomyFigure.toggleAttribute("hidden", suit);
@@ -1730,7 +1739,7 @@ const pendingWearables = new Set();
 let wearableSession;
 
 function refreshWearables(crewId) {
-  if (pendingWearables.has(crewId)) return;
+  if (connectedFlight?.timedDemo || pendingWearables.has(crewId)) return;
   pendingWearables.add(crewId);
   wearableSession ??= fetch("/api/v1/demo/session", {method:"POST",cache:"no-store"}).then(response=>{
     if (!response.ok) throw new Error("Crew session unavailable");
@@ -1798,7 +1807,10 @@ function updateBodyMap(sample, member, frame) {
   suitId.textContent = data.crew[member];
   const channel = activeLayer === "sensors" && selectedRegion === "torso" ? "back_pod"
     : selectedRegion === "wrist" && ["anatomy","cardiorespiratory","sensors"].includes(activeLayer) ? "wristband" : null;
-  const runSignal = missionWearables.get(data.crew[member])?.channels[channel];
+  const timed = connectedFlight?.timedDemo;
+  const runSignal = timed
+    ? channel === "wristband" ? flightDemoWristband(data.crew[member],frame.time,connectedFlight.crewStarted) : null
+    : missionWearables.get(data.crew[member])?.channels[channel];
   const eva = activeEva(frame.time);
   const suited = activeLayer === "suit" && eva?.member === member;
   const suit = suited ? allocator.suit(eva,frame.time) : null;
@@ -1809,8 +1821,12 @@ function updateBodyMap(sample, member, frame) {
       (evaLinkFault() ? "offline" : "online")+" · "+(suit.tethered ? "tether secured" : "tether on standby")+
       " · airlock "+suit.pressure.toLowerCase()+" · inner hatch "+(suit.inner ? "open" : "closed")+
       " · outer hatch "+(suit.outer ? "open" : "closed")+" · internal vitals unavailable",true]
-    : flightHealthRun && ["anatomy","cardiorespiratory","sensors","muscles"].includes(activeLayer)
-    ? runSignal ? [runSignal.source_id,wearableSummary(runSignal),"Synthetic mission device stream.",Boolean(runSignal.reading.accepted)]
+    : (timed || flightHealthRun) && ["anatomy","cardiorespiratory","sensors","muscles"].includes(activeLayer)
+    ? runSignal ? [runSignal.source_id,wearableSummary(runSignal),timed
+      ? runSignal.reading.evidence
+        ? "Suspect sample received T+"+clock(runSignal.reading.evidence.received_at_s)+". Hold the last accepted reading."
+        : "Sana’s resting reference · 68 bpm. Crew-only demo evidence."
+      : "Synthetic mission device stream.",Boolean(runSignal.reading.accepted)]
       : ["No mission device reading","Unobserved","No measurement for this region on the mission clock.",false]
     : regionTelemetry(sample);
   element("region-name").textContent = bodyRegions[selectedRegion].label;
@@ -1818,9 +1834,9 @@ function updateBodyMap(sample, member, frame) {
   element("region-reading").textContent = reading;
   element("region-detail").textContent = detail;
   element("region-time").textContent = suited ? "Observed T+"+clock(frame.time)+" · synthetic suit state"
-    : flightHealthRun ? "" : observed ? "Observed T+" + clock(sample.time) +
+    : timed || flightHealthRun ? "" : observed ? "Observed T+" + clock(sample.time) +
     (connectedFlight ? " · synthetic phase reference" : " · synthetic replay sample") : "";
-  element("wrist-readout").hidden = Boolean(flightHealthRun) || activeLayer !== "sensors" || selectedRegion !== "wrist";
+  element("wrist-readout").hidden = Boolean(timed || flightHealthRun) || activeLayer !== "sensors" || selectedRegion !== "wrist";
   element("wrist-bpm").textContent = sample.heart_rate + " bpm";
   element("wrist-sample").textContent = (connectedFlight ? "Synthetic phase reference" : "Latest simulated sample") +
     " · T+" + clock(sample.time);
@@ -1932,6 +1948,7 @@ function drawHistory(series, field, time) {
 }
 
 function renderProfiles(frame) {
+  const timed = connectedFlight?.timedDemo;
   for (const [kind, member] of profileMembers) {
     const id = data.crew[member];
     const row = data.history[id][index];
@@ -1940,7 +1957,7 @@ function renderProfiles(frame) {
     setIcon(element(kind + "-title"), profileIcons[kind],
       characters[member].short + " · " + (kind==="personnel" ? "Digital twin" : kind[0].toUpperCase() + kind.slice(1)));
     let rows;
-    if (flightHealthRun && ["personnel","devices","vitals"].includes(kind)
+    if (!timed && flightHealthRun && ["personnel","devices","vitals"].includes(kind)
         && !element(kind+"-widget").hidden && !missionWearables.has(id)) refreshWearables(id);
     if (kind === "personnel") {
       const persona = characters[member];
@@ -1954,7 +1971,7 @@ function renderProfiles(frame) {
       element("personnel-role").textContent = duties[member].role + " · " + id;
       element("personnel-location").textContent = roomById.get(zone).name + " · " + task;
       const health = element("personnel-health");
-      health.hidden = !flightHealthRun;
+      health.hidden = timed || !flightHealthRun;
       if (flightHealthRun) health.href = "/runs/" + encodeURIComponent(flightHealthRun) + "/crew?crew_id=" + encodeURIComponent(id);
       element("twin-body").hidden = twinView !== "body";
       element("personnel-data").hidden = twinView === "body";
@@ -1976,6 +1993,10 @@ function renderProfiles(frame) {
       rows = [...crewRoutines.meters(person,frame.time),["Current activity",task],["Needs queue",person.blocked || "Clear"],
         ["Crew checkup",person.checkup ? "Last T+" + clock(person.checkup.time) : "Every 24 mission hours"],
         ["Private mood",reports.mood || "No report"],["Symptoms",reports.symptoms || "No report"]];
+    } else if (timed && ["devices","vitals"].includes(kind)) {
+      const demoSignal = flightDemoWristband(id,frame.time,connectedFlight.crewStarted);
+      rows = [["Synthetic demo · optical wristband",demoSignal ? wearableSummary(demoSignal) : "Unobserved"]];
+      if (kind === "vitals") drawWearableHistory(null,frame.time);
     } else if (flightHealthRun && ["devices","vitals"].includes(kind)) {
       const snapshot = missionWearables.get(id);
       rows = [["Device stream",snapshot ? "Synthetic · run T+"+clock(snapshot.mission_s)
@@ -2374,6 +2395,7 @@ function render() {
   element("one-hour").hidden = Boolean(connectedFlight);
   element("next-event").textContent = connectedFlight ? "Advance 15 s" : "Next event";
   element("stage").dataset.asteria = Boolean(connectedFlight);
+  element("stage").toggleAttribute("data-timed-demo",Boolean(connectedFlight?.timedDemo));
   element("stage").dataset.vehicle = connectedFlight?.visual ?? "";
   element("stage").dataset.steering = Boolean(connectedFlight?.steering);
   element("ship").dataset.vehicle = connectedFlight?.visual ?? "";
@@ -3026,6 +3048,18 @@ const launchMission = bindLaunchCheckout(data.missions,data.replay_version,{
   crew: characters.map((character,index)=>({name:character.name,role:duties[index].role,portrait:()=>crewFace(index)})),
   pauseReplay:stop,
   openCommand:trigger=>commandPanel.open(trigger),
+  closeCommand:()=>commandPanel.close(),
+  onDemoCrew(action) {
+    if (action === "close-twin") {
+      for (const panel of profileWindows.values()) panel.close();
+      return true;
+    }
+    const member = data.crew.indexOf(flightDemoCrew);
+    if (action === "crew-check") return requestPeerCheck(member,"wrist");
+    openDigitalTwin(member,portraits.get(member));
+    element("inspect-wristband").click();
+    return true;
+  },
   exteriorBusy:(mode,time)=>tasks.some(job=>job.mode===mode && job.procedure==="eva" &&
     job.queued<=time && time<job.finishes),
   nextExteriorHold:(mode,time,orbitStart,canReleaseExterior)=>{
@@ -3084,7 +3118,7 @@ const launchMission = bindLaunchCheckout(data.missions,data.replay_version,{
   },
   resetCrew(missionId) {
     for (let i = peerChecks.length-1; i >= 0; i--) if (peerChecks[i].mode === missionId) peerChecks.splice(i,1);
-    allocator.clear(missionId);
+    allocator.clear(missionId,-1,{save:!missionId.endsWith("-timed-demo")});
     evaFaults.delete(missionId);
     activityModes.delete(missionId);
   },

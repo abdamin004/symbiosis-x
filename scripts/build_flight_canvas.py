@@ -42,6 +42,7 @@ def build(output: Path) -> None:
     launch_scene = (ROOT / "docs/demo/launch-scene.js").read_text(encoding="utf-8")
     missions_ui = (ROOT / "docs/demo/flight-missions.js").read_text(encoding="utf-8")
     checkout = (ROOT / "docs/demo/launch-checkout.js").read_text(encoding="utf-8")
+    timed_demo = (ROOT / "docs/demo/flight-demo.js").read_text(encoding="utf-8")
     anatomy = (ROOT / "docs/demo/flight-anatomy.html").read_text(encoding="utf-8")
     crew_routines = (ROOT / "docs/demo/flight-crew.js").read_text(encoding="utf-8")
     docking_scene = (ROOT / "docs/demo/docking-scene.js").read_text(encoding="utf-8")
@@ -53,7 +54,7 @@ def build(output: Path) -> None:
         .replace("__FLIGHT_WORKFLOW__", workflow).replace("__FLIGHT_WIDGETS__", widgets)
         .replace("__FLIGHT_STATIONS__", stations).replace("__LAUNCH_SCENE__", launch_scene)
         .replace("__FLIGHT_MISSIONS__", missions_ui)
-        .replace("__LAUNCH_CHECKOUT__", checkout).replace("__HUD_ICONS__", icons)
+        .replace("__FLIGHT_DEMO__", timed_demo).replace("__LAUNCH_CHECKOUT__", checkout).replace("__HUD_ICONS__", icons)
         .replace("__FLIGHT_ANATOMY__", anatomy).replace("__FLIGHT_CREW__", crew_routines)
         .replace("__DOCKING_SCENE__", docking_scene).replace("__FLIGHT_NAVIGATION__", navigation)
         .replace("__FLIGHT_PROCESSES__", processes),

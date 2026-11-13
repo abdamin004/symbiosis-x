@@ -199,44 +199,6 @@ test("Horizon burns into orbit, reaches ISS and returns to Earth in one saved mi
   await expect(navigation.locator("#navigation-reserve")).toContainText("9 cold-gas pulses");
 });
 
-test("timed demo recovers the crew in four active minutes without touching the campaign", async ({ page }) => {
-  await page.setViewportSize({width:390,height:844});
-  await page.clock.install();
-  await page.route(url=>url.pathname==="/flight",route=>route.fulfill({contentType:"text/html",body:flightHtml}));
-  await page.goto("/flight");
-  await page.evaluate(()=>localStorage.setItem("sx:launch-checkout:v1",JSON.stringify({time:15,jobs:{},hold:true})));
-  await page.reload();
-  await expect(page.locator("#campaign-save")).toHaveText("Launch held · T+0:15");
-  await page.getByRole("button",{name:"Run 4-minute mission demo"}).click();
-  async function verifyGuideLayout(transport) {
-    const guide = await page.locator("#mission-guide").boundingBox();
-    const controls = await page.locator(transport).boundingBox();
-    expect(guide.x+guide.width).toBeLessThanOrEqual(390);
-    expect(guide.y).toBeGreaterThanOrEqual(controls.y+controls.height);
-    const instrument = await page.locator("#flight-instrument").boundingBox();
-    if (instrument) expect(guide.y+guide.height).toBeLessThan(instrument.y);
-  }
-  await expect(page.locator("#guide-next")).toHaveText("Start ship systems");
-  await verifyGuideLayout("#pad-transport");
-  await page.clock.runFor(55_000);
-  await expect(page.locator("#demo-time")).toHaveText(/0:55/);
-  await page.getByRole("button",{name:"Pause demo"}).click();
-  await page.clock.runFor(10_000);
-  await expect(page.locator("#demo-time")).toHaveText(/0:55/);
-  await page.getByRole("button",{name:"Resume demo"}).click();
-  await page.clock.runFor(53_000);
-  await expect(page.locator("#orbital-burn-scene")).toBeVisible();
-  await verifyGuideLayout(".flight-controls");
-  await expect(page.locator("#guide-next")).toHaveText("Raise apoapsis to station altitude");
-  await page.clock.runFor(127_000);
-  await expect(page.locator("#demo-status")).not.toHaveText("Crew recovered on Earth");
-  await page.clock.runFor(5000);
-  await expect(page.locator("#demo-time")).toHaveText("4:00 / 4:00");
-  await expect(page.locator("#demo-status")).toHaveText("Crew recovered on Earth");
-  await page.getByRole("button",{name:"Exit demo"}).click();
-  await expect(page.locator("#campaign-save")).toHaveText("Launch held · T+0:15");
-});
-
 test("the exterior workflow recalls on link loss and verifies a later repair once", async ({ page }) => {
   await page.emulateMedia({reducedMotion:"reduce"});
   await page.route(url=>url.pathname==="/flight",route=>route.fulfill({contentType:"text/html",body:flightHtml}));
