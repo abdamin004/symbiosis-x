@@ -4,7 +4,7 @@ function createCrewRoutines({count,tick,occupied,rules,underCabinAlert}) {
     {id:"meal",label:"Food",asset:"galley",action:"Eat a meal",interval:7200,duration:240,stock:"meals",cost:1},
     {id:"water",label:"Hydration",asset:"galley",action:"Drink water",interval:4200,duration:90,stock:"water",cost:.25},
     {id:"rest",label:"Rest",asset:"bed",action:"Rest in bunk",interval:14400,duration:900},
-    {id:"hygiene",label:"Hygiene",asset:"wc",action:"Use the WC",interval:6600,duration:150},
+    {id:"hygiene",label:"Hygiene",asset:"wc",action:"Use the WC and wash hands",interval:6600,duration:150},
   ];
   const duties = [
     [["radio","Review mission plan"],["stores","Review supply manifest"],["galley","Check galley supplies"]],
@@ -26,10 +26,20 @@ function createCrewRoutines({count,tick,occupied,rules,underCabinAlert}) {
     }))};
   }
 
-  function applyCommands(session,campaign,time) {
+  function applyCommands(session,campaign,time,galleyOnly = false) {
     for (const event of campaign.commands) {
       if (event.time > time || session.appliedProvisionCommands?.has(event.id)) continue;
+      if (galleyOnly !== event.action.startsWith("galley-")) continue;
       const returned = campaign.departure != null && event.time >= campaign.departure;
+      if (event.action.startsWith("galley-")) {
+        session.galley?.finishDue(event.time);
+        const action = event.action.slice(7);
+        if (!returned || ["report","review","recheck","share"].includes(action)) {
+          session.galley?.apply({...event,action},session.ledgers.outbound);
+        }
+        (session.appliedProvisionCommands ??= new Set()).add(event.id);
+        continue;
+      }
       const ledger = session.ledgers[returned || event.action === "replenish" ? "returned" : "outbound"];
       ledger.commit(event.id,event.action,"routine",{
         time:event.time,power:remainingPower(session,campaign,event.time),
@@ -56,9 +66,15 @@ function createCrewRoutines({count,tick,occupied,rules,underCabinAlert}) {
         outbound:createFlightProvisions(rules,campaign.vehicle),
         returned:createFlightProvisions(rules,"return-capsule"),
       };
+      if (campaign?.vehicle === "asteria") session.galley = createGalleyHygiene(start,tick,count);
       sessions.set(mode,session);
     }
     for (let time = session.time+tick; time <= now; time += tick) {
+      if (session.galley) {
+        applyCommands(session,campaign,time,true);
+        session.galley.finishDue(time);
+      }
+      const galley = campaign?.departure != null && time >= campaign.departure ? null : session.galley;
       const ledger = session.ledgers?.[campaign.departure != null && time>=campaign.departure ? "returned" : "outbound"];
       const power = campaign ? remainingPower(session,campaign,time) : 0;
       const reserved = new Set();
@@ -84,9 +100,10 @@ function createCrewRoutines({count,tick,occupied,rules,underCabinAlert}) {
           if (job.need) {
             const operation = {meal:"prepare_meal",water:"drink",hygiene:"hygiene"}[job.need.id];
             const reason = ledger && operation ? ledger.commit("crew-"+member+"-"+job.assigned,operation,
-              job.activity,{time,power}) : null;
+              job.activity,{time,power,galleyHold:Boolean(galley?.prepareHeld())}) : null;
             if (!reason) person.refreshed[job.need.id] = job.finishes;
             else person.provisionHold = reason;
+            if (job.need.id === "meal" && !reason) galley?.logMeal(member,job.finishes);
             if (!ledger && job.need.stock) {
               session.supplies[job.need.stock] -= job.need.cost;
               remaining[job.need.stock] -= job.need.cost;
@@ -96,7 +113,7 @@ function createCrewRoutines({count,tick,occupied,rules,underCabinAlert}) {
           } else person.rotation++;
           person.previous = job.asset;
           person.active = null;
-        } else if ((person.reliefAt !== null && !job.need && job.checkup === undefined) || occupied(member,job.asset,time) ||
+        } else if (galley?.activeJob(member,time) || (person.reliefAt !== null && !job.need && job.checkup === undefined) || occupied(member,job.asset,time) ||
             job.checkup !== undefined && occupied(job.checkup,null,time)) {
           person.previous = time >= job.arrival ? job.asset : person.previous;
           person.active = null;
@@ -107,7 +124,7 @@ function createCrewRoutines({count,tick,occupied,rules,underCabinAlert}) {
       });
       session.crew.forEach((person,member)=>{
         person.blocked = person.provisionHold ?? "";
-        if (person.active || session.crew.some(other=>other.active?.checkup === member) || occupied(member,null,time)) return;
+        if (person.active || galley?.activeJob(member,time) || session.crew.some(other=>other.active?.checkup === member) || occupied(member,null,time)) return;
         const needsRelief = person.reliefAt !== null;
         const urgent = needs.map(need=>({need,age:(time-person.refreshed[need.id])/need.interval}))
           .filter(item=>item.age >= (needsRelief ? 1 : .72)).sort((a,b)=>b.age-a.age);
@@ -129,7 +146,7 @@ function createCrewRoutines({count,tick,occupied,rules,underCabinAlert}) {
         const activity = person.previous === "bed" ? "rest" : person.previous ? "working" : "routine";
         const need = urgent.find(({need})=>available(need.asset) && (ledger
           ? need.id === "rest" ||
-            need.id === "meal" && ledger.stock.meals > 0 && power >= rules.load_kw.prepare_meal &&
+            need.id === "meal" && !galley?.prepareHeld() && ledger.stock.meals > 0 && power >= rules.load_kw.prepare_meal &&
               ledger.stock.potable >= ledger.cost("prepare_meal",activity) ||
             need.id === "water" && ledger.stock.potable >= ledger.cost("drink",activity) ||
             need.id === "hygiene" && ledger.ration === "standard" && power >= rules.load_kw.hygiene &&
@@ -137,6 +154,10 @@ function createCrewRoutines({count,tick,occupied,rules,underCabinAlert}) {
           : !need.stock || remaining[need.stock] >= need.cost))?.need;
         if (needsRelief && !need) {
           person.blocked = "Routine duty paused for relief";
+          return;
+        }
+        if (!need && !reserved.has("galley") && !occupied(member,"galley",time) && galley?.scheduleRoutine(member,time)) {
+          reserved.add("galley");
           return;
         }
         const routine = duties[member][person.rotation%duties[member].length];
@@ -157,7 +178,9 @@ function createCrewRoutines({count,tick,occupied,rules,underCabinAlert}) {
       session.time = time;
     }
     if (session.ledgers) {
+      applyCommands(session,campaign,now,true);
       applyCommands(session,campaign,now);
+      session.galley?.finishDue(now);
       session.provisions = session.ledgers[campaign.departure != null && now>=campaign.departure ? "returned" : "outbound"];
       session.supplies = {meals:session.provisions.stock.meals,water:session.provisions.stock.potable/1000};
     }
@@ -212,6 +235,7 @@ function createFlightProvisions(rules, vehicle) {
   }
 
   function apply(action, activity, evidence) {
+    if (action === "prepare_meal" && evidence.galleyHold) return "Galley work surface held";
     if (rules.load_kw[action] > evidence.power) return "Power headroom too low";
     if (["drink","prepare_meal","hygiene","oxygen_generation"].includes(action)) return consume(action,activity);
     if (action === "standard" || action === "conserve") ration = action;
