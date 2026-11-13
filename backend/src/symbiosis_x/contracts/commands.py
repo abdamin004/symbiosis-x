@@ -28,6 +28,7 @@ class RunReceipt(Contract):
 class AdvanceRunRequest(Contract):
     advance_id: Identifier
     expected_step: NonnegativeInt
+    target_mission_s: NonnegativeInt | None = None
 
 
 class AdvanceReceipt(RunReceipt):
