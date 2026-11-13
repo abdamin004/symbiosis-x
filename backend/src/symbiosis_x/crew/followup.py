@@ -61,7 +61,7 @@ def reminder_id(crew_id: str, metric: str, due_at_s: int) -> str:
 
 def _last_accepted(db: Connection, run_id: str, crew_id: str, metric: str) -> int | None:
     row = db.execute(
-        """SELECT MAX(h.observed_at_s) FROM health_observations h
+        """SELECT MAX(h.received_at_s) FROM health_observations h
            JOIN events e ON e.run_id = h.run_id AND e.event_id = h.event_id
            WHERE h.run_id = ? AND h.crew_id = ? AND h.metric = ? AND h.quality = 'valid'
              AND e.event_type = 'crew.health_measurement'""",
