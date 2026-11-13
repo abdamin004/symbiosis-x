@@ -73,3 +73,14 @@ export function saveCrewMeasurement(runId, command) {
     method: "POST", body: JSON.stringify(command),
   });
 }
+
+export function openEmergencyCase(runId, command) {
+  return jsonRequest("/runs/" + encodeURIComponent(runId) + "/crew/emergencies", "crew", {
+    method: "POST", body: JSON.stringify(command),
+  });
+}
+export function acknowledgeEmergencyCase(runId, caseId, command) {
+  return jsonRequest("/runs/" + encodeURIComponent(runId) + "/crew/emergencies/" + encodeURIComponent(caseId) + "/acknowledgment", "crew", {
+    method: "POST", body: JSON.stringify(command),
+  });
+}
