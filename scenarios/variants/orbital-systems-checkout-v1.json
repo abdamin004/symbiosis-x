@@ -1,0 +1,125 @@
+{
+  "id": "orbital-systems-checkout",
+  "version": 1,
+  "title": "Orbital Systems Checkout",
+  "vehicle": "Kestrel · light crew vehicle and ascent booster",
+  "ship": "Kestrel",
+  "seed": 4242,
+  "pacing": "4–6 minutes",
+  "objective": "Reach a low Earth orbit, verify the orbital systems, and recover the crew from the same vehicle.",
+  "briefing": [
+    "Start ship systems, assign the crew checks, and arm the countdown when ready.",
+    "Commit liftoff, separate the ascent booster at burnout, and raise periapsis into a stable orbit.",
+    "Assign Ivo to check the orbital systems. Once the result is verified, commit deorbit and confirm recovery."
+  ],
+  "stages": [
+    {
+      "id": "upper",
+      "name": "Kestrel crew vehicle",
+      "detail": "Four seats · orbital propulsion and Earth return"
+    },
+    {
+      "id": "booster",
+      "name": "Light ascent booster",
+      "detail": "First stage · ignition gate"
+    }
+  ],
+  "jobs": [
+    {
+      "id": "restraints",
+      "title": "Verify restraints and suit seals",
+      "crew": "Sana Kepler",
+      "station": "Crew cabin",
+      "duration_s": 30,
+      "purpose": "Confirm the crew can stay secured through ascent."
+    },
+    {
+      "id": "engine",
+      "title": "Confirm propulsion readiness",
+      "crew": "Ivo Reyes",
+      "station": "Engineering",
+      "duration_s": 45,
+      "purpose": "Verify the engines and flight controls are ready."
+    },
+    {
+      "id": "link",
+      "title": "Read back range clearance",
+      "crew": "Noor Okafor",
+      "station": "Communications",
+      "duration_s": 30,
+      "purpose": "Confirm the simulated range has cleared the launch."
+    }
+  ],
+  "ascent": {
+    "burn_s": 30,
+    "separation_deadline_s": 75,
+    "minimum_coast_s": 15,
+    "coast_limit_s": 75,
+    "reserve_initial": 72,
+    "insertion_cost": 35,
+    "minimum_reserve": 15,
+    "coast_cost_per_tick": 6,
+    "insertion_profile": {
+      "apoapsis_km": 170,
+      "initial_periapsis_km": -30,
+      "target_periapsis_km": 160,
+      "minimum_periapsis_km": 150
+    }
+  },
+  "sequence": {
+    "countdown_s": 15,
+    "objectives": [
+      {
+        "id": "checks",
+        "label": "Verify crew and range checks",
+        "planned_s": 45
+      },
+      {
+        "id": "countdown",
+        "label": "Arm countdown and commit liftoff",
+        "planned_s": 60
+      },
+      {
+        "id": "separation",
+        "label": "Separate the light ascent booster",
+        "planned_s": 90
+      },
+      {
+        "id": "insertion",
+        "label": "Establish stable orbit",
+        "planned_s": 105
+      },
+      {
+        "id": "systems",
+        "label": "Verify orbital systems",
+        "planned_s": 135
+      },
+      {
+        "id": "deorbit",
+        "label": "Commit deorbit",
+        "planned_s": 135
+      },
+      {
+        "id": "landing",
+        "label": "Land Kestrel",
+        "planned_s": 180
+      },
+      {
+        "id": "return",
+        "label": "Confirm Earth recovery",
+        "planned_s": 180
+      }
+    ]
+  },
+  "checkout_s": 30,
+  "pad": {
+    "daylight_cycle_s": 240,
+    "daylight_offset_s": 35,
+    "startup_s": 15
+  },
+  "return": {
+    "entry_s": 30,
+    "descent_s": 15,
+    "reserve_cost": 10
+  }
+}

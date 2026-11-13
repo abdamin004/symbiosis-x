@@ -73,8 +73,10 @@ function createFlightNavigation(reference, hosts) {
       craft = [radius*Math.cos(angle),radius*Math.sin(angle),stationAtDeparture[2]];
     }
     if (data.deorbit !== null) {
-      const start = Math.atan2(craft[1],craft[0]) - tau*(data.time-data.deorbit)/reference.station.period;
-      const altitude = Math.hypot(craft[0],craft[1])-reference.earth;
+      const atBurn = data.checkout ? pointAt(orbit,data.deorbit-data.insertion) : craft;
+      const start = Math.atan2(atBurn[1],atBurn[0]) -
+        (data.checkout ? 0 : tau*(data.time-data.deorbit)/reference.station.period);
+      const altitude = Math.hypot(atBurn[0],atBurn[1])-reference.earth;
       const entry = Array.from({length:30},(_,i)=>{
         const f = i/29;
         const radius = reference.earth + altitude*(1-f*f);

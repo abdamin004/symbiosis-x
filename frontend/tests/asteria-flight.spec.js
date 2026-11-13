@@ -30,12 +30,11 @@ test("Asteria hands off to the crew canvas and returns to Earth in one saved mis
   await page.goto("/flight");
   const button = name => page.getByRole("button", { name, exact: true });
 
-  const start = button("Start mission");
-  if (await start.isVisible()) await start.click();
+  await button("New run").click();
   await expect(page.locator("#launch-status")).toHaveText("Launchpad");
 
   await button("Briefing").click();
-  await expect(page.getByRole("dialog", { name:"Asteria mission briefing" })).toBeVisible();
+  await expect(page.getByRole("dialog", { name:"ISS Research and Return briefing" })).toBeVisible();
   await button("Close").click();
   for (const crew of ["Sana", "Ivo", "Noor"]) {
     await button("Assign " + crew).click();
@@ -53,7 +52,7 @@ test("Asteria hands off to the crew canvas and returns to Earth in one saved mis
   await transport.getByRole("button", { name:"Play", exact:true }).click();
   await expect(button("Arm countdown")).toBeEnabled({ timeout:6000 });
   await expect(page.locator("#startup-status")).toHaveAttribute("data-online", "true");
-  await transport.getByRole("button", { name:"Pause", exact:true }).click();
+  await expect(transport.getByRole("button", { name:"Play", exact:true })).toBeDisabled();
   await button("Arm countdown").click();
   await expect(liftoff).toBeDisabled();
   await advance(1);
@@ -63,7 +62,13 @@ test("Asteria hands off to the crew canvas and returns to Earth in one saved mis
   await expect(transport.getByRole("button", { name:"Pause", exact:true })).toBeVisible();
   await transport.getByRole("button", { name:"Pause", exact:true }).click();
   await transport.getByRole("button", { name:"Play", exact:true }).click();
-  await expect(page.locator("#ship canvas")).toBeVisible({ timeout: 15_000 });
+  await expect(button("Separate booster")).toBeVisible();
+  await expect(transport.getByRole("button", { name:"Play", exact:true })).toBeDisabled();
+  await button("Separate booster").click();
+  await expect(button("Commit orbital insertion")).toBeVisible();
+  await expect(transport.getByRole("button", { name:"Play", exact:true })).toBeDisabled();
+  await button("Commit orbital insertion").click();
+  await expect(page.locator("#ship canvas")).toBeVisible();
   await expect(page.locator("#ship .pawn:visible")).toHaveCount(4);
   const flightPlayback = page.getByRole("group", { name:"Flight playback" });
   await expect(flightPlayback.getByRole("button", { name:"Cycle speed" })).toHaveText("4×");
@@ -129,8 +134,6 @@ test("Asteria hands off to the crew canvas and returns to Earth in one saved mis
   await button("Confirm crew recovery").click();
 
   await page.reload();
-  const resume = button("Resume mission");
-  if (await resume.isVisible()) await resume.click();
   await expect(page.locator("#launch-status")).toHaveText("Crew recovered on Earth");
   await expect(page.locator("#ship canvas")).toBeVisible();
   await expect(page).toHaveURL(missionUrl);
@@ -142,7 +145,7 @@ test("ISS replay portraits and pawns open crew anatomy with evidence for the sel
   await page.setViewportSize({ width: 620, height: 820 });
   await page.route(url => url.pathname === "/flight", route => route.fulfill({ contentType: "text/html", body: flightHtml }));
   await page.goto("/flight");
-  await page.getByRole("button", { name: "ISS research replay", exact: true }).click();
+  await page.getByRole("button", { name: "Open replay", exact: true }).click();
 
   await page.locator("#crew-strip .crew-portrait").first().click();
   const twin = page.locator("#personnel-widget");
@@ -175,4 +178,76 @@ test("ISS replay portraits and pawns open crew anatomy with evidence for the sel
   await page.getByRole("button", {name:"Skip one mission hour"}).click();
   await page.getByRole("button", {name:"Skip one mission hour"}).click();
   await expect(resources).not.toContainText("40 meals");
+});
+
+test("Flight resumes independent campaigns and preserves the legacy Asteria save", async ({ page, context }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await context.route(url => url.pathname === "/flight", route => route.fulfill({ contentType: "text/html", body: flightHtml }));
+  await page.goto("/flight");
+  await page.evaluate(() => localStorage.setItem("sx:launch-checkout:v1",
+    JSON.stringify({time:15, jobs:{engine:{due:45}},startupAt:0,hold:true})));
+  await page.reload();
+  const button = name => page.getByRole("button", { name, exact: true });
+  await expect(page.getByRole("heading", { name:"Choose a mission" })).toBeVisible();
+  await expect(page.locator("#campaign-save")).toHaveText("Launch held · T+0:15");
+  await button("Resume").click();
+  await expect(page.locator("#launch-status")).toHaveText("Launch held");
+  await expect(button("Assigned Ivo")).toBeDisabled();
+  await button("Save and exit").click();
+
+  await page.getByRole("radio", { name:"Orbital Systems Checkout" }).check();
+  await expect(page.locator("#campaign-ship")).toContainText("Kestrel");
+  await expect(page.locator("#campaign-save")).toHaveText("Available · no saved run");
+  await button("Briefing").click();
+  await expect(page.getByRole("dialog", { name:"Orbital Systems Checkout briefing" })).toContainText("4–6 minutes");
+  await button("Close").click();
+  await button("New run").click();
+  await expect(page.locator("#launch-mission-name")).toHaveText("Orbital Systems Checkout");
+  for (const crew of ["Sana", "Ivo", "Noor"]) await button("Assign " + crew).click();
+  await button("Start ship systems").click();
+  const step = button("Advance 15 s");
+  for (let i = 0; i < 3; i++) await step.click();
+  await button("Arm countdown").click();
+  await step.click();
+  await button("Launch").click();
+  await expect(button("Separate booster")).toBeVisible();
+  await button("Save and exit").click();
+
+  const reopened = await context.newPage();
+  await page.close();
+  await reopened.emulateMedia({ reducedMotion: "reduce" });
+  await reopened.goto("/flight");
+  const reopenedButton = name => reopened.getByRole("button", { name, exact: true });
+  await expect(reopened.locator("#campaign-save")).toHaveText("Launch held · T+0:15");
+  await reopened.getByRole("radio", { name:"Orbital Systems Checkout" }).check();
+  await expect(reopened.locator("#campaign-save")).toHaveText("Booster burnout · T+1:30");
+  await reopenedButton("Resume").click();
+  await expect(reopened.locator("#pad-clock")).toHaveText("T+1:30");
+  await reopenedButton("Separate booster").click();
+  await reopenedButton("Commit orbital insertion").click();
+  await expect(reopened.locator("#flight-mission-name")).toHaveText("Orbital Systems Checkout");
+  await expect(reopenedButton("Commit phasing")).toBeHidden();
+  await reopenedButton("Orbit map").click();
+  await expect(reopened.locator("#navigation-pe")).toHaveText("160 km");
+  await expect(reopened.locator("#navigation-approach")).toHaveText("Orbital checkout");
+  await reopenedButton("Close").click();
+  await reopenedButton("Assign Ivo to orbital systems check").click();
+  const orbitStep = reopenedButton("Advance one mission tick");
+  await orbitStep.click();
+  await orbitStep.click();
+  await expect(reopened.locator("#resource-phase")).toContainText("Orbital systems verified");
+  await reopenedButton("Commit deorbit").click();
+  for (let i = 0; i < 3; i++) await orbitStep.click();
+  await reopenedButton("Confirm landing").click();
+  await reopenedButton("Confirm crew recovery").click();
+  await reopenedButton("Save and exit").click();
+  await reopenedButton("New run").click();
+  await reopenedButton("Keep saved run").click();
+  await expect(reopened.locator("#campaign-save")).toContainText("Crew recovered on Earth");
+  await reopenedButton("New run").click();
+  await reopenedButton("Replace saved run").click();
+  await expect(reopened.locator("#pad-clock")).toHaveText("T+0:00");
+  await reopenedButton("Save and exit").click();
+  await reopened.getByRole("radio", { name:"ISS Research and Return" }).check();
+  await expect(reopened.locator("#campaign-save")).toHaveText("Launch held · T+0:15");
 });
