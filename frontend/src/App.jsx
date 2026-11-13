@@ -3,6 +3,7 @@ import { FIXTURE_RUN } from "./api/fixtures.js";
 import MissionConsole from "./features/mission/MissionConsole.jsx";
 import RunLauncher from "./features/mission/RunLauncher.jsx";
 import MeasurementPage from "./features/crew/MeasurementPage.jsx";
+import EmergencyAssist from "./features/crew/EmergencyAssist.jsx";
 
 // Routes choose a view. The server resolves the caller's role and decides what it may read.
 export default function App() {
@@ -11,6 +12,7 @@ export default function App() {
       <Route path="/" element={<RunLauncher run={FIXTURE_RUN} />} />
       <Route path="/runs/:runId/crew" element={<MissionConsole role="crew" />} />
       <Route path="/runs/:runId/crew/measure" element={<MeasurementPage />} />
+      <Route path="/runs/:runId/crew/emergency" element={<EmergencyAssist />} />
       <Route path="/runs/:runId/ground" element={<MissionConsole role="ground" />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
