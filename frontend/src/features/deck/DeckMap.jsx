@@ -66,15 +66,18 @@ export default function DeckMap({ role }) {
   const [selected, setSelected] = useState("scrubber");
   const [enlarged, setEnlarged] = useState(false);
   const item = ITEMS[selected] ?? ITEMS.scrubber;
+  // The SVG is managed through innerHTML. Render the pressed state from React
+  // rather than mutating the discarded SVG nodes during a state update.
+  const displayedSVG = SHIP_DECK_SVG.replace(
+    /data-pick="([^"]+)"([^>]*?)aria-pressed="false"/g,
+    (match, key, attributes) => `data-pick="${key}"${attributes}aria-pressed="${key === selected}"`,
+  );
   function select(event) {
     const marker = event.target.closest?.("[data-pick]");
     if (!marker || !event.currentTarget.contains(marker)) return;
     const key = marker.getAttribute("data-pick");
     if (!ITEMS[key]) return;
     setSelected(key);
-    event.currentTarget.querySelectorAll("[data-pick]").forEach((node) => {
-      node.setAttribute("aria-pressed", String(node === marker));
-    });
   }
   function selectByKeyboard(event) {
     if (event.key !== "Enter" && event.key !== " ") return;
@@ -93,7 +96,7 @@ export default function DeckMap({ role }) {
       <div className="deck-map-layout">
         <div>
           <div className="deck-map-canvas" onClick={select} onKeyDown={selectByKeyboard} tabIndex={-1} aria-label="Interactive spacecraft deck map">
-            <div dangerouslySetInnerHTML={{ __html: SHIP_DECK_SVG }} />
+            <div dangerouslySetInnerHTML={{ __html: displayedSVG }} />
           </div>
           <div className="map-readouts"><span>SCRUBBER · 20 m³/h</span><span>HEADROOM · 0.60 kW</span></div>
         </div>
