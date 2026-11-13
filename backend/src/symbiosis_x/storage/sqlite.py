@@ -11,6 +11,7 @@ MIGRATIONS = (
     "001_initial.sql",
     "002_integer_integrity.sql",
     "003_observation_series.sql",
+    "004_health.sql",
 )
 SCHEMA_REVISION = len(MIGRATIONS)
 

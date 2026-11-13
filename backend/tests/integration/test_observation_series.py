@@ -18,7 +18,7 @@ def test_seeded_series_are_queryable_and_idempotent(tmp_path):
     assert seed(database)
     assert not seed(database)
     with closing(connect(database)) as db:
-        assert db.execute("PRAGMA user_version").fetchone()[0] == 3
+        assert db.execute("PRAGMA user_version").fetchone()[0] == 4
         assert db.execute("SELECT count(*) FROM events").fetchone()[0] == 26
         query = """
             SELECT observed_at_s, value FROM telemetry_observations

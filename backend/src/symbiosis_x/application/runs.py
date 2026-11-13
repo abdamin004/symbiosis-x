@@ -22,6 +22,22 @@ class RunConflict(Exception):
     pass
 
 
+def load_active_run(db, run_id: str):
+    """Return the run row for a writer, or raise when it is missing or closed."""
+    run = db.execute("SELECT * FROM runs WHERE run_id = ?", (run_id,)).fetchone()
+    if run is None:
+        raise RunNotFound("RUN_NOT_FOUND")
+    if run["status"] != "active":
+        raise RunConflict("RUN_CLOSED")
+    return run
+
+
+def next_event_seq(db, run_id: str) -> int:
+    return db.execute(
+        "SELECT COALESCE(MAX(event_seq), 0) + 1 FROM events WHERE run_id = ?", (run_id,)
+    ).fetchone()[0]
+
+
 def request_digest(command: StartRunRequest | AdvanceRunRequest | ResetRunRequest) -> str:
     return sha256(command.model_dump_json().encode()).hexdigest()
 
