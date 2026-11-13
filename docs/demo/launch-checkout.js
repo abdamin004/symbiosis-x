@@ -1,5 +1,5 @@
 // Local Commander training exercise. The live golden run has its own clock and command gate.
-function bindLaunchCheckout(config, {pauseReplay,onCanvas,onPlayback,resetCrew,hasCrewWork,crew}) {
+function bindLaunchCheckout(config, {pauseReplay,onCanvas,onPlayback,resetCrew,crew}) {
   const find = id => document.getElementById(id);
   const canvas = find("launch-scene");
   const scene = createLaunchScene(canvas);
@@ -171,7 +171,7 @@ function bindLaunchCheckout(config, {pauseReplay,onCanvas,onPlayback,resetCrew,h
       dock = "Approach · hatch secured";
     }
     const phases = {5:"Approach",6:"Docked",7:"Station research",9:"Return transit",10:"Recovery"};
-    return {time:state.time,phaseStarted,frameIndex,visual,advance:canAdvance(),speed,canWaitForCrew:Boolean(flight.phaseBurn),frame:{
+    return {time:state.time,phaseStarted,crewStarted:state.insertion,frameIndex,visual,advance:canAdvance(),speed,canWaitForCrew:Boolean(flight.phaseBurn),frame:{
       phase:phases[frameIndex] ?? "Outbound",
       label:flight.phase,site,dock,
       vehicle:state.departedAt !== null ? "Asteria return capsule" : "Asteria",
@@ -219,7 +219,7 @@ function bindLaunchCheckout(config, {pauseReplay,onCanvas,onPlayback,resetCrew,h
     if (state.ignition === null) return true;
     const flight = flightState();
     return state.insertion !== null && performance.now() >= orbitPreviewUntil &&
-      Boolean(flight.advance || flight.phaseBurn && hasCrewWork(state.time));
+      Boolean(flight.advance || flight.phaseBurn);
   }
   function updatePadClock(time) {
     const light = lightAt(time);

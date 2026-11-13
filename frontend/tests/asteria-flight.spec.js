@@ -75,14 +75,18 @@ test("Asteria hands off to the crew canvas and returns to Earth in one saved mis
   await page.locator("#crew-strip .crew-portrait").first().click();
   const twin = page.locator("#personnel-widget");
   await twin.getByRole("button", { name:"Head on body map" }).click();
-  await expect(twin.locator("#crew-camera")).toContainText(/At station/);
-  await twin.getByRole("button", { name:"Request crewmate check" }).click();
+  await expect(twin.locator("#crew-camera")).toContainText(/Moving|At station/);
+  await expect(page.getByRole("group",{name:"Mission resources"})).toContainText("40 meals");
+  await expect(page.locator("#ship .pawn .action-marker meter:visible").first()).toBeVisible();
+  await page.getByRole("button", { name:"Orders", exact:true }).click();
+  await button("Request crewmate check").click();
   await expect(twin.locator("#peer-check-status")).toContainText("due T+");
   const tick = flightPlayback.getByRole("button", { name:"Advance one mission tick" });
   await tick.click();
   await tick.click();
   await expect(twin.locator("#peer-check-status")).toContainText("recorded a visual check");
-  await expect(twin.locator("#region-reading")).toHaveText("Unobserved");
+  await expect(twin.locator("#region-reading")).toHaveText("Normal · visual check");
+  await button("Close orders").click();
   await twin.getByRole("button", { name:"Close Digital twin widget" }).click();
 
   const command = page.getByRole("region", { name: "Flight command" });
@@ -132,6 +136,7 @@ test("ISS replay portraits and pawns open crew anatomy with evidence for the sel
   await expect(twin.locator("#region-reading")).toHaveText("Unobserved");
 
   await twin.getByRole("button", { name: "Wristband · left wrist" }).click();
+  await expect(twin.locator("#wrist-bpm")).toHaveText(/\d+ bpm/);
   await expect(twin.locator("#region-source")).toHaveText("Simulated optical wristband");
   await expect(twin.locator("#region-reading")).toHaveText(/\d+ bpm/);
   await expect(twin.locator("#region-time")).toHaveText(/Observed T\+/);
@@ -148,4 +153,9 @@ test("ISS replay portraits and pawns open crew anatomy with evidence for the sel
   await expect(twin).toBeVisible();
   await expect(twin.locator("#personnel-name")).not.toHaveText(firstMember);
   await expect(twin.getByRole("tab", { name: "Anatomy", exact: true })).toHaveAttribute("aria-selected", "true");
+  const resources = page.getByRole("group", {name:"Mission resources"});
+  await expect(resources).toContainText("40 meals");
+  await page.getByRole("button", {name:"Skip one mission hour"}).click();
+  await page.getByRole("button", {name:"Skip one mission hour"}).click();
+  await expect(resources).not.toContainText("40 meals");
 });
