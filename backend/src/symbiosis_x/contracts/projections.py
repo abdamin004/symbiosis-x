@@ -111,6 +111,7 @@ class RunView(Contract):
     scenario_id: Identifier
     scenario_version: Identifier
     mission_s: NonnegativeInt
+    status: Literal["active", "closed"] = "active"
 
 
 class AcceptedCO2(Quantity):

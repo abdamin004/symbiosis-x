@@ -8,7 +8,7 @@ const EMPTY = {
   observed_at_s: "0", source_id: "synthetic.manual.sim-01", quality: "valid",
   value: "", systolic: "", diastolic: "", method: "assigned_device",
   meal_context: "fasting", site: "oral", duration_min: "",
-  start_mission_s: "", end_mission_s: "", score: "3", symptoms: "", private_text: "",
+  start_mission_s: "", end_mission_s: "", score: "3", symptoms: "", private_text: "", activity: "rest",
 };
 
 function Field({ id, label, children, hint }) {
@@ -137,7 +137,7 @@ export default function MeasurementPage() {
             <button type="button" onClick={saveMeasurement} disabled={saving} className="mt-3 rounded-md bg-selection px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{saving ? "Saving..." : "Save to private Crew record"}</button>
           </section>}
           {saveError && <p role="alert" className="mt-3 rounded bg-red-50 p-3 text-sm text-red-800">{saveError}</p>}
-          {saved && <p role="status" data-testid="measurement-saved" className="mt-3 rounded border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">Saved privately for {saved.crew_id} at mission time {saved.received_at_s}s.</p>}
+          {saved && <p role="status" data-testid="measurement-saved" className="mt-3 rounded border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">Saved privately for {saved.crew_id} at mission time {saved.received_at_s}s. <Link className="font-semibold underline" to={`/runs/${encodeURIComponent(runId)}/crew`}>See the assessment in Crew Health</Link></p>}
         </section>
         <MetricGuide guide={guide} />
       </div>
