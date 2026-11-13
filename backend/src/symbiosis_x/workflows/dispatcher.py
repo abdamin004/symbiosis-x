@@ -118,6 +118,7 @@ def _beat(db: Connection, run_id: str, mission_s: int) -> None:
         )
     elif mission_s == 600:
         db.execute("UPDATE runs SET decision_rev = 103 WHERE run_id = ?", (run_id,))
+        _observe(db, run_id, mission_s)
         _fault(
             db, run_id, event_id="evt-power-drops",
             event_type="fault.power_drop", mission_s=600,
@@ -127,7 +128,6 @@ def _beat(db: Connection, run_id: str, mission_s: int) -> None:
                 "feeder_connected": True,
             },
         )
-        _observe(db, run_id, mission_s)
         queue_ground_snapshot(
             db, run_id, snapshot_id="ground-v103", decision_rev=103,
             observed_at_s=600, issued_at_s=600, deliver_at_s=900,
