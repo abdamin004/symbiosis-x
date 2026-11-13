@@ -7,8 +7,10 @@ from symbiosis_x.crew.measurements import (
     MeasurementConflict, MeasurementNotFound, MeasurementRejected,
     MeasurementReceipt, SaveMeasurementRequest, read_measurement, save_measurement,
 )
-from symbiosis_x.application.projections import read_crew
+from symbiosis_x.application.projections import read_crew, read_run
 from symbiosis_x.application.runs import RunNotFound
+from symbiosis_x.application.wearables import CrewWearables, read_wearables
+from symbiosis_x.crew.profile import profile_for_crew
 from symbiosis_x.contracts.commands import CaseRelayReceipt, ShareCaseStatusRequest
 from symbiosis_x.contracts.projections import CurrentCrewView
 from symbiosis_x.workflows.relay import CaseRelayRejected, queue_case_status
@@ -43,6 +45,19 @@ def _emergency_error(error: Exception) -> HTTPException:
     if isinstance(error, EmergencyRejected):
         return HTTPException(422, str(error))
     return HTTPException(409, str(error))
+
+
+@router.get("/{run_id}/crew/wearables", dependencies=[Depends(require_role("crew"))])
+def crew_wearables(run_id: str, crew_id: str, request: Request, response: Response) -> CrewWearables:
+    response.headers["Cache-Control"] = "no-store"
+    try:
+        with request.app.state.repository.read() as db:
+            run = read_run(db, run_id)
+            if profile_for_crew(crew_id) is None:
+                raise HTTPException(404, "CREW_NOT_FOUND")
+            return read_wearables(db, run_id, crew_id, run["mission_s"])
+    except RunNotFound as error:
+        raise HTTPException(404, str(error)) from error
 
 
 @router.post(

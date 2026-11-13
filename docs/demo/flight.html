@@ -1523,6 +1523,68 @@ function regionTelemetry(sample) {
     "Whole-person heart rate sampled at the left wrist.", true];
   return unobserved;
 }
+const missionWearables = new Map();
+const pendingWearables = new Set();
+let wearableSession;
+
+function refreshWearables(crewId) {
+  if (pendingWearables.has(crewId)) return;
+  pendingWearables.add(crewId);
+  wearableSession ??= fetch("/api/v1/demo/session", {method:"POST",cache:"no-store"}).then(response=>{
+    if (!response.ok) throw new Error("Crew session unavailable");
+    return response.json();
+  });
+  wearableSession.then(async ({crew})=>{
+    const path = "/api/v1/runs/"+encodeURIComponent(flightHealthRun)+"/crew/wearables";
+    const response = await fetch(path+"?"+new URLSearchParams({crew_id:crewId}), {
+      headers:{Authorization:"Bearer "+crew},cache:"no-store",
+    });
+    if (!response.ok) {
+      if (response.status === 401) wearableSession = undefined;
+      throw new Error("Device stream unavailable");
+    }
+    const result = await response.json();
+    if (result.run_id !== flightHealthRun || result.crew_id !== crewId) throw new Error("Device stream mismatch");
+    missionWearables.set(crewId,result);
+  }).catch(()=>{
+    wearableSession = undefined;
+    missionWearables.set(crewId,null);
+  }).finally(()=>{
+    pendingWearables.delete(crewId);
+    render();
+  });
+}
+
+function wearableSummary(channel) {
+  const {status,accepted,age_s,evidence} = channel.reading;
+  const observed = accepted ? accepted.value+" "+accepted.unit+" · observed T+"+clock(accepted.observed_at_s)+
+    " · received T+"+clock(accepted.received_at_s)+" · age "+age_s+" s" : "Unobserved";
+  const reason = evidence?.quality === "unavailable" ? " · device disconnected"
+    : evidence?.quality === "suspect" ? " · motion artifact at T+"+clock(evidence.observed_at_s) : "";
+  return observed+" · "+status+reason;
+}
+
+function drawWearableHistory(channel, missionTime) {
+  const canvas = element("vitals-chart");
+  const ctx = canvas.getContext("2d");
+  const history = channel?.history ?? [];
+  const values = history.filter(sample=>sample.value !== null).map(sample=>sample.value);
+  const min = Math.min(...values), max = Math.max(...values);
+  const x = sample => 12+296*sample.observed_at_s/Math.max(1,missionTime);
+  ctx.clearRect(0,0,320,100);
+  for (const sample of history) {
+    const y = sample.value === null ? 88 : 80-66*(sample.value-min)/(max-min || 1);
+    ctx.fillStyle = {valid:"#a9baff",suspect:"#ffbc89",unavailable:"#a9a5b8"}[sample.quality];
+    ctx.beginPath();
+    ctx.arc(x(sample),y,3,0,Math.PI*2);
+    ctx.fill();
+  }
+  canvas.setAttribute("aria-label",history.length ? channel.source_id+" history · "+history.map(sample=>
+    "observed T+"+clock(sample.observed_at_s)+", received T+"+clock(sample.received_at_s)+", "+
+    (sample.value === null ? "" : sample.value+" "+sample.unit+", ")+sample.quality
+  ).join(" · ") : "No readings for this signal");
+}
+
 function updateBodyMap(sample, member, frame) {
   const map = element("body-map");
   const state = activeLayer + ":" + selectedRegion;
@@ -1532,14 +1594,20 @@ function updateBodyMap(sample, member, frame) {
   }
   map.style.setProperty("--profile-accent",duties[member].color);
   suitId.textContent = data.crew[member];
-  const [source,reading,detail,observed] = regionTelemetry(sample);
+  const channel = activeLayer === "sensors" && selectedRegion === "torso" ? "back_pod"
+    : selectedRegion === "wrist" && ["anatomy","cardiorespiratory","sensors"].includes(activeLayer) ? "wristband" : null;
+  const runSignal = missionWearables.get(data.crew[member])?.channels[channel];
+  const [source,reading,detail,observed] = flightHealthRun && ["anatomy","cardiorespiratory","sensors","muscles"].includes(activeLayer)
+    ? runSignal ? [runSignal.source_id,wearableSummary(runSignal),"Synthetic mission device stream.",Boolean(runSignal.reading.accepted)]
+      : ["No mission device reading","Unobserved","No measurement for this region on the mission clock.",false]
+    : regionTelemetry(sample);
   element("region-name").textContent = bodyRegions[selectedRegion].label;
   element("region-source").textContent = source;
   element("region-reading").textContent = reading;
   element("region-detail").textContent = detail;
-  element("region-time").textContent = observed ? "Observed T+" + clock(sample.time) +
+  element("region-time").textContent = flightHealthRun ? "" : observed ? "Observed T+" + clock(sample.time) +
     (connectedFlight ? " · synthetic phase reference" : " · synthetic replay sample") : "";
-  element("wrist-readout").hidden = activeLayer !== "sensors" || selectedRegion !== "wrist";
+  element("wrist-readout").hidden = Boolean(flightHealthRun) || activeLayer !== "sensors" || selectedRegion !== "wrist";
   element("wrist-bpm").textContent = sample.heart_rate + " bpm";
   element("wrist-sample").textContent = (connectedFlight ? "Synthetic phase reference" : "Latest simulated sample") +
     " · T+" + clock(sample.time);
@@ -1657,6 +1725,8 @@ function renderProfiles(frame) {
     setIcon(element(kind + "-title"), profileIcons[kind],
       characters[member].short + " · " + (kind==="personnel" ? "Digital twin" : kind[0].toUpperCase() + kind.slice(1)));
     let rows;
+    if (flightHealthRun && ["personnel","devices","vitals"].includes(kind)
+        && !element(kind+"-widget").hidden && !missionWearables.has(id)) refreshWearables(id);
     if (kind === "personnel") {
       const persona = characters[member];
       const art = element("personnel-art");
@@ -1691,6 +1761,22 @@ function renderProfiles(frame) {
       rows = [...crewRoutines.meters(person,frame.time),["Current activity",task],["Needs queue",person.blocked || "Clear"],
         ["Crew checkup",person.checkup ? "Last T+" + clock(person.checkup.time) : "Every 24 mission hours"],
         ["Private mood",reports.mood || "No report"],["Symptoms",reports.symptoms || "No report"]];
+    } else if (flightHealthRun && ["devices","vitals"].includes(kind)) {
+      const snapshot = missionWearables.get(id);
+      rows = [["Device stream",snapshot ? "Synthetic · run T+"+clock(snapshot.mission_s)
+        : missionWearables.has(id) ? "Unavailable · retrying" : "Loading"]];
+      if (kind === "vitals") {
+        const key = {heart_rate:"wristband",speed:"back_pod"}[selectedSignal];
+        const channel = snapshot?.channels[key];
+        setChoices("series",selectedSignal);
+        drawWearableHistory(channel,snapshot?.mission_s ?? 0);
+        rows.push([signals[selectedSignal][0],channel ? wearableSummary(channel) : "Unobserved"]);
+      } else if (snapshot) {
+        for (const [key, label] of [["wristband","Wristband"],["back_pod","Back pod"]]) {
+          const channel = snapshot.channels[key];
+          rows.push([label+" · "+channel.source_id,wearableSummary(channel)]);
+        }
+      }
     } else if (kind === "devices") {
       rows = Object.entries(signals).map(([key,[label,unit,source]]) => [
         label + " · " + source, row[key] + " " + unit,
@@ -1742,6 +1828,16 @@ function renderProfiles(frame) {
       return [dt,dd];
     }));
   }
+}
+if (flightHealthRun) {
+  setInterval(()=>{
+    if (document.hidden) return;
+    const visibleCrew = new Set();
+    for (const kind of ["personnel","devices","vitals"]) {
+      if (!element(kind+"-widget").hidden && profileMembers.has(kind)) visibleCrew.add(data.crew[profileMembers.get(kind)]);
+    }
+    for (const crewId of visibleCrew) refreshWearables(crewId);
+  },3000);
 }
 
 function setIcon(node, icon, label) {
@@ -2456,7 +2552,8 @@ for (const button of document.querySelectorAll("[data-profile]")) {
     render();
   });
 }
-choices("series", Object.entries(signals).map(([key,[name]])=>[key,key==="emg"?"Synthetic EMG":name]),
+choices("series", Object.entries(signals).filter(([key])=>!flightHealthRun || key === "heart_rate" || key === "speed")
+  .map(([key,[name]])=>[key,flightHealthRun && key === "speed" ? "Back-pod motion" : key === "emg" ? "Synthetic EMG" : name]),
   value=>{selectedSignal = value;});
 function discardFutureTasks(time) {
   allocator.clear(crewMode(),time);

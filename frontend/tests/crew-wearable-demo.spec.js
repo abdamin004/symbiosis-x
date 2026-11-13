@@ -24,13 +24,25 @@ test("selected portrait keeps its own reading after reload", async ({ page }) =>
   let saved;
   await page.route("**/api/v1/runs/run-flight-crew/**",async route=>{
     const url = new URL(route.request().url());
+    const crewId = url.searchParams.get("crew_id");
+    const sana = crewId === "SIM-02";
+    if (url.pathname.endsWith("/wearables")) {
+      expect(route.request().headers().authorization).toBe("Bearer crew-token");
+      const wristband = {source_id:"sim.crew.wristband",metric:"heart_rate",unit:"bpm"};
+      const sample = {...wristband,value:72,quality:"valid",observed_at_s:0,received_at_s:0};
+      const dropout = {...wristband,value:null,quality:"unavailable",observed_at_s:20,received_at_s:20};
+      const missing = {status:"missing",accepted:null,age_s:null,evidence:null};
+      return route.fulfill({json:{run_id:"run-flight-crew",crew_id:crewId,mission_s:20,channels:{
+        wristband:{...wristband,reading:sana ? {status:"held",accepted:sample,age_s:20,evidence:dropout} : missing,
+          history:sana ? [sample,dropout] : []},
+        back_pod:{source_id:"sim.crew.back_pod",metric:"motion_speed",unit:"m/s",reading:missing,history:[]},
+      }}});
+    }
     if (url.pathname.endsWith("/measurements")) {
       saved = route.request().postDataJSON();
       return route.fulfill({status:201,json:{...saved,run_id:"run-flight-crew",received_at_s:60}});
     }
     if (!url.pathname.endsWith("/crew")) return route.fulfill({status:404,json:{detail:"UNAVAILABLE"}});
-    const crewId = url.searchParams.get("crew_id");
-    const sana = crewId === "SIM-02";
     const profile = {crew_id:crewId,display_name:sana ? "Sana Kepler" : "Ivo Reyes",
       baselines:[{metric:"heart_rate",value:sana ? 68 : 76,unit:"bpm"}],history:{status:"unknown",entries:[]}};
     const assessment = saved && saved.crew_id === crewId ? {
@@ -44,6 +56,17 @@ test("selected portrait keeps its own reading after reload", async ({ page }) =>
   });
   await page.goto("/flight?view=replay&run_id=run-flight-crew");
   await page.getByRole("button",{name:/Inspect Sana Kepler/}).click();
+  const twin = page.locator("#personnel-widget");
+  await twin.getByRole("button",{name:"Gear",exact:true}).click();
+  const devices = page.locator("#devices-widget");
+  await expect(devices).toContainText("72 bpm");
+  await expect(devices).toContainText("age 20 s · held · device disconnected");
+  await expect(devices).toContainText("Back pod · sim.crew.back_pod");
+  await expect(devices).toContainText("Unobserved · missing");
+  await devices.getByRole("button",{name:"Close Devices widget"}).click();
+  await twin.getByRole("button",{name:"Vitals",exact:true}).click();
+  await expect(page.locator("#vitals-chart")).toHaveAttribute("aria-label",/72 bpm.*unavailable/);
+  await page.getByRole("button",{name:"Close Vitals widget"}).click();
   await page.getByRole("link",{name:"Open private health record"}).click();
   await expect(page).toHaveURL(/run-flight-crew\/crew\?crew_id=SIM-02$/);
   await page.getByRole("link",{name:"Take a measurement"}).click();
@@ -59,6 +82,10 @@ test("selected portrait keeps its own reading after reload", async ({ page }) =>
   await expect(page.getByTestId("crew-health-reading")).toHaveText("73 bpm");
   await page.goto("/flight?view=replay&run_id=run-flight-crew");
   await page.getByRole("button",{name:/Inspect Ivo Reyes/}).click();
+  await twin.getByRole("button",{name:"Gear",exact:true}).click();
+  await expect(devices).toContainText("Unobserved · missing");
+  await expect(devices).not.toContainText("72 bpm");
+  await devices.getByRole("button",{name:"Close Devices widget"}).click();
   await page.getByRole("link",{name:"Open private health record"}).click();
   await expect(page).toHaveURL(/run-flight-crew\/crew\?crew_id=SIM-03$/);
   await expect(page.getByText(/Ivo Reyes · SIM-03/)).toBeVisible();
