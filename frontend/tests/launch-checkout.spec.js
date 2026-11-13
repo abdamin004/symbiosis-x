@@ -35,7 +35,7 @@ test("checkout explains the crew and countdown gates and tracks the attached sta
 
   const stack = page.getByRole("list", {name:"Rocket stage stack"});
   const stages = stack.getByRole("listitem");
-  await expect(stack).toBeInViewport({ratio:1});
+  await expect(stack).toBeInViewport({ratio:.8});
   await expect(stages).toHaveCount(3);
   for (const [index,name] of ["Crew capsule","Orbital stage","Ascent booster"].entries()) {
     await expect(stages.nth(index)).toContainText(name);

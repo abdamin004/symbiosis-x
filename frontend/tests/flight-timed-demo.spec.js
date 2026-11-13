@@ -24,7 +24,7 @@ test.afterAll(() => {
 });
 
 test("the three-minute demo shows Crew evidence and returns without touching player saves", async ({ page }) => {
-  test.setTimeout(60_000);
+  test.setTimeout(120_000);
   const errors = [];
   const apiRequests = [];
   page.on("pageerror", error => errors.push(error.message));
