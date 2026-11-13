@@ -71,7 +71,7 @@ git merge origin/main
 
 Run the ticket checks, push to your member branch, and open a pull request into `main`. Put the Jira key in the commit subject and PR title, for example `KAN-10 Bootstrap the FastAPI package`. Link Jira and GitHub in both directions. Use **Create a merge commit** on GitHub to keep the branch history shared with `main`. Keep your member branch after merge and update it before starting the next ticket.
 
-In the PR, record the test command and result, affected consumers, and any blockers. Move the Jira ticket to In Review when the PR is open and to Done after the change merges and meets its acceptance criteria.
+In the PR, record the test command and result, affected consumers, and any blockers. Before starting work, assign the Jira ticket to yourself and move it to In Progress. Merge the tested change into main, then move the Jira ticket to In Review for a teammate to check. Move it to Done after peer review and any follow-up fixes.
 
 ## Run the cabin pilot
 

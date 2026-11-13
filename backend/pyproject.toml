@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools==80.9.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "symbiosis-x-backend"
+version = "0.1.0"
+description = "Local simulation API for SYMBIOSIS X"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi==0.128.8",
+    "uvicorn==0.54.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "httpx==0.28.1",
+    "jsonschema==4.25.1",
+    "pytest==8.4.2",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["symbiosis_x*"]
