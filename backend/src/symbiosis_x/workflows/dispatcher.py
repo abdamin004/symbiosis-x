@@ -123,6 +123,10 @@ def _beat(db: Connection, run_id: str, mission_s: int, *, variant: dict | None =
             packet=_packet(snapshot_s=60, power_kw=(variant["power_headroom_kw"]["initial"] if variant else GOLDEN_HEADROOM_INITIAL_KW), power_s=60, co2_ppm=(next(item["value"] for item in variant["incoming_observations"] if item["observed_at_s"] == 60) if variant else GOLDEN_OBSERVED_CO2_PPM)),
         )
     elif mission_s == 480:
+        # The cabin sensor samples at 08:00 too (expected beat 3). The organizer feed has
+        # no 08:00 sample, so that variant keeps its 01:00 reading rather than inventing one.
+        if variant is None:
+            _observe(db, run_id, mission_s)
         run = db.execute(
             "SELECT run_id, mission_s, status FROM runs WHERE run_id = ?", (run_id,)
         ).fetchone()
