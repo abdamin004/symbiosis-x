@@ -8,10 +8,12 @@ if __package__:
     from .build_cabin_preview import ACTIVITY_S, ROOT
     from .iss_mission_replay import build_replays, crew_history
     from .launch_envelope import launch_envelope, rendezvous_envelope
+    from .flight_orbit import navigation_reference
 else:
     from build_cabin_preview import ACTIVITY_S, ROOT
     from iss_mission_replay import build_replays, crew_history
     from launch_envelope import launch_envelope, rendezvous_envelope
+    from flight_orbit import navigation_reference
 
 
 def build(output: Path) -> None:
@@ -21,6 +23,7 @@ def build(output: Path) -> None:
     launch = json.loads((ROOT / "scenarios/variants/launch-checkout-v1.json").read_text())
     launch["ascent"] = launch_envelope(launch)
     launch["rendezvous"] = rendezvous_envelope(launch)
+    launch["navigation"] = navigation_reference(launch["ascent"])
     scenario, frames = build_replays(crew)
     data = json.dumps({
         "metrics": json.loads((ROOT / "catalogs/crew/health-metrics.json").read_text())["metrics"],
@@ -36,6 +39,7 @@ def build(output: Path) -> None:
     anatomy = (ROOT / "docs/demo/flight-anatomy.html").read_text(encoding="utf-8")
     crew_routines = (ROOT / "docs/demo/flight-crew.js").read_text(encoding="utf-8")
     docking_scene = (ROOT / "docs/demo/docking-scene.js").read_text(encoding="utf-8")
+    navigation = (ROOT / "docs/demo/flight-navigation.js").read_text(encoding="utf-8")
     icons = (ROOT / "frontend/src/ui/icons/lucide/flight.svg").read_text(encoding="utf-8")
     output.write_text(
         template.replace("__FLIGHT_DATA__", data)
@@ -43,7 +47,7 @@ def build(output: Path) -> None:
         .replace("__FLIGHT_STATIONS__", stations).replace("__LAUNCH_SCENE__", launch_scene)
         .replace("__LAUNCH_CHECKOUT__", checkout).replace("__HUD_ICONS__", icons)
         .replace("__FLIGHT_ANATOMY__", anatomy).replace("__FLIGHT_CREW__", crew_routines)
-        .replace("__DOCKING_SCENE__", docking_scene),
+        .replace("__DOCKING_SCENE__", docking_scene).replace("__FLIGHT_NAVIGATION__", navigation),
         encoding="utf-8",
     )
 
