@@ -20,7 +20,7 @@ export default function LiveMissionConsole({ role, runId }) {
     return () => { active = false; };
   }, [runId, role]);
 
-  if (error) return <main className="mx-auto max-w-4xl px-4 py-12"><h1 className="text-2xl font-semibold">{role === "crew" ? "Crew" : "Ground"} console</h1><p role="alert" className="mt-3 text-red-800">Could not load this role projection: {error}</p><Link className="mt-3 inline-block underline" to="/">Back to launcher</Link></main>;
+  if (error) return <main className="mx-auto max-w-4xl px-4 py-12"><h1 className="text-2xl font-semibold">{role === "crew" ? "Crew" : "Ground"} console</h1><p role="status" className="mt-3 text-slate-700">{error === "RUN_NOT_FOUND" ? "No fixture is available for run " + runId + "." : "Could not load this role projection: " + error}</p><Link className="mt-3 inline-block underline" to="/">Back to launcher</Link></main>;
   if (!view) return <main className="mx-auto max-w-4xl px-4 py-12" role="status">Loading live run…</main>;
 
   return (
