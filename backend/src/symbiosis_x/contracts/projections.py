@@ -127,6 +127,7 @@ class GroundPacket(Contract):
     """Operational data stored at delivery, without private or live Crew fields."""
 
     co2: GroundCO2
+    power_headroom: PowerHeadroom | None = None
 
 
 class DeliveredTelemetry(Contract):
@@ -134,6 +135,7 @@ class DeliveredTelemetry(Contract):
     decision_rev: NonnegativeInt
     delivery: Delivery
     co2: GroundCO2
+    power_headroom: PowerHeadroom | None = None
 
 
 class CurrentGroundView(RunView):

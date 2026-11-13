@@ -58,6 +58,7 @@ def read_ground(db: Connection, run_id: str) -> CurrentGroundView:
                 link_status="delayed",
             ),
             co2=stored.co2,
+            power_headroom=stored.power_headroom,
         )
     return CurrentGroundView(
         run_id=run["run_id"], scenario_id=run["scenario_id"],

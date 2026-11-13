@@ -8,6 +8,7 @@ from symbiosis_x.contracts.commands import (
     AdvanceReceipt, AdvanceRunRequest, RunReceipt, StartRunRequest,
 )
 from symbiosis_x.storage.repository import Repository
+from symbiosis_x.workflows.relay import deliver_due
 
 NOMINAL_SCENARIO = ("nominal", "1")
 LOCAL_FACILITATOR = "local-facilitator"
@@ -113,4 +114,5 @@ def advance_run(repository: Repository, run_id: str, command: AdvanceRunRequest)
         )
         record_nominal_co2(db, run_id, receipt.mission_s)
         deliver_nominal_ground(db, run_id, receipt.mission_s)
+        deliver_due(db, run_id, receipt.mission_s)
     return receipt
