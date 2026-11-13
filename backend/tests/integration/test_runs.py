@@ -124,3 +124,20 @@ def test_reset_closes_old_run(tmp_path):
         assert db.execute(
             "SELECT event_type FROM events WHERE run_id = ? ORDER BY event_seq LIMIT 2", (receipt["run_id"],)
         ).fetchall() == [("run.started",), ("observation.recorded",)]
+
+
+# Jira acceptance entry points: keep the specified test commands stable while
+# implementations remain grouped by concern in their dedicated test modules.
+def test_driver_shares_advance_cursor(tmp_path):
+    from test_driver import test_driver_shares_advance_cursor as verify
+    verify(tmp_path)
+
+
+def test_pause_stops_automatic_advance(tmp_path):
+    from test_driver import test_pause_stops_automatic_advance as verify
+    verify(tmp_path)
+
+
+def test_compose_applies_due_events_in_order(tmp_path):
+    from test_golden_step import test_compose_applies_due_events_in_order as verify
+    verify(tmp_path)
