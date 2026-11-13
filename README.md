@@ -32,13 +32,13 @@ SYMBIOSIS X answers with four ideas, each shown on its own screen of a simulated
 - Emergency procedures are training placeholders, not approved medical procedures. Everything is advisory, and any simulated plant change goes through the Crew commit gate.
 
 **Not built yet** (described in the build plan, not claimed above):
-- personal reminders and follow-up (SX-24C)
-- the comparable trend in the live Crew view (the trend evaluator exists; the fixture panel shows it)
-- the live Ground list of delivered health cases (the backend delivers them; the fixture console shows them)
+- the subtitled demo video (SX-11C)
+
+Personal reminders and follow-up (SX-24C), the comparable trend in the live Crew view, and the live Ground list of delivered health cases have all landed. Each was checked in the browser during the [tagged release rehearsal](docs/acceptance.md#tagged-release-rehearsal).
 
 ### Project description review
 
-Manual review against the SX-11D method, on `main` at `2dd0177` (2026-11-13):
+Manual review against the SX-11D method, on `main` at `2dd0177` (2026-11-13). The claims were rechecked against release candidate [`v0.1.0-rc.1`](docs/acceptance.md#tagged-release-rehearsal) (`5c3b7c5`):
 
 | Check | Evidence | Result |
 | --- | --- | --- |
@@ -48,7 +48,7 @@ Manual review against the SX-11D method, on `main` at `2dd0177` (2026-11-13):
 | Fixture labels | Crew, readings, references, demo rules, cabin model, relay delay and procedures are each labelled as synthetic or as a demo assumption. Unbuilt features are listed separately, not claimed. | Pass |
 | Claims match the build | Claims were checked against merged work and its tests: SX-23C, SX-23D, SX-04C, SX-25A, SX-09B, SX-09D, SX-07D, SX-03B, SX-18B and KAN-60. | Pass, with the "not built yet" items excluded |
 
-Update this section after the release rehearsal (SX-11B): refresh the commit and remove items from "Not built yet" as they land.
+The SX-11B rehearsal refreshed this section. Update it at the next tagged release.
 
 ## Start on your laptop
 
@@ -88,7 +88,7 @@ npm install
 npm run dev
 ```
 
-Open [the run launcher](http://localhost:5173/). It links the Crew console (`/runs/run-001/crew`) and the Ground console (`/runs/run-001/ground`) for the same example run. Both consoles read the published SX-01A examples until [KAN-43 / SX-08B](https://crewsync-1794569647227.atlassian.net/browse/KAN-43) wires live reads. The dev server proxies `/api` and `/health` to the backend at `http://127.0.0.1:8766`. Set `SYMBIOSIS_X_API_URL` to use a different backend address. The route chooses a view only. The server resolves each caller's role and decides what it may read.
+Open [the run launcher](http://localhost:5173/). It links the Crew console (`/runs/run-001/crew`) and the Ground console (`/runs/run-001/ground`) for the same example run. **Start run** begins a live seeded run. This needs a demo session, so start the backend with `SYMBIOSIS_X_LOCAL_DEMO=1`, otherwise the launcher shows `LOCAL_DEMO_DISABLED`. `/backup` plays the saved golden frames with no backend. The dev server proxies `/api` and `/health` to the backend at `http://127.0.0.1:8766`. Set `SYMBIOSIS_X_API_URL` to use a different backend address. The route chooses a view only. The server resolves each caller's role and decides what it may read.
 
 Run the browser smoke test from `frontend/`. The first run needs `npx playwright install chromium`.
 
