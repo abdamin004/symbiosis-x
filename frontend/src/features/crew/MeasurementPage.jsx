@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { createOperationId, saveCrewMeasurement } from "../../api/client.js";
 import { Link, useParams } from "react-router-dom";
 import { HEALTH_GUIDE_DISCLAIMER, HEALTH_GUIDES, HEALTH_METRICS } from "../../api/healthCatalog.js";
 import MetricGuide from "./MetricGuide.jsx";
@@ -51,16 +52,35 @@ export default function MeasurementPage() {
   const [values, setValues] = useState(EMPTY);
   const [error, setError] = useState("");
   const [preview, setPreview] = useState(null);
+  const [saved, setSaved] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const measurementId = useRef(null);
   const guide = useMemo(() => HEALTH_GUIDES.get(metric), [metric]);
   const selected = HEALTH_METRICS.find((item) => item.id === metric);
   const update = (key) => (value) => setValues((old) => ({ ...old, [key]: value }));
-  function changeMetric(value) { setMetric(value); setValues(EMPTY); setError(""); setPreview(null); }
+  function changeMetric(value) { setMetric(value); setValues(EMPTY); setError(""); setPreview(null); setSaved(null); setSaveError(""); measurementId.current = null; }
   function submit(event) {
     event.preventDefault();
     const measurement = buildMeasurement(metric, values);
     const message = validate(metric, measurement);
     setError(message);
     setPreview(message ? null : measurement);
+    setSaved(null);
+    setSaveError("");
+  }
+  async function saveMeasurement() {
+    if (!preview) return;
+    setSaving(true);
+    setSaveError("");
+    if (!measurementId.current) measurementId.current = createOperationId("measurement");
+    const context = metric === "heart_rate" ? { activity: values.activity } : {};
+    try {
+      const receipt = await saveCrewMeasurement(runId, { measurement_id: measurementId.current, crew_id: "SIM-01", synthetic: true, measurement: preview, context });
+      setSaved(receipt);
+      measurementId.current = null;
+    } catch (e) { setSaveError(e.message); }
+    finally { setSaving(false); }
   }
   return (
     <main className="mx-auto max-w-5xl px-4 py-8" data-testid="measurement-page">
@@ -112,9 +132,12 @@ export default function MeasurementPage() {
           </form>
           {preview && <section role="status" data-testid="measurement-preview" className="mt-5 rounded-md border border-emerald-200 bg-emerald-50 p-3">
             <h2 className="font-semibold">Measurement validated · local preview</h2>
-            <p className="mt-1 text-xs">Validated against the project metric shape. This page does not submit or persist the measurement.</p>
+            <p className="mt-1 text-xs">Validated against the project metric shape. Save sends this synthetic reading to the private Crew API.</p>
             <pre className="mt-2 overflow-auto text-xs">{JSON.stringify(preview, null, 2)}</pre>
+            <button type="button" onClick={saveMeasurement} disabled={saving} className="mt-3 rounded-md bg-selection px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{saving ? "Saving..." : "Save to private Crew record"}</button>
           </section>}
+          {saveError && <p role="alert" className="mt-3 rounded bg-red-50 p-3 text-sm text-red-800">{saveError}</p>}
+          {saved && <p role="status" data-testid="measurement-saved" className="mt-3 rounded border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">Saved privately for {saved.crew_id} at mission time {saved.received_at_s}s.</p>}
         </section>
         <MetricGuide guide={guide} />
       </div>
