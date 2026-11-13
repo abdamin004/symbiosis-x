@@ -376,6 +376,10 @@ button[aria-pressed=true]{background:#3d315e}
 #launch-jobs .checkout-job-status{font-size:.72rem}
 #orbit-track{width:100%;background:#0b1427;border-radius:7px}
 #orbit-status{color:var(--blue)}
+#navigation-mini{position:fixed;z-index:8;right:.65rem;bottom:.65rem;width:clamp(116px,16vw,168px);padding:.35rem;background:#101932df;box-shadow:0 4px 16px #0006;text-align:left}
+#navigation-mini canvas,#navigation-track{display:block;width:100%;border-radius:6px}
+#navigation-mini small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.68rem;color:#c7d7ed}
+#orbit-dialog{width:min(680px,calc(100% - 1.5rem))}
 .hud,.launch-hud{position:fixed;inset:0 0 auto;z-index:10;pointer-events:none;background:linear-gradient(180deg,#080c1bde,transparent);box-shadow:none}
 .hud button,.hud a,.launch-hud button,.launch-hud a{pointer-events:auto}
 .ribbon{gap:.35rem .65rem;text-shadow:0 1px 8px #090b19}
@@ -693,8 +697,31 @@ __HUD_ICONS__
 </dialog>
 <dialog id="orbit-dialog" class="mission-dialog" aria-labelledby="orbit-title">
   <div class="dialog-top"><h2 id="orbit-title">Orbit map</h2><form method="dialog"><button>Close</button></form></div>
-  <div id="orbit-dialog-content"></div>
+  <canvas id="navigation-track" width="560" height="300" role="img" aria-label="Earth, spacecraft trajectory and station orbit"></canvas>
+  <p><span style="color:#fff0bf">▲ Asteria</span> · <span style="color:#a6bcff">● ISS reference</span></p>
+  <p id="navigation-basis"></p>
+  <dl class="launch-readouts">
+    <div><dt>Apoapsis</dt><dd id="navigation-ap"></dd></div>
+    <div><dt>Periapsis</dt><dd id="navigation-pe"></dd></div>
+    <div><dt>Altitude</dt><dd id="navigation-altitude"></dd></div>
+    <div><dt>Speed</dt><dd id="navigation-speed"></dd></div>
+    <div><dt>Period</dt><dd id="navigation-period"></dd></div>
+    <div><dt>Next decision</dt><dd id="navigation-target"></dd></div>
+    <div><dt>Relative navigation</dt><dd id="navigation-approach"></dd></div>
+    <div><dt>Navigation watch</dt><dd id="navigation-owner"></dd></div>
+    <div><dt>Propulsion</dt><dd id="navigation-stage"></dd></div>
+    <div><dt>Attitude</dt><dd id="navigation-attitude"></dd></div>
+    <div><dt>RCS reserve</dt><dd id="navigation-reserve"></dd></div>
+  </dl>
+  <div class="choices" aria-label="Commander attitude control">
+    <button type="button" data-attitude="-15">Rotate −15°</button>
+    <button type="button" data-attitude="15">Rotate +15°</button>
+  </div>
 </dialog>
+<button id="navigation-mini" type="button" aria-label="Open orbit minimap" hidden>
+  <canvas id="navigation-thumb" width="240" height="144" aria-hidden="true"></canvas>
+  <small id="navigation-caption"></small>
+</button>
 <section id="launch-page" class="launch-page" aria-label="SYMBIOSIS X flight game" hidden>
   <div class="launch-hud">
   <nav class="ribbon launch-ribbon" aria-label="Flight navigation">
@@ -821,6 +848,7 @@ __LAUNCH_SCENE__
 __LAUNCH_CHECKOUT__
 __FLIGHT_CREW__
 __DOCKING_SCENE__
+__FLIGHT_NAVIGATION__
 </script>
 <script>
 const element = id => document.getElementById(id);
@@ -2311,6 +2339,7 @@ const launchMission = bindLaunchCheckout(data.launch,{
         const elapsed = Math.min(TICK_SECONDS, (now-canvasTickStarted)*.004*(connectedFlight?.speed ?? 1));
         if (!reducedMotion.matches && now-lastPaintAt >= 32) {
           paintFlight(currentFrame(),missionTime+elapsed);
+          launchMission.paintNavigation(missionTime+elapsed);
           lastPaintAt = now;
         }
         canvasAnimation = requestAnimationFrame(animate);
