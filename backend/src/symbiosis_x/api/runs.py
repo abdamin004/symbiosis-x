@@ -4,8 +4,8 @@ from ipaddress import ip_address
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
-from symbiosis_x.application.runs import RunConflict, RunNotFound, start_run
-from symbiosis_x.contracts.commands import RunReceipt, StartRunRequest
+from symbiosis_x.application.runs import RunConflict, RunNotFound, advance_run, start_run
+from symbiosis_x.contracts.commands import AdvanceReceipt, AdvanceRunRequest, RunReceipt, StartRunRequest
 
 router = APIRouter(prefix="/api/v1/runs", tags=["runs"])
 
@@ -28,6 +28,16 @@ def require_local_facilitator(request: Request) -> None:
 def start(command: StartRunRequest, request: Request) -> RunReceipt:
     try:
         return start_run(request.app.state.repository, command)
+    except RunNotFound as error:
+        raise HTTPException(404, str(error)) from error
+    except RunConflict as error:
+        raise HTTPException(409, str(error)) from error
+
+
+@router.post("/{run_id}/advance", response_model=AdvanceReceipt, dependencies=[Depends(require_local_facilitator)])
+def advance(run_id: str, command: AdvanceRunRequest, request: Request) -> AdvanceReceipt:
+    try:
+        return advance_run(request.app.state.repository, run_id, command)
     except RunNotFound as error:
         raise HTTPException(404, str(error)) from error
     except RunConflict as error:
