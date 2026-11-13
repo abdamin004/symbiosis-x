@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response
 
 from symbiosis_x.api.roles import require_role
 from symbiosis_x.contracts.commands import (
-    ActionReceipt, ActionRequest, PlanCandidate, PlanEvaluationReceipt,
+    CrewActionReceipt, ActionRequest, PlanCandidate, PlanEvaluationReceipt,
 )
 from symbiosis_x.workflows.planner import evaluate_run
 
@@ -40,7 +40,7 @@ def _digest(command: ActionRequest) -> str:
     return sha256(command.model_dump_json().encode("utf-8")).hexdigest()
 
 
-def _record_receipt(db, run_id: str, command: ActionRequest, receipt: ActionReceipt, digest: str) -> None:
+def _record_receipt(db, run_id: str, command: ActionRequest, receipt: CrewActionReceipt, digest: str) -> None:
     db.execute(
         """INSERT INTO operations (run_id, operation_scope, operation_id, request_digest, receipt_json)
            VALUES (?, 'crew_action', ?, ?, ?)""",
@@ -60,9 +60,9 @@ def evaluate_plan(run_id: str, request: Request, response: Response) -> PlanEval
         raise HTTPException(404, str(error)) from error
 
 
-@router.post("/{run_id}/actions", response_model=ActionReceipt,
+@router.post("/{run_id}/actions", response_model=CrewActionReceipt,
              dependencies=[Depends(require_crew)])
-def commit_action(run_id: str, command: ActionRequest, request: Request) -> ActionReceipt:
+def commit_action(run_id: str, command: ActionRequest, request: Request) -> CrewActionReceipt:
     """Commit one feasible Crew-approved option; retries return the original immutable receipt."""
     digest = _digest(command)
     with request.app.state.repository.write() as db:
@@ -74,7 +74,7 @@ def commit_action(run_id: str, command: ActionRequest, request: Request) -> Acti
         if prior is not None:
             if prior["request_digest"] != digest:
                 raise HTTPException(409, "OPERATION_ID_REUSED")
-            return ActionReceipt.model_validate_json(prior["receipt_json"])
+            return CrewActionReceipt.model_validate_json(prior["receipt_json"])
 
         run = db.execute(
             "SELECT status, decision_rev, mission_s FROM runs WHERE run_id = ?", (run_id,)
@@ -86,7 +86,7 @@ def commit_action(run_id: str, command: ActionRequest, request: Request) -> Acti
 
         current_rev = run["decision_rev"]
         if command.basis_decision_rev != current_rev:
-            receipt = ActionReceipt(
+            receipt = CrewActionReceipt(
                 operation_id=command.operation_id, candidate_id=command.candidate_id,
                 status="rejected", reason_code="STALE_DECISION_REV",
                 basis_decision_rev=command.basis_decision_rev,
@@ -98,7 +98,7 @@ def commit_action(run_id: str, command: ActionRequest, request: Request) -> Acti
         plan = evaluate_run(db, run_id)
         candidate = next(item for item in plan.candidates if item.candidate_id == command.candidate_id)
         if candidate.result != "feasible":
-            receipt = ActionReceipt(
+            receipt = CrewActionReceipt(
                 operation_id=command.operation_id, candidate_id=command.candidate_id,
                 status="rejected", reason_code=candidate.reason_code,
                 basis_decision_rev=command.basis_decision_rev,
@@ -108,7 +108,7 @@ def commit_action(run_id: str, command: ActionRequest, request: Request) -> Acti
             return receipt
 
         next_rev = current_rev + 1
-        receipt = ActionReceipt(
+        receipt = CrewActionReceipt(
             operation_id=command.operation_id, candidate_id=command.candidate_id,
             status="accepted", reason_code=None,
             basis_decision_rev=command.basis_decision_rev,
@@ -127,9 +127,9 @@ def commit_action(run_id: str, command: ActionRequest, request: Request) -> Acti
         return receipt
 
 
-@router.get("/{run_id}/actions/{operation_id}", response_model=ActionReceipt,
+@router.get("/{run_id}/actions/{operation_id}", response_model=CrewActionReceipt,
             dependencies=[Depends(require_crew)])
-def get_action(run_id: str, operation_id: str, request: Request, response: Response) -> ActionReceipt:
+def get_action(run_id: str, operation_id: str, request: Request, response: Response) -> CrewActionReceipt:
     """Read the immutable receipt for a previously submitted operation."""
     response.headers["Cache-Control"] = "no-store"
     with request.app.state.repository.read() as db:
@@ -141,4 +141,4 @@ def get_action(run_id: str, operation_id: str, request: Request, response: Respo
         if row is None:
             exists = db.execute("SELECT 1 FROM runs WHERE run_id = ?", (run_id,)).fetchone()
             raise HTTPException(404, "RUN_NOT_FOUND" if exists is None else "ACTION_NOT_FOUND")
-        return ActionReceipt.model_validate_json(row["receipt_json"])
+        return CrewActionReceipt.model_validate_json(row["receipt_json"])
