@@ -4,10 +4,10 @@ test("seven metrics open the matching form", async ({ page }) => {
   await page.goto("/runs/run-001/crew/measure");
   const picker = page.getByLabel("Indicator");
   const cases = [
-    ["heart_rate", "Heart rate (bpm)", ["value", "activity"]],
-    ["blood_pressure", "Blood pressure (mmHg)", ["systolic", "diastolic"]],
-    ["glucose", "Blood glucose (mg/dL)", ["value", "method", "meal_context"]],
-    ["temperature", "Body temperature (°C)", ["value", "method", "site"]],
+    ["heart_rate", "Heart rate", ["value", "activity"]],
+    ["blood_pressure", "Blood pressure", ["systolic", "diastolic"]],
+    ["glucose", "Blood glucose", ["value", "method", "meal_context"]],
+    ["temperature", "Body temperature", ["value", "method", "site"]],
     ["sleep", "Sleep", ["duration_min", "start_mission_s", "end_mission_s"]],
     ["mood", "Mood self-report", ["score"]],
     ["symptoms", "Symptoms", ["symptoms", "private_text"]],
