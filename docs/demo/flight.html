@@ -12,9 +12,9 @@ h1,h2,p{margin:0}a{color:var(--blue);text-underline-offset:.2em}
 .stage{position:relative;isolation:isolate;min-height:100dvh;background:radial-gradient(ellipse at 64% 45%,#251944 0%,#0a0e20 53%,#05070f 82%);overflow:clip}
 .stage::before,.stage::after{content:"";position:absolute;pointer-events:none;z-index:-1}
 .stage::before{inset:-70px;background-image:radial-gradient(circle,#e5e2ffb8 1px,transparent 1.5px),radial-gradient(circle,#b9d7fba8 .8px,transparent 1.2px);background-size:97px 83px,149px 127px;background-position:11px 21px,63px 55px;opacity:.7}
-.stage[data-playing=true]::before{animation:travel 9s linear infinite}
+.stage::before{transform:translateX(var(--star-offset,0px))}
 .stage::after{width:min(65vw,640px);aspect-ratio:1;border-radius:50%;right:-16%;top:48%;background:radial-gradient(circle at 25% 8%,#595989 0,#303451 23%,#111427 54%,#080a16 72%);box-shadow:-7px -10px 45px #736aff35;opacity:.7}
-@keyframes travel{to{transform:translateX(-97px)}}
+
 .viewport{overflow-x:auto;overscroll-behavior-x:contain;position:relative;margin:0 auto;max-width:1500px;padding-top:clamp(1rem,7vh,5rem)}
 .ship{width:111%;margin-inline:-9% -2%;min-width:700px;aspect-ratio:1100/475;position:relative;isolation:isolate}
 #hull{position:absolute;width:100%;height:100%;inset:0;pointer-events:none;z-index:-1}
@@ -104,6 +104,9 @@ button[aria-pressed=true]{background:#3d315e}
 #widget-shelf{position:absolute;top:calc(100% + 4.2rem);left:.65rem;right:.65rem;display:flex;gap:.3rem;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:.73rem}
 #widget-shelf button{padding:.25rem .45rem}
 #widget-notice{position:absolute;width:1px;height:1px;clip-path:inset(50%);overflow:hidden}
+.order-card{padding:.5rem;margin:.4rem 0;background:#2632517d;border-radius:7px}
+.order-card strong{font-size:.8rem;color:var(--blue)}
+.order-card button{font-size:.74rem;margin:.2rem .2rem 0 0}
 #workflow-widget{max-width:calc(100% - 20px)}
 .crew-portrait{padding:.25rem .25rem .3rem;background:#141b37;box-shadow:inset 0 1px #7987b94d}
 .crew-portrait .crew-face{width:34px;height:34px}
@@ -129,6 +132,57 @@ button[aria-pressed=true]{background:#3d315e}
 @media(max-width:720px){.stage::after{width:70vw}}
 @media(max-width:520px){.flight-controls{top:calc(100% + 4.2rem)}.crew-strip{gap:.22rem}}
 @media(prefers-reduced-motion:reduce){.pawn{transition:none}.stage[data-playing=true]::before{animation:none}}
+/* Cutaway art layers share the same coordinate plane as the deck controls. */
+.ship{width:106%;margin-inline:-3%;min-width:700px}
+.pawn{width:34px;height:38px;border:0;background:transparent;box-shadow:none}
+.pawn:hover{background:#cad0ff24}
+.pawn[data-working=true]{box-shadow:none}
+.pawn .action-marker{top:-.32rem;left:82%}
+.crew-sprite{position:relative;width:24px;height:29px;transform:scaleX(var(--facing,1));filter:drop-shadow(0 2px 2px #090e1c)}
+.crew-sprite i{position:absolute;display:block}
+.crew-sprite .shadow{width:23px;height:6px;left:1px;bottom:-2px;background:#090c18b0;border-radius:50%}
+.crew-sprite .pack{width:19px;height:13px;left:3px;top:11px;background:#29314c;border-radius:3px;box-shadow:0 -2px #666e8b}
+.crew-sprite .torso{width:13px;height:13px;left:6px;top:11px;background:linear-gradient(125deg,var(--suit),#47526b);border-radius:3px}
+.crew-sprite .helmet{width:14px;height:12px;left:5px;top:1px;background:linear-gradient(155deg,#c9dcf2 10%,#354e75 12% 47%,var(--skin) 52% 85%,#33486d 89%);border:2px solid var(--suit);border-radius:45%}
+.crew-sprite .leg{width:5px;height:9px;top:21px;background:#65718e;border-bottom:2px solid #101623;border-radius:2px}
+.crew-sprite .leg-left{left:6px}
+.crew-sprite .leg-right{right:5px}
+.crew-sprite .arm{width:4px;height:11px;top:12px;background:var(--suit);border-radius:3px;transform-origin:center top}
+.crew-sprite .arm-left{left:3px;rotate:12deg}
+.crew-sprite .arm-right{right:2px;rotate:-12deg}
+[data-pose=move] .leg-left{transform:translateY(calc(2px * var(--stride,0)))}
+[data-pose=move] .leg-right{transform:translateY(calc(-2px * var(--stride,0)))}
+[data-pose=move] .arm-left{rotate:calc(22deg * var(--stride,0))}
+[data-pose=move] .arm-right{rotate:calc(-22deg * var(--stride,0))}
+[data-pose=work] .arm-right{rotate:calc(-58deg + 21deg * var(--stride,0))}
+[data-pose=rest] .crew-sprite{transform:rotate(-18deg)}
+@media(max-width:720px){.ship{margin-inline:0;width:100%}}
+.minimap-screen{background:radial-gradient(ellipse at 50% 0,#22294f,#0c1329 75%);border-radius:9px;min-height:84px;display:grid;align-items:center;padding:.25rem}
+.map-views button{flex:1}
+#deck-map{width:100%;height:79px;display:block}
+.map-systems{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.35rem}
+.map-systems div{padding:.35rem .25rem;background:#1d2646;border-radius:5px}
+.map-systems small{display:block;font-size:.65rem;color:var(--muted)}
+.map-systems strong{font:600 .75rem ui-monospace,monospace;color:var(--blue)}
+#lock-map{font-size:.72rem;padding:.2rem .42rem}
+#map-widget{max-height:min(57dvh,350px)}
+.panel{background:linear-gradient(150deg,#141c36f5,#090e22f7 72%);box-shadow:0 12px 34px #0008,inset 0 1px #788ac04d}
+.widget-bar{padding-bottom:.36rem;border-bottom:1px solid #828fc12c}
+.profile-data{grid-template-columns:minmax(0,1fr) minmax(0,1.08fr)}
+.profile-data dt,.profile-data dd{padding:.25rem .35rem;background:#27365845;border-radius:4px;overflow-wrap:anywhere}
+#vitals-chart{margin-top:.25rem;background:repeating-linear-gradient(0deg,#25345255 0 1px,transparent 1px 24px),#10182d}
+.personnel-hero{display:grid;grid-template-columns:65px minmax(0,1fr);align-items:center;gap:.65rem;padding:.6rem 0}
+.personnel-hero strong,.personnel-hero span{display:block}
+.personnel-hero strong{font-size:1.2rem}
+.personnel-hero span{color:var(--muted);font-size:.72rem}
+#personnel-art{display:grid;place-items:center;aspect-ratio:1;background:radial-gradient(circle,#46537c,#181e38);border-radius:10px;border-bottom:2px solid var(--profile-accent)}
+#personnel-art .crew-face{width:50px;height:50px}
+.profile-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.35rem}
+.profile-cards>div{background:#222d4b99;border-radius:6px;padding:.4rem .45rem}
+.profile-cards strong{font-size:.73rem;color:var(--blue)}
+.profile-cards strong .icon,.personnel-actions .icon{width:.75rem;height:.75rem;margin-right:.25rem}
+.profile-cards p{font-size:.73rem;margin:.15rem 0 0}
+.personnel-actions{margin:.55rem 0 0}
 </style>
 </head>
 <body>
@@ -140,7 +194,6 @@ __HUD_ICONS__
     <button type="button" id="show-inspector" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#hud-activity"/></svg>Inspector</button>
     <button type="button" id="show-crew" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#hud-users"/></svg>Crew</button>
     <button type="button" id="show-workflow" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#hud-clipboard-list"/></svg>Orders</button>
-    <button type="button" id="show-map" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="#hud-map"/></svg>Overview</button>
     <a href="/mission">Mission control</a>
   </div>
   <nav class="crew-strip" id="crew-strip" aria-label="Astronaut portraits"></nav>
@@ -159,20 +212,43 @@ __HUD_ICONS__
 <div class="overlays" id="overlays">
   <section class="panel" id="workflow-widget" hidden aria-labelledby="workflow-title">
     <div class="widget-bar"><button class="move-widget widget-title" type="button" aria-label="Move orders with drag or arrow keys"><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button><h2 id="workflow-title">Onboard orders</h2><button class="widget-close" type="button" aria-label="Close orders"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button></div>
-    <p id="workflow-state"></p>
+    <div class="order-card">
+      <strong>Routine · Scrubber check</strong>
+      <p id="routine-state"></p>
+      <button id="assign-routine" type="button">Assign Ivo to routine check</button>
+    </div>
+    <div class="order-card">
+      <strong>Ground · Fault inspection</strong>
+      <p id="workflow-state"></p>
     <p id="monitor-state"></p>
-    <button id="assign-order" type="button" hidden>Commander · Assign inspection</button>
+    <button id="assign-order" type="button" hidden>Commander · Assign Ivo</button>
     <button id="hold-order" type="button" hidden>Commander · Hold</button>
-    <button id="complete-order" type="button" hidden>SIM-03 · Report inspection</button>
+    <button id="complete-order" type="button" hidden>Ivo · Send inspection report</button>
+    </div>
   </section>
   <section class="panel" id="map-widget" aria-label="Mission overview">
-    <div class="widget-bar"><button class="move-widget widget-title" type="button" aria-label="Move route map with drag or arrow keys"><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button><h2>Mission overview</h2><button class="widget-close" type="button" aria-label="Close route map"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button></div>
+    <div class="widget-bar"><button class="move-widget widget-title" type="button" aria-label="Move minimap with drag or arrow keys" disabled><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button><h2>Mission overview</h2><button id="lock-map" type="button" aria-pressed="true" aria-label="Lock minimap position" title="Unlock minimap position" data-widget-lock><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg> <span>Lock</span></button></div>
+    <div class="choices map-views" role="group" aria-label="Mission overview view">
+      <button type="button" data-map-view="route" aria-pressed="true">Route</button>
+      <button type="button" data-map-view="deck" aria-pressed="false">Deck</button>
+      <button type="button" data-map-view="systems" aria-pressed="false">Systems</button>
+    </div>
+    <div class="minimap-screen">
+      <div id="map-route">
     <svg class="route-map" viewBox="0 0 260 58" aria-hidden="true">
       <path d="M18 35 Q75 -4 130 17 Q190 -4 242 35" stroke="#8385bd" fill="none"/>
       <circle cx="18" cy="35" r="4"/><circle cx="130" cy="17" r="4"/><circle cx="242" cy="35" r="4"/>
       <circle id="ship-position" cx="18" cy="35" r="5"/>
       <g fill="#bac5e7" font-size="10"><text x="3" y="55">Earth</text><text x="122" y="39">ISS</text><text x="218" y="55">Return</text></g>
     </svg>
+      </div>
+      <div id="map-deck" hidden><svg id="deck-map" viewBox="170 106 782 270" role="img" aria-label="Ship rooms and crew positions"></svg></div>
+      <div id="map-systems" class="map-systems" hidden>
+        <div><small>Cabin CO₂</small><strong id="map-air"></strong></div>
+        <div><small>Power reserve</small><strong id="map-power"></strong></div>
+        <div><small>Onboard jobs</small><strong id="map-jobs"></strong></div>
+      </div>
+    </div>
     <p id="map-location"></p>
     <p id="phase"></p>
     <div class="overview-time">
@@ -200,11 +276,28 @@ __HUD_ICONS__
     <button type="button" id="activity" hidden></button>
     <div id="crew-profile" hidden>
       <div id="profile-tabs" role="group" aria-label="Astronaut profile">
+        <button type="button" data-profile="personnel">Profile</button>
         <button type="button" data-profile="duty">Duty</button>
         <button type="button" data-profile="needs">Needs</button>
         <button type="button" data-profile="vitals">Vitals</button>
         <button type="button" data-profile="devices">Devices</button>
       </div>
+    </div>
+  </section>
+  <section class="panel profile-window" id="personnel-widget" hidden aria-labelledby="personnel-title">
+    <div class="widget-bar">
+      <button class="move-widget widget-title" type="button" aria-label="Move Profile widget"><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button>
+      <h2 id="personnel-title">Crew profile</h2>
+      <button class="widget-close" type="button" aria-label="Close Profile widget"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button>
+    </div>
+    <div class="personnel-hero">
+      <div id="personnel-art"></div>
+      <div><span id="personnel-role"></span><strong id="personnel-name"></strong><span id="personnel-location"></span></div>
+    </div>
+    <div class="profile-cards" id="personnel-data"></div>
+    <div class="choices personnel-actions" role="group" aria-label="Crew profile views">
+      <button type="button" data-personnel-view="duty">Duty</button><button type="button" data-personnel-view="needs">Needs</button>
+      <button type="button" data-personnel-view="vitals">Vitals</button><button type="button" data-personnel-view="devices">Devices</button>
     </div>
   </section>
   <section class="panel profile-window" id="duty-widget" hidden aria-labelledby="duty-title">
@@ -327,17 +420,15 @@ const stationDuties = [
   [["comms-01","Report approach"],["comms-01","Acknowledge capture"],["comms-01","Track the experiment handoff"],["habitat-01","Use the WC and log hydration"],["comms-01","Report departure"],["comms-01","Confirm recovery"]],
 ];
 function station(duty, member) {
-  const order = flightWorkflow.read();
   const time = Math.floor(missionTime);
   const task = activeTask(member, time);
   if (task && time >= task.assigned) {
     const asset = equipment.get(task.asset);
     return [asset.room, time < task.arrival ? "Walking to " + asset.name : task.action];
   }
-  if (member === 2 && order?.assigned && time >= order.decided &&
-      (order.completed == null || time < order.completed)) {
-    return ["life-support-01", "Inspect life support at the Commander's request"];
-  }
+  const groundWork = member === 2 && groundInspection(currentFrame());
+  if (groundWork && time >= groundWork.assigned) return ["life-support-01",
+    time < groundWork.arrival ? "Walking to the scrubber rack" : "Inspect life support for the Commander"];
   return duty.stations[index] ?? stationDuties[member][index - duty.stations.length];
 }
 
@@ -367,6 +458,13 @@ function placeArea(button, x, y, width, height) {
 }
 function taskAt(asset, time) {
   return tasks.findLast(task => task.asset === asset && task.queued <= time);
+}
+
+function groundInspection(frame) {
+  const job = flightWorkflow.job(frame);
+  if (!["Queued","Travelling","Inspecting","Ready to report"].includes(job?.state)) return null;
+  const origin = job.work.origin ?? stationPoint("engineering-01",2);
+  return {...job.work,origin,asset:"scrubber",member:2};
 }
 
 function activeTask(member, time) {
@@ -419,13 +517,17 @@ function rectangle(x,y,w,h,fill) {
 
 function bulkhead(x1,y1,x2,y2) {
   ctx.beginPath();
+  ctx.moveTo(x1,y1+4); ctx.lineTo(x2,y2+4);
+  ctx.strokeStyle = "#080d1a"; ctx.lineWidth = 10; ctx.stroke();
+  ctx.beginPath();
   ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
   ctx.strokeStyle = "#10162b"; ctx.lineWidth = 7; ctx.stroke();
-  ctx.strokeStyle = "#687596"; ctx.lineWidth = 2; ctx.stroke();
+  ctx.strokeStyle = "#7f91b9"; ctx.lineWidth = 2; ctx.stroke();
   ctx.lineWidth = 1;
 }
 
 function doorway(x,y,vertical,accent) {
+  const opening = doorClearance(x,y);
   ctx.save();
   ctx.translate(x,y);
   if (vertical) ctx.rotate(Math.PI / 2);
@@ -435,15 +537,21 @@ function doorway(x,y,vertical,accent) {
     rectangle(dx,-3,5,6,accent);
   }
   for (const dx of [-10,0,10]) rectangle(dx-2,-1,4,2,"#9cadd480");
+  const leaf = 13 * (1-opening);
+  for (const start of [-14,14-leaf]) {
+    rectangle(start,-4,leaf,8,"#283650");
+    rectangle(start,-4,leaf,1,accent);
+  }
   ctx.restore();
 }
 
 function drawShip(frame) {
   ctx.clearRect(0,0,1100,475);
   ctx.lineWidth = 1;
-  const plume = ctx.createLinearGradient(27,0,177,0);
+  const glow = reducedMotion.matches ? .54 : .54 + .15 * Math.sin(missionTime * 1.7);
+  const plume = ctx.createLinearGradient(22,0,177,0);
   plume.addColorStop(0,"#756aff00");
-  plume.addColorStop(.78,"#756aff65");
+  plume.addColorStop(.78,"rgba(126,113,255," + glow + ")");
   plume.addColorStop(1,"#c2d5ff");
   for (const y of [200,282]) {
     shape([[25,y],[157,y-13],[182,y-10],[182,y+10],[157,y+13]],plume,"#9a8dff44");
@@ -461,9 +569,20 @@ function drawShip(frame) {
       rectangle(x+8,y+5,1,33,"#7187c3");
     }
   }
-  shape([[162,209],[198,115],[399,115],[426,97],[648,97],[670,116],[811,116],
+  const hullOutline = [[162,209],[198,115],[399,115],[426,97],[648,97],[670,116],[811,116],
     [838,167],[930,167],[1008,241],[930,315],[838,315],[811,369],[672,369],
-    [647,379],[426,379],[399,370],[198,370],[162,273]],"#161e35","#8192be");
+    [647,379],[426,379],[399,370],[198,370],[162,273]];
+  shape(hullOutline.map(([x,y])=>[x,y+13]),"#090f1f","#39466b");
+  const plating = ctx.createLinearGradient(0,97,0,389);
+  plating.addColorStop(0,"#68759a");
+  plating.addColorStop(.28,"#3c4c70");
+  plating.addColorStop(1,"#1e2b4b");
+  shape(hullOutline,plating,"#a4b4d9");
+  for (const [x,y,w] of [[212,120,177],[448,104,180],[681,121,116],[854,172,60],[229,360,150],[465,366,160],[681,359,117]]) {
+    rectangle(x,y,w,2,"#a4b7e480");
+    rectangle(x+8,y+3,w-16,2,"#1c2a49");
+    for (const bolt of [x+4,x+w-6]) rectangle(bolt,y,2,2,"#e5eaff");
+  }
   shape([[179,214],[208,125],[810,125],[828,182],[924,182],[986,241],
     [924,300],[828,300],[806,355],[206,359],[179,269]],"#131a2f","#3c5079");
   rectangle(198,224,622,34,"#26354f");
@@ -477,7 +596,10 @@ function drawShip(frame) {
     const accent = warning ? "#ffc486" : z.accent;
     const {x,y,w,h,door} = z;
     const right=x+w, bottom=y+h;
-    rectangle(x,y,w,h,z.color);
+    const floor = ctx.createLinearGradient(x,y,x+w,y+h);
+    floor.addColorStop(0,z.color); floor.addColorStop(1,"#161f35");
+    rectangle(x,y,w,h,floor);
+    rectangle(x+3,y+3,w-6,8,"#141a2d75");
     for (let xx=x+18;xx<right-5;xx+=18) rectangle(xx,y+4,1,h-8,"#a7b9f212");
     for (let yy=y+17;yy<bottom-6;yy+=17) rectangle(x+4,yy,w-8,1,"#a7b9f212");
     const walls = [[x,y,right,y],[right,y,right,bottom],[x,bottom,right,bottom],[x,y,x,bottom]];
@@ -495,6 +617,16 @@ function drawShip(frame) {
     rectangle(x+9,y+7,19,2,accent);
     rectangle(right-14,y+7,5,2,accent);
     drawFixtures(id,z,frame);
+    for (const fixture of fixtures) {
+      if (fixture.room !== id) continue;
+      const work = taskAt(fixture.id,frame.time) || (fixture.id === "scrubber" && groundInspection(frame));
+      if (!work || frame.time < work.arrival || frame.time >= work.finishes) continue;
+      ctx.save();
+      ctx.globalAlpha = reducedMotion.matches ? .8 : .55 + .35 * Math.sin(missionTime * 1.3);
+      ctx.shadowColor = accent; ctx.shadowBlur = 11;
+      rectangle(fixture.x-6,fixture.y-8,12,2,accent);
+      ctx.restore();
+    }
     roomButtons.get(id).dataset.alert = warning;
   }
   shape([[938,207],[980,241],[938,275]],"#203458","#5a7bac");
@@ -504,9 +636,11 @@ function drawShip(frame) {
 function drawFixtures(id,z,frame) {
   const steel="#7184a9", dark="#111b32", light=z.accent;
   function module(x,y,w,h) {
+    rectangle(x+3,y+4,w,h,"#080d1ccc");
     rectangle(x-1,y-1,w+2,h+2,"#13192e");
     rectangle(x,y,w,h,steel);
     rectangle(x+2,y+2,w-4,h-4,dark);
+    rectangle(x+2,y,w-4,1,"#b1c1e5");
   }
   if (id === "habitat-01") {
     for (let i=0;i<4;i++) {
@@ -559,6 +693,8 @@ function showInspector() {
 }
 
 const profileMembers = new Map();
+const profileIcons = {personnel:"users",duty:"clipboard-list",needs:"bed-single",vitals:"activity",devices:"zap"};
+const profileRows = new Map();
 const profileWindows = new Map();
 const checkIns = new Map();
 let assetCrew = 0, selectedSignal = "heart_rate";
@@ -615,15 +751,34 @@ function drawHistory(series, field, time) {
 
 function renderProfiles(frame) {
   for (const [kind, member] of profileMembers) {
-    if (element(kind + "-widget").hidden) continue;
     const id = data.crew[member];
     const row = data.history[id][index];
     const reports = checkIns.get(id + ":" + row.time) ?? {};
     const [zone, task] = station(duties[member], member);
-    setIcon(element(kind + "-title"), {duty:"clipboard-list",needs:"bed-single",vitals:"activity",devices:"zap"}[kind],
-      characters[member].short + " · " + kind[0].toUpperCase() + kind.slice(1));
+    setIcon(element(kind + "-title"), profileIcons[kind],
+      characters[member].short + " · " + (kind==="personnel" ? "Profile" : kind[0].toUpperCase() + kind.slice(1)));
     let rows;
-    if (kind === "needs") {
+    if (kind === "personnel") {
+      const persona = characters[member];
+      const art = element("personnel-art");
+      if (art.dataset.member !== String(member)) {
+        art.replaceChildren(crewFace(member));
+        art.dataset.member = member;
+        art.style.setProperty("--profile-accent",duties[member].color);
+      }
+      element("personnel-name").textContent = persona.name;
+      element("personnel-role").textContent = duties[member].role + " · " + id;
+      element("personnel-location").textContent = roomById.get(zone).name + " · " + task;
+      rows = [
+        ["Background",persona.bio,"clipboard-list"],
+        ["Traits and specialties",persona.traits + " · " + persona.strength,"zap"],
+        ["Crew relationship",characters[persona.link].name + " · " + persona.bond,"users"],
+        ["Shared mission beat",crewBeat(frame,member),"radio"],
+        ["Apparel",frame.phase==="Return transit" || frame.phase==="Departure"
+          ? "Flight suit · phase wardrobe preview" : "Cabin wear · phase wardrobe preview","package"],
+        ["Private check-in",reports.mood || "Mood not reported","activity"],
+      ];
+    } else if (kind === "needs") {
       setChoices("mood", reports.mood ?? "");
       setChoices("symptoms", reports.symptoms ?? "");
       rows = [["Rest",frame.habitat.beds ? "Protected rest window" : "Scheduled"],["Meal and hydration",frame.habitat.meal],["WC",frame.habitat.wc]];
@@ -646,7 +801,22 @@ function renderProfiles(frame) {
         ["Crew relationship",characters[persona.link].name + " · " + persona.bond],
         ["Shared beat · scripted",crewBeat(frame,member)],["Vehicle",frame.vehicle],["Phase",frame.phase]];
     }
-    element(kind + "-data").replaceChildren(...rows.flatMap(([label,value]) => {
+    const key = JSON.stringify(rows);
+    if (profileRows.get(kind) === key) continue;
+    profileRows.set(kind,key);
+    const container = element(kind + "-data");
+    if (kind === "personnel") {
+      container.replaceChildren(...rows.map(([label,value,icon])=>{
+        const card = document.createElement("div");
+        const title = document.createElement("strong"), body = document.createElement("p");
+        setIcon(title,icon,label);
+        body.textContent = value;
+        card.append(title,body);
+        return card;
+      }));
+      continue;
+    }
+    container.replaceChildren(...rows.flatMap(([label,value]) => {
       const dt = document.createElement("dt"), dd = document.createElement("dd");
       dt.textContent = label; dd.textContent = value;
       return [dt,dd];
@@ -757,7 +927,10 @@ function inspect(frame) {
     if (asset.id === "bench") condition = frame.power == null ? "No bus sample · dry run only" : "Dry run · " + frame.power.toFixed(2) + " kW headroom";
     if (asset.id === "radio") condition = "Local simulated status transmission";
     if (asset.id === "wc") condition = frame.habitat.wc;
-    if (asset.id === "scrubber") condition = frame.removal == null ? "Flow unmodeled" : frame.removal + " m³/h";
+    if (asset.id === "scrubber") {
+      condition = frame.removal == null ? "Flow unmodeled" : frame.removal + " m³/h";
+      if (groundInspection(frame)) condition += " · Reserved for Ground inspection";
+    }
     if (asset.id === "bus") condition = frame.power == null ? "Headroom unmodeled" : frame.power.toFixed(2) + " kW headroom";
     value.textContent = active ? characters[task.member].short + " · " + (frame.time < task.assigned
       ? "Queued until " + clock(task.assigned) : frame.time < task.arrival ? "Walking to station"
@@ -769,7 +942,7 @@ function inspect(frame) {
     const crew = assetCrew;
     setChoices("asset-crew",crew);
     const memberBusy = activeTask(crew, frame.time) ||
-      (crew === 2 && (flightWorkflow.canComplete(frame)));
+      (crew === 2 && groundInspection(frame)) || (asset.id === "scrubber" && groundInspection(frame));
     assign.disabled = Boolean(active || memberBusy || frame.habitat.beds && ["bed","wc"].includes(asset.id)
       || nextTick(missionTime) + TICK_SECONDS + WORK_SECONDS > endTime);
     return;
@@ -821,7 +994,20 @@ function render() {
   element("workflow-state").textContent = flightWorkflow.status(frame, clock);
   element("monitor-state").textContent = frame.removal != null && frame.removal < 20
     ? "Monitor · Primary scrubber degraded. Inspection records evidence." : "";
+  const routine = tasks.find(task=>task.routine && task.queued<=frame.time);
+  const scrubber = taskAt("scrubber",frame.time);
+  const rackBusy = Boolean(scrubber && frame.time < scrubber.finishes);
+  const ivoBusy = Boolean(activeTask(2,frame.time));
+  const windowEnds = flightWorkflow.timebox(frame.time).finishes;
+  const routineStatus = flightWorkflow.routine(frame,routine);
+  element("routine-state").textContent = routineStatus === "Complete"
+    ? routineStatus + " at " + clock(routine.finishes) + " · recorded at scrubber rack"
+    : routineStatus + " · due 06:00";
+  const assignRoutine = element("assign-routine");
+  assignRoutine.hidden = Boolean(routine) || frame.time >= flightWorkflow.routineDue;
+  assignRoutine.disabled = rackBusy || ivoBusy || Boolean(groundInspection(frame)) || windowEnds > flightWorkflow.routineDue;
   element("assign-order").hidden = !flightWorkflow.canDecide(frame);
+  element("assign-order").disabled = ivoBusy || rackBusy || windowEnds >= (flightWorkflow.read()?.expires ?? 0);
   element("hold-order").hidden = !flightWorkflow.canDecide(frame);
   element("complete-order").hidden = !flightWorkflow.canComplete(frame);
   element("clock").textContent = clock(frame.time);
@@ -834,6 +1020,10 @@ function render() {
   const [mx,my] = routePoints[frame.route];
   element("ship-position").setAttribute("cx",mx);
   element("ship-position").setAttribute("cy",my);
+  element("map-air").textContent = frame.co2.toFixed(0) + " ppm";
+  element("map-power").textContent = frame.power == null ? "Unavailable" : frame.power.toFixed(2) + " kW";
+  element("map-jobs").textContent = tasks.filter(task=>task.queued<=frame.time && task.finishes>frame.time).length
+    + Number(Boolean(groundInspection(frame)));
   element("map-location").textContent = frame.site + " · " + clock(frame.time);
   element("timeline").value = Math.floor(missionTime);
   element("timeline").setAttribute("aria-valuetext", clock(frame.time) + " " + frame.label);
@@ -851,16 +1041,10 @@ function render() {
   }
   duties.forEach((duty, i) => {
     const [roomId, task] = station(duty,i);
-    const z = zones[roomId];
     const button = pawns.get(i);
-    const work = activeTask(i, frame.time);
+    const work = activeTask(i, frame.time) || (i === 2 && groundInspection(frame));
     const asset = work && frame.time >= work.assigned ? equipment.get(work.asset) : null;
-    const floorY = z.side === "upper" ? z.y+z.h-16 : z.side === "lower" ? z.y+z.h-21 : z.y+z.h-24;
-    const x = asset ? asset.x : z.x + z.w*(.18+i*.21);
-    const y = asset ? floorY : floorY - (i%2)*4;
     const travelling = asset && frame.time < work.arrival;
-    if (asset) placeTaskPawn(button,work,x,y);
-    else routePawn(button,roomId,x,y);
     const sharedWork = !asset && ["Docked","Station research","Recovery"].includes(frame.phase);
     const statusIcon = travelling ? "map" : asset?.icon ?? (sharedWork ? "users" : roomIcons[roomId]);
     const marker = button.querySelector(".action-marker");
@@ -887,14 +1071,22 @@ function render() {
     button.dataset.work = task ? (frame.time < task.finishes ? "active" : "complete") : "available";
     button.setAttribute("aria-pressed", selection.asset === id);
   }
-  drawShip(frame);
-  drawSelectedRoute(frame);
+  paintFlight(frame);
   inspect(frame);
   renderProfiles(frame);
 }
 
+const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
 const crewPositions = new WeakMap();
-function pathBetween(start, end) {
+const paintedPositions = new Map();
+
+function stationPoint(room,member,asset) {
+  const z = zones[room];
+  const floor = z.y+z.h-({upper:16,lower:21,bridge:24}[z.side]);
+  return {room,x:asset?.x ?? z.x+z.w*(.18+member*.21),y:floor-(asset ? 0 : (member%2)*4)};
+}
+
+function pathBetween(start,end) {
   const portal = id => zones[id].side === "bridge" ? [zones[id].x,passageY] : [zones[id].door,passageY];
   const threshold = id => {
     const z = zones[id];
@@ -903,66 +1095,84 @@ function pathBetween(start, end) {
   return start.room === end.room ? [[start.x,start.y],[end.x,end.y]]
     : [[start.x,start.y],threshold(start.room),portal(start.room),portal(end.room),threshold(end.room),[end.x,end.y]];
 }
-function taskPath(task,x,y) {
-  const a = equipment.get(task.asset);
-  return pathBetween(task.origin,{room:a.room,x,y});
-}
-function placeTaskPawn(button,task,x,y) {
-  crewPositions.get(button)?.animation?.cancel();
-  const room = equipment.get(task.asset).room;
-  const points = taskPath(task,x,y);
-  if (missionTime >= task.arrival) {
-    place(button,x,y);
-    crewPositions.set(button,{room,x,y});
-    return;
-  }
-  const lengths = points.slice(1).map(([xx,yy],i)=>Math.hypot(xx-points[i][0],yy-points[i][1]));
-  const ratio = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0
-    : Math.min(1, Math.max(0,(missionTime-task.assigned)/TICK_SECONDS));
-  let remaining = ratio * lengths.reduce((a,b)=>a+b,0);
+
+function pointAlong(points,progress) {
+  const lengths = points.slice(1).map(([x,y],i)=>Math.hypot(x-points[i][0],y-points[i][1]));
+  let remaining = progress * lengths.reduce((sum,length)=>sum+length,0);
   for (const [i,length] of lengths.entries()) {
-    if (remaining <= length && length) {
-      const fraction = remaining / length;
+    if (length && remaining <= length) {
+      const fraction = remaining/length;
       const [ax,ay] = points[i], [bx,by] = points[i+1];
-      place(button,ax+(bx-ax)*fraction,ay+(by-ay)*fraction);
-      return;
+      return [ax+(bx-ax)*fraction,ay+(by-ay)*fraction];
     }
     remaining -= length;
   }
-  place(button,x,y);
-  crewPositions.set(button,{room,x,y});
+  return points.at(-1);
 }
+
+function crewMotion(member, frame) {
+  const duty = duties[member];
+  const [room] = station(duty,member);
+  const task = activeTask(member,frame.time) || (member === 2 && groundInspection(frame));
+  if (task && frame.time >= task.assigned) {
+    const asset = equipment.get(task.asset);
+    return {origin:task.origin,destination:stationPoint(room,member,asset),
+      start:task.assigned,end:task.arrival,activity:frame.time >= task.arrival ? "work" : "move"};
+  }
+  const priorRoom = index > 0 ? (duty.stations[index-1] ?? stationDuties[member][index-1-duty.stations.length])[0] : room;
+  const motion = {origin:stationPoint(priorRoom,member),destination:stationPoint(room,member),
+    start:checkpoints[index].time,end:checkpoints[index].time+TICK_SECONDS,
+    activity:frame.phase === "Station rest" ? "rest" : "idle"};
+  if (motion.start <= missionTime && missionTime < motion.end && room !== priorRoom) motion.activity = "move";
+  return motion;
+}
+
+function doorClearance(x,y) {
+  let nearest = 50;
+  for (const position of paintedPositions.values()) {
+    if (position.activity === "move" && !reducedMotion.matches) nearest = Math.min(nearest,Math.hypot(position.x-x,position.y-y));
+  }
+  return Math.max(0,1-nearest/50);
+}
+
+function paintFlight(frame) {
+  for (const [member,button] of pawns) {
+    const motion = crewMotion(member,frame);
+    const route = pathBetween(motion.origin,motion.destination);
+    const progress = motion.activity !== "move" ? 1 : reducedMotion.matches ? 0
+      : Math.min(1,Math.max(0,(missionTime-motion.start)/(motion.end-motion.start)));
+    const [x,y] = pointAlong(route,progress);
+    const facing = pointAlong(route,Math.min(1,progress+.02))[0] < x ? -1 : 1;
+    const pose = reducedMotion.matches ? 0 : Math.sin(missionTime*(motion.activity==="move" ? 2.5 : 1.3));
+    place(button,x,y);
+    button.dataset.pose = motion.activity;
+    button.style.setProperty("--stride",pose.toFixed(2));
+    button.style.setProperty("--facing",facing);
+    crewPositions.set(button,{room:motion.destination.room,x,y});
+    paintedPositions.set(member,{x,y,activity:motion.activity});
+    if (!element("map-deck").hidden) {
+      miniCrew.get(member).setAttribute("cx",x);
+      miniCrew.get(member).setAttribute("cy",y);
+    }
+  }
+  element("stage").style.setProperty("--star-offset",reducedMotion.matches ? "0px" : -(missionTime%388)/4+"px");
+  drawShip(frame);
+  drawSelectedRoute(frame);
+}
+
 function drawSelectedRoute(frame) {
   const work = selection.crew !== undefined ? activeTask(selection.crew,frame.time)
     : selection.asset ? taskAt(selection.asset,frame.time) : null;
-  if (!work || frame.time >= work.arrival) return;
-  const asset = equipment.get(work.asset), z = zones[asset.room];
-  const y = z.side === "upper" ? z.y+z.h-16 : z.y+z.h-21;
-  const points = taskPath(work,asset.x,y);
+  const visibleWork = work || ((selection.crew===2 || selection.asset==="scrubber") && groundInspection(frame));
+  if (!visibleWork || frame.time >= visibleWork.arrival) return;
+  const asset = equipment.get(visibleWork.asset);
+  const points = pathBetween(visibleWork.origin,stationPoint(asset.room,visibleWork.member,asset));
   ctx.save();
   ctx.strokeStyle = "#c5bbffd9"; ctx.lineWidth = 2; ctx.setLineDash([4,5]);
   ctx.beginPath();
   points.forEach(([x,y],i)=>i ? ctx.lineTo(x,y) : ctx.moveTo(x,y));
   ctx.stroke();
   ctx.restore();
-}
-function routePawn(button, room, x, y) {
-  const previous = crewPositions.get(button);
-  if (previous?.x === x && previous?.y === y && previous?.room === room) return;
-  place(button,x,y);
-  const next = {room,x,y,animation:null};
-  crewPositions.set(button,next);
-  previous?.animation?.cancel();
-  if (!previous || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  const points = pathBetween(previous,next);
-  const distances = [0];
-  for (let i=1;i<points.length;i++) distances.push(distances[i-1]+Math.hypot(
-    points[i][0]-points[i-1][0], points[i][1]-points[i-1][1]));
-  const distance = distances.at(-1);
-  if (!distance) return;
-  next.animation = button.animate(points.map(([xx,yy],i)=>({
-    left:(xx/11)+"%",top:(yy/475*100)+"%",offset:distances[i]/distance,
-  })), {duration:Math.min(1550,Math.max(220,distance*3.3)),easing:"linear"});
 }
 
 function stop() {
@@ -975,6 +1185,7 @@ function setMissionTime(seconds) {
   index = checkpoints.findLastIndex(frame => frame.time <= missionTime);
 }
 
+let lastPaintAt = 0;
 function tick(now) {
   const rate = compressed ? endTime / 3600 : 4 * speed;
   setMissionTime(missionTime + (now - lastWallTime) / 1000 * rate);
@@ -982,16 +1193,53 @@ function tick(now) {
   if (missionTime >= endTime) stop();
   else timer = requestAnimationFrame(tick);
   if (Math.floor(missionTime) !== lastRenderedSecond || timer === null) render();
-  else if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    for (const [member,button] of pawns) {
-      const task = activeTask(member,missionTime);
-      if (!task || missionTime < task.assigned || missionTime >= task.arrival) continue;
-      const asset = equipment.get(task.asset), z = zones[asset.room];
-      placeTaskPawn(button,task,asset.x,z.side === "upper" ? z.y+z.h-16 : z.y+z.h-21);
-    }
+  else if (!reducedMotion.matches && now-lastPaintAt >= 32) {
+    paintFlight(currentFrame());
+    lastPaintAt = now;
   }
 }
+reducedMotion.addEventListener("change",render);
 
+function crewSprite(member) {
+  const sprite = document.createElement("div");
+  sprite.className = "crew-sprite";
+  sprite.setAttribute("aria-hidden","true");
+  for (const part of ["shadow","pack","leg leg-left","leg leg-right","torso","arm arm-left","arm arm-right","helmet"]) {
+    const layer = document.createElement("i");
+    layer.className = part;
+    sprite.append(layer);
+  }
+  sprite.style.setProperty("--skin",characters[member].skin);
+  return sprite;
+}
+
+const svgNS = "http://www.w3.org/2000/svg";
+const miniCrew = new Map();
+function setupMinimap() {
+  const deck = element("deck-map");
+  function glyph(tag,attributes) {
+    const node = document.createElementNS(svgNS,tag);
+    for (const [key,value] of Object.entries(attributes)) node.setAttribute(key,value);
+    deck.append(node);
+    return node;
+  }
+  glyph("rect",{x:198,y:224,width:620,height:34,fill:"#334265"});
+  for (const [id,zone] of Object.entries(zones)) {
+    const box = glyph("rect",{x:zone.x+2,y:zone.y+2,width:zone.w-4,height:zone.h-4,
+      rx:5,fill:zone.color,stroke:zone.accent,"stroke-width":3});
+    const title = document.createElementNS(svgNS,"title");
+    title.textContent = roomById.get(id).name;
+    box.append(title);
+  }
+  duties.forEach((duty,i)=>miniCrew.set(i,glyph("circle",{r:11,fill:duty.color,stroke:"#101528","stroke-width":4})));
+  for (const button of document.querySelectorAll("[data-map-view]")) button.addEventListener("click",()=>{
+    for (const view of document.querySelectorAll("[data-map-view]")) {
+      view.setAttribute("aria-pressed",String(view===button));
+      element("map-"+view.dataset.mapView).hidden = view!==button;
+    }
+    paintFlight(currentFrame());
+  });
+}
 function crewFace(member) {
   const persona = characters[member], suit = duties[member].color;
   const art = document.createElementNS("http://www.w3.org/2000/svg","svg");
@@ -1024,7 +1272,7 @@ duties.forEach((duty,i) => {
   const activity = document.createElement("span");
   activity.className = "action-marker";
   activity.setAttribute("aria-hidden","true");
-  pawn.append(crewFace(i), marker, activity);
+  pawn.append(crewSprite(i), marker, activity);
   const member = document.createElement("button");
   member.type = "button";
   member.textContent = characters[i].name + " · " + duty.role;
@@ -1043,7 +1291,12 @@ duties.forEach((duty,i) => {
   status.className = "crew-status";
   status.setAttribute("aria-hidden","true");
   portrait.append(crewFace(i),id,status);
-  portrait.addEventListener("click", select);
+  portrait.addEventListener("click",()=>{
+    selection = {crew:i};
+    profileMembers.set("personnel",i);
+    profileWindows.get("personnel").open(portrait);
+    render();
+  });
   portraits.set(i,portrait);
   element("crew-strip").append(portrait);
   pawns.set(i,pawn);
@@ -1142,7 +1395,23 @@ for (const [field,values] of Object.entries({
     checkIns.set(key,{...checkIns.get(key),[field]:value});
   });
 }
-element("assign-order").addEventListener("click", () => { flightWorkflow.decide(currentFrame(),true); render(); });
+element("assign-routine").addEventListener("click", () => {
+  if (element("assign-routine").disabled || element("assign-routine").hidden) return;
+  const frame = currentFrame();
+  const [room] = station(duties[2],2);
+  const origin = stationPoint(room,2);
+  const work = flightWorkflow.timebox(frame.time);
+  while (tasks.length && tasks.at(-1).queued > frame.time) tasks.pop();
+  tasks.push({...work,origin,queued:frame.time,asset:"scrubber",member:2,routine:true,
+    action:"Inspect the scrubber on the routine watch",result:"Routine scrubber check recorded"});
+  render();
+});
+element("assign-order").addEventListener("click", () => {
+  if (element("assign-order").disabled || element("assign-order").hidden) return;
+  const [room] = station(duties[2],2);
+  flightWorkflow.decide(currentFrame(),true,stationPoint(room,2));
+  render();
+});
 element("hold-order").addEventListener("click", () => { flightWorkflow.decide(currentFrame(),false); render(); });
 element("complete-order").addEventListener("click", () => { flightWorkflow.complete(currentFrame()); render(); });
 window.addEventListener("storage", event => { if (event.key === flightWorkflow.key) render(); });
@@ -1162,12 +1431,14 @@ hudSize.observe(element("crew-strip"));
 hudSize.observe(document.querySelector(".hud"));
 hudSize.observe(shelf);
 const ordersWindow = widgets.register(element("workflow-widget"), element("show-workflow"), () => ({x:14,y:35}));
-widgets.register(element("map-widget"), element("show-map"), () => ({x:14,y:overlay.clientHeight - 270}));
+widgets.register(element("map-widget"),null,() => ({x:14,y:overlay.clientHeight}),{
+  persistent:true,lock:element("lock-map"),
+});
 const inspectorWindow = widgets.register(element("inspector-widget"), element("show-inspector"), () => ({x:overlay.clientWidth - 354,y:overlay.clientHeight - 305}));
 widgets.register(element("crew-widget"), element("show-crew"), () => ({x:overlay.clientWidth - 354,y:14}));
-for (const [offset, kind] of ["duty", "needs", "vitals", "devices"].entries()) {
+for (const [offset, kind] of ["personnel", "duty", "needs", "vitals", "devices"].entries()) {
   const button = document.querySelector('[data-profile="'+kind+'"]');
-  setIcon(button,{duty:"clipboard-list",needs:"bed-single",vitals:"activity",devices:"zap"}[kind],button.textContent);
+  setIcon(button,profileIcons[kind],button.textContent);
   profileWindows.set(kind,widgets.register(element(kind + "-widget"),null,() => ({
     x:Math.max(14,overlay.clientWidth - 355),y:10 + offset * 18,
   })));
@@ -1175,6 +1446,16 @@ for (const [offset, kind] of ["duty", "needs", "vitals", "devices"].entries()) {
 choices("medical-crew",characters.map((persona,i)=>[i,persona.short,persona.name]),
   value=>{medicalCrew=value;});
 for (const [i,button] of [...element("medical-crew").children].entries()) button.prepend(crewFace(i));
+for (const button of document.querySelectorAll("[data-personnel-view]")) {
+  const kind = button.dataset.personnelView;
+  setIcon(button,profileIcons[kind],button.textContent);
+  button.addEventListener("click",()=>{
+    profileMembers.set(kind,profileMembers.get("personnel"));
+    profileWindows.get(kind).open(button);
+    render();
+  });
+}
+setupMinimap();
 widgets.layout();
 render();
 </script>

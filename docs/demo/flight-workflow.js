@@ -2,6 +2,12 @@
 const flightWorkflow = (() => {
   const key = "sx:iss-research-v1:inspection";
   const delay = 300;
+  const tick = 15;
+  const routineDue = 360;
+  const timebox = time => {
+    const assigned = Math.ceil(time / tick) * tick;
+    return {assigned,arrival:assigned+tick,finishes:assigned+3*tick};
+  };
 
   function read() {
     try { return JSON.parse(localStorage.getItem(key)); }
@@ -26,16 +32,38 @@ const flightWorkflow = (() => {
       && frame.time < order.expires && frame.vehicle === "Outbound capsule");
   }
 
-  function decide(frame, approved) {
+  function decide(frame, approved, origin = null) {
     const order = read();
     if (!canDecide(frame, order)) return;
+    const work = timebox(frame.time);
+    if (approved && work.finishes >= order.expires) return;
     save({...order, decision:approved ? "Assigned" : "Held", decided:frame.time,
-      assigned:approved ? "SIM-03" : null});
+      assigned:approved ? "SIM-03" : null, work:approved ? {...work,origin} : null});
+  }
+
+  function job(frame, order = read()) {
+    if (!order || frame.time < order.arrives) return null;
+    if (order.completed != null && frame.time >= order.completed) return {state:"Reported"};
+    if (order.decision === "Held" && frame.time >= order.decided) return {state:"Held"};
+    if (frame.time >= order.expires) return {state:"Deadline missed"};
+    if (order.decision !== "Assigned" || frame.time < order.decided) return {state:"Awaiting Commander"};
+    const work = order.work ?? timebox(order.decided);
+    const state = frame.time < work.assigned ? "Queued" : frame.time < work.arrival ? "Travelling"
+      : frame.time < work.finishes ? "Inspecting" : "Ready to report";
+    return {state,work};
   }
 
   function canComplete(frame, order = read()) {
-    return Boolean(order?.assigned && frame.time >= order.decided
-      && order.completed == null && frame.vehicle === "Outbound capsule");
+    return frame.vehicle === "Outbound capsule" && order?.completed == null && job(frame,order)?.state === "Ready to report";
+  }
+
+  function routine(frame, task) {
+    if (task && frame.time >= task.finishes) return "Complete";
+    if (frame.time >= routineDue) return "Deadline missed";
+    if (!task) return "Awaiting Commander";
+    if (frame.time < task.assigned) return "Queued";
+    if (frame.time < task.arrival) return "Travelling";
+    return "Inspecting";
   }
 
   function complete(frame) {
@@ -55,7 +83,9 @@ const flightWorkflow = (() => {
       return facts.join(" · ");
     }
     facts.push("Commander received " + clock(order.arrives));
-    if (time >= order.expires && !order.decision) facts.push("Review window expired");
+    const state = job(frame,order)?.state;
+    if (state === "Deadline missed") facts.push("Inspection deadline missed");
+    if (["Queued","Travelling","Inspecting","Ready to report"].includes(state)) facts.push(state);
     if (order.decision && time >= order.decided) {
       facts.push("Commander " + order.decision.toLowerCase() + " " + clock(order.decided));
       if (order.assigned) facts.push(order.assigned + " · inspect Life Support");
@@ -69,6 +99,6 @@ const flightWorkflow = (() => {
     return facts.join(" · ");
   }
 
-  return {key, read, send, canSend, canDecide, decide, canComplete, complete, status,
+  return {key, read, send, canSend, canDecide, decide, canComplete, complete, status, job, routine, routineDue, timebox,
     reset: () => localStorage.removeItem(key)};
 })();

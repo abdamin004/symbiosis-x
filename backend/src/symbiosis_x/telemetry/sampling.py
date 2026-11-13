@@ -1,7 +1,9 @@
 """Create canonical observations from the scheduled virtual cabin CO₂ sensor."""
 
 from dataclasses import dataclass
+from hashlib import sha256
 from math import isfinite
+from random import Random
 
 
 @dataclass(frozen=True)
@@ -58,3 +60,41 @@ class CabinCO2Sensor:
             "model_version": model_version,
             "payload": payload,
         }
+
+
+def sample_noise_ppm(seed: int, source_id: str, mission_s: int, sigma_ppm: float) -> float:
+    """Seeded Gaussian noise for one sensor sample.
+
+    Each (seed, source, mission time) gets its own stream, so a sample does not
+    depend on call order, on how many samples came before it, or on other
+    sensors. The same seed always reproduces the same noise.
+    """
+    if not isfinite(sigma_ppm) or sigma_ppm < 0:
+        raise ValueError("noise sigma must be finite and nonnegative")
+    key = sha256(f"{seed}:{source_id}:{mission_s}".encode()).digest()
+    return Random(int.from_bytes(key[:8], "big")).gauss(0.0, sigma_ppm)
+
+
+def noisy_trace(
+    sensor: CabinCO2Sensor,
+    history: list[tuple[int, float | None]],
+    *,
+    seed: int,
+    sigma_ppm: float,
+    run_id: str,
+    model_version: str,
+) -> list[dict]:
+    """Sample a true CO₂ history through the sensor with seeded measurement noise.
+
+    Missing true values stay unavailable; noise never invents a reading. Noisy
+    values are clamped at zero because a concentration cannot be negative.
+    """
+    events = []
+    for mission_s, true_ppm in history:
+        measured = None
+        if true_ppm is not None:
+            measured = max(0.0, true_ppm + sample_noise_ppm(seed, sensor.source_id, mission_s, sigma_ppm))
+        event = sensor.sample(measured, run_id=run_id, mission_s=mission_s, model_version=model_version)
+        if event is not None:
+            events.append(event)
+    return events

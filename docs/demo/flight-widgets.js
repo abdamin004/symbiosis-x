@@ -34,7 +34,9 @@ function createFlightWidgets(overlay, shelf, notice) {
 
   function layout() {
     const active = entries.filter(entry=>entry.wanted);
-    const ordered = [focused,...active.filter(entry=>entry!==focused)].filter(entry=>entry?.wanted);
+    const ordered = [...active.filter(entry=>entry.persistent), focused,
+      ...active.filter(entry=>entry!==focused && !entry.persistent)]
+      .filter((entry,index,list)=>entry?.wanted && list.indexOf(entry)===index);
     const occupied = [];
     for (const entry of ordered) {
       const hadFocus = entry.panel.contains(document.activeElement);
@@ -57,7 +59,7 @@ function createFlightWidgets(overlay, shelf, notice) {
   const sizes = new ResizeObserver(entries=>{ if (entries.some(e=>!e.target.hidden)) schedule(); });
   sizes.observe(overlay);
 
-  function register(panel, toggle, preferred) {
+  function register(panel, toggle, preferred, {persistent=false,lock=null} = {}) {
     const handle = panel.querySelector(".move-widget"), bar = panel.querySelector(".widget-bar");
     const recall = document.createElement("button");
     recall.type = "button";
@@ -65,7 +67,8 @@ function createFlightWidgets(overlay, shelf, notice) {
     recall.setAttribute("aria-controls",panel.id);
     recall.hidden = true;
     shelf.append(recall);
-    const entry = {panel,toggle,preferred,recall,wanted:!panel.hidden,position:null,trigger:null};
+    const entry = {panel,toggle,preferred,recall,persistent,wanted:!panel.hidden,position:null,trigger:null};
+    let locked = Boolean(lock);
     entries.push(entry);
     sizes.observe(panel);
     toggle?.setAttribute("aria-controls",panel.id);
@@ -92,10 +95,16 @@ function createFlightWidgets(overlay, shelf, notice) {
 
     recall.addEventListener("click",()=>{open();if (!panel.hidden) handle.focus();});
     toggle?.addEventListener("click",()=>entry.wanted && !panel.hidden ? close() : open(toggle));
-    panel.querySelector(".widget-close").addEventListener("click",close);
+    panel.querySelector(".widget-close")?.addEventListener("click",close);
+    if (lock) lock.addEventListener("click",()=>{
+      locked = !locked;
+      lock.setAttribute("aria-pressed",String(locked));
+      lock.title = locked ? "Unlock minimap position" : "Lock minimap position";
+      handle.disabled = locked;
+    });
     let pointer = null;
     bar.addEventListener("pointerdown", event=>{
-      if (event.button!==0 || !entry.position || event.target.closest(".widget-close")) return;
+      if (locked || event.button!==0 || !entry.position || event.target.closest(".widget-close,[data-widget-lock]")) return;
       bar.setPointerCapture(event.pointerId);
       pointer={id:event.pointerId,x:event.clientX-entry.position.x,y:event.clientY-entry.position.y};
     });
@@ -105,7 +114,7 @@ function createFlightWidgets(overlay, shelf, notice) {
     bar.addEventListener("lostpointercapture",()=>{pointer=null;});
     handle.addEventListener("keydown",event=>{
       const offset={ArrowLeft:[-20,0],ArrowRight:[20,0],ArrowUp:[0,-20],ArrowDown:[0,20]}[event.key];
-      if (!offset || !entry.position) return;
+      if (locked || !offset || !entry.position) return;
       event.preventDefault();
       move(entry.position.x+offset[0],entry.position.y+offset[1]);
     });

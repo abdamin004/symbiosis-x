@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "rules_version": "health-reference-rules-v1",
+  "synthetic_data_only": true,
+  "disclaimer": "Training-simulation rules for fictional crew. Comparisons are explanations, not diagnoses or medical advice.",
+  "sources_checked_on": "2026-11-13",
+  "earth_based_label": "Earth-based adult reference. Not validated for spaceflight.",
+  "personal_baseline_rules": [
+    {
+      "rule_id": "personal-hr-rest-v1",
+      "metric": "heart_rate",
+      "unit": "bpm",
+      "baseline_source": "catalogs/crew/sim-01-health.json",
+      "band_below": 15,
+      "band_above": 15,
+      "requires_context": {
+        "activity": ["rest"]
+      },
+      "note": "Synthetic demo band of 15 bpm either side of the personal resting baseline. Not a clinical threshold."
+    }
+  ],
+  "reference_rules": [
+    {
+      "rule_id": "ref-hr-adult-rest-v1",
+      "metric": "heart_rate",
+      "unit": "bpm",
+      "kind": "range",
+      "low": 60,
+      "high": 100,
+      "requires_context": {
+        "activity": ["rest"]
+      },
+      "earth_based": true,
+      "note": "Resting heart rate for adults and children 10 years and older. Well-trained athletes may rest at 40 to 60 bpm.",
+      "source": {
+        "title": "Pulse",
+        "publisher": "MedlinePlus Medical Encyclopedia, U.S. National Library of Medicine",
+        "version": "web page, accessed 2026-11-13",
+        "url": "https://medlineplus.gov/ency/article/003399.htm"
+      }
+    },
+    {
+      "rule_id": "ref-bp-aha-categories-v1",
+      "metric": "blood_pressure",
+      "unit": "mmHg",
+      "kind": "blood_pressure_categories",
+      "categories": [
+        {"category": "severe_hypertension", "systolic_above": 180, "diastolic_above": 120, "combine": "or"},
+        {"category": "stage_2_hypertension", "systolic_at_least": 140, "diastolic_at_least": 90, "combine": "or"},
+        {"category": "stage_1_hypertension", "systolic_at_least": 130, "diastolic_at_least": 80, "combine": "or"},
+        {"category": "elevated", "systolic_at_least": 120, "diastolic_below": 80, "combine": "and"},
+        {"category": "normal", "systolic_below": 120, "diastolic_below": 80, "combine": "and"}
+      ],
+      "within_categories": ["normal"],
+      "requires_context": {
+        "method": ["automatic_upper_arm_cuff"],
+        "posture": ["seated_rested"]
+      },
+      "earth_based": true,
+      "note": "Categories assume a seated, rested reading with an upper-arm cuff. Only a medical professional can confirm a diagnosis.",
+      "source": {
+        "title": "Understanding Blood Pressure Readings",
+        "publisher": "American Heart Association",
+        "version": "web page, accessed 2026-11-13",
+        "url": "https://www.heart.org/en/health-topics/high-blood-pressure/understanding-blood-pressure-readings"
+      }
+    },
+    {
+      "rule_id": "ref-glucose-fasting-plasma-v1",
+      "metric": "glucose",
+      "unit": "mg/dL",
+      "kind": "fasting_plasma_glucose",
+      "below_prediabetes": 100,
+      "diabetes_at_least": 126,
+      "requires_context": {
+        "method": ["lab_plasma"],
+        "meal_context": ["fasting"]
+      },
+      "handheld_methods": ["meter", "handheld_meter", "capillary_meter", "cgm"],
+      "earth_based": true,
+      "note": "Laboratory fasting plasma glucose after at least 8 hours without caloric intake. These cutoffs are never applied to a handheld meter reading.",
+      "source": {
+        "title": "2. Diagnosis and Classification of Diabetes: Standards of Care in Diabetes—2025",
+        "publisher": "Diabetes Care, American Diabetes Association",
+        "version": "2025; 48(Supplement 1): S27–S49",
+        "url": "https://doi.org/10.2337/dc25-S002"
+      }
+    },
+    {
+      "rule_id": "ref-temperature-oral-v1",
+      "metric": "temperature",
+      "unit": "°C",
+      "kind": "range",
+      "low": 36.1,
+      "high": 37.2,
+      "fever_above": 38.0,
+      "requires_context": {
+        "site": ["oral"]
+      },
+      "earth_based": true,
+      "note": "The source gives a typical range of 36.1 to 37.2 °C and fever above 38 °C without naming a site. The project applies it to oral readings only.",
+      "source": {
+        "title": "Body temperature norms",
+        "publisher": "MedlinePlus Medical Encyclopedia, U.S. National Library of Medicine",
+        "version": "web page, accessed 2026-11-13",
+        "url": "https://medlineplus.gov/ency/article/001982.htm"
+      }
+    }
+  ],
+  "contextual_metrics": [
+    {
+      "metric": "sleep",
+      "note": "Sleep is shown as context for the other readings. It is not scored as normal or abnormal."
+    },
+    {
+      "metric": "mood",
+      "note": "Mood is a project-defined self-report and is shown as context only. It is never turned into a mental-state score."
+    },
+    {
+      "metric": "symptoms",
+      "note": "Symptoms are self-reported context, not a diagnosis. Private text stays in the Crew projection."
+    }
+  ]
+}
