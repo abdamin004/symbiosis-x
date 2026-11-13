@@ -123,7 +123,10 @@ test("the three-minute demo shows Crew evidence and returns without touching pla
   await page.getByRole("button",{name:"Exit demo"}).dispatchEvent("click");
   await expect(page.locator("#campaign-save")).toHaveText("Launch held · T+0:15");
   await begin();
+  // Wait for the deferred ascent and burn frames before inspecting the restarted twin.
   await advance(31);
+  for (let i=0;i<4 && !(await twin.isVisible());i++) await advance(1);
+  await expect(beat).toHaveText("Stable orbit · Sana’s health baseline");
   await expect(twin.locator("#region-reading")).toHaveText(/68 bpm.*accepted/);
   await expect(twin.locator("#peer-check")).toBeHidden();
   await page.getByRole("button",{name:"Exit demo"}).dispatchEvent("click");
