@@ -84,3 +84,11 @@ export function acknowledgeEmergencyCase(runId, caseId, command) {
     method: "POST", body: JSON.stringify(command),
   });
 }
+
+export function setActiveRunId(runId) {
+  try { sessionStorage.setItem("symbiosis-x-active-run", runId); } catch { /* private browsing may disable storage */ }
+}
+export function isActiveRunId(runId) {
+  try { return sessionStorage.getItem("symbiosis-x-active-run") === runId; }
+  catch { return false; }
+}
