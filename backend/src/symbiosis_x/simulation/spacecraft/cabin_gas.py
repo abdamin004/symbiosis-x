@@ -2,8 +2,7 @@
 
 Each compartment holds an ideal-gas inventory of O₂, CO₂ and N₂ (the balance
 gas) in moles at a fixed synthetic temperature, so total pressure follows from
-the inventory. Every process is a bookkept transfer, which keeps mass balance
-exact:
+the inventory. Every process accounts for the moles it moves:
 
 * fans exchange equal volumes of air between two compartments;
 * a powered scrubber removes CO₂ in proportion to its effective flow and the
@@ -99,7 +98,7 @@ class Plant:
 
     def __post_init__(self):
         ids = [c.compartment_id for c in self.compartments]
-        if len(set(ids)) != len(ids) or not ids:
+        if not ids or not all(ids) or len(set(ids)) != len(ids):
             raise ValueError("compartment IDs must be unique and non-empty")
         for c in self.compartments:
             _positive("volume_m3", c.volume_m3)
@@ -128,6 +127,7 @@ class CabinState:
     # Cumulative transfers across the plant boundary, for the mass balance.
     ledger: Mapping[str, float] = field(default_factory=lambda: {
         "o2_generated": 0.0, "o2_consumed": 0.0, "co2_produced": 0.0, "co2_removed": 0.0})
+    vented_mol: Mapping[str, float] = field(default_factory=lambda: dict.fromkeys(SPECIES, 0.0))
 
 
 @dataclass(frozen=True)
@@ -137,6 +137,12 @@ class CompartmentReading:
     o2_partial_kpa: float
     o2_percent: float
     co2_ppm: float
+    co2_partial_kpa: float = 0.0
+    n2_partial_kpa: float = 0.0
+
+
+def kpa_per_mole(volume_m3: float) -> float:
+    return 1 / (moles_per_m3(1) * volume_m3)
 
 
 def _nonnegative(name, value):
@@ -153,13 +159,19 @@ def _positive(name, value):
 def initial_state(plant: Plant, *, co2_ppm: float = 2000, pressure_kpa: float = NOMINAL_PRESSURE_KPA,
                   o2_fraction: float = NOMINAL_O2_FRACTION, mission_s: int = 0) -> CabinState:
     _nonnegative("co2_ppm", co2_ppm)
-    _positive("pressure_kpa", pressure_kpa)
+    _nonnegative("pressure_kpa", pressure_kpa)
+    _nonnegative("o2_fraction", o2_fraction)
+    n2_fraction = 1 - (o2_fraction + co2_ppm / PPM)
+    if n2_fraction < 0:
+        raise ValueError("gas fractions must sum to at most one before adding nitrogen")
     moles = {}
     for c in plant.compartments:
         total = moles_per_m3(pressure_kpa) * c.volume_m3
-        co2 = total * co2_ppm / PPM
-        o2 = total * o2_fraction
-        moles[c.compartment_id] = {"o2": o2, "co2": co2, "n2": total - o2 - co2}
+        moles[c.compartment_id] = {
+            "o2": total * o2_fraction,
+            "co2": total * (co2_ppm / PPM),
+            "n2": total * n2_fraction,
+        }
     return CabinState(mission_s, moles)
 
 
@@ -167,21 +179,38 @@ def readings(state: CabinState, plant: Plant) -> list[CompartmentReading]:
     out = []
     for c in plant.compartments:
         gas = state.moles[c.compartment_id]
-        total = sum(gas.values())
-        kpa = total * GAS_CONSTANT_J_MOL_K * CABIN_TEMPERATURE_K / c.volume_m3 / 1000
-        out.append(CompartmentReading(c.compartment_id, kpa, kpa * gas["o2"] / total,
-                                      100 * gas["o2"] / total, PPM * gas["co2"] / total))
+        total = sum(gas[species] for species in SPECIES)
+        scale = kpa_per_mole(c.volume_m3)
+        out.append(CompartmentReading(
+            compartment_id=c.compartment_id,
+            total_pressure_kpa=total * scale,
+            o2_partial_kpa=gas["o2"] * scale,
+            o2_percent=100 * gas["o2"] / total if total else 0.0,
+            co2_ppm=PPM * gas["co2"] / total if total else 0.0,
+            co2_partial_kpa=gas["co2"] * scale,
+            n2_partial_kpa=gas["n2"] * scale,
+        ))
     return out
 
 
 def step(state: CabinState, plant: Plant, dt_s: int) -> CabinState:
-    """Advance one explicit step. Every change is computed from the start-of-step inventory."""
+    """Advance the plant with demands based on the start-of-step inventory.
+
+    Withdrawals reserve the available moles in fan, scrubber and crew order.
+    Incoming gas and gas produced during this step are available next step.
+    """
     if type(dt_s) is not int or dt_s <= 0:
         raise ValueError("dt_s must be a positive integer")
     volume = {c.compartment_id: c.volume_m3 for c in plant.compartments}
-    delta = {cid: dict.fromkeys(SPECIES, 0.0) for cid in volume}
+    remaining = {cid: {gas: state.moles[cid][gas] for gas in SPECIES} for cid in volume}
+    added = {cid: dict.fromkeys(SPECIES, 0.0) for cid in volume}
     ledger = dict(state.ledger)
     n = state.moles
+
+    def withdraw(cid: str, gas: str, requested_mol: float) -> float:
+        actual = min(remaining[cid][gas], requested_mol)
+        remaining[cid][gas] -= actual
+        return actual
 
     for fan in plant.fans:
         if not fan.powered or fan.flow_m3_h == 0:
@@ -191,35 +220,32 @@ def step(state: CabinState, plant: Plant, dt_s: int) -> CabinState:
         if moved >= min(volume[a], volume[b]):
             raise ValueError("time step too long for this fan flow")
         for gas in SPECIES:
-            a_to_b = n[a][gas] * moved / volume[a]
-            b_to_a = n[b][gas] * moved / volume[b]
-            delta[a][gas] += b_to_a - a_to_b
-            delta[b][gas] += a_to_b - b_to_a
+            added[b][gas] += withdraw(a, gas, n[a][gas] * moved / volume[a])
+            added[a][gas] += withdraw(b, gas, n[b][gas] * moved / volume[b])
 
     for s in plant.scrubbers:
         if not s.powered:
             continue
         exposure = s.effective_flow_m3_h * s.effectiveness / 3600 * dt_s / volume[s.compartment_id]
-        removed = n[s.compartment_id]["co2"] * (1 - exp(-exposure))
-        delta[s.compartment_id]["co2"] -= removed
+        removed = withdraw(s.compartment_id, "co2", n[s.compartment_id]["co2"] * (1 - exp(-exposure)))
         ledger["co2_removed"] += removed
 
     for g in plant.generators:
         if g.powered:
-            delta[g.compartment_id]["o2"] += g.rate_mol_s * dt_s
+            added[g.compartment_id]["o2"] += g.rate_mol_s * dt_s
             ledger["o2_generated"] += g.rate_mol_s * dt_s
 
     for member in plant.crew:
         factor = WORKLOAD_FACTOR[member.workload]
-        consumed = min(NOMINAL_O2_MOL_S * factor * dt_s, n[member.compartment_id]["o2"])
-        produced = NOMINAL_CO2_MOL_S * factor * dt_s
-        delta[member.compartment_id]["o2"] -= consumed
-        delta[member.compartment_id]["co2"] += produced
+        demand = NOMINAL_O2_MOL_S * factor * dt_s
+        consumed = withdraw(member.compartment_id, "o2", demand)
+        produced = NOMINAL_CO2_MOL_S * factor * dt_s * (consumed / demand)
+        added[member.compartment_id]["co2"] += produced
         ledger["o2_consumed"] += consumed
         ledger["co2_produced"] += produced
 
-    moles = {cid: {gas: max(0.0, n[cid][gas] + delta[cid][gas]) for gas in SPECIES} for cid in volume}
-    return CabinState(state.mission_s + dt_s, moles, ledger)
+    moles = {cid: {gas: remaining[cid][gas] + added[cid][gas] for gas in SPECIES} for cid in volume}
+    return replace(state, mission_s=state.mission_s + dt_s, moles=moles, ledger=ledger)
 
 
 def mass_balance_residual(initial: CabinState, final: CabinState) -> dict[str, float]:
@@ -227,11 +253,12 @@ def mass_balance_residual(initial: CabinState, final: CabinState) -> dict[str, f
     def total(state, gas):
         return sum(c[gas] for c in state.moles.values())
     led = {k: final.ledger[k] - initial.ledger[k] for k in final.ledger}
-    return {
+    residual = {
         "o2": total(final, "o2") - total(initial, "o2") - led["o2_generated"] + led["o2_consumed"],
         "co2": total(final, "co2") - total(initial, "co2") - led["co2_produced"] + led["co2_removed"],
         "n2": total(final, "n2") - total(initial, "n2"),
     }
+    return {gas: residual[gas] + (final.vented_mol[gas] - initial.vented_mol[gas]) for gas in SPECIES}
 
 
 # --- Synthetic degraded-scrubber scenario -------------------------------------------------
