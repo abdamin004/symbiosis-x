@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "profile_id": "sim-01-health-v1",
+  "crew_id": "SIM-01",
+  "display_name": "SIM-01 (fictional)",
+  "simulated": true,
+  "history": {
+    "status": "unknown",
+    "entries": []
+  },
+  "baselines": [
+    {
+      "metric": "heart_rate",
+      "value": 72,
+      "unit": "bpm",
+      "context": "Synthetic resting value during quiet seated activity",
+      "source_id": "synthetic.sim-01-health-baseline-v1"
+    }
+  ]
+}

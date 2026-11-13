@@ -3,6 +3,7 @@
 from sqlite3 import Connection, Row
 
 from symbiosis_x.application.runs import RunNotFound
+from symbiosis_x.crew.profile import load_profile
 from symbiosis_x.contracts.projections import (
     AcceptedCO2, CurrentCrewView, CurrentGroundView, DeliveredTelemetry, Delivery, GroundPacket,
 )
@@ -29,7 +30,11 @@ def read_crew(db: Connection, run_id: str) -> CurrentCrewView:
            ORDER BY observed_at_s DESC, received_at_s DESC, event_id DESC LIMIT 1""",
         (run_id, run["mission_s"]),
     ).fetchone()
-    return CurrentCrewView(**dict(run), co2=AcceptedCO2(**dict(co2)) if co2 else None)
+    return CurrentCrewView(
+        **dict(run),
+        co2=AcceptedCO2(**dict(co2)) if co2 else None,
+        health_profile=load_profile(),
+    )
 
 
 def read_ground(db: Connection, run_id: str) -> CurrentGroundView:

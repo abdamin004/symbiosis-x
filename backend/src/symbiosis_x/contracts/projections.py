@@ -6,6 +6,8 @@ from pydantic import model_validator
 
 from .events import Contract, Identifier, NonnegativeInt, NonnegativeNumber
 
+from symbiosis_x.crew.profile import AstronautHealthProfile
+
 
 class Quantity(Contract):
     value: NonnegativeNumber
@@ -121,6 +123,7 @@ class CurrentCrewView(RunView):
     role: Literal["crew"] = "crew"
     decision_rev: NonnegativeInt
     co2: AcceptedCO2 | None
+    health_profile: AstronautHealthProfile
 
 
 class GroundPacket(Contract):
