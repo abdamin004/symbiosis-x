@@ -97,3 +97,34 @@ test("Asteria hands off to the crew canvas and returns to Earth in one saved mis
   await expect(page.locator("#ship canvas")).toBeVisible();
   await expect(page).toHaveURL(missionUrl);
 });
+
+test("ISS replay portraits and pawns open crew anatomy with evidence for the selected region", async ({ page }) => {
+  await page.setViewportSize({ width: 620, height: 820 });
+  await page.route(url => url.pathname === "/flight", route => route.fulfill({ contentType: "text/html", body: flightHtml }));
+  await page.goto("/flight");
+  await page.getByRole("button", { name: "ISS research replay", exact: true }).click();
+
+  await page.locator("#crew-strip .crew-portrait").first().click();
+  const twin = page.locator("#personnel-widget");
+  await expect(twin).toBeVisible();
+  const firstMember = await twin.locator("#personnel-name").innerText();
+  await twin.getByRole("tab", { name: "Anatomy", exact: true }).press("ArrowRight");
+  await expect(twin.getByRole("tab", { name: "Skeleton" })).toBeFocused();
+  await expect(twin.locator("#region-reading")).toHaveText("Unobserved");
+
+  await twin.getByRole("tab", { name: "Sensors" }).click();
+  await twin.getByRole("button", { name: "Left wrist on body map" }).click();
+  await expect(twin.locator("#region-source")).toHaveText("Simulated optical watch");
+  await expect(twin.locator("#region-reading")).toHaveText(/\d+ bpm/);
+  await expect(twin.locator("#region-time")).toHaveText(/Observed T\+/);
+  await twin.getByRole("tab", { name: "Suit", exact: true }).click();
+  await expect(twin.locator("[data-anatomy-suit]")).toBeVisible();
+  await expect(twin.locator("#region-reading")).toHaveText("Suit status unavailable");
+  await expect(twin.locator("#region-time")).toBeEmpty();
+  await twin.getByRole("button", { name: "Close Digital twin widget" }).click();
+
+  await page.locator("#ship .pawn").nth(1).click();
+  await expect(twin).toBeVisible();
+  await expect(twin.locator("#personnel-name")).not.toHaveText(firstMember);
+  await expect(twin.getByRole("tab", { name: "Anatomy", exact: true })).toHaveAttribute("aria-selected", "true");
+});
