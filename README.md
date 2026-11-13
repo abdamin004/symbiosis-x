@@ -82,3 +82,9 @@ python3 scripts/build_cabin_preview.py /tmp/symbiosis-x-cabin.html
 ```
 
 Open the generated file. Select any astronaut and compare the Crew replay at 13:00 before and after confirming reduced activity at 06:00. The cabin adds the contributions of all four astronauts. Planning leaves the cabin input unchanged. The Ground fixture shows the earlier delivered snapshot at 13:00. This preview uses synthetic data and runs without the application server.
+
+### Build canvas components
+
+Use the [spacecraft icon sprite](frontend/src/ui/icons/spacecraft.svg) for cabin, scrubber, power and Crew. Keep the SVG paths on the same 24 × 24 grid and inherit `currentColor`. In React or HTML, give icon-only controls accessible names. Treat icons next to text as decorative.
+
+Use violet for selection, blue for telemetry and amber for degraded equipment. Give status a text label as well as a color. Use the catalog's stable asset IDs and keep selection state in the canvas. Pass role-scoped values into components so the same deck and inspector can serve Crew and Ground.
