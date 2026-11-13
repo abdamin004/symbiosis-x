@@ -54,9 +54,22 @@ button[aria-pressed=true]{background:#3d315e}
 .widget-bar{gap:.28rem}
 .widget-title{display:flex;align-items:center;gap:.35rem;text-align:left;color:var(--ink)}
 .widget-close{padding:.17rem .4rem;background:transparent;color:var(--muted)}
-.crew-strip{position:absolute;top:calc(100% + .35rem);left:.65rem;display:flex;gap:.32rem}
-.crew-portrait{width:clamp(42px,7vw,57px);padding:.28rem .2rem;background:#10152bdf;display:grid;justify-items:center;gap:.12rem;color:var(--suit)}
-.crew-portrait .icon{width:1.25rem;height:1.25rem}
+.crew-strip{position:absolute;top:calc(100% + .35rem);left:50%;transform:translateX(-50%);display:flex;gap:.35rem}
+.crew-portrait{width:clamp(51px,8vw,68px);padding:.24rem .2rem;background:#10152bdf;display:grid;justify-items:center;gap:.12rem;color:var(--suit)}
+.crew-face{width:28px;height:28px;display:block}
+.crew-name{font-size:.7rem;line-height:1.05;color:#e9edff}
+.crew-status{position:absolute;right:3px;top:3px;background:#141c33;border-radius:4px;padding:1px 2px;color:var(--suit)}
+.crew-status .icon{width:.77rem;height:.77rem}
+.crew-portrait{position:relative}
+.pawn .action-marker{position:absolute;left:78%;top:-.25rem;color:#ffdaab;background:#181a37;border-radius:6px;padding:3px;pointer-events:none}
+.action-marker .icon{display:block;width:.8rem;height:.8rem}
+.pawn .crew-face{width:29px;height:29px}
+.pawn::before,.pawn::after{display:none}
+.choice-label{display:block;margin:.5rem 0 .2rem;color:var(--muted);font-size:.76rem}
+.choices{display:flex;flex-wrap:wrap;gap:.25rem;margin-bottom:.4rem}
+.choices button{padding:.24rem .42rem;font-size:.74rem}
+.choices button[aria-pressed=true]{color:#f4eaff;box-shadow:inset 0 -2px var(--violet)}
+#asset-controls .choices{flex-basis:100%}
 .crew-portrait small{font:600 .6rem ui-monospace,monospace;color:var(--ink)}
 .crew-portrait[data-working=true]{box-shadow:inset 0 -2px #ffcb9c}
 .crew-portrait[aria-pressed=true]{box-shadow:inset 0 -2px var(--suit)}
@@ -80,7 +93,6 @@ button[aria-pressed=true]{background:#3d315e}
 .asset-target[data-work="active"]{color:#ffd49d;background:#b47c3d36;box-shadow:inset 0 0 0 1px #ffc886b5}
 .asset-target[data-work="complete"]{color:#abecd9}
 #asset-controls{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center}
-#asset-controls select{max-width:100%}
 #work-progress{display:block;width:100%;height:.4rem;margin:.55rem 0;accent-color:#c1aaff}
 .asset-target{min-width:23px;min-height:23px}
 .pawn[data-working=true]{box-shadow:0 0 14px #ffca9c99}
@@ -97,12 +109,12 @@ button[aria-pressed=true]{background:#3d315e}
 #profile-tabs button{font-size:.76rem}
 .profile-data{margin:.55rem 0;display:grid;grid-template-columns:1fr auto;gap:.24rem .6rem;font-size:.82rem;color:var(--muted)}
 .profile-data dd{margin:0;color:var(--ink);text-align:right}
+#duty-data{grid-template-columns:minmax(5.2rem,.8fr) minmax(0,2fr)}
+#duty-data dd{text-align:left}
 #vitals-chart{width:100%;height:auto;background:#10182d;border-radius:5px}
-#wellbeing label{display:block;font-size:.8rem;color:var(--muted);margin-top:.3rem}
-#wellbeing select{max-width:100%}
 [hidden]{display:none!important}
 @media(max-width:720px){.stage::after{width:70vw}}
-@media(max-width:335px){.flight-controls{top:calc(100% + 3.15rem)}.crew-strip{gap:.22rem}}
+@media(max-width:520px){.flight-controls{top:calc(100% + 4.2rem)}.crew-strip{gap:.22rem}}
 @media(prefers-reduced-motion:reduce){.pawn{transition:none}.stage[data-playing=true]::before{animation:none}}
 </style>
 </head>
@@ -162,7 +174,7 @@ __HUD_ICONS__
     <p class="reading" id="reading"></p>
     <progress id="work-progress" max="30" value="0" aria-label="Equipment task progress" hidden></progress>
     <div id="asset-controls" hidden>
-      <label>Astronaut <select id="asset-crew"></select></label>
+      <span class="choice-label" id="asset-crew-label">Assign astronaut</span><div class="choices" id="asset-crew" role="group" aria-labelledby="asset-crew-label"></div>
       <button id="assign-asset" type="button"></button>
     </div>
     <p id="focus-detail"></p>
@@ -192,12 +204,10 @@ __HUD_ICONS__
     </div>
     <dl class="profile-data" id="needs-data"></dl>
       <div id="wellbeing">
-        <label>Private simulated mood <select id="mood">
-          <option value="">No report</option><option>Settled</option><option>Focused</option><option>Overloaded</option>
-        </select></label>
-        <label>Private symptom check-in <select id="symptoms">
-          <option value="">No report</option><option>None reported</option><option>Discomfort reported</option>
-        </select></label>
+        <span class="choice-label" id="mood-label">Private simulated mood</span>
+        <div class="choices" id="mood" role="group" aria-labelledby="mood-label"></div>
+        <span class="choice-label" id="symptoms-label">Private symptom check-in</span>
+        <div class="choices" id="symptoms" role="group" aria-labelledby="symptoms-label"></div>
       </div>
   </section>
   <section class="panel profile-window" id="vitals-widget" hidden aria-labelledby="vitals-title">
@@ -207,10 +217,8 @@ __HUD_ICONS__
       <button class="widget-close" type="button" aria-label="Close Vitals widget"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button>
     </div>
     <dl class="profile-data" id="vitals-data"></dl>
-      <label id="series-control">Signal <select id="series">
-        <option value="heart_rate">Heart rate</option><option value="pitch">Trunk pitch</option>
-        <option value="roll">Trunk roll</option><option value="speed">Ship-relative speed</option><option value="emg">Synthetic EMG</option>
-      </select></label>
+      <span class="choice-label" id="series-label">Signal</span>
+      <div class="choices" id="series" role="group" aria-labelledby="series-label"></div>
       <canvas width="320" height="100" id="vitals-chart" role="img"></canvas>
   </section>
   <section class="panel profile-window" id="devices-widget" hidden aria-labelledby="devices-title">
@@ -257,7 +265,7 @@ const duties = [
     ["command-01","Clear the departure checkpoint"],["command-01","Log the life support alert"],
     ["habitat-01","Check crew activity"],["command-01","Review the power report"],
     ["cargo-01","Review the transfer manifest"]]},
-  {role:"Medical officer", color:"#a1eddd", stations:[
+  {role:"Research scientist", color:"#a1eddd", stations:[
     ["medical-01","Check the research kit"],["habitat-01","Check in with the crew"],
     ["medical-01","Review the activity checkpoint"],["medical-01","Monitor the crew"],
     ["habitat-01","Follow up with the crew"]]},
@@ -270,8 +278,27 @@ const duties = [
     ["comms-01","Track the first delivery"],["engineering-01","Record the power change"],
     ["comms-01","Review the Ground handoff"]]},
 ];
-duties[1].role = "Research scientist";
-duties[1].stations[0] = ["medical-01","Check the research kit"];
+// Fictional player-only personas. No device channel estimates a trait or relationship.
+const characters = [
+  {name:"Mara Vale",short:"Mara",skin:"#a67368",hair:"#3f2638",traits:"Methodical · Protective",strength:"Piloting, handoffs and go/no-go calls",bio:"Former rescue pilot. Keeps a handwritten checklist for every handoff.",link:2,bond:"Trusts Ivo’s checks; asks for a second reading before accepting a risk."},
+  {name:"Sana Kepler",short:"Sana",skin:"#c99170",hair:"#281b2c",traits:"Curious · Precise",strength:"Experiment design and paired motion samples",bio:"Built a small motion lab before joining the flight crew. Wants a clean research record.",link:3,bond:"Works with Noor to preserve a clear record of experiments and handoffs."},
+  {name:"Ivo Reyes",short:"Ivo",skin:"#cf9b7b",hair:"#553d3b",traits:"Practical · Cautious",strength:"Power distribution and life support",bio:"Maintained remote field stations. Prefers an inspection to an untested workaround.",link:0,bond:"Challenges Mara’s assumptions before committing, then supports the decision."},
+  {name:"Noor Okafor",short:"Noor",skin:"#865c54",hair:"#322536",traits:"Patient · Observant",strength:"Relay timing, acknowledgment and crew coordination",bio:"Worked as a Ground relay operator. Reads every delivery timestamp aloud.",link:1,bond:"Helps Sana separate an experiment result from a late delivery or stale sample."},
+];
+function crewBeat(frame, member) {
+  if (frame.phase === "Docked") return member % 2 === 0
+    ? "Mara and Ivo cross-check the transfer conditions." : "Sana and Noor read back the research kit manifest.";
+  if (frame.phase === "Station research") return member % 2 === 0
+    ? "Ivo briefs Mara on station environment readiness." : "Sana collects motion samples; Noor records the handoff.";
+  if (frame.phase === "Station rest") return "Crew defers routine handoffs for protected rest.";
+  if (frame.phase === "Recovery") return "Crew reconvenes for the recovery debrief.";
+  return member % 2 === 0 ? "Mara and Ivo share a readiness check." : "Sana and Noor prepare the research handoff.";
+}
+const TICK_SECONDS = 15;
+const WORK_SECONDS = 2 * TICK_SECONDS;
+const nextTick = seconds => Math.ceil(seconds / TICK_SECONDS) * TICK_SECONDS;
+const roomIcons = {"command-01":"users","medical-01":"flask-conical","engineering-01":"zap",
+  "comms-01":"radio","habitat-01":"bed-single","life-support-01":"wind","cargo-01":"package"};
 const stationDuties = [
   [["command-01","Review approach"],["cargo-01","Authorize transfer after checks"],["comms-01","Coordinate station operations"],["habitat-01","Protected rest"],["command-01","Pilot the return capsule"],["command-01","Close the mission log"]],
   [["medical-01","Prepare the experiment"],["cargo-01","Transfer the research kit"],["medical-01","Collect wrist and trunk motion samples"],["habitat-01","Protected rest"],["medical-01","Secure the research record"],["medical-01","Archive research data"]],
@@ -282,9 +309,9 @@ function station(duty, member) {
   const order = flightWorkflow.read();
   const time = Math.floor(missionTime);
   const task = activeTask(member, time);
-  if (task) {
+  if (task && time >= task.assigned) {
     const asset = equipment.get(task.asset);
-    return [asset.room, asset.task];
+    return [asset.room, time < task.arrival ? "Walking to " + asset.name : asset.task];
   }
   if (member === 2 && order?.assigned && time >= order.decided &&
       (order.completed == null || time < order.completed)) {
@@ -317,11 +344,11 @@ function placeArea(button, x, y, width, height) {
   button.style.height = height / 475 * 100 + "%";
 }
 function taskAt(asset, time) {
-  return tasks.findLast(task => task.asset === asset && task.assigned <= time);
+  return tasks.findLast(task => task.asset === asset && task.queued <= time);
 }
 
 function activeTask(member, time) {
-  return tasks.find(task => task.member === member && task.assigned <= time && time < task.finishes);
+  return tasks.find(task => task.member === member && task.queued <= time && time < task.finishes);
 }
 
 const roomById = new Map(data.rooms.map(room => [room.room_id, room]));
@@ -507,6 +534,24 @@ const profileMembers = new Map();
 const profileWindows = new Map();
 let activeProfileTrigger = null;
 const checkIns = new Map();
+let assetCrew = 0, selectedSignal = "heart_rate";
+function setChoices(id, selected) {
+  for (const button of element(id).children) {
+    button.setAttribute("aria-pressed",button.dataset.value === String(selected));
+  }
+}
+function choices(id, entries, change) {
+  for (const [value,label,description] of entries) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = label;
+    button.dataset.value = value;
+    if (description) { button.title = description; button.setAttribute("aria-label", description); }
+    button.addEventListener("click",()=>{change(value);render();});
+    element(id).append(button);
+  }
+}
+
 const signals = {
   heart_rate:["Heart rate","bpm","Simulated optical watch"],
   pitch:["Trunk pitch","°","Simulated back-pod IMU"],
@@ -549,26 +594,30 @@ function renderProfiles(frame) {
     const reports = checkIns.get(id + ":" + row.time) ?? {};
     const [zone, task] = station(duties[member], member);
     setIcon(element(kind + "-title"), {duty:"clipboard-list",needs:"bed-single",vitals:"activity",devices:"zap"}[kind],
-      id + " · " + kind[0].toUpperCase() + kind.slice(1));
+      characters[member].short + " · " + kind[0].toUpperCase() + kind.slice(1));
     let rows;
     if (kind === "needs") {
-      element("mood").value = reports.mood ?? "";
-      element("symptoms").value = reports.symptoms ?? "";
+      setChoices("mood", reports.mood ?? "");
+      setChoices("symptoms", reports.symptoms ?? "");
       rows = [["Rest",frame.habitat.beds ? "Protected rest window" : "Scheduled"],["Meal and hydration",frame.habitat.meal],["WC",frame.habitat.wc]];
     } else if (kind === "devices") {
       rows = Object.entries(signals).map(([key,[label,unit,source]]) => [
         label + " · " + source, row[key] + " " + unit,
       ]);
     } else if (kind === "vitals") {
-      const field = element("series").value;
+      const field = selectedSignal;
+      setChoices("series",field);
       drawHistory(data.history[id],field,frame.time);
       rows = [[signals[field][0] + " · " + signals[field][2],row[field] + " " + signals[field][1]],
         ["Observed / received",clock(row.time) + " / " + clock(row.time)],
         ...data.metrics.map(metric => [metric.label,metric.id === "heart_rate"
           ? row.heart_rate + " bpm" : reports[metric.id] || healthSources[metric.id]])];
     } else {
+      const persona = characters[member];
       rows = [["Role",duties[member].role],["Station",roomById.get(zone).name],["Task",task],
-        ["Vehicle",frame.vehicle],["Phase",frame.phase],["Experiment",data.research]];
+        ["Background",persona.bio],["Traits",persona.traits],["Specialties",persona.strength],
+        ["Crew relationship",characters[persona.link].name + " · " + persona.bond],
+        ["Shared beat · scripted",crewBeat(frame,member)],["Vehicle",frame.vehicle],["Phase",frame.phase]];
     }
     element(kind + "-data").replaceChildren(...rows.flatMap(([label,value]) => {
       const dt = document.createElement("dt"), dd = document.createElement("dd");
@@ -603,7 +652,7 @@ function inspect(frame) {
     const task = taskAt(asset.id, frame.time);
     const active = task && frame.time < task.finishes;
     progress.hidden = !task;
-    if (task) progress.value = Math.min(30, frame.time - task.assigned);
+    if (task) progress.value = Math.max(0, Math.min(WORK_SECONDS, frame.time - task.arrival));
     setIcon(name, asset.icon, asset.name);
     let condition = "Available";
     if (asset.id === "bed") condition = frame.habitat.beds ? "Rest period in progress" : "Needs tidying";
@@ -611,23 +660,26 @@ function inspect(frame) {
     if (asset.id === "wc") condition = frame.habitat.wc;
     if (asset.id === "scrubber") condition = frame.removal == null ? "Flow unmodeled" : frame.removal + " m³/h";
     if (asset.id === "bus") condition = frame.power == null ? "Headroom unmodeled" : frame.power.toFixed(2) + " kW headroom";
-    value.textContent = active ? data.crew[task.member] + " · " + (task.finishes - frame.time) + " s remaining"
+    value.textContent = active ? characters[task.member].short + " · " + (frame.time < task.assigned
+      ? "Queued until " + clock(task.assigned) : frame.time < task.arrival ? "Walking to station"
+      : (task.finishes - frame.time) + " s remaining")
       : (task ? task.result + " · " + clock(task.finishes) : condition);
     detail.textContent = asset.use + " · " + (task && !active && asset.id === "bed" ? "Bunk ready" : condition);
     const assign = element("assign-asset");
     assign.textContent = asset.task;
-    const crew = Number(element("asset-crew").value);
+    const crew = assetCrew;
+    setChoices("asset-crew",crew);
     const memberBusy = activeTask(crew, frame.time) ||
       (crew === 2 && (flightWorkflow.canComplete(frame)));
     assign.disabled = Boolean(active || memberBusy || frame.habitat.beds && ["bed","wc"].includes(asset.id)
-      || frame.time + 30 > endTime);
+      || nextTick(missionTime) + TICK_SECONDS + WORK_SECONDS > endTime);
     return;
   }
   if (selection.crew !== undefined) {
     const id = data.crew[selection.crew];
     const duty = duties[selection.crew];
     const [room, task] = station(duty, selection.crew);
-    setIcon(name, "users", id + " · " + duty.role);
+    setIcon(name, "users", characters[selection.crew].name + " · " + duty.role);
     value.textContent = roomById.get(room).name + " · " + task;
     detail.textContent = reduced.has(id)
       ? (frame.time < data.activity_s ? "Reduced activity confirmed for 06:00." : "Reduced activity is contributing to the cabin model.")
@@ -702,12 +754,24 @@ function render() {
     const z = zones[roomId];
     const button = pawns.get(i);
     const work = activeTask(i, frame.time);
-    const asset = work ? equipment.get(work.asset) : null;
+    const asset = work && frame.time >= work.assigned ? equipment.get(work.asset) : null;
     const floorY = z.side === "upper" ? z.y+z.h-16 : z.side === "lower" ? z.y+z.h-21 : z.y+z.h-24;
     const x = asset ? asset.x : z.x + z.w*(.18+i*.21);
     const y = asset ? floorY : floorY - (i%2)*4;
-    routePawn(button,roomId,x,y);
-    button.setAttribute("aria-label", data.crew[i] + " " + duty.role + " in " + roomById.get(roomId).name);
+    const travelling = asset && frame.time < work.arrival;
+    if (asset) placeTaskPawn(button,work,x,y);
+    else routePawn(button,roomId,x,y);
+    const sharedWork = !asset && ["Docked","Station research","Recovery"].includes(frame.phase);
+    const statusIcon = travelling ? "map" : asset?.icon ?? (sharedWork ? "users" : roomIcons[roomId]);
+    const marker = button.querySelector(".action-marker");
+    const badge = portraits.get(i).querySelector(".crew-status");
+    if (badge.dataset.icon !== statusIcon) {
+      setIcon(marker,statusIcon,""); setIcon(badge,statusIcon,"");
+      badge.dataset.icon = statusIcon;
+    }
+    marker.hidden = !asset && !sharedWork;
+    marker.style.color = travelling || sharedWork ? "#bed6ff" : "";
+    button.setAttribute("aria-label", characters[i].name + " " + duty.role + " · " + task);
     button.title = task;
     button.dataset.working = Boolean(work);
     button.setAttribute("aria-pressed", selection.crew === i);
@@ -715,7 +779,8 @@ function render() {
     const portrait = portraits.get(i);
     portrait.setAttribute("aria-pressed", selection.crew === i);
     portrait.dataset.working = Boolean(work);
-    portrait.title = duty.role + " · " + roomById.get(roomId).name + " · " + task;
+    portrait.title = characters[i].name + " · " + duty.role + " · " + task;
+    portrait.setAttribute("aria-label", "Inspect " + characters[i].name + " " + duty.role + " · " + task);
   });
   for (const [id,button] of equipmentButtons) {
     const task = taskAt(id, frame.time);
@@ -723,11 +788,64 @@ function render() {
     button.setAttribute("aria-pressed", selection.asset === id);
   }
   drawShip(frame);
+  drawSelectedRoute(frame);
   inspect(frame);
   renderProfiles(frame);
 }
 
 const crewPositions = new WeakMap();
+function pathBetween(start, end) {
+  const portal = id => zones[id].side === "bridge" ? [zones[id].x,passageY] : [zones[id].door,passageY];
+  const threshold = id => {
+    const z = zones[id];
+    return z.side === "bridge" ? portal(id) : [z.door,z.side === "upper" ? z.y+z.h-9 : z.y+9];
+  };
+  return start.room === end.room ? [[start.x,start.y],[end.x,end.y]]
+    : [[start.x,start.y],threshold(start.room),portal(start.room),portal(end.room),threshold(end.room),[end.x,end.y]];
+}
+function taskPath(task,x,y) {
+  const a = equipment.get(task.asset);
+  return pathBetween(task.origin,{room:a.room,x,y});
+}
+function placeTaskPawn(button,task,x,y) {
+  crewPositions.get(button)?.animation?.cancel();
+  const room = equipment.get(task.asset).room;
+  const points = taskPath(task,x,y);
+  if (missionTime >= task.arrival) {
+    place(button,x,y);
+    crewPositions.set(button,{room,x,y});
+    return;
+  }
+  const lengths = points.slice(1).map(([xx,yy],i)=>Math.hypot(xx-points[i][0],yy-points[i][1]));
+  const ratio = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0
+    : Math.min(1, Math.max(0,(missionTime-task.assigned)/TICK_SECONDS));
+  let remaining = ratio * lengths.reduce((a,b)=>a+b,0);
+  for (const [i,length] of lengths.entries()) {
+    if (remaining <= length && length) {
+      const fraction = remaining / length;
+      const [ax,ay] = points[i], [bx,by] = points[i+1];
+      place(button,ax+(bx-ax)*fraction,ay+(by-ay)*fraction);
+      return;
+    }
+    remaining -= length;
+  }
+  place(button,x,y);
+  crewPositions.set(button,{room,x,y});
+}
+function drawSelectedRoute(frame) {
+  const work = selection.crew !== undefined ? activeTask(selection.crew,frame.time)
+    : selection.asset ? taskAt(selection.asset,frame.time) : null;
+  if (!work || frame.time >= work.arrival) return;
+  const asset = equipment.get(work.asset), z = zones[asset.room];
+  const y = z.side === "upper" ? z.y+z.h-16 : z.y+z.h-21;
+  const points = taskPath(work,asset.x,y);
+  ctx.save();
+  ctx.strokeStyle = "#c5bbffd9"; ctx.lineWidth = 2; ctx.setLineDash([4,5]);
+  ctx.beginPath();
+  points.forEach(([x,y],i)=>i ? ctx.lineTo(x,y) : ctx.moveTo(x,y));
+  ctx.stroke();
+  ctx.restore();
+}
 function routePawn(button, room, x, y) {
   const previous = crewPositions.get(button);
   if (previous?.x === x && previous?.y === y && previous?.room === room) return;
@@ -736,14 +854,7 @@ function routePawn(button, room, x, y) {
   crewPositions.set(button,next);
   previous?.animation?.cancel();
   if (!previous || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  const portal = id => zones[id].side === "bridge" ? [zones[id].x,passageY] : [zones[id].door,passageY];
-  const threshold = id => {
-    const z = zones[id];
-    return z.side === "bridge" ? portal(id) : [z.door,z.side === "upper" ? z.y+z.h-9 : z.y+9];
-  };
-  const start = [previous.x,previous.y], end = [x,y];
-  const points = previous.room === room ? [start,end]
-    : [start,threshold(previous.room),portal(previous.room),portal(room),threshold(room),end];
+  const points = pathBetween(previous,next);
   const distances = [0];
   for (let i=1;i<points.length;i++) distances.push(distances[i-1]+Math.hypot(
     points[i][0]-points[i-1][0], points[i][1]-points[i-1][1]));
@@ -771,8 +882,26 @@ function tick(now) {
   if (missionTime >= endTime) stop();
   else timer = requestAnimationFrame(tick);
   if (Math.floor(missionTime) !== lastRenderedSecond || timer === null) render();
+  else if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    for (const [member,button] of pawns) {
+      const task = activeTask(member,missionTime);
+      if (!task || missionTime < task.assigned || missionTime >= task.arrival) continue;
+      const asset = equipment.get(task.asset), z = zones[asset.room];
+      placeTaskPawn(button,task,asset.x,z.side === "upper" ? z.y+z.h-16 : z.y+z.h-21);
+    }
+  }
 }
 
+function crewFace(member) {
+  const persona = characters[member], suit = duties[member].color;
+  const art = document.createElementNS("http://www.w3.org/2000/svg","svg");
+  art.setAttribute("viewBox","0 0 32 32");
+  art.setAttribute("class","crew-face");
+  art.setAttribute("aria-hidden","true");
+  const hairline = ["M9 13 9 8l5-4 7 2 2 5-7-2z","M8 14V8l4-4 9 1 4 7-6-4-5 1z","M9 12V8l6-4 7 2 2 7-5-4-6 1z","M8 12V8l3-5 9 0 5 5v5l-4-3-8 1z"][member];
+  art.innerHTML = '<path fill="'+suit+'" d="M4 30v-5l6-4h12l6 4v5z"/><path fill="#26314d" d="M8 27h16v3H8z"/><path fill="'+persona.skin+'" d="M9 10h14v9l-4 5h-6l-4-5z"/><path fill="'+persona.hair+'" d="'+hairline+'"/><path fill="none" stroke="'+suit+'" d="M6 18v-7a10 10 0 0 1 20 0v7M7 19l2 3m16-3-2 3"/><path stroke="#14162a" stroke-width="1.5" d="M12 15h2m4 0h2"/>';
+  return art;
+}
 for (const room of data.rooms) {
   const z = zones[room.room_id];
   const button = document.createElement("button");
@@ -790,12 +919,15 @@ duties.forEach((duty,i) => {
   pawn.className = "pawn";
   pawn.style.setProperty("--suit",duty.color);
   const marker = document.createElement("span");
-  marker.textContent = data.crew[i];
+  marker.textContent = characters[i].short;
   marker.setAttribute("aria-hidden","true");
-  pawn.append(marker);
+  const activity = document.createElement("span");
+  activity.className = "action-marker";
+  activity.setAttribute("aria-hidden","true");
+  pawn.append(crewFace(i), marker, activity);
   const member = document.createElement("button");
   member.type = "button";
-  member.textContent = duty.role;
+  member.textContent = characters[i].name + " · " + duty.role;
   const select = () => { selection = {crew:i}; showInspector(); render(); };
   pawn.addEventListener("click", select);
   member.addEventListener("click", select);
@@ -804,10 +936,13 @@ duties.forEach((duty,i) => {
   portrait.className = "crew-portrait";
   portrait.style.setProperty("--suit", duty.color);
   portrait.setAttribute("aria-label", "Inspect " + data.crew[i] + " " + duty.role);
-  setIcon(portrait, ["users","flask-conical","zap","radio"][i], "");
   const id = document.createElement("small");
-  id.textContent = data.crew[i];
-  portrait.append(id);
+  id.className = "crew-name";
+  id.textContent = characters[i].short;
+  const status = document.createElement("span");
+  status.className = "crew-status";
+  status.setAttribute("aria-hidden","true");
+  portrait.append(crewFace(i),id,status);
   portrait.addEventListener("click", select);
   portraits.set(i,portrait);
   element("crew-strip").append(portrait);
@@ -832,28 +967,26 @@ for (const asset of fixtures) {
   icon.style.transform = "translate(-50%,-50%)";
   button.addEventListener("click", () => {
     selection = {asset:asset.id};
-    element("asset-crew").value = asset.crew;
+    assetCrew = asset.crew;
     showInspector();
     render();
   });
   equipmentButtons.set(asset.id, button);
   element("ship").append(button);
 }
-duties.forEach((duty,index) => {
-  const option = new Option(data.crew[index] + " · " + duty.role, index);
-  element("asset-crew").append(option);
-});
-element("asset-crew").addEventListener("change", render);
+choices("asset-crew", characters.map((persona, i)=>[i,persona.short,persona.name + " · " + duties[i].role]),
+  value=>{assetCrew = value;});
 element("assign-asset").addEventListener("click", () => {
   if (!selection.asset || element("assign-asset").disabled) return;
   const asset = equipment.get(selection.asset);
-  const assigned = Math.floor(missionTime);
+  const queued = Math.floor(missionTime);
+  const assigned = nextTick(missionTime), arrival = assigned + TICK_SECONDS;
+  const previous = crewPositions.get(pawns.get(assetCrew));
+  const origin = {room:previous.room,x:previous.x,y:previous.y};
   // Assigning while scrubbed back branches the local task history.
-  while (tasks.length && tasks.at(-1).assigned > assigned) tasks.pop();
-  tasks.push({
-    asset:asset.id, member:Number(element("asset-crew").value),
-    assigned, finishes:assigned+30, result:asset.result,
-  });
+  while (tasks.length && tasks.at(-1).queued > queued) tasks.pop();
+  tasks.push({asset:asset.id,member:assetCrew,queued,assigned,arrival,origin,
+    finishes:arrival+WORK_SECONDS,result:asset.result});
   render();
 });
 element("timeline").max = endTime;
@@ -899,12 +1032,14 @@ for (const button of document.querySelectorAll("[data-profile]")) {
     render();
   });
 }
-element("series").addEventListener("change", render);
-for (const field of ["mood", "symptoms"]) {
-  element(field).addEventListener("change", () => {
+choices("series", Object.entries(signals).map(([key,[name]])=>[key,key==="emg"?"Synthetic EMG":name]),
+  value=>{selectedSignal = value;});
+for (const [field,values] of Object.entries({
+  mood:["Settled","Focused","Overloaded"],symptoms:["None reported","Discomfort reported"],
+})) {
+  choices(field,[["","No report"],...values.map(value=>[value,value])],value=>{
     const key = data.crew[profileMembers.get("needs")] + ":" + checkpoints[index].time;
-    checkIns.set(key,{...checkIns.get(key),[field]:element(field).value});
-    render();
+    checkIns.set(key,{...checkIns.get(key),[field]:value});
   });
 }
 element("assign-order").addEventListener("click", () => { flightWorkflow.decide(currentFrame(),true); render(); });
