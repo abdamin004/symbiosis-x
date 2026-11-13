@@ -1,12 +1,142 @@
 {
   "catalog_version": 1,
   "rooms": [
-    {"room_id":"command-01","name":"Command","function":"Start a run and advance the mission clock.","systems":[{"name":"Mission clock","status":"live"},{"name":"Navigation and waypoint ETA","status":"planned"}]},
-    {"room_id":"habitat-01","name":"Habitat","function":"House the four-person crew and track confirmed activity in the shared cabin.","systems":[{"name":"Shared air zone","entity_id":"cabin-01","status":"replay"},{"name":"Crew activity","status":"replay"}]},
-    {"room_id":"life-support-01","name":"Life support","function":"Monitor cabin atmosphere and remove carbon dioxide.","systems":[{"name":"Cabin CO₂ sensor","entity_id":"co2-sensor-01","status":"replay"},{"name":"Primary scrubber","entity_id":"primary-scrubber-01","status":"replay"},{"name":"Standby readiness","status":"planned"}]},
-    {"room_id":"engineering-01","name":"Engineering","function":"Track electrical headroom and power available to ship systems.","systems":[{"name":"Power bus","entity_id":"power-bus-01","status":"replay"},{"name":"Standby power check","status":"planned"}]},
-    {"room_id":"medical-01","name":"Medical","function":"Support private measurements and onboard emergency drills.","systems":[{"name":"Crew health","status":"planned"},{"name":"Emergency assist","status":"planned"}]},
-    {"room_id":"comms-01","name":"Communications","function":"Deliver operational snapshots and acknowledgments to Ground.","systems":[{"name":"Ground relay","status":"planned"}]},
-    {"room_id":"cargo-01","name":"Cargo & docking","function":"Track hatch readiness and payload custody for transfers.","systems":[{"name":"Hatch readiness","status":"planned"},{"name":"Payload manifest","status":"planned"}]}
+    {
+      "room_id": "command-01",
+      "name": "Command",
+      "function": "Start a run and advance the mission clock.",
+      "systems": [
+        {
+          "name": "Mission clock",
+          "status": "live",
+          "key": "clock",
+          "insight": "A saved step advances mission time once."
+        },
+        {
+          "name": "Navigation and waypoint ETA",
+          "status": "planned",
+          "key": "navigation",
+          "insight": "Waypoint and arrival calculations are planned."
+        }
+      ]
+    },
+    {
+      "room_id": "habitat-01",
+      "name": "Habitat",
+      "function": "House the four-person crew and track confirmed activity in the shared cabin.",
+      "systems": [
+        {
+          "name": "Shared air zone",
+          "entity_id": "cabin-01",
+          "status": "live",
+          "key": "air",
+          "insight": "Four astronauts share the same 100 m³ modeled air zone."
+        },
+        {
+          "name": "Crew activity",
+          "status": "replay",
+          "key": "activity",
+          "insight": "Confirmed activity changes CO₂ generation from 06:00."
+        }
+      ]
+    },
+    {
+      "room_id": "life-support-01",
+      "name": "Life support",
+      "function": "Monitor cabin atmosphere and remove carbon dioxide.",
+      "systems": [
+        {
+          "name": "Cabin CO₂ sensor",
+          "entity_id": "co2-sensor-01",
+          "status": "live",
+          "key": "co2",
+          "insight": "CO₂ rises after effective scrubber flow falls."
+        },
+        {
+          "name": "Primary scrubber",
+          "entity_id": "primary-scrubber-01",
+          "status": "replay",
+          "key": "scrubber",
+          "insight": "The replay drops flow from 20 to 4 m³/h at 01:00."
+        },
+        {
+          "name": "Standby readiness",
+          "status": "planned",
+          "key": "standby",
+          "insight": "Standby cannot be evaluated until the readiness check is connected."
+        }
+      ]
+    },
+    {
+      "room_id": "engineering-01",
+      "name": "Engineering",
+      "function": "Track electrical headroom and power available to ship systems.",
+      "systems": [
+        {
+          "name": "Power bus",
+          "entity_id": "power-bus-01",
+          "status": "replay",
+          "key": "power",
+          "insight": "The replay reduces headroom at 10:00."
+        },
+        {
+          "name": "Standby power check",
+          "status": "planned",
+          "key": "power-check",
+          "insight": "Available headroom is shown while the standby decision model is pending."
+        }
+      ]
+    },
+    {
+      "room_id": "medical-01",
+      "name": "Medical",
+      "function": "Support private measurements and onboard emergency drills.",
+      "systems": [
+        {
+          "name": "Crew health",
+          "status": "catalog",
+          "key": "health",
+          "insight": "Crew measurements use the seven registered metric types."
+        },
+        {
+          "name": "Emergency assist",
+          "status": "planned",
+          "key": "emergency",
+          "insight": "Onboard training cases and acknowledgment are planned."
+        }
+      ]
+    },
+    {
+      "room_id": "comms-01",
+      "name": "Communications",
+      "function": "Deliver operational snapshots and acknowledgments to Ground.",
+      "systems": [
+        {
+          "name": "Ground relay",
+          "status": "live",
+          "key": "relay",
+          "insight": "Ground reads the stored delivered packet and its age."
+        }
+      ]
+    },
+    {
+      "room_id": "cargo-01",
+      "name": "Cargo & docking",
+      "function": "Track hatch readiness and payload custody for transfers.",
+      "systems": [
+        {
+          "name": "Hatch readiness",
+          "status": "planned",
+          "key": "hatch",
+          "insight": "The future readiness check uses seal and pressure evidence."
+        },
+        {
+          "name": "Payload manifest",
+          "status": "planned",
+          "key": "cargo",
+          "insight": "Payload custody and transfer are planned."
+        }
+      ]
+    }
   ]
 }
