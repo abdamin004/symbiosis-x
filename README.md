@@ -30,6 +30,24 @@ python -m uvicorn symbiosis_x.main:app --host 127.0.0.1 --port 8766 --no-proxy-h
 
 Open [OpenAPI docs](http://127.0.0.1:8766/docs). Startup migrates the local database to revision 3. By default the file is `symbiosis-x.sqlite3` in the working directory. Set `SYMBIOSIS_X_DB_PATH` to use a different file. Use a temporary path for tests. The pilot canvas currently runs from generated replay data. The simulation API routes and health probes have their own tickets.
 
+## Run the frontend
+
+Use Node 20.19 or later. From the repository root:
+
+```sh
+cd frontend
+npm install
+npm run dev
+```
+
+Open [the run launcher](http://localhost:5173/). It links the Crew console (`/runs/run-001/crew`) and the Ground console (`/runs/run-001/ground`) for the same example run. Both consoles read the published SX-01A examples until [KAN-43 / SX-08B](https://crewsync-1794569647227.atlassian.net/browse/KAN-43) wires live reads. The dev server proxies `/api` and `/health` to the backend at `http://127.0.0.1:8766`. Set `SYMBIOSIS_X_API_URL` to use a different backend address. The route chooses a view only. The server resolves each caller's role and decides what it may read.
+
+Run the browser smoke test from `frontend/`. The first run needs `npx playwright install chromium`.
+
+```sh
+npx playwright test tests/smoke.spec.js
+```
+
 ## SX-01A handoff
 
 [KAN-9 / SX-01A](https://crewsync-1794569647227.atlassian.net/browse/KAN-9) publishes four examples for the same `sx01-golden` scenario, seed `4242`. At mission time 13:00, Crew sees v103 and 0.20 kW. Ground still sees its delivered v102 and 0.60 kW. A commit attempted on the stale revision has `applied: false`.
