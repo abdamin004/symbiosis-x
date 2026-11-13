@@ -3147,8 +3147,13 @@ const launchMission = bindLaunchCheckout(data.missions,data.replay_version,{
     }
     const member = data.crew.indexOf(flightDemoCrew);
     if (action === "crew-check") return requestPeerCheck(member,"wrist");
-    openDigitalTwin(member,portraits.get(member));
-    element("inspect-wristband").click();
+    selection = {crew:member};
+    twinView = "body";
+    activeLayer = "sensors";
+    selectedRegion = "wrist";
+    profileMembers.set("personnel",member);
+    profileWindows.get("personnel").open(portraits.get(member));
+    render();
     return true;
   },
   exteriorBusy:(mode,time)=>tasks.some(job=>job.mode===mode && job.procedure==="eva" &&
