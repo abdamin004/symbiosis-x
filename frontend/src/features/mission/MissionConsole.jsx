@@ -2,6 +2,7 @@ import { Link, useParams } from "react-router-dom";
 import { fixtureFor } from "../../api/fixtures.js";
 import { CREW_HEALTH_FIXTURE } from "../../api/crewHealthFixture.js";
 import CrewHealthPanel from "../crew/CrewHealthPanel.jsx";
+import CheckInForm from "../crew/CheckInForm.jsx";
 import RadiationContext from "../crew/RadiationContext.jsx";
 import GroundHealthStatus from "../ground/GroundHealthStatus.jsx";
 import ServiceStatus from "./ServiceStatus.jsx";
@@ -88,6 +89,7 @@ export default function MissionConsole({ role }) {
       {role === "crew" && (
         <>
           <CrewHealthPanel health={CREW_HEALTH_FIXTURE} cabin={equipment.co2} />
+          <CheckInForm runId={runId} />
           <p className="mt-3">
             <Link className="text-sm font-semibold text-selection underline" to={`/runs/${encodeURIComponent(runId)}/crew/measure`}>
               Take a measurement
