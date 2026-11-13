@@ -8,17 +8,26 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
   const burnCanvas = find("orbital-burn-scene");
   const burnScene = createLaunchScene(burnCanvas);
   const guide = find("mission-guide");
+  const overview = find("map-widget");
+  const plan = createMissionPlan(find);
   let guideTarget;
   const dockingScene = createDockingScene(find("docking-scene"),find("docking-caption"));
   const attitudeControls = [...document.querySelectorAll("[data-attitude],[data-pitch]")];
   const navigationHosts = {
-    mini:find("navigation-thumb"),large:find("navigation-track"),guidance:find("maneuver-track"),dialog:find("orbit-dialog"),
+    mini:find("navigation-thumb"),large:find("navigation-track"),preview:find("orbit-map-preview"),guidance:find("maneuver-track"),
     caption:find("navigation-caption"),heading:find("navigation-heading"),attitudeControls,
     fields:Object.fromEntries(["ap","pe","altitude","speed","period","target","owner","stage","attitude","reserve","basis","approach"]
       .map(name=>[name,find("navigation-"+name)])),
   };
   const padLabel = " on a concrete launchpad by the service road, hangar and tank farm";
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+  const narrowCheckout = matchMedia("(max-width:850px)");
+  const checkoutProgress = find("launch-checkout-progress");
+  function placeCheckoutProgress() {
+    find(narrowCheckout.matches ? "pad-controls" : "pad-command").prepend(checkoutProgress);
+  }
+  narrowCheckout.addEventListener("change",placeCheckoutProgress);
+  placeCheckoutProgress();
   const fresh = mission => ({time:0,jobs:{},hold:false,startupAt:null,armed:null,ignition:null,separation:null,insertion:null,aborted:false,phasing:null,capture:null,retreat:null,approachHeld:false,sealAt:null,pressureAt:null,hatchAt:null,transferAt:null,researchAt:null,
     archivedAt:null,departedAt:null,deorbitAt:null,landedAt:null,recoveredAt:null,systemsCheckAt:null,
     transferArrival:null,matchedAt:null,
@@ -56,10 +65,10 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
   let tutorialPage = 0;
   let voiceEnabled = true;
   const pages = [
-    ["map","Your mission","Launch with four crew. Establish orbit, complete the mission objectives, and bring the crew home."],
-    ["zap","Bring the ship online","Start ship systems on the left. The electrical bus, hydraulics, oxygen supply and CO₂ scrubber light up as they come online."],
-    ["users","Verify the crew checklist","Assign each check using the crew portraits on the right. Press Play to advance their work. Green checks show which jobs are verified."],
-    ["activity","Clear the pad","Arm the countdown when checkout is complete. Once the timer clears, choose Launch and watch the tower arms release."],
+    {title:"Your mission", copy:()=>config.objective, draw:drawMissionRoute},
+    {title:"Bring the ship online", copy:()=>`Start ship systems, then press Play. Allow ${config.pad.startup_s} seconds on the launch clock for all four systems to come online.`, draw:drawStartupLesson},
+    {title:"Assign astronauts to checks", copy:()=>"In Crew checklist, select the astronaut’s portrait on each row. Press Play and wait for all checks to show Verified.", draw:drawCrewLesson},
+    {title:"Clear the pad", copy:()=>"When ship systems are online and the crew checks are verified, use the launch controls below Crew checklist.", draw:drawLaunchLesson},
   ];
   let tick, countdown;
   let state;
@@ -88,14 +97,115 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     navigation = createFlightNavigation(mission.navigation,navigationHosts);
     buildMissionControls();
   }
+  function tutorialElement(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text) node.textContent = text;
+    return node;
+  }
+  function tutorialControl(label, icon) {
+    const control = tutorialElement("span","tutorial-control",label);
+    if (icon) setIcon(control,icon," "+label);
+    return control;
+  }
+  function tutorialLocation(label, location) {
+    const block = tutorialElement("span","tutorial-location");
+    block.append(tutorialElement("strong",null,label),tutorialElement("span",null,location));
+    return block;
+  }
+  function drawMissionRoute() {
+    const stages = [
+      ["tutorial-launch","Launch",`Lift off in ${config.ship} and separate the booster.`],
+      ["tutorial-orbit","Orbit",`Establish a ${insertion.target_periapsis_km} × ${insertion.apoapsis_km} km parking orbit.`],
+      ...(rendezvous ? [
+        ["tutorial-dock","Rendezvous & dock","Match the ISS orbit, capture and verify the hatch."],
+        ["flask-conical","Research","Deliver the kit and verify the crew’s research samples."],
+      ] : [
+        ["clipboard-list","Systems checkout","Assign Ivo to verify the orbital systems."],
+      ]),
+      ["tutorial-recovery","Recovery","Deorbit, land and confirm crew recovery on Earth."],
+    ];
+    const route = tutorialElement("ol","tutorial-route");
+    route.setAttribute("role","list");
+    route.setAttribute("aria-label","Mission route");
+    for (const [icon,label,detail] of stages) {
+      const stage = tutorialElement("li");
+      const marker = tutorialElement("span","tutorial-route-icon");
+      setIcon(marker,icon,"");
+      stage.append(marker,tutorialElement("strong",null,label),tutorialElement("small",null,detail));
+      route.append(stage);
+    }
+    return route;
+  }
+  function tutorialTransport() {
+    const transport = tutorialElement("div","tutorial-transport");
+    transport.append(tutorialLocation("Launch time controls","Top of the screen"),tutorialControl("Play","play"));
+    return transport;
+  }
+  function drawStartupLesson() {
+    const console = tutorialElement("div","tutorial-console");
+    const panel = tutorialElement("div","tutorial-systems");
+    const head = tutorialElement("div","tutorial-systems-head");
+    head.append(tutorialLocation("Ship systems","Left panel · first panel on mobile"),tutorialControl("Start ship systems","zap"));
+    const readouts = tutorialElement("ul","tutorial-startup");
+    readouts.setAttribute("role","list");
+    for (const {name,icon} of systems) {
+      const row = tutorialElement("li");
+      setIcon(row,icon,"");
+      row.append(tutorialElement("strong",null,name),tutorialElement("small",null,"✓ Online"));
+      readouts.append(row);
+    }
+    panel.append(head,readouts);
+    console.append(panel,tutorialTransport());
+    return console;
+  }
+  function drawCrewLesson() {
+    const panel = tutorialElement("div","tutorial-console");
+    const checks = tutorialElement("ul","tutorial-checks");
+    checks.setAttribute("role","list");
+    const icons = {restraints:"users",engine:"activity",link:"radio"};
+    for (const job of config.jobs) {
+      const row = tutorialElement("li");
+      const cue = tutorialElement("span","tutorial-check-icon");
+      setIcon(cue,icons[job.id] ?? "clipboard-list","");
+      const details = tutorialElement("span","tutorial-job");
+      details.append(tutorialElement("strong",null,job.title),tutorialElement("small",null,job.station+" · "+job.duration_s+" s"));
+      const assignee = crew.find(person=>person.name===job.crew);
+      const control = tutorialControl("Assign "+job.crew.split(" ")[0]);
+      control.prepend(assignee.portrait());
+      row.append(cue,details,control);
+      checks.append(row);
+    }
+    const states = tutorialElement("div","tutorial-states");
+    states.append(tutorialElement("span",null,"Awaiting assignment"),tutorialElement("span",null,"→ In progress"),tutorialElement("span",null,"→ ✓ Verified"));
+    panel.append(tutorialLocation("Crew checklist","Right panel · below Ship systems on mobile"),checks,tutorialTransport(),states);
+    return panel;
+  }
+  function drawLaunchLesson() {
+    const steps = tutorialElement("ol","tutorial-liftoff");
+    steps.setAttribute("role","list");
+    for (const [label,icon,detail] of [
+      ["Arm countdown","",`Start the ${countdown}-second countdown.`],
+      ["Play","play","Run the countdown in Launch time controls."],
+      ["Launch","tutorial-launch",`Commit liftoff once the countdown clears.`],
+    ]) {
+      const row = tutorialElement("li");
+      row.append(tutorialControl(label,icon),tutorialElement("small",null,detail));
+      steps.append(row);
+    }
+    return steps;
+  }
   function drawTutorial() {
-    const [icon,title,copy] = pages[tutorialPage];
-    setIcon(find("tutorial-art"),icon,"");
+    const {title,copy,draw} = pages[tutorialPage];
+    find("tutorial-context").textContent = config.title+" · "+config.ship;
     find("tutorial-title").textContent = title;
-    find("tutorial-copy").textContent = copy;
+    find("tutorial-copy").textContent = copy();
+    find("tutorial-art").replaceChildren(draw());
     find("tutorial-step").textContent = (tutorialPage+1)+" / "+pages.length;
     find("tutorial-back").disabled = tutorialPage === 0;
     find("tutorial-next").textContent = tutorialPage === pages.length-1 ? "Open checkout" : "Next";
+    find("tutorial-title").focus();
+    tutorial.querySelector(".tutorial-content").scrollTop = 0;
   }
   function showCheckoutTutorial() {
     let seen = false;
@@ -104,6 +214,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     tutorialPage = 0;
     drawTutorial();
     tutorial.showModal();
+    find("tutorial-title").focus();
   }
   find("tutorial-next").addEventListener("click",()=>{
     if (tutorialPage === pages.length-1) tutorial.close("complete");
@@ -346,9 +457,13 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
   }
 
   function renderNavigation(flight) {
-    const visible = view === "launch" && state.ignition !== null;
-    find("flight-instrument").hidden = !visible;
+    const visible = view === "launch";
+    find("flight-instrument").hidden = !visible || state.ignition === null;
+    find("orbit-map-widget").hidden = !visible;
     if (!visible) { navigation.show(null); return; }
+    const context = state.ignition === null ? "Pad · trajectory preview"
+      : state.recoveredAt !== null ? "Earth recovery" : "Spacecraft trajectory";
+    if (find("orbit-widget-context").textContent !== context) find("orbit-widget-context").textContent = context;
     const progress = activeBurn ? burnProgress(performance.now()) : 0;
     const time = activeBurn?.kind === "coast" ? state.time+(activeBurn.destination-state.time)*progress : state.time;
     navigation.show({
@@ -385,6 +500,21 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     find("launch-show-processes").hidden = !launch;
     find("pad-briefing").hidden = !launch;
     guide.hidden = !launch;
+    const mapView = menu ? "menu" : inOrbit ? "flight" : view;
+    if (overview.dataset.view !== mapView) {
+      overview.dataset.view = mapView;
+      overview.querySelector('[data-map-view="route"]').textContent = view === "replay" ? "Route" : "Plan";
+      const selected = overview.querySelector('[data-map-view][aria-pressed="true"]');
+      if (selected && getComputedStyle(selected).display === "none") {
+        selectOverviewTab(overview.querySelector('[data-map-view="route"]'));
+      }
+    }
+    overview.hidden = menu;
+    find("map-plan-open").hidden = !launch;
+    find("map-current").hidden = !launch;
+    find("map-milestones").hidden = !launch;
+    find("map-replay-route").hidden = view !== "replay";
+    find("map-replay-controls").hidden = view !== "replay";
     find("launch-mission-name").textContent = launch ? config.title : "SYMBIOSIS X";
     find("launch-field").dataset.view = view;
     if (menu) {
@@ -417,7 +547,10 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
         [state.hatchAt,"Hatch authorized"],[state.transferAt,"Cargo receipt accepted"],
         [state.archivedAt,"Research archived"],[state.departedAt,"Departure committed"]]),
     } : {};
-    onCanvas(inOrbit ? canvasState(flight) : null,procedureEvents);
+    onCanvas(inOrbit ? canvasState(flight) : null,procedureEvents,{
+      mode:launch ? (demo.active ? config.id+"-timed-demo" : config.id) : view,
+      time:launch ? state.time : null,
+    });
   }
 
   function advance() {
@@ -507,7 +640,11 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
       render();
       return;
     }
-    if (playback !== null) {stopPlayback(); return;}
+    if (playback !== null) {
+      stopPlayback();
+      renderObjectives(flightState());
+      return;
+    }
     if (!canPlay()) return;
     if (state.ignition === null) {
       const frame = now => {
@@ -559,22 +696,14 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     };
     const current = config.sequence.objectives.find(objective=>times[objective.id] == null);
     const held = state.hold || state.approachHeld || flight.phase.includes("held") || flight.phase.includes("missed");
-    let completed = 0;
-    for (const objective of config.sequence.objectives) {
-      const {label,badge,row,segment} = objectiveRows.get(objective.id);
+    const objectives = config.sequence.objectives.map(objective=>{
       const actual = times[objective.id];
-      const done = actual != null;
-      if (done) completed++;
-      const next = objective === current;
-      const status = done ? "Verified · " + missionStamp(actual)
-        : next ? flight.terminal ? "Incomplete" : held ? "Held" : "Next" : "Upcoming";
-      row.dataset.status = status.split(" ")[0].toLowerCase();
-      segment.dataset.step = done ? "complete" : next ? "current" : "upcoming";
-      label.textContent = objective.label;
-      badge.textContent = (objective.planned_s === null ? "" : "Plan "+missionStamp(objective.planned_s)+" · ") + status;
-    }
-    find("mission-objective-next").textContent = flight.phase + " · " + flight.next;
-    renderGuide(flight,current,completed,held);
+      const status = actual != null ? "verified" : objective !== current ? "upcoming"
+        : flight.terminal ? "incomplete" : held ? "held" : "next";
+      return {...objective,actual,status};
+    });
+    plan.render(objectives,flight);
+    renderGuide(flight,objectives.filter(objective=>objective.status === "verified").length,held);
   }
 
   function nextControl(flight) {
@@ -593,15 +722,16 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     if (flight.warpTo !== undefined) return "launch-coast";
     if (flight.phaseBurn) return "launch-phasing";
     if (flight.matchBurn) return "launch-match";
+    if (flight.sample?.expired && state.capture === null) return "launch-retreat";
     if (state.approachHeld) return "launch-approach-hold";
     if (flight.capture) return "launch-capture";
-    if (flight.sample?.expired) return "launch-retreat";
+    if (flight.exteriorHold && flight.advance) return "play";
     if (!demo.active && antennaUnverified(config.id,state.time) && state.phasing === null) return "show-processes";
     if (flight.canOpen) return "launch-open-hatch";
     if (state.capture !== null && state.hatchAt === null) {
       return flight.seal.startsWith("Verified") ? "launch-check-pressure" : "launch-check-seal";
     }
-    if (flight.canDeorbit) return "launch-deorbit";
+    if (flight.canDeorbit) return find("launch-deorbit").disabled ? null : "launch-deorbit";
     if (flight.advance) return state.insertion === null ? "pad-play" : "play";
     for (const id of ["launch-transfer","launch-research","launch-archive","launch-depart","launch-systems-check",
       "launch-land","launch-recover","launch-abort"]) {
@@ -610,29 +740,95 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     return null;
   }
 
-  function renderGuide(flight, current, completed, held) {
-    const waiting = activeBurn || playback !== null || ascentPlaying;
+  const guideActions = {
+    startup:["checkout","Start ship systems","Power, steering and cabin air come online before liftoff."],
+    "launch-hold":["checkout","Release hold","The countdown can continue once you clear the hold."],
+    "launch-arm":["checkout","Arm countdown","Start the final timer before launch."],
+    "launch-go":["ascent","Launch","The booster lifts the ship off the pad."],
+    "launch-separate":["separation","Separate booster","Drop the spent booster so the ship can fly on."],
+    "launch-insert":["insertion","Enter Earth orbit","Choose Commit orbital insertion to fire the engine and settle into orbit."],
+    "launch-phasing":["insertion","Fire engines toward the station","Choose Commit ISS transfer burn to begin the trip."],
+    "launch-match":["insertion","Match station orbit","Fire the engine to match the station’s speed before closing in."],
+    "launch-approach-hold":["approach","Resume approach","This lets the ship start closing in again."],
+    "launch-capture":["docking","Dock with the station","Choose Capture station to latch the ship to the docking port."],
+    "launch-retreat":["approach","Retreat to orbit","The docking window has closed. Move away from the station."],
+    "launch-check-seal":["docking","Check seal","Verify the joint between the ship and station is airtight."],
+    "launch-check-pressure":["docking","Compare pressure","Check that air pressure matches on both sides of the hatch."],
+    "launch-open-hatch":["docking","Open the hatch","Both checks are current. Choose Authorize hatch opening."],
+    "launch-transfer":["docking","Hand off research kit","Move the kit from the ship to the station."],
+    "launch-research":["docking","Assign Sana to station research","Sana uses the kit to collect motion samples."],
+    "launch-archive":["docking","Verify and archive research","Save the paired samples before leaving the station."],
+    "launch-depart":["docking","Board the return capsule","Choose Seal hatch and board return capsule to leave the station."],
+    "launch-systems-check":["coast","Assign Ivo to orbital systems check","Ivo checks that the ship is ready to return."],
+    "launch-deorbit":["recovery","Begin the return to Earth","Choose Commit deorbit to leave orbit and descend."],
+    "launch-land":["recovery","Confirm landing","Record that the capsule reached the landing zone."],
+    "launch-recover":["recovery","Confirm crew recovery","Record that the crew is safely back on Earth."],
+    "launch-abort":["ascent","Abort ascent","End the exercise. The ship missed its chance to reach orbit safely."],
+    "show-processes":["coast","Finish the inspection and verify safe return in Workflows","The antenna check must be complete before the ship can maneuver."],
+  };
+
+  function guideCue(flight, control, waiting) {
+    if (state.recoveredAt !== null) return ["recovery","Crew safely back on Earth",""];
+    if (flight.terminal) return state.aborted
+      ? ["ascent","Ascent ended","Open Flight plan to review the unfinished steps."]
+      : ["approach","Ship back in safe orbit","Open Flight plan to review the unfinished steps."];
+    if (activeBurn) {
+      const maneuver = {
+        insertion:["insertion","Entering Earth orbit","The engine fires to settle the ship into orbit."],
+        transfer:["insertion","Heading toward the station","The engine fires to lift the ship into a higher orbit."],
+        match:["insertion","Matching the station’s speed","The engine fires before the ship can close in."],
+        coast:["coast","Coasting with engines off","The ship follows its orbit to the next maneuver."],
+      };
+      return maneuver[activeBurn.kind];
+    }
+    if (control === "launch-coast") return state.phasing === null
+      ? ["coast","Coast to the departure point","Let the ship drift in orbit until it lines up for the trip to the station."]
+      : ["coast","Coast to the top of the orbit","Let the ship drift to the station’s altitude before matching speed."];
+    if (control === "pad-play") {
+      if (flight.pad) return state.armed === null
+        ? ["checkout",waiting ? "Checks in progress" : "Play to finish checkout","Give the systems and crew time to finish their checks."]
+        : ["ascent",waiting ? "Countdown running" : "Play to run the countdown",
+          "Launch unlocks when the countdown ends."];
+      return state.separation === null
+        ? ["ascent",waiting ? "Booster lifting the ship" : "Play to continue climbing","Wait for the booster to finish firing before separating it."]
+        : ["insertion",waiting ? "Drifting toward the burn point" : "Play to reach the burn point",
+          "The ship has a short window to fire its engine and enter orbit."];
+    }
+    if (control === "play") {
+      if (flight.exteriorHold) return ["coast","Wait for the spacewalker","Advance time so the crew member can return safely."];
+      if (state.deorbitAt !== null) return ["recovery",waiting ? "Descending toward Earth" : "Play to reach the landing zone",
+        "The capsule slows as it descends through the atmosphere."];
+      if (state.capture !== null) return ["docking",waiting ? "Sana is collecting samples" : "Play to finish sampling",
+        "Wait for Sana to collect both sets of motion readings."];
+      if (flight.sample) return ["approach",waiting ? "Closing in on the station" : "Play to approach the station",
+        "The docking control unlocks when the ship is close enough and moving slowly."];
+      return ["coast",waiting ? "Ivo is checking the ship" : "Play to finish Ivo’s check",
+        "Wait for Ivo to verify the ship’s systems."];
+    }
+    if (guideActions[control]) return guideActions[control];
+    if (flight.pad) return ["checkout",flight.next,"Each crew member checks a different part of launch readiness."];
+    if (flight.canDeorbit) return ["recovery","Return held","The ship needs more fuel reserve to begin the return."];
+    return ["coast","Station approach held","The ship needs more fuel reserve to start the trip."];
+  }
+
+  function renderGuide(flight, completed, held) {
+    const waiting = Boolean(activeBurn || playback !== null || ascentPlaying);
     const stateName = state.recoveredAt !== null ? "complete" : flight.terminal ? "ended"
       : held ? "held" : waiting ? "waiting" : "ready";
     guide.dataset.state = stateName;
-    const next = state.recoveredAt !== null ? "Crew safely back on Earth" : flight.next;
-    const detail = current && !flight.terminal
-      ? current.label + (current.planned_s === null ? "" : " · planned "+missionStamp(current.planned_s))
-      : flight.terminal && state.recoveredAt === null ? "Review the flight plan for unfinished objectives." : "";
+    const target = nextControl(flight);
+    guideTarget = typeof target === "string" ? find(target) : target;
+    const [scene, next, detail] = guideCue(flight,guideTarget?.id,waiting);
+    find("guide-illustration").dataset.scene = scene;
     for (const [id, value] of [
       ["guide-count",completed+" / "+config.sequence.objectives.length+" complete"],
       ["guide-phase",flight.phase],["guide-next",next],["guide-detail",detail],
     ]) {
       if (find(id).textContent !== value) find(id).textContent = value;
     }
-    const target = nextControl(flight);
-    guideTarget = typeof target === "string" ? find(target) : target;
-    find("guide-focus").hidden = !guideTarget || demo.active || Boolean(waiting);
+    find("guide-focus").hidden = !guideTarget || demo.active || waiting;
   }
 
-  function missionStamp(seconds) {
-    return "T+" + Math.floor(seconds/60) + ":" + String(seconds%60).padStart(2,"0");
-  }
   function updateCheckout(time) {
     if (view !== "launch" || state.ignition !== null) return;
     const starting = state.startupAt !== null;
@@ -661,6 +857,41 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     return flight.reserve === undefined ? "Upper stage standby" : flight.reserve+" game units";
   }
 
+  function renderLaunchStack(flight) {
+    const booster = state.separation !== null ? "Separated" : state.aborted ? "Engine off"
+      : flight.phase === "Booster ascent" ? "Firing" : state.ignition !== null ? "Burnout" : "Attached";
+    const upper = activeBurn?.kind === "insertion" ? "Firing" : state.aborted ? "Engine off"
+      : state.insertion !== null ? "In orbit" : state.separation !== null ? "Coasting" : "Attached";
+    for (const [id, label] of [["capsule","Attached"],["upper",upper],["booster",booster]]) {
+      const stage = stageRows.get(id);
+      if (!stage) continue;
+      stage.item.dataset.state = label.toLowerCase();
+      stage.status.textContent = label;
+    }
+  }
+
+  function renderCheckoutProgress(online, crewReady) {
+    checkoutProgress.hidden = state.ignition !== null;
+    if (state.ignition !== null) return;
+    const total = config.jobs.length;
+    const done = config.jobs.filter(job=>state.jobs[job.id]?.due <= state.time).length;
+    find("launch-crew-progress").max = total;
+    find("launch-crew-progress").value = done;
+    const count = done+" of "+total+" checks done · "+(total-done)+" remaining";
+    const blockers = [];
+    if (state.hold) blockers.push("release launch hold");
+    if (!online) blockers.push(state.startupAt === null ? "start ship systems" : "finish ship startup");
+    if (!crewReady) blockers.push(config.jobs.some(job=>!state.jobs[job.id]) ? "assign remaining checks" : "finish crew checks");
+    const seconds = state.armed === null ? 0 : state.armed+countdown-state.time;
+    const gate = blockers.length ? "Arm blocked · "+blockers.join(" · ")
+      : state.armed === null ? "Ready to arm · choose Arm countdown"
+      : seconds > 0 ? "Launch blocked · "+seconds+" s left in countdown"
+      : "Ready for liftoff · choose Launch";
+    for (const [id,value] of [["launch-crew-count",count],["launch-checklist",gate]]) {
+      if (find(id).textContent !== value) find(id).textContent = value;
+    }
+  }
+
   function render(animate = true) {
     if (state.ignition === null && playback !== "pad") updatePadClock(state.time);
     const launchPlaying = playback === "pad" || ascentPlaying;
@@ -676,7 +907,9 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
       find("pad-light").textContent = flightState().phase;
     }
     const startup = find("startup-status");
-    startup.dataset.online = String(systemsReady());
+    const online = systemsReady();
+    const crewReady = ready();
+    startup.dataset.online = String(online);
     find("startup").disabled = state.startupAt !== null || state.ignition !== null;
     find("launch-systems").hidden = state.ignition !== null;
     find("launch-time").textContent = Math.floor(state.time / 60) + ":" + String(state.time % 60).padStart(2, "0");
@@ -696,14 +929,14 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     orbit.hidden = state.separation === null || state.aborted ||
       (state.insertion !== null && activeBurn?.kind !== "insertion");
     if (!orbit.hidden) paintOrbit(orbit, state.insertion === null ? 0 : burnProgress(performance.now()));
-    find("launch-stack").dataset.ignited = String(flight.phase === "Booster ascent");
-    find("launch-stack").querySelector("[data-stage=booster]").hidden = state.separation !== null;
+    renderLaunchStack(flight);
+    renderCheckoutProgress(online,crewReady);
     find("launch-go").hidden = state.ignition !== null;
     find("launch-separate").hidden = !flight.separate;
     find("launch-insert").hidden = !flight.insert;
     find("launch-arm").hidden = state.ignition !== null || state.armed !== null;
-    find("launch-arm").disabled = state.hold || !systemsReady() || !ready();
-    find("launch-go").disabled = state.hold || !systemsReady() || !ready() || state.armed === null || state.time < state.armed+countdown;
+    find("launch-arm").disabled = state.hold || !online || !crewReady;
+    find("launch-go").disabled = find("launch-arm").disabled || state.armed === null || state.time < state.armed+countdown;
     find("launch-step").disabled = demo.active || !canAdvance();
     find("launch-crew-checks").hidden = state.ignition !== null;
     find("launch-research").hidden = state.transferAt === null || state.researchAt !== null;
@@ -759,8 +992,6 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     find("launch-hold").hidden = state.ignition !== null;
     find("launch-hold").textContent = state.hold ? "Release hold" : "Hold launch";
     find("launch-hold").setAttribute("aria-pressed", String(state.hold));
-    find("launch-checklist").textContent = state.hold ? "Commander hold"
-      : ready() ? "Crew checks verified" : "Waiting for crew checks";
     for (const job of config.jobs) {
       const record = state.jobs[job.id];
       const row = rows.get(job.id);
@@ -957,32 +1188,39 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     event.preventDefault();
     if (!event.repeat) steer(...direction);
   });
-  const objectiveRows = new Map();
+  const stageRows = new Map();
+  const stagePurposes = {
+    capsule:"Carries crew and returns them to Earth",
+    upper:"Places the capsule into orbit",
+    booster:"Provides thrust for liftoff",
+  };
+  const jobIcons = {restraints:"users",engine:"activity",link:"radio"};
   function buildMissionControls() {
-    objectiveRows.clear();
+    plan.build(config);
+    stageRows.clear();
     rows.clear();
-    for (const id of ["mission-objective-list","guide-track","launch-stack","launch-jobs"]) find(id).replaceChildren();
-    for (const objective of config.sequence.objectives) {
-      const row = document.createElement("li");
-      const label = document.createElement("strong");
-      const badge = document.createElement("small");
-      row.append(label,badge);
-      find("mission-objective-list").append(row);
-      const segment = document.createElement("i");
-      find("guide-track").append(segment);
-      objectiveRows.set(objective.id,{row,label,badge,segment});
-    }
+    for (const id of ["launch-stack","launch-jobs"]) find(id).replaceChildren();
     find("launch-title").textContent = config.title;
     find("launch-subtitle").textContent = config.vehicle;
     for (const stage of config.stages) {
       const item = document.createElement("li");
       item.className = "launch-stage";
       item.dataset.stage = stage.id;
+      const shape = document.createElement("span");
+      shape.className = "launch-stage-shape";
+      shape.setAttribute("aria-hidden","true");
+      const copy = document.createElement("div");
+      copy.className = "launch-stage-copy";
       const name = document.createElement("strong");
       const detail = document.createElement("small");
+      const status = document.createElement("span");
+      status.className = "launch-stage-status";
       name.textContent = stage.name;
-      detail.textContent = stage.detail;
-      item.append(name,detail);
+      detail.textContent = stage.id === "upper" && !rendezvous
+        ? "Carries the crew into orbit and back to Earth" : stagePurposes[stage.id] ?? stage.detail;
+      copy.append(name,detail,status);
+      item.append(shape,copy);
+      stageRows.set(stage.id,{item,status});
       find("launch-stack").append(item);
     }
     for (const job of config.jobs) {
@@ -990,7 +1228,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
       const title = document.createElement("strong");
       const status = document.createElement("span");
       const assign = document.createElement("button");
-      title.textContent = job.title;
+      setIcon(title,jobIcons[job.id] ?? "clipboard-list",job.title);
       assign.type = "button";
       const assignee = crew.find(person=>person.name===job.crew);
       const assignedLabel = document.createElement("span");
@@ -1030,7 +1268,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
       resetCrew(config.id+"-timed-demo");
       demo.stop();
     }
-    if (find("mission-objectives").open) find("mission-objectives").close();
+    for (const id of ["mission-objectives","orbit-dialog"]) if (find(id).open) find(id).close();
     pauseReplay();
     stopPlayback();
     loadMission(mission,timed);
@@ -1065,6 +1303,8 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     "assign-checks":()=>{ for (const row of rows.values()) row.assign.click(); return true; },
     "crew-baseline":()=>onDemoCrew("crew-baseline"),
     "crew-check":()=>onDemoCrew("crew-check"),
+    "start-demo-eva":()=>onDemoCrew("start-demo-eva"),
+    "verify-demo-eva":()=>onDemoCrew("verify-demo-eva"),
     "close-twin":()=>onDemoCrew("close-twin"),
     "show-docking":()=>{ openCommand(find("demo-pause")); return true; },
     "hide-docking":()=>{ closeCommand(); return true; },
@@ -1145,7 +1385,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     replay() { showView("replay",config,true); },
   });
   for (const id of ["show-missions","launch-open-missions"]) find(id).addEventListener("click",exit);
-  for (const id of ["show-objectives","launch-open-objectives","guide-plan"]) find(id).addEventListener("click",openObjectives);
+  for (const id of ["map-plan-open","launch-open-objectives","guide-plan"]) find(id).addEventListener("click",openObjectives);
   find("guide-focus").addEventListener("click",()=>{
     if (!guideTarget || guideTarget.disabled) return;
     if (guideTarget.closest("#mission-command-widget")) openCommand(find("guide-focus"));
@@ -1298,4 +1538,127 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
 
   return {advance:()=>{if (!demo.active) advance();},advanceToCheckpoint,togglePlayback,cycleSpeed,refreshCrewWork:()=>renderView(false),
     paintNavigation:time=>navigation.showAt(time)};
+}
+
+function missionStamp(seconds) {
+  return "T+" + Math.floor(seconds/60) + ":" + String(seconds%60).padStart(2,"0");
+}
+
+function createMissionPlan(find) {
+  const phases = [
+    ["Checkout","Pad","clipboard-list",["checks","countdown"]],
+    ["Ascent","Ascent","zap",["separation","insertion"]],
+    ["Rendezvous","Dock","radio",["phasing","match","capture","hatch"]],
+    ["Station research","ISS","flask-conical",["transfer","research"]],
+    ["Orbital systems","Orbit","activity",["systems"]],
+    ["Earth return","Return","rotate-ccw",["departure","deorbit","landing","return"]],
+  ];
+  const icons = {
+    checks:"clipboard-list",countdown:"play",separation:"zap",insertion:"map",phasing:"zap",match:"activity",
+    capture:"radio",hatch:"wind",transfer:"package",research:"flask-conical",systems:"activity",
+    departure:"skip-forward",deorbit:"rotate-ccw",landing:"map",return:"users",
+  };
+  const labels = {verified:"Verified",upcoming:"Upcoming",next:"Next",held:"Held",incomplete:"Incomplete"};
+  const stageLabels = {complete:"Complete",current:"Current",held:"Held",incomplete:"Incomplete",upcoming:"Upcoming"};
+  const rows = new Map();
+  let stages = [];
+  let ship = "";
+
+  function node(tag, className, text) {
+    const element = document.createElement(tag);
+    if (className) element.className = className;
+    if (text) element.textContent = text;
+    return element;
+  }
+  function setText(element, value) {
+    if (element.textContent !== value) element.textContent = value;
+  }
+  function mark(element, state) {
+    if (element.dataset.step !== state) element.dataset.step = state;
+    if (state === "current" || state === "held" || state === "incomplete") element.setAttribute("aria-current","step");
+    else element.removeAttribute("aria-current");
+  }
+
+  function build(mission) {
+    ship = mission.ship;
+    setText(find("mission-objective-ship"),mission.ship+" · "+mission.title);
+    setText(find("mission-objective-brief"),mission.objective);
+    rows.clear();
+    const milestones = find("map-milestones");
+    const details = find("mission-objective-list");
+    const track = find("guide-track");
+    for (const list of [milestones,details,track]) list.replaceChildren();
+
+    const phaseDefinitions = [...phases];
+    const known = new Set(phases.flatMap(phase=>phase[3]));
+    const other = mission.sequence.objectives.filter(objective=>!known.has(objective.id)).map(objective=>objective.id);
+    if (other.length) phaseDefinitions.push(["Other objectives","Other","clipboard-list",other]);
+    stages = phaseDefinitions.flatMap(([title,short,icon,ids])=>{
+      const objectives = mission.sequence.objectives.filter(objective=>ids.includes(objective.id));
+      if (!objectives.length) return [];
+      const milestone = node("li");
+      const marker = node("span","plan-mark");
+      setIcon(marker,icon,"");
+      milestone.append(marker,node("span","plan-milestone-label",short));
+      milestones.append(milestone);
+
+      const card = node("li","plan-stage");
+      const heading = node("h3");
+      const phaseIcon = node("span");
+      setIcon(phaseIcon,icon,"");
+      const badge = node("small");
+      heading.append(phaseIcon,document.createTextNode(title),badge);
+      const tasks = node("ol","plan-tasks");
+      card.append(heading,tasks);
+      details.append(card);
+
+      for (const objective of objectives) {
+        const row = node("li");
+        const taskIcon = node("span","plan-task-icon");
+        setIcon(taskIcon,icons[objective.id] ?? "clipboard-list","");
+        const copy = node("div");
+        const status = node("small");
+        copy.append(node("strong",null,objective.label),status);
+        row.append(taskIcon,copy);
+        tasks.append(row);
+        rows.set(objective.id,{row,status,segment:node("i")});
+      }
+      return [{title,objectives,milestone,card,badge}];
+    });
+    for (const {id} of mission.sequence.objectives) track.append(rows.get(id).segment);
+  }
+
+  function render(objectives, flight) {
+    const byId = new Map(objectives.map(objective=>[objective.id,objective]));
+    const current = objectives.find(objective=>objective.status !== "verified");
+    for (const {id,status,actual,planned_s:planned} of objectives) {
+      const {row,status:badge,segment} = rows.get(id);
+      if (row.dataset.status !== status) row.dataset.status = status;
+      segment.dataset.step = status === "verified" ? "complete" : current?.id === id ? "current" : "upcoming";
+      const timing = planned == null ? "" : "Plan "+missionStamp(planned)+" · ";
+      setText(badge,timing+labels[status]+(actual == null ? "" : " · "+missionStamp(actual)));
+    }
+    for (const stage of stages) {
+      const complete = stage.objectives.every(objective=>byId.get(objective.id).status === "verified");
+      const active = stage.objectives.some(objective=>objective.id === current?.id);
+      const state = complete ? "complete" : active ? current.status === "next" ? "current" : current.status : "upcoming";
+      mark(stage.milestone,state);
+      mark(stage.card,state);
+      const label = stage.title+" · "+stageLabels[state];
+      stage.milestone.title = label;
+      stage.milestone.setAttribute("aria-label",label);
+      setText(stage.badge,stageLabels[state]);
+    }
+    const icon = icons[current?.id] ?? "clipboard-list";
+    const marker = find("map-current-icon");
+    if (marker.dataset.icon !== icon) {
+      setIcon(marker,icon,"");
+      marker.dataset.icon = icon;
+    }
+    setText(find("map-current-objective"),current?.label ?? "Crew safely back on Earth");
+    setText(find("map-current-state"),ship+" · "+(current ? labels[current.status] : "Complete"));
+    setText(find("mission-objective-next"),flight.phase+" · "+flight.next);
+  }
+
+  return {build,render};
 }

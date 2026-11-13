@@ -92,8 +92,18 @@ function createCrewRoutines({count,tick,occupied}) {
     return session;
   }
 
-  function meters(person,time) {
-    return needs.map(need=>[need.label,Math.round(100*Math.max(0,1-(time-person.refreshed[need.id])/need.interval))+"%"]);
+  const levels = (person,time) => needs.map(need=>[need.label,
+    Math.round(100*Math.max(0,Math.min(1,1-(time-person.refreshed[need.id])/need.interval)))]);
+  const meters = (person,time) => levels(person,time).map(([label,value])=>[label,value+"%"]);
+
+  function wellbeing(person,time,member,cabinStress) {
+    const [need, reserve] = levels(person,time).sort((a,b)=>a[1]-b[1])[0];
+    const needsLoad = Math.max(0,40-reserve) * 1.35 + (person.blocked ? 12 : 0);
+    const eventLoad = cabinStress ? [24,45,33,29][member] : 0;
+    const value = Math.max(0,Math.round(100-needsLoad-eventLoad));
+    return {value, state:value < 43 ? "Strained" : value < 71 ? "Under pressure" : "Settled",
+      driver:cabinStress ? "Cabin air alert" : person.blocked ? "Needs waiting for access" : need+" is lowest",
+      need,reserve};
   }
-  return {update,meters};
+  return {update,meters,wellbeing};
 }

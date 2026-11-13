@@ -23,8 +23,9 @@ test.afterAll(() => {
   if (outputDirectory) rmSync(outputDirectory, { recursive: true, force: true });
 });
 
-test("the three-minute demo shows Crew evidence and returns without touching player saves", async ({ page }) => {
-  test.setTimeout(60_000);
+test("the health demo shows the cabin response, private check and scheduled EVA without touching player saves", async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.setViewportSize({width:1200,height:674});
   const errors = [];
   const apiRequests = [];
   page.on("pageerror", error => errors.push(error.message));
@@ -57,12 +58,13 @@ test("the three-minute demo shows Crew evidence and returns without touching pla
   const beat = page.locator("#demo-status");
   const clock = page.locator("#demo-time");
   const phase = page.locator("#guide-phase");
+  const cabin = page.locator("#demo-evidence");
   const twin = page.locator("#personnel-widget");
   const advance = seconds => page.clock.runFor(seconds * 1000);
-  const begin = () => page.getByRole("button",{name:"Run 3-minute mission demo"}).dispatchEvent("click");
+  const begin = () => page.getByRole("button",{name:"Run astronaut health demo"}).dispatchEvent("click");
   await expect(page.locator("#campaign-save")).toHaveText("Launch held · T+0:15");
   await begin();
-  await expect(beat).toHaveText("Systems and crew checkout");
+  await expect(beat).toHaveText("Astronaut health · systems and crew checkout");
   await advance(10);
   await expect(phase).toHaveText("Booster ascent");
   await advance(11);
@@ -74,29 +76,82 @@ test("the three-minute demo shows Crew evidence and returns without touching pla
   await expect(phase).toHaveText("Orbital insertion burn");
   await page.getByRole("button",{name:"Resume demo"}).dispatchEvent("click");
   await advance(9.1);
-  await expect(clock).toHaveText("0:30 / 3:00");
+  await expect(clock).toHaveText("0:30 / 3:43");
   await expect(phase).toHaveText("Parking orbit · waiting for ISS window");
-  await expect(beat).toHaveText("Stable orbit · Sana’s health baseline");
+  await expect(beat).toHaveText("Stable orbit · cabin and Crew baseline");
+  const sana = page.locator("#crew-strip").getByRole("button",{name:/Inspect Sana Kepler/});
+  await expect(sana).toHaveAttribute("data-mood","Settled");
+  await expect(cabin).toHaveText(/2000.00 ppm.*T\+02:15.*20 m³\/h.*cabin-1/);
   await expect(twin).toBeVisible();
   await expect(twin.locator("#personnel-name")).toHaveText("Sana Kepler");
   await expect(twin.locator("#region-source")).toHaveText("Synthetic demo · optical wristband");
   await expect(twin.locator("#region-reading")).toHaveText(/68 bpm.*observed T\+02:10.*received T\+02:15.*accepted/);
+  const [twinBounds, shipBounds, guideBounds, readingBounds] = await Promise.all([
+    twin.boundingBox(), page.locator("#ship").boundingBox(), page.locator("#mission-guide").boundingBox(),
+    twin.locator("#region-reading").boundingBox(),
+  ]);
+  expect(twinBounds.x+twinBounds.width).toBeLessThan(shipBounds.x);
+  expect(shipBounds.x+shipBounds.width).toBeLessThan(guideBounds.x);
+  expect(readingBounds.y+readingBounds.height).toBeLessThan(twinBounds.y+twinBounds.height);
   await expect(twin.getByRole("link",{name:"Open private health record"})).toBeHidden();
   await advance(7);
-  await expect(beat).toHaveText("Wearable quality · motion artifact");
+  await expect(beat).toHaveText("Crew alert · scrubber capacity falls and cabin CO₂ rises");
+  await expect(sana).toHaveAttribute("data-mood","Strained");
+  await expect(sana).toHaveAttribute("title",/Cabin air alert/);
+  await expect(cabin).toHaveText(/2001.33 ppm.*T\+02:30.*4 m³\/h/);
+  const ground = page.getByRole("region",{name:"Ground relay"});
+  async function showGround() {
+    const parked = page.getByRole("button",{name:"Mission overview",exact:true});
+    if (await parked.isVisible()) await parked.dispatchEvent("click");
+    await page.locator('[data-map-view="ground"]').dispatchEvent("click");
+    await expect(ground).toBeVisible();
+  }
+  await showGround();
+  const groundField = name => ground.locator('[data-ground="'+name+'"]');
+  await expect(groundField("source")).toHaveText(/Offline playback/);
+  await expect(groundField("case")).toHaveText("Nominal cabin");
+  await expect(groundField("co2")).toHaveText("2000.00 ppm");
+  await expect(groundField("clock")).toHaveText("T+02:30");
   await expect(twin.locator("#region-reading")).toHaveText(/68 bpm.*held.*motion artifact/);
   await expect(twin.locator("#region-detail")).toContainText("Suspect sample received T+02:30");
   await advance(8);
-  await expect(beat).toHaveText("Crew response · Noor checks on Sana");
+  await expect(beat).toHaveText("Private Crew check · Noor checks on Sana");
   await expect(twin.locator("#peer-check-status")).toContainText("Noor is heading");
   await advance(16);
-  await expect(beat).toHaveText("Crew response · observation recorded");
+  await expect(beat).toHaveText("Private Crew check · observation recorded");
   await expect(twin.locator("#peer-check-status")).toContainText("Noor recorded a visual check");
   await advance(8);
-  await expect(beat).toHaveText("Wearable quality · repeat sample accepted");
+  await expect(beat).toHaveText("Ground receives scrubber status · Crew accepts repeat wristband sample");
   await expect(twin.locator("#region-reading")).toHaveText(/70 bpm.*accepted/);
-  await advance(12);
+  await showGround();
+  await expect(groundField("case")).toHaveText("Primary scrubber degraded · Crew responding");
+  await expect(groundField("co2")).toHaveText("2001.33 ppm");
+  await expect(groundField("observed")).toHaveText("T+02:30");
+  await expect(groundField("received")).toHaveText("T+03:15");
+  await expect(groundField("age")).toHaveText("00:45");
+  await expect(ground).not.toContainText(/Sana|Noor|bpm|visual check/);
+  await advance(6);
+  await expect(beat).toHaveText("Mara approves scrubber service · Ivo restores flow");
+  await expect(sana).toHaveAttribute("data-mood","Settled");
+  await expect(cabin).toHaveText(/2006.66 ppm.*T\+03:30.*20 m³\/h/);
+  await advance(11);
+  await expect(beat).toHaveText("Crew confirms CO₂ is falling · recovery report in transit");
+  await expect(cabin).toHaveText(/2006.65 ppm.*T\+04:00.*20 m³\/h/);
+  await advance(15);
+  await expect(beat).toHaveText("Suit telemetry · oxygen reserve, battery and tether");
+  await expect(twin.locator("#personnel-name")).toHaveText("Ivo Reyes");
+  await expect(twin.locator("#region-source")).toHaveText("Simulated suit telemetry");
+  await expect(twin.locator("#region-detail")).toContainText("O₂ reserve 84% · battery 92%");
+  await expect(twin.locator("#region-detail")).toContainText("tether secured");
+  await showGround();
+  await expect(groundField("case")).toHaveText("Scrubber flow restored · CO₂ decline confirmed onboard");
+  await expect(groundField("co2")).toHaveText("2006.65 ppm");
+  await expect(groundField("received")).toHaveText("T+04:45");
+  await expect(ground).not.toContainText(/Ivo|oxygen|battery|tether/);
+  await advance(13);
+  await expect(beat).toHaveText("Mara verifies Ivo’s safe return");
   await expect(twin).toBeHidden();
+  await advance(10);
   await expect(page.locator("#orbital-burn-scene")).toBeVisible();
   await advance(24);
   const exterior = page.getByRole("img",{name:"Exterior view of the ship and the International Space Station"});
@@ -114,14 +169,17 @@ test("the three-minute demo shows Crew evidence and returns without touching pla
   await advance(36.2);
   await expect(beat).toHaveText("Capsule landed");
   await advance(4);
-  await expect(clock).toHaveText("3:00 / 3:00");
+  await expect(clock).toHaveText("3:43 / 3:43");
   await expect(beat).toHaveText("Crew recovered on Earth");
   await expect(page.locator("#mission-guide")).toHaveAttribute("data-state","complete");
   await expect(page.locator("#guide-count")).toHaveText("14 / 14 complete");
   await page.getByRole("button",{name:"Exit demo"}).dispatchEvent("click");
   await expect(page.locator("#campaign-save")).toHaveText("Launch held · T+0:15");
   await begin();
+  // Wait for the deferred ascent and burn frames before inspecting the restarted twin.
   await advance(31);
+  for (let i=0;i<4 && !(await twin.isVisible());i++) await advance(1);
+  await expect(beat).toHaveText("Stable orbit · cabin and Crew baseline");
   await expect(twin.locator("#region-reading")).toHaveText(/68 bpm.*accepted/);
   await expect(twin.locator("#peer-check")).toBeHidden();
   await page.getByRole("button",{name:"Exit demo"}).dispatchEvent("click");
@@ -140,7 +198,7 @@ test("the timed beats and shared Crew twin fit on mobile with reduced motion", a
   await page.route(url => url.pathname === "/flight", route =>
     route.fulfill({contentType:"text/html",body:flightHtml}));
   await page.goto("/flight");
-  await page.getByRole("button",{name:"Run 3-minute mission demo"}).dispatchEvent("click");
+  await page.getByRole("button",{name:"Run astronaut health demo"}).dispatchEvent("click");
 
   const guide = page.locator("#mission-guide");
   async function verifyGuideLayout(transport) {
@@ -154,11 +212,15 @@ test("the timed beats and shared Crew twin fit on mobile with reduced motion", a
 
   await verifyGuideLayout("#pad-transport");
   await page.clock.runFor(37_000);
+  let additional = 0;
+  for (; additional<4000 && !(await page.locator("#personnel-widget").isVisible());additional+=1000) {
+    await page.clock.runFor(1000);
+  }
   await verifyGuideLayout(".flight-controls");
   await expect(page.locator("#personnel-widget")).toBeVisible();
   await expect(page.locator("#region-reading")).toBeInViewport();
   await expect(page.locator("#demo-status")).toBeInViewport();
-  await page.clock.runFor(86_000);
+  await page.clock.runFor(129_000-additional);
   await expect(page.locator("#docking-scene")).toBeInViewport();
   await expect(page.locator("#docking-caption")).toContainText("secured to ISS");
   await page.clock.runFor(58_000);
