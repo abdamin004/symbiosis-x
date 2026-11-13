@@ -11,6 +11,7 @@ from starlette.concurrency import run_in_threadpool
 
 from symbiosis_x.api.crew import router as crew_router
 from symbiosis_x.api.ground import router as ground_router
+from symbiosis_x.api.decisions import router as decisions_router
 from symbiosis_x.api.health import router as health_router
 from symbiosis_x.api.private_checkins import router as private_checkins_router
 from symbiosis_x.api.roles import new_demo_tokens, router as roles_router
@@ -55,6 +56,7 @@ def create_app(
     application.include_router(crew_router)
     application.include_router(private_checkins_router)
     application.include_router(ground_router)
+    application.include_router(decisions_router)
     if canvas_path:
         path_to_canvas = Path(canvas_path)
 
