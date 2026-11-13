@@ -1,0 +1,14 @@
+{
+  "sample_id": "organizer-small-v1",
+  "provenance": "synthetic_test_fixture",
+  "approved_organizer_data": false,
+  "note": "Generated test rows in the shape of an incoming CO2 feed. Not an approved organizer sample. See docs/data/intake.md.",
+  "rows": [
+    {"source_id": "synthetic.organizer.co2", "metric": "co2", "value": 2010, "unit": "ppm", "observed_at_s": 60, "received_at_s": 60, "quality": "valid"},
+    {"source_id": "synthetic.organizer.co2", "metric": "co2", "value": 0.2058, "unit": "percent", "observed_at_s": 600, "received_at_s": 605, "quality": "valid"},
+    {"source_id": "synthetic.organizer.co2", "metric": "co2", "value": null, "unit": "ppm", "observed_at_s": 660, "received_at_s": 665, "quality": "unavailable"},
+    {"source_id": "synthetic.organizer.co2", "metric": "co2", "value": 2073, "unit": "ppmv?", "observed_at_s": 720, "received_at_s": 725, "quality": "valid"},
+    {"source_id": "synthetic.organizer.co2", "metric": "co2", "value": 2080, "unit": "ppm", "observed_at_s": 780, "received_at_s": 770, "quality": "valid"},
+    {"source_id": "synthetic.organizer.co2", "metric": "co2", "value": 2084, "unit": "ppm", "observed_at_s": 840.5, "received_at_s": 845, "quality": "valid"}
+  ]
+}
