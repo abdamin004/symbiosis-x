@@ -3819,7 +3819,7 @@ function updateGround(frame) {
   });
   campaignRelay.update(campaign,groundFlightContext?.time);
 }
-const ordersWindow = widgets.register(element("workflow-widget"), element("show-workflow"), () => ({x:14,y:35}));
+const ordersWindow = widgets.register(element("workflow-widget"), element("show-workflow"), () => ({x:14,y:35}), {compactPriority:true});
 const groundVisibility = new MutationObserver(() => updateGround(currentFrame()));
 groundVisibility.observe(element("workflow-widget"), {attributes:true, attributeFilter:["hidden"]});
 groundVisibility.observe(element("map-widget"), {attributes:true, attributeFilter:["hidden"]});

@@ -233,7 +233,11 @@ test("a saved Horizon direction holds departure until its verified report reache
 
   await issue.click();
   await advance(3);
-  await button("Assign Ivo to readiness check").click();
+  await expect(ground.locator("#campaign-ground-status")).toContainText("Received onboard");
+  await expect(orders).toBeVisible();
+  const assign = orders.getByRole("button",{name:"Assign Ivo to readiness check"});
+  await expect(assign).toBeEnabled();
+  await assign.click();
   await expect(orders).toContainText("Ivo Reyes · Queued at the scrubber rack");
   await expect(page.locator("#crew-strip .crew-portrait").nth(2)).toHaveAttribute("data-working","true");
   await advance(1);
