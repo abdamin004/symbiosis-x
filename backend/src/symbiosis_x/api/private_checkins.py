@@ -31,7 +31,8 @@ def create(
     except CheckInNotFound as error:
         raise HTTPException(404, str(error)) from error
     except CheckInConflict as error:
-        raise HTTPException(409, str(error)) from error
+        status_code = 422 if str(error) == "SYNTHETIC_CHECK_IN_REQUIRED" else 409
+        raise HTTPException(status_code, str(error)) from error
 
 
 @router.get("/{check_in_id}", response_model=PrivateCheckInReceipt)
