@@ -1,0 +1,17 @@
+{
+  "id": "launch-checkout",
+  "version": 1,
+  "title": "Launch Checkout",
+  "vehicle": "Asteria · three-part launch stack",
+  "objective": "Prepare the crew and clear first-stage ignition.",
+  "stages": [
+    {"id": "capsule", "name": "Crew capsule", "detail": "Four seats · recovery vehicle"},
+    {"id": "upper", "name": "Orbital stage", "detail": "Insertion propulsion · on standby"},
+    {"id": "booster", "name": "Ascent booster", "detail": "First stage · ignition gate"}
+  ],
+  "jobs": [
+    {"id": "restraints", "title": "Verify restraints and suit seals", "crew": "Sana Kepler", "station": "Crew cabin", "duration_s": 30},
+    {"id": "engine", "title": "Confirm propulsion readiness", "crew": "Ivo Reyes", "station": "Engineering", "duration_s": 45},
+    {"id": "link", "title": "Read back range clearance", "crew": "Noor Okafor", "station": "Communications", "duration_s": 30}
+  ]
+}
