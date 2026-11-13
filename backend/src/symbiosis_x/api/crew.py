@@ -7,6 +7,13 @@ from symbiosis_x.crew.measurements import (
     MeasurementConflict, MeasurementNotFound, MeasurementRejected,
     MeasurementReceipt, SaveMeasurementRequest, read_measurement, save_measurement,
 )
+from symbiosis_x.crew.followup import (
+    ReminderConflict,
+    ReminderNotFound,
+    ReminderRejected,
+    HealthReminder,
+    acknowledge_reminder,
+)
 from symbiosis_x.application.projections import read_crew
 from symbiosis_x.application.runs import RunNotFound
 from symbiosis_x.contracts.projections import CurrentCrewView
@@ -121,3 +128,23 @@ def get_crew_measurement(
         return read_measurement(request.app.state.repository, run_id, measurement_id)
     except MeasurementNotFound as error:
         raise HTTPException(404, str(error)) from error
+
+
+@router.post(
+    "/{run_id}/crew/reminders/{reminder_id}/ack",
+    dependencies=[Depends(require_role("crew"))],
+    response_model=HealthReminder,
+)
+def acknowledge_crew_reminder(
+    run_id: str, reminder_id: str, request: Request, response: Response,
+) -> HealthReminder:
+    """Acknowledge one due private follow-up through the Crew route."""
+    response.headers["Cache-Control"] = "no-store"
+    try:
+        return acknowledge_reminder(request.app.state.repository, run_id, reminder_id)
+    except ReminderNotFound as error:
+        raise HTTPException(404, str(error)) from error
+    except ReminderRejected as error:
+        raise HTTPException(422, str(error)) from error
+    except ReminderConflict as error:
+        raise HTTPException(409, str(error)) from error
