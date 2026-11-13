@@ -10,6 +10,16 @@
       "sample_period_s": 60,
       "input_kind": "simulated",
       "visibility": "operational"
+    },
+    {
+      "source_id": "sim.cabin.pressure",
+      "component_id": "pressure-sensor-01",
+      "entity_id": "cabin-01",
+      "metric": "pressure",
+      "unit": "kPa",
+      "sample_period_s": 60,
+      "input_kind": "simulated",
+      "visibility": "operational"
     }
   ]
 }
