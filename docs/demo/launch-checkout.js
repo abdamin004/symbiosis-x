@@ -123,7 +123,8 @@ function bindLaunchCheckout(config, pauseReplay) {
     const scene = find("launch-scene");
     const elapsed = state.ignition === null ? 0 : state.time-state.ignition;
     scene.dataset.phase = state.aborted ? "abort" : flight.orbit ? "orbit" : state.separation !== null ? "upper" : state.ignition === null ? "pad" : "ascent";
-    scene.style.setProperty("--climb", Math.min(95,elapsed*2.1)+"px");
+    scene.setAttribute("aria-label", "Asteria · " + flight.phase);
+    scene.style.setProperty("--climb", Math.min(scene.clientHeight*.19, elapsed*2.1)+"px");
     scene.dataset.separated = String(state.separation !== null);
     renderObjectives(flight);
     find("launch-stack").dataset.ignited = String(flight.phase === "Booster ascent");
@@ -221,29 +222,40 @@ function bindLaunchCheckout(config, pauseReplay) {
     rows.set(job.id,{status,assign});
     find("launch-jobs").append(row);
   }
-  find("show-missions").addEventListener("click", () => {
+  function openMissions() {
     pauseReplay();
     find("mission-menu").showModal();
-  });
-  function openCheckout() {
-    if (find("mission-menu").open) find("mission-menu").close();
-    if (find("mission-objectives").open) find("mission-objectives").close();
-    pauseReplay();
-    render();
-    find("launch-checkout").showModal();
   }
-  find("open-checkout").addEventListener("click",openCheckout);
-  find("objective-open-launch").addEventListener("click",openCheckout);
-  find("show-objectives").addEventListener("click",()=>{
+
+  function showView(replay, writeHistory = false) {
+    for (const dialog of [find("mission-menu"), find("mission-objectives")]) {
+      if (dialog.open) dialog.close();
+    }
+    pauseReplay();
+    find("stage").hidden = !replay;
+    find("launch-checkout").hidden = replay;
+    if (!replay) render();
+    if (writeHistory && (new URLSearchParams(location.search).get("view") === "replay") !== replay) {
+      const url = new URL(location.href);
+      if (replay) url.searchParams.set("view", "replay");
+      else url.searchParams.delete("view");
+      history.pushState(null, "", url);
+    }
+  }
+
+  function openObjectives() {
     pauseReplay();
     render();
     find("mission-objectives").showModal();
-  });
-  find("launch-open-objectives").addEventListener("click",()=>{
-    find("launch-checkout").close();
-    render();
-    find("mission-objectives").showModal();
-  });
+  }
+
+  for (const id of ["show-missions","launch-open-missions"]) find(id).addEventListener("click",openMissions);
+  for (const id of ["open-checkout","objective-open-launch"]) find(id).addEventListener("click",()=>showView(false,true));
+  for (const id of ["show-objectives","launch-open-objectives"]) find(id).addEventListener("click",openObjectives);
+  find("open-flight-replay").addEventListener("click",()=>showView(true,true));
+  const syncView = () => showView(new URLSearchParams(location.search).get("view") === "replay");
+  window.addEventListener("popstate",syncView);
+  syncView();
   find("launch-arm").addEventListener("click",()=>{
     if (state.hold || !ready() || state.armed !== null || state.ignition !== null) return;
     state.armed = state.time;
