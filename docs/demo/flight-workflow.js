@@ -107,7 +107,7 @@ const flightWorkflow = (() => {
 const campaignGround = (() => {
   const uplink = 45;
   const downlink = 30;
-  const workTick = 60;
+  const workTick = 15;
   const timebox = time => {
     const assigned = (Math.floor(time / workTick) + 1) * workTick;
     return {assigned,arrival:assigned+workTick,finishes:assigned+3*workTick};
