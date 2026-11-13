@@ -8,8 +8,9 @@ from symbiosis_x.application.checkins import (
     CheckInNotFound,
     create_check_in,
     read_check_in,
+    read_mood_reports,
 )
-from symbiosis_x.contracts.checkins import PrivateCheckInReceipt, PrivateCheckInRequest
+from symbiosis_x.contracts.checkins import PrivateCheckInReceipt, PrivateCheckInRequest, PrivateMoodReport
 
 router = APIRouter(
     prefix="/api/v1/runs/{run_id}/crew/check-ins",
@@ -18,7 +19,7 @@ router = APIRouter(
 )
 
 
-@router.post("", response_model=PrivateCheckInReceipt, status_code=201)
+@router.post("", response_model=PrivateCheckInReceipt, response_model_exclude_none=True, status_code=201)
 def create(
     run_id: str,
     command: PrivateCheckInRequest,
@@ -35,7 +36,16 @@ def create(
         raise HTTPException(status_code, str(error)) from error
 
 
-@router.get("/{check_in_id}", response_model=PrivateCheckInReceipt)
+@router.get("", response_model=list[PrivateMoodReport])
+def read_moods(run_id: str, request: Request, response: Response) -> list[PrivateMoodReport]:
+    response.headers["Cache-Control"] = "no-store"
+    try:
+        return read_mood_reports(request.app.state.repository, run_id)
+    except CheckInNotFound as error:
+        raise HTTPException(404, str(error)) from error
+
+
+@router.get("/{check_in_id}", response_model=PrivateCheckInReceipt, response_model_exclude_none=True)
 def read(
     run_id: str,
     check_in_id: str,

@@ -77,6 +77,9 @@ button[aria-pressed=true]{background:#3d315e}
 .crew-mood i{display:block;height:100%;width:var(--mood-fill,100%);background:var(--mood-color,#7de0b8)}
 .crew-portrait[data-mood="Under pressure"]{--mood-color:#ffd08c}
 .crew-portrait[data-mood="Strained"]{--mood-color:#ff949e}
+.crew-portrait .crew-self-report{font-size:.53rem;line-height:1;color:#c7d6f0}
+#crew-mood-dialog select{color:var(--ink);background:#1b2744;padding:.3rem;border-radius:5px}
+#personnel-private-mood{font-size:.75rem;color:var(--muted);margin:.25rem 0}
 .crew-portrait .crew-mood-label{font-size:.54rem;line-height:1;color:var(--mood-color,#9eeac9)}
 .overview-time{display:flex;align-items:center;justify-content:space-between;gap:.35rem}
 #timeline{width:100%;accent-color:var(--violet)}
@@ -155,6 +158,11 @@ button[aria-pressed=true]{background:#3d315e}
 .crew-sprite .arm{width:4px;height:11px;top:12px;background:var(--suit);border-radius:3px;transform-origin:center top}
 .crew-sprite .arm-left{left:3px;rotate:12deg}
 .crew-sprite .arm-right{right:2px;rotate:-12deg}
+.crew-device{position:absolute;display:grid;place-items:center;width:22px;height:22px;padding:0;transform:translate(-50%,-50%);z-index:3;border:1px solid #92d9ef9c;border-radius:5px;background:#14253ee8;color:#acdef4}
+.crew-device .icon{width:.72rem;height:.72rem}
+.crew-device:focus-visible{outline:2px solid white;outline-offset:2px}
+.crew-device[data-quality=held],.crew-device[data-quality=stale]{color:#ffd198;border-color:#ffcf829c}
+.crew-device[data-quality=accepted]{color:#9ae4c2;border-color:#9ae4c29c}
 [data-pose=move] .leg-left{transform:translateY(calc(2px * var(--stride,0)))}
 [data-pose=move] .leg-right{transform:translateY(calc(-2px * var(--stride,0)))}
 [data-pose=move] .arm-left{rotate:calc(22deg * var(--stride,0))}
@@ -1147,6 +1155,9 @@ __HUD_ICONS__
       <div id="personnel-art"></div>
       <div><span id="personnel-role"></span><strong id="personnel-name"></strong><span id="personnel-location"></span></div>
     </div>
+    <meter id="personnel-duty-progress" class="duty-progress" min="0" max="1" aria-label="Current task progress" hidden></meter>
+    <p id="personnel-private-mood" hidden></p>
+    <button type="button" id="open-mood-report" hidden>Report mood privately</button>
     <a id="personnel-health" hidden>Open private health record</a>
     <p id="crew-exposure" hidden>Suspected CO₂ exposure · simulated risk. Crew check requested.</p>
     <div class="twin-peer" id="wearable-recheck" hidden>
@@ -1255,6 +1266,12 @@ __HUD_ICONS__
       <button class="widget-close" type="button" aria-label="Close Needs widget"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button>
     </div>
     <dl class="profile-data" id="needs-data"></dl>
+    <div id="crew-duty-handoff" class="twin-peer" hidden>
+      <label for="crew-duty-replacement">Qualified replacement</label>
+      <select id="crew-duty-replacement"></select>
+      <button type="button" id="confirm-duty-handoff">Commander · Transfer scrubber duty</button>
+      <output id="crew-duty-handoff-result" aria-live="polite"></output>
+    </div>
   </section>
   <section class="panel profile-window" id="vitals-widget" hidden aria-labelledby="vitals-title">
     <div class="widget-bar">
@@ -1507,6 +1524,22 @@ __HUD_ICONS__
     <path d="M3 10a9 9 0 0 1 18 0H3Zm0 0 8 8m10-8-8 8m-5-8 3 8m5-8-3 8m-3 0h4l2 4H8l2-4Z"/>
   </symbol>
 </svg>
+<dialog id="crew-mood-dialog" class="mission-dialog" aria-labelledby="crew-mood-title">
+  <h2 id="crew-mood-title">Private mood report</h2>
+  <p>Crew only · optional synthetic self-report for <strong id="mood-report-name"></strong></p>
+  <form id="crew-mood-form">
+    <label for="crew-mood-score">Mood score (1–5)</label>
+    <select id="crew-mood-score" required>
+      <option value="">Choose a score</option>
+      <option value="1">1 · Very low</option><option value="2">2 · Low</option>
+      <option value="3">3 · Neutral</option><option value="4">4 · Good</option>
+      <option value="5">5 · Very good</option>
+    </select>
+    <button type="submit" id="save-mood-report">Save private check-in</button>
+    <button type="button" id="cancel-mood-report">Cancel</button>
+    <p id="mood-report-error" role="alert"></p>
+  </form>
+</dialog>
 <dialog id="end-mission-dialog" class="mission-dialog" aria-labelledby="end-mission-title">
   <div class="dialog-top"><h2 id="end-mission-title">End this mission?</h2></div>
   <div id="end-mission-confirm">
@@ -1905,7 +1938,8 @@ function station(duty, member) {
   const check = peerWork(member,time);
   if (check) return [check.room, time < check.arrival ? "Heading to a crew check" : "Checking in with " + characters[check.member].short];
   const task = activeTask(member, time);
-  if (task && time >= task.assigned) {
+  if (task && time < task.assigned) return [task.origin.room,task.action];
+  if (task) {
     if (task.procedure === "eva") return ["cargo-01", task.support === member
       ? "Airlock watch for "+characters[task.member].short : evaStage(task,time)];
     const asset = equipment.get(task.asset);
@@ -1920,6 +1954,10 @@ function station(duty, member) {
   if (waiting) return [waiting.room,"Available for crew observation"];
   const job = crewRoutine(member);
   if (job) return [equipment.get(job.asset).room, time < job.arrival ? "Heading to " + equipment.get(job.asset).name : job.action];
+  if (crewSession?.crew[member]?.reliefAt != null) {
+    const previous = equipment.get(crewSession.crew[member].previous);
+    return [previous?.room ?? duty.stations[0][0],"Available for relief or a Crew check"];
+  }
   return duty.stations[index] ?? stationDuties[member][index - duty.stations.length];
 }
 
@@ -1940,7 +1978,7 @@ const allocator = createFlightAllocator({
   tick:TICK_SECONDS,
   evaScenario:data.eva,
   position(member) { return crewPositions.get(pawns.get(member)); },
-  booked(job) {
+  booked(job, replaced) {
     if (!job.origin || !equipment.has(job.asset)) return "The assignee or station is unavailable.";
     if (job.procedure === "eva") {
       if (!connectedFlight?.evaEligible || job.mode !== data.eva.mission_id) {
@@ -1956,7 +1994,7 @@ const allocator = createFlightAllocator({
         return "Suit reserve or return margin is below the release limit.";
       }
     }
-    if (tasks.some(other => other.mode === job.mode && other.queued <= job.queued && other.finishes > job.queued &&
+    if (tasks.some(other => other !== replaced && other.mode === job.mode && other.queued <= job.queued && other.finishes > job.queued &&
       (jobOwns(other,job.member) || (job.support != null && jobOwns(other,job.support)) || other.asset === job.asset))) return "The assignee or station already has a job.";
     if ([job.member,job.support].some(member=>member != null && peerWork(member,job.queued))) return "The assignee is performing a crew observation.";
     if (job.member === 1 && connectedFlight?.stationWork) return "The assignee is collecting station research samples.";
@@ -1970,6 +2008,16 @@ let crewSession;
 const crewRoutines = createCrewRoutines({
   rules:data.provisions,
   count:duties.length,tick:TICK_SECONDS,
+  underCabinAlert(time) {
+    if (connectedFlight?.timedDemo) {
+      const step = Math.floor((time-connectedFlight.crewStarted)/TICK_SECONDS);
+      const drill = data.health_drill.frames[step];
+      return Boolean(drill && drill.flow_m3_h < data.health_drill.frames[0].flow_m3_h);
+    }
+    if (connectedFlight) return false;
+    const frame = checkpoints.findLast(point=>point.time<=time);
+    return frame?.removal != null && frame.removal < checkpoints[0].removal;
+  },
   occupied(member,asset,time) {
     const frame = {...checkpoints[checkpoints.findLastIndex(point=>point.time<=time)],time};
     const order = groundInspection(frame);
@@ -2062,6 +2110,7 @@ function reducedActivity() {
 }
 const roomButtons = new Map();
 const pawns = new Map();
+const crewDevices = new Map();
 const roster = new Map();
 const portraits = new Map();
 const ctx = element("hull").getContext("2d");
@@ -2431,6 +2480,104 @@ function regionTelemetry(sample) {
   return unobserved;
 }
 const missionWearables = new Map();
+const privateMoods = new Map();
+let moodReportsReady = false;
+let moodReportsFailed = false;
+let moodMember, moodAttempt, moodRequest, moodSavePending = false;
+
+function moodEndpoint() {
+  return "/api/v1/runs/"+encodeURIComponent(flightHealthRun)+"/crew/check-ins";
+}
+
+function rememberMood(report) {
+  const prior = privateMoods.get(report.crew_id);
+  if (!prior || report.mission_s >= prior.mission_s) privateMoods.set(report.crew_id,report);
+}
+
+function hasMoodRun() {
+  return Boolean(flightHealthRun && groundFlightContext?.mode === "replay");
+}
+
+function hasVisibleCrewProfile() {
+  return ["personnel","needs"].some(kind=>!element(kind+"-widget").closest("[hidden]"));
+}
+
+function refreshMoodReports() {
+  if (!hasMoodRun() || !hasVisibleCrewProfile() || moodRequest || moodSavePending) return;
+  moodRequest = crewWearableSession().then(async ({crew})=>{
+    const response = await fetch(moodEndpoint(),{headers:{Authorization:"Bearer "+crew},cache:"no-store"});
+    if (!response.ok) throw new Error("Mood reports unavailable");
+    const reports = await response.json();
+    if (!Array.isArray(reports)) throw new Error("Invalid mood report list");
+    for (const report of reports) rememberMood(report);
+    moodReportsReady = true;
+    moodReportsFailed = false;
+  }).catch(()=>{
+    wearableSession = undefined;
+    moodReportsFailed = true;
+  }).finally(()=>{
+    moodRequest = undefined;
+    render();
+  });
+}
+
+function reportedMood(member, timed) {
+  if (timed || !hasMoodRun()) return "Mood unreported";
+  const report = privateMoods.get(data.crew[member]);
+  return report ? "Self-report "+report.mood_score+"/5 · T+"+clock(report.mission_s)
+    : moodReportsFailed ? "Mood report unavailable"
+    : moodReportsReady ? "Mood unreported" : "Mood not loaded";
+}
+
+const moodDialog = element("crew-mood-dialog");
+element("open-mood-report").addEventListener("click",()=>{
+  if (!hasMoodRun() || moodSavePending) return;
+  moodMember = profileMembers.get("personnel");
+  element("mood-report-name").textContent = characters[moodMember].name;
+  element("crew-mood-form").reset();
+  element("mood-report-error").textContent = "";
+  moodDialog.showModal();
+});
+element("cancel-mood-report").addEventListener("click",()=>moodDialog.close());
+moodDialog.addEventListener("cancel",event=>{ if (moodSavePending) event.preventDefault(); });
+element("crew-mood-form").addEventListener("submit",async event=>{
+  event.preventDefault();
+  if (moodSavePending || !hasMoodRun()) return;
+  const crewId = data.crew[moodMember];
+  const score = Number(element("crew-mood-score").value);
+  if (!Number.isInteger(score) || score < 1 || score > 5) return;
+  if (moodAttempt?.crew_id !== crewId || moodAttempt.mood_score !== score) {
+    moodAttempt = {check_in_id:"flight-mood-"+crypto.randomUUID(),crew_id:crewId,note:"",mood_score:score,synthetic:true};
+  }
+  moodSavePending = true;
+  const controls = [element("save-mood-report"),element("crew-mood-score"),element("cancel-mood-report")];
+  for (const control of controls) control.disabled = true;
+  element("mood-report-error").textContent = "";
+  try {
+    // Finish any earlier read before applying the write receipt at the same mission tick.
+    await moodRequest;
+    const {crew} = await crewWearableSession();
+    const response = await fetch(moodEndpoint(),{method:"POST",cache:"no-store",
+      headers:{Authorization:"Bearer "+crew,"Content-Type":"application/json"},
+      body:JSON.stringify(moodAttempt),
+    });
+    if (response.status === 401) wearableSession = undefined;
+    if (!response.ok) throw new Error("Could not save the private check-in.");
+    const report = await response.json();
+    if (report.run_id !== flightHealthRun || report.crew_id !== crewId || report.mood_score !== score) {
+      throw new Error("Could not confirm the private check-in.");
+    }
+    rememberMood(report);
+    moodAttempt = undefined;
+    moodDialog.close();
+  } catch (error) {
+    element("mood-report-error").textContent = error.message;
+  } finally {
+    moodSavePending = false;
+    for (const control of controls) control.disabled = false;
+    render();
+  }
+});
 const pendingWearables = new Set();
 let wearableSession;
 
@@ -2613,7 +2760,7 @@ function updateBodyMap(sample, member, frame) {
   element("region-detail").textContent = detail;
   element("region-time").textContent = suited ? "Observed T+"+clock(frame.time)+" · synthetic suit state"
     : timed || flightHealthRun ? "" : observed ? "Observed T+" + clock(sample.time) +
-    (connectedFlight ? " · synthetic phase reference" : " · synthetic replay sample") : "";
+    (connectedFlight ? " · synthetic phase reference" : " · synthetic replay sample · age "+Math.max(0,frame.time-sample.time)+" s") : "";
   element("wrist-readout").hidden = Boolean(timed || flightHealthRun) || activeLayer !== "sensors" || selectedRegion !== "wrist";
   element("wrist-bpm").textContent = sample.heart_rate + " bpm";
   element("wrist-sample").textContent = (connectedFlight ? "Synthetic phase reference" : "Latest simulated sample") +
@@ -2725,6 +2872,34 @@ function drawHistory(series, field, time) {
     + latest.map(row => clock(row.time) + " " + row[field] + " " + signals[field][1]).join(", "));
 }
 
+let dutyHandoffJob;
+let dutyHandoffMember;
+function renderDutyHandoff(member,frame) {
+  const handoff = element("crew-duty-handoff");
+  const job = activeTask(member,frame.time);
+  const canTransfer = !connectedFlight?.timedDemo && crewSession.crew[member].reliefAt !== null &&
+    job?.asset === "scrubber" && job.assigned <= frame.time;
+  handoff.hidden = !canTransfer;
+  if (!canTransfer || dutyHandoffJob === job && dutyHandoffMember === member) return;
+  dutyHandoffJob = job;
+  dutyHandoffMember = member;
+  element("crew-duty-replacement").replaceChildren(...flightProcedures.shift.members
+    .filter(candidate=>candidate!==member).map(candidate=>new Option(characters[candidate].name,candidate)));
+  element("crew-duty-handoff-result").textContent = "";
+}
+element("confirm-duty-handoff").addEventListener("click",()=>{
+  const frame = currentFrame();
+  const member = profileMembers.get("needs");
+  const job = activeTask(member,frame.time);
+  if (connectedFlight?.timedDemo || !job || job !== dutyHandoffJob ||
+      crewSession.crew[member].reliefAt === null || job.assigned > frame.time) return;
+  const replacement = Number(element("crew-duty-replacement").value);
+  if (replacement === member || !flightProcedures.shift.members.includes(replacement)) return;
+  const reason = allocator.handoff(job,replacement,frame.time);
+  element("crew-duty-handoff-result").textContent = reason;
+  if (!reason) render();
+});
+
 function renderProfiles(frame) {
   const timed = connectedFlight?.timedDemo;
   for (const [kind, member] of profileMembers) {
@@ -2747,7 +2922,16 @@ function renderProfiles(frame) {
       }
       element("personnel-name").textContent = persona.name;
       element("personnel-role").textContent = duties[member].role + " · " + id;
-      element("personnel-location").textContent = roomById.get(zone).name + " · " + task;
+      const state = pawns.get(member).dataset.dutyState;
+      element("personnel-location").textContent = roomById.get(zone).name+" · "+task+
+        (timed ? "" : " · "+state);
+      const progress = pawns.get(member).querySelector("meter");
+      element("personnel-duty-progress").hidden = Boolean(timed || progress.hidden);
+      element("personnel-duty-progress").value = progress.value;
+      const privateMood = element("personnel-private-mood");
+      privateMood.hidden = Boolean(timed);
+      privateMood.textContent = reportedMood(member,timed) + " · Crew only";
+      element("open-mood-report").hidden = !hasMoodRun();
       const health = element("personnel-health");
       health.hidden = timed || !flightHealthRun;
       if (flightHealthRun) health.href = "/runs/" + encodeURIComponent(flightHealthRun) + "/crew?crew_id=" + encodeURIComponent(id);
@@ -2767,15 +2951,23 @@ function renderProfiles(frame) {
         ["Traits and specialties",persona.traits + " · " + persona.strength,"zap"],
         ["Apparel",frame.phase==="Return transit" || frame.phase==="Departure"
           ? "Flight suit · phase wardrobe preview" : "Cabin wear · phase wardrobe preview","package"],
-        ["Private check-in",reports.mood || "Mood not reported","activity"],
+        ["Private check-in",reportedMood(member,timed),"activity"],
       ];
     } else if (kind === "needs") {
       const person = crewSession.crew[member];
       const mood = crewWellbeing(member,frame);
+      renderDutyHandoff(member,frame);
       rows = [["Simulated mood",mood.state+" · "+mood.value+"%"],["Main influence",mood.driver],
+        ["Relief",mood.reliefAt === null ? "No modeled relief request" :
+          "Requested at T+"+clock(mood.reliefAt)+" after "+mood.strainThreshold+" s of cabin alert"],
+        ["Recovery",mood.reliefAt === null ? "Available for routine duty" :
+          mood.recoveryRemaining+" s of clear cabin conditions remaining"],
+        ...(mood.reliefAt !== null && (activeTask(member,frame.time) || member === 2 && groundInspection(frame) ||
+          connectedFlight?.stationWork?.member === member) ?
+          [["Commander handoff","Assigned duty continues until Commander handoff"]] : []),
         ...crewRoutines.meters(person,frame.time),["Current activity",task],["Needs queue",person.blocked || "Clear"],
         ["Crew checkup",person.checkup ? "Last T+" + clock(person.checkup.time) : "Every 24 mission hours"],
-        ["Private mood",reports.mood || "No report"],["Symptoms",reports.symptoms || "No report"]];
+        ["Private mood",reportedMood(member,timed)],["Symptoms",reports.symptoms || "No report"]];
     } else if (timed && ["devices","vitals"].includes(kind)) {
       const demoSignal = flightDemoWristband(id,frame.time,connectedFlight.crewStarted);
       rows = [["Synthetic demo · optical wristband",demoSignal ? wearableSummary(demoSignal) : "Unobserved"]];
@@ -2851,10 +3043,12 @@ function renderProfiles(frame) {
 if (flightHealthRun) {
   setInterval(()=>{
     if (document.hidden) return;
+    refreshMoodReports();
     const visibleCrew = new Set();
     for (const kind of ["personnel","devices","vitals"]) {
       if (!element(kind+"-widget").hidden && profileMembers.has(kind)) visibleCrew.add(data.crew[profileMembers.get(kind)]);
     }
+    if (hasMoodRun() && hasVisibleCrewProfile() && selection.crew !== undefined) visibleCrew.add(data.crew[selection.crew]);
     for (const crewId of visibleCrew) refreshWearables(crewId);
   },3000);
 }
@@ -3300,21 +3494,34 @@ function render() {
       setIcon(marker.querySelector("i"),statusIcon,""); setIcon(badge,statusIcon,"");
       badge.dataset.icon = statusIcon;
     }
+    const blocked = !work && !crewCheck && !flightWork && !routine && crewSession.crew[i].blocked;
+    const moving = travelling || crewCheck && frame.time < crewCheck.arrival ||
+      flightWork && frame.time < flightWork.arrival || routine && frame.time < routine.arrival;
     const state = work?.procedure === "eva" ? work.support === i ? "Airlock watch" : evaStage(work,frame.time)
       : work && frame.time < work.assigned ? "Assigned"
-      : travelling ? "Travelling" : routine?.need?.id === "rest" ? "Resting"
-      : work || routine || crewCheck || flightWork ? "Working" : "On watch";
+      : moving ? "Travelling" : routine?.need?.id === "rest" || blocked && crewSession.crew[i].reliefAt !== null ? "Resting"
+      : blocked ? "Blocked" : work || routine || crewCheck || flightWork ? "Working" : frame.phase === "Station rest" ? "Resting" : "On watch";
     label.textContent = state;
     marker.hidden = false;
     marker.querySelector("meter").hidden = !work && !routine && !crewCheck && !flightWork;
     button.dataset.suited = work?.procedure === "eva" && work.member === i;
     marker.style.color = travelling || sharedWork ? "#bed6ff" : "";
-    button.setAttribute("aria-label", characters[i].name + " " + duty.role + " · " + task);
+    button.dataset.dutyState = state;
+    button.setAttribute("aria-label", characters[i].name + " " + duty.role + " · " + state + " · " + task);
     button.title = "Open digital twin · " + task;
     button.dataset.working = Boolean(work || routine || crewCheck || flightWork);
     button.setAttribute("aria-pressed", selection.crew === i);
     roster.get(i).setAttribute("aria-pressed", selection.crew === i);
     const portrait = portraits.get(i);
+    for (const [channel,device] of crewDevices.get(i)) {
+      const reading = missionWearables.get(data.crew[i])?.channels[channel]?.reading;
+      device.hidden = selection.crew !== i || Boolean(connectedFlight?.timedDemo);
+      const status = reading?.status ?? (flightHealthRun ? "unobserved" : "synthetic reference");
+      const label = channel === "wristband" ? "wristband" : "back pod";
+      device.dataset.quality = status;
+      device.title = label+" · "+status;
+      device.setAttribute("aria-label","Open "+characters[i].name+"’s "+label+" sensors · "+status);
+    }
     const exposure = Boolean(frame.healthDrill?.exposureRisk && data.crew[i] === flightDemoCrew);
     portrait.dataset.exposure = exposure;
     portrait.setAttribute("aria-pressed", selection.crew === i);
@@ -3323,11 +3530,16 @@ function render() {
     const mood = crewWellbeing(i,frame);
     portrait.dataset.mood = mood.state;
     portrait.style.setProperty("--mood-fill",mood.value+"%");
-    portrait.querySelector(".crew-mood-label").textContent = mood.state;
-    portrait.title = characters[i].name+" · "+task+" · Simulated mood "+mood.value+"%: "+mood.driver+
-      " · "+mood.need+" "+mood.reserve+"%";
+    portrait.querySelector(".crew-mood-label").textContent = connectedFlight?.timedDemo ? mood.state : "Model · "+mood.state;
+    const selfReport = portrait.querySelector(".crew-self-report");
+    selfReport.hidden = Boolean(connectedFlight?.timedDemo);
+    const reported = reportedMood(i,connectedFlight?.timedDemo);
+    selfReport.textContent = reported.startsWith("Self-report") ? reported.split(" · ")[0] : reported;
+    portrait.title = characters[i].name+" · "+task+" · Simulated mood "+mood.value+"%: "+mood.driver+" · "+reported+
+      " · "+mood.need+" "+mood.reserve+"%"+(mood.reliefAt === null ? "" :
+        " · Relief requested at T+"+clock(mood.reliefAt)+" · "+mood.recoveryRemaining+" s clear to recover");
     portrait.setAttribute("aria-label","Inspect "+characters[i].name+" "+duty.role+" · "+task+
-      " · Simulated mood: "+mood.state+(exposure ? " · Suspected CO₂ exposure" : ""));
+      " · "+state+" · Simulated mood: "+mood.state+(mood.reliefAt === null ? "" : " · Relief requested")+(selfReport.hidden ? "" : " · "+reported)+(exposure ? " · Suspected CO₂ exposure" : ""));
   });
   element("crew-exposure").hidden = !(frame.healthDrill?.exposureRisk &&
     data.crew[profileMembers.get("personnel")] === flightDemoCrew);
@@ -3382,7 +3594,9 @@ function crewMotion(member, frame) {
   if (check) return {origin:check.origin,destination:stationPoint(room,member),
     start:check.arrival - TICK_SECONDS,end:check.arrival,activity:frame.time < check.arrival ? "move" : "work"};
   const task = activeTask(member,frame.time) || (member === 2 && groundInspection(frame));
-  if (task && frame.time >= task.assigned) {
+  if (task && frame.time < task.assigned) return {origin:task.origin,destination:task.origin,
+    start:frame.time,end:task.assigned,activity:"idle"};
+  if (task) {
     const asset = equipment.get(task.asset);
     return {origin:task.origin,destination:stationPoint(room,member,asset),
       start:task.assigned,end:task.arrival,activity:frame.time >= task.arrival ? "work" : "move"};
@@ -3471,7 +3685,11 @@ function paintFlight(frame, sceneTime = missionTime) {
     }
     const facing = pointAlong(route,Math.min(1,progress+.02))[0] < x ? -1 : 1;
     const pose = reducedMotion.matches ? 0 : Math.sin(sceneTime*(motion.activity==="move" ? 2.5 : 1.3));
-    place(button,...(motion.activity === "move" && reducedMotion.matches && eva?.member !== member ? route[0] : [x,y]));
+    const [deviceX,deviceY] = motion.activity === "move" && reducedMotion.matches && eva?.member !== member ? route[0] : [x,y];
+    place(button,deviceX,deviceY);
+    for (const [channel,marker] of crewDevices.get(member)) {
+      place(marker,deviceX+(channel === "wristband" ? -26 : 26),deviceY+15);
+    }
     button.dataset.pose = motion.activity;
     button.style.setProperty("--stride",pose.toFixed(2));
     button.style.setProperty("--facing",facing);
@@ -3692,14 +3910,17 @@ function showSystemReading(id,current,unit,precision,status,values,attention) {
   line.setAttribute("d","M"+points.join(" L"));
 }
 
-function openDigitalTwin(member, trigger) {
+function openDigitalTwin(member, trigger, channel) {
   selection = {crew:member};
   twinView = "body";
-  activeLayer = activeEva(Math.floor(missionTime))?.member === member ? "suit" : "anatomy";
-  selectedRegion = "torso";
+  activeLayer = channel ? "sensors" : activeEva(Math.floor(missionTime))?.member === member ? "suit" : "anatomy";
+  selectedRegion = channel === "wristband" ? "wrist" : "torso";
   profileMembers.set("personnel",member);
   render();
   profileWindows.get("personnel").open(trigger);
+  if (hasMoodRun() && !missionWearables.has(data.crew[member])) refreshWearables(data.crew[member]);
+  if (!moodReportsReady) refreshMoodReports();
+  if (channel && !element("personnel-widget").hidden) element("layer-sensors").focus({preventScroll:true});
 }
 
 function crewFace(member) {
@@ -3767,7 +3988,9 @@ duties.forEach((duty,i) => {
   moodBar.append(document.createElement("i"));
   const moodLabel = document.createElement("small");
   moodLabel.className = "crew-mood-label";
-  portrait.append(moodBar,moodLabel);
+  const selfReport = document.createElement("small");
+  selfReport.className = "crew-self-report";
+  portrait.append(moodBar,moodLabel,selfReport);
   portrait.setAttribute("aria-controls","personnel-widget");
   portrait.addEventListener("click",()=>openDigitalTwin(i,portrait));
   portraits.set(i,portrait);
@@ -3775,6 +3998,19 @@ duties.forEach((duty,i) => {
   pawns.set(i,pawn);
   roster.set(i,member);
   element("ship").append(pawn);
+  const devices = new Map();
+  for (const [channel,icon] of [["wristband","activity"],["back_pod","package"]]) {
+    const device = document.createElement("button");
+    device.className = "crew-device";
+    device.type = "button";
+    device.hidden = true;
+    device.setAttribute("aria-controls","personnel-widget");
+    setIcon(device,icon,"");
+    device.addEventListener("click",()=>openDigitalTwin(i,device,channel));
+    devices.set(channel,device);
+    element("ship").append(device);
+  }
+  crewDevices.set(i,devices);
   element("roster").append(member);
 });
 for (const asset of fixtures) {

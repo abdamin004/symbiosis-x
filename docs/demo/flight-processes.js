@@ -51,6 +51,21 @@ function createFlightAllocator({tick,booked,position,evaScenario}) {
     persist();
     return "";
   }
+  function handoff(job,member,now) {
+    const origin = position(member);
+    const assigned = Math.ceil(now/tick)*tick;
+    const arrival = assigned+tick;
+    const next = {...job,member,origin,queued:now,assigned,arrival,
+      finishes:arrival+Math.max(tick,job.finishes-Math.max(now,job.arrival))};
+    const reason = next.finishes > next.deadline ? "The replacement would finish after the deadline."
+      : booked(next,job);
+    if (reason) return reason;
+    job.finishes = now;
+    job.result = "Commander transferred duty";
+    tasks.push({...next,caseId:job.mode+"-"+nextCase++});
+    persist();
+    return "";
+  }
   function routine(mode,now,start,procedure="shift") {
     const {version,member,deadline} = mode.endsWith("-timed-demo")
       ? {...defaults,member:flightProcedures[procedure].members[0]}
@@ -144,7 +159,6 @@ function createFlightAllocator({tick,booked,position,evaScenario}) {
     else linkFaults.delete(mode);
     persist();
   }
-
-  return {tasks,settings,configure,problem,allocate,routine,clear,events,recall,verify,suit,
+  return {tasks,settings,configure,problem,allocate,handoff,routine,clear,events,recall,verify,suit,
     antennaReceipt,canVerify,linkFault:mode=>linkFaults.has(mode),setLinkFault};
 }
