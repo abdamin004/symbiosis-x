@@ -23,7 +23,8 @@ button:hover{background:#292852}button:focus-visible,input:focus-visible{outline
 button:disabled{opacity:.46;cursor:default}
 button[aria-pressed=true]{background:#3d315e}
 .zone,.pawn{position:absolute;transform:translate(-50%,-50%)}
-.zone{background:transparent;text-shadow:0 1px 8px #070711;font-size:clamp(.68rem,1.15vw,.88rem);padding:.12rem .38rem;white-space:nowrap;color:#e1e6ff}
+.zone{display:flex;align-items:flex-start;justify-content:center;border-radius:0;background:transparent;text-shadow:0 1px 8px #070711;font-size:clamp(.68rem,1.15vw,.88rem);padding:.56rem .1rem 0;white-space:nowrap;color:#e1e6ff}
+.zone:hover,.zone[aria-pressed=true]{background:#b7c4ff13;box-shadow:inset 0 0 0 1px #b9c8ff4b}
 .zone[data-alert=true]{color:#ffd198;text-shadow:0 0 12px #ffa45f}
 .pawn{--suit:#a9c7ff;width:38px;height:38px;padding:0;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--suit),transparent 45%);border-radius:50%;background:#141a31;z-index:2}
 .pawn::before{content:"";width:21px;height:19px;border-radius:7px 7px 4px 4px;background:linear-gradient(90deg,transparent 3px,var(--suit) 3px 18px,transparent 18px);box-shadow:inset 0 -4px #121a2d9e;transform:translateY(3px)}
@@ -65,7 +66,9 @@ button[aria-pressed=true]{background:#3d315e}
 #map-widget #reset:hover{background:#8c3854}
 .play-area{position:relative;min-height:max(520px,calc(100dvh - 145px))}
 .profile-window{max-height:min(58vh,480px)}
-.asset-target{position:absolute;transform:translate(-50%,-50%);display:grid;place-items:center;padding:2px;color:#c8d8ff;background:#10182fc9;border-radius:4px}
+.asset-target{position:absolute;transform:translate(-50%,-50%);display:grid;place-items:center;padding:0;color:#c8d8ff;background:transparent;border-radius:3px;z-index:1}
+.asset-target .icon{background:#10182fdd;border-radius:3px;padding:2px;box-sizing:content-box}
+.asset-target:hover,.asset-target[aria-pressed=true]{background:#a5b6ff24;box-shadow:inset 0 0 0 1px #a7beffad}
 .asset-target .icon{width:.85rem;height:.85rem}
 .ribbon output{color:var(--blue)}
 .flight-controls{position:absolute;right:.6rem;top:calc(100% + .35rem);width:max-content;pointer-events:none}
@@ -74,7 +77,7 @@ button[aria-pressed=true]{background:#3d315e}
 .transport{display:flex;align-items:center;gap:.3rem}
 #phase{font-size:.75rem}
 .overlays{top:var(--control-clearance,100px)}
-.asset-target[data-work="active"]{color:#ffd49d;background:#513953}
+.asset-target[data-work="active"]{color:#ffd49d;background:#b47c3d36;box-shadow:inset 0 0 0 1px #ffc886b5}
 .asset-target[data-work="complete"]{color:#abecd9}
 #asset-controls{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center}
 #asset-controls select{max-width:100%}
@@ -303,6 +306,16 @@ const fixtures = [
 const equipment = new Map(fixtures.map(asset => [asset.id, asset]));
 const tasks = [];
 const equipmentButtons = new Map();
+const fixtureFootprints = {
+  bed:[430,157,105,39], wc:[596,153,32,35], galley:[552,154,38,32],
+  lab:[434,294,60,29], radio:[672,293,60,29], scrubber:[668,164,86,33],
+  bus:[224,291,86,33], stores:[222,166,123,31],
+};
+function placeArea(button, x, y, width, height) {
+  place(button,x+width/2,y+height/2);
+  button.style.width = width / 11 + "%";
+  button.style.height = height / 475 * 100 + "%";
+}
 function taskAt(asset, time) {
   return tasks.findLast(task => task.asset === asset && task.assigned <= time);
 }
@@ -766,7 +779,7 @@ for (const room of data.rooms) {
   button.type = "button";
   button.className = "zone";
   button.textContent = room.name;
-  place(button,z.x+z.w/2,z.y+18);
+  placeArea(button,z.x+3,z.y+3,z.w-6,z.h-6);
   button.addEventListener("click", () => { selection = {room:room.room_id}; showInspector(); render(); });
   roomButtons.set(room.room_id,button);
   element("ship").append(button);
@@ -810,7 +823,13 @@ for (const asset of fixtures) {
   button.setAttribute("aria-label", asset.name);
   button.title = asset.name;
   setIcon(button, asset.icon, "");
-  place(button, asset.x, asset.y);
+  const [x,y,w,h] = fixtureFootprints[asset.id];
+  placeArea(button,x,y,w,h);
+  const icon = button.querySelector(".icon");
+  icon.style.position = "absolute";
+  icon.style.left = (asset.x-x)/w*100 + "%";
+  icon.style.top = (asset.y-y)/h*100 + "%";
+  icon.style.transform = "translate(-50%,-50%)";
   button.addEventListener("click", () => {
     selection = {asset:asset.id};
     element("asset-crew").value = asset.crew;
