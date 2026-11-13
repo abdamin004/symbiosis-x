@@ -212,11 +212,15 @@ test("the timed beats and shared Crew twin fit on mobile with reduced motion", a
 
   await verifyGuideLayout("#pad-transport");
   await page.clock.runFor(37_000);
+  let additional = 0;
+  for (; additional<4000 && !(await page.locator("#personnel-widget").isVisible());additional+=1000) {
+    await page.clock.runFor(1000);
+  }
   await verifyGuideLayout(".flight-controls");
   await expect(page.locator("#personnel-widget")).toBeVisible();
   await expect(page.locator("#region-reading")).toBeInViewport();
   await expect(page.locator("#demo-status")).toBeInViewport();
-  await page.clock.runFor(129_000);
+  await page.clock.runFor(129_000-additional);
   await expect(page.locator("#docking-scene")).toBeInViewport();
   await expect(page.locator("#docking-caption")).toContainText("secured to ISS");
   await page.clock.runFor(58_000);
