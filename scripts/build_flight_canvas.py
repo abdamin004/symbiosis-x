@@ -5,11 +5,13 @@ import json
 from pathlib import Path
 
 if __package__:
+    from .flight_airlock_rehearsal import build_airlock_rehearsal
     from .build_cabin_preview import ACTIVITY_S, ROOT
     from .iss_mission_replay import build_replays, crew_history
     from .launch_envelope import launch_envelope, rendezvous_envelope
     from .flight_orbit import navigation_reference
 else:
+    from flight_airlock_rehearsal import build_airlock_rehearsal
     from build_cabin_preview import ACTIVITY_S, ROOT
     from iss_mission_replay import build_replays, crew_history
     from launch_envelope import launch_envelope, rendezvous_envelope
@@ -32,6 +34,7 @@ def build(output: Path) -> None:
     data = json.dumps({
         "metrics": json.loads((ROOT / "catalogs/crew/health-metrics.json").read_text())["metrics"],
         "rooms": rooms, "crew": crew_ids, "activity_s": ACTIVITY_S, "missions": missions,
+        "airlock": build_airlock_rehearsal(),
         "replay_version": scenario["version"],
         "frames": frames, "history": crew_history(frames[""], crew_ids), "research": scenario["research"],
     }, ensure_ascii=False).replace("<", "\\u003c")
@@ -42,6 +45,7 @@ def build(output: Path) -> None:
     launch_scene = (ROOT / "docs/demo/launch-scene.js").read_text(encoding="utf-8")
     missions_ui = (ROOT / "docs/demo/flight-missions.js").read_text(encoding="utf-8")
     checkout = (ROOT / "docs/demo/launch-checkout.js").read_text(encoding="utf-8")
+    timed_demo = (ROOT / "docs/demo/flight-demo.js").read_text(encoding="utf-8")
     anatomy = (ROOT / "docs/demo/flight-anatomy.html").read_text(encoding="utf-8")
     crew_routines = (ROOT / "docs/demo/flight-crew.js").read_text(encoding="utf-8")
     docking_scene = (ROOT / "docs/demo/docking-scene.js").read_text(encoding="utf-8")
@@ -53,7 +57,7 @@ def build(output: Path) -> None:
         .replace("__FLIGHT_WORKFLOW__", workflow).replace("__FLIGHT_WIDGETS__", widgets)
         .replace("__FLIGHT_STATIONS__", stations).replace("__LAUNCH_SCENE__", launch_scene)
         .replace("__FLIGHT_MISSIONS__", missions_ui)
-        .replace("__LAUNCH_CHECKOUT__", checkout).replace("__HUD_ICONS__", icons)
+        .replace("__FLIGHT_DEMO__", timed_demo).replace("__LAUNCH_CHECKOUT__", checkout).replace("__HUD_ICONS__", icons)
         .replace("__FLIGHT_ANATOMY__", anatomy).replace("__FLIGHT_CREW__", crew_routines)
         .replace("__DOCKING_SCENE__", docking_scene).replace("__FLIGHT_NAVIGATION__", navigation)
         .replace("__FLIGHT_PROCESSES__", processes),

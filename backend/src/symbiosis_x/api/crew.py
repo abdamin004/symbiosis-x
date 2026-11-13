@@ -14,6 +14,12 @@ from symbiosis_x.crew.profile import profile_for_crew
 from symbiosis_x.contracts.commands import CaseRelayReceipt, ShareCaseStatusRequest
 from symbiosis_x.contracts.projections import CurrentCrewView
 from symbiosis_x.workflows.relay import CaseRelayRejected, queue_case_status
+from symbiosis_x.crew.followup import (
+    AcknowledgeReminderRequest,
+    FollowupNotFound,
+    FollowupRejected,
+    acknowledge_reminder,
+)
 from symbiosis_x.crew.emergency import (
     AcknowledgeEmergencyRequest,
     EmergencyCase,
@@ -128,6 +134,23 @@ def share_case_status(
             return queue_case_status(db, run, command, case_id=case.case_id, status=case.status)
         except CaseRelayRejected as error:
             raise HTTPException(409, str(error)) from error
+
+
+@router.post(
+    "/{run_id}/crew/reminders/{reminder_id}/acknowledgment", dependencies=[Depends(require_role("crew"))],
+)
+def acknowledge_crew_reminder(
+    run_id: str, reminder_id: str, command: AcknowledgeReminderRequest, request: Request, response: Response,
+) -> dict:
+    """Acknowledge the current due instance of a personal reminder (Crew only)."""
+    response.headers["Cache-Control"] = "no-store"
+    try:
+        return acknowledge_reminder(request.app.state.repository, run_id, reminder_id, command)
+    except FollowupNotFound as error:
+        raise HTTPException(404, str(error)) from error
+    except FollowupRejected as error:
+        status = 409 if str(error) == "RUN_CLOSED" else 422
+        raise HTTPException(status, str(error)) from error
 
 
 @router.post(

@@ -53,7 +53,18 @@ function createFlightWidgets(overlay, shelf, notice, fixedControls = []) {
     for (const entry of ordered) {
       const hadFocus = entry.panel.contains(document.activeElement);
       entry.panel.hidden = false;
-      if (place(entry,entry.position ?? entry.preferred(),occupied)) occupied.push(rect(entry));
+      entry.panel.style.maxHeight = "";
+      const preferred = entry.position ?? entry.preferred();
+      let placed = place(entry,preferred,occupied);
+      if (!placed && entry===focused && entry.compactPriority) {
+        // Keep the selected panel usable on short displays by scrolling its body.
+        const originalHeight = entry.panel.offsetHeight;
+        for (const fraction of [.85,.7,.55,.4]) {
+          entry.panel.style.maxHeight = Math.floor(originalHeight*fraction)+"px";
+          if (place(entry,preferred,occupied)) { placed = true; break; }
+        }
+      }
+      if (placed) occupied.push(rect(entry));
       else {
         entry.panel.hidden = true;
         if (hadFocus) { entry.recall.hidden = false; shelf.hidden = false; entry.recall.focus(); }
