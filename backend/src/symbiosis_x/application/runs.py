@@ -3,6 +3,7 @@
 from hashlib import sha256
 from uuid import uuid4
 
+from symbiosis_x.application.exercise_schedule import EXERCISE_SCENARIO, load_exercise_fixture, record_exercise_checkpoint
 from symbiosis_x.application.nominal import deliver_nominal_ground, record_nominal_co2
 from symbiosis_x.application.wearables import WEARABLE_SCENARIO, WEARABLE_STEPS_S, record_wearables
 from symbiosis_x.crew.wearable_series import load_wearable_fixture
@@ -16,6 +17,7 @@ from symbiosis_x.storage.repository import Repository
 from symbiosis_x.workflows.relay import deliver_due, receive_due_advisories
 
 NOMINAL_SCENARIO = ("nominal", "1")
+EXERCISE_STEPS_S = (*WEARABLE_STEPS_S, 150, 210, 225, 255)
 LOCAL_FACILITATOR = "local-facilitator"
 
 
@@ -72,6 +74,9 @@ def start_run(repository: Repository, command: StartRunRequest, golden_manifest_
             elif scenario == WEARABLE_SCENARIO:
                 if command.seed != load_wearable_fixture()["seed"]:
                     raise RunConflict("WEARABLE_SEED_MISMATCH")
+            elif scenario == EXERCISE_SCENARIO:
+                if command.seed != load_exercise_fixture()["seed"]:
+                    raise RunConflict("EXERCISE_SEED_MISMATCH")
             elif scenario != NOMINAL_SCENARIO:
                 raise RunNotFound("SCENARIO_NOT_FOUND")
             run_id = uuid4().hex
@@ -106,7 +111,7 @@ def _record_start(db, run_id: str, payload_json: str) -> None:
         seed_golden(db, run_id)
     elif (scenario["scenario_id"], scenario["scenario_version"]) == ORGANIZER_SCENARIO:
         seed_golden(db, run_id, variant=load_organizer_manifest())
-    elif (scenario["scenario_id"], scenario["scenario_version"]) == WEARABLE_SCENARIO:
+    elif (scenario["scenario_id"], scenario["scenario_version"]) in (WEARABLE_SCENARIO, EXERCISE_SCENARIO):
         record_wearables(db, run_id, 0)
 
 
@@ -166,6 +171,8 @@ def _step_of(run) -> int:
     steps = GOLDEN_STEPS_S if scenario in (GOLDEN_SCENARIO, ORGANIZER_SCENARIO) else NOMINAL_STEPS_S
     if scenario == WEARABLE_SCENARIO:
         steps = WEARABLE_STEPS_S
+    elif scenario == EXERCISE_SCENARIO:
+        steps = EXERCISE_STEPS_S
     return steps.index(run["mission_s"]) if run["mission_s"] in steps else 0
 
 
@@ -243,11 +250,11 @@ def advance_run(repository: Repository, run_id: str, command: AdvanceRunRequest,
         scenario = (run["scenario_id"], run["scenario_version"])
         if scenario in (GOLDEN_SCENARIO, ORGANIZER_SCENARIO):
             return _advance_golden(db, run_id, run, command)
-        if scenario not in (NOMINAL_SCENARIO, WEARABLE_SCENARIO):
+        if scenario not in (NOMINAL_SCENARIO, WEARABLE_SCENARIO, EXERCISE_SCENARIO):
             raise RunConflict("SCENARIO_NOT_ADVANCEABLE")
         if command.target_mission_s is not None:
             raise RunConflict("TARGET_ONLY_FOR_GOLDEN")
-        steps = WEARABLE_STEPS_S if scenario == WEARABLE_SCENARIO else NOMINAL_STEPS_S
+        steps = {WEARABLE_SCENARIO: WEARABLE_STEPS_S, EXERCISE_SCENARIO: EXERCISE_STEPS_S}.get(scenario, NOMINAL_STEPS_S)
         if command.expected_step >= len(steps) or (
             steps[command.expected_step] != run["mission_s"]
         ):
@@ -275,10 +282,12 @@ def advance_run(repository: Repository, run_id: str, command: AdvanceRunRequest,
             (run_id, command.advance_id, digest, receipt.model_dump_json()),
         )
         record_nominal_co2(db, run_id, receipt.mission_s)
-        if scenario == WEARABLE_SCENARIO:
+        if scenario in (WEARABLE_SCENARIO, EXERCISE_SCENARIO):
             record_wearables(db, run_id, receipt.mission_s, run["mission_s"])
         else:
             deliver_nominal_ground(db, run_id, receipt.mission_s)
+        if scenario == EXERCISE_SCENARIO:
+            record_exercise_checkpoint(db, run_id, receipt.mission_s, run["mission_s"])
         deliver_due(db, run_id, receipt.mission_s)
         receive_due_advisories(db, run_id, receipt.mission_s)
     return receipt

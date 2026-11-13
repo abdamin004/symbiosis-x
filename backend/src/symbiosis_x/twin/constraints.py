@@ -10,7 +10,7 @@ The CO₂ limit is the team's labeled 3,200 ppm demo rule, not NASA's one-hour
 ppCO₂ reference.
 """
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import Literal
 
 from symbiosis_x.contracts.commands import CandidateResults
@@ -155,3 +155,38 @@ def evaluate_candidates(inputs: PlanInputs) -> PlanEvaluation:
     return PlanEvaluation(status=status, basis_snapshot_id=inputs.basis_snapshot_id,
                           decision_rev=inputs.decision_rev, policy_version=POLICY_VERSION,
                           horizon_s=inputs.horizon_s, candidates=candidates)
+
+
+@dataclass(frozen=True)
+class ExerciseOption:
+    candidate_id: Literal["keep_exercise", "defer_exercise"]
+    result: Literal["feasible", "rejected"]
+    reason_code: Literal["POWER_LIMIT", "CO2_PEAK_LIMIT"] | None
+    projected_co2_ppm: float
+    peak_co2_ppm: float
+    headroom_kw: float
+    standby: dict
+
+
+def evaluate_exercise_options(fixture: dict, *, co2_ppm: float, duration_s: int, headroom_kw: float):
+    """Compare an optional simulated exercise load with the same cabin and bus evidence."""
+    options = []
+    for option, generation, load in (
+        ("keep_exercise", fixture["exercise_generation_m3_h"], fixture["exercise_load_kw"]),
+        ("defer_exercise", fixture["rest_generation_m3_h"], 0),
+    ):
+        end = advance_co2_ppm(
+            co2_ppm, duration_s=duration_s, volume_m3=fixture["cabin_volume_m3"],
+            generation_m3_h=generation, removal_m3_h=fixture["removal_m3_h"],
+        )
+        peak = max(co2_ppm, end)
+        remaining = round(headroom_kw - load, 3)
+        reason = (
+            "POWER_LIMIT" if remaining < fixture["minimum_headroom_kw"] else
+            "CO2_PEAK_LIMIT" if peak > fixture["co2_limit_ppm"] else None
+        )
+        standby = asdict(check_standby_power(max(0, remaining)))
+        options.append(ExerciseOption(
+            option, "rejected" if reason else "feasible", reason, end, peak, remaining, standby,
+        ))
+    return tuple(options)

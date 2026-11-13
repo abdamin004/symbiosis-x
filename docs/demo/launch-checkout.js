@@ -30,9 +30,9 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
   placeCheckoutProgress();
   const fresh = mission => ({time:0,jobs:{},hold:false,startupAt:null,armed:null,ignition:null,separation:null,insertion:null,aborted:false,phasing:null,capture:null,retreat:null,approachHeld:false,sealAt:null,pressureAt:null,hatchAt:null,transferAt:null,researchAt:null,
     archivedAt:null,departedAt:null,deorbitAt:null,landedAt:null,recoveredAt:null,systemsCheckAt:null,
-    transferArrival:null,matchedAt:null,
+    transferArrival:null,matchedAt:null, groundRequired:Boolean(mission.rendezvous), groundDirection:null,
     attitude:0,pitch:0,rcs:mission.navigation.rcsPulses});
-  let ascent, rendezvous, docking, returnPlan, navigation;
+  let ascent, rendezvous, docking, returnPlan, navigation, propulsion;
   let view = "menu";
   let ascentTimer = null;
   let ascentPlaying = false;
@@ -83,13 +83,15 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     config = mission;
     find("navigation-ship-key").textContent = "▲ " + mission.ship;
     find("navigation-station-key").hidden = !mission.rendezvous;
-    state = timed ? fresh(mission) : {...fresh(mission),...saves.read(mission)};
+    const saved = timed ? null : saves.read(mission);
+    state = saved ? {...fresh(mission),groundRequired:false,...saved} : fresh(mission);
     // Older ISS runs could depart before the research archive step existed.
     if (state.departedAt !== null && state.archivedAt === null) state.archivedAt = state.departedAt;
     ascent = mission.ascent;
     rendezvous = mission.rendezvous;
     docking = mission.docking;
     returnPlan = mission.return;
+    propulsion = mission.propulsion_budget;
     insertion = ascent.insertion_profile;
     tick = ascent.tick_s;
     countdown = mission.sequence.countdown_s;
@@ -266,7 +268,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
       return {phase:"Booster burnout",next:"Separate booster",separate:true};
     }
     const coastTime = (state.insertion ?? state.time)-state.separation;
-    const coast = ascent.coast.find(sample=>sample.seconds===coastTime);
+    const coast = ascentSample(state.insertion ?? state.time);
     if (state.insertion !== null) return orbitalState(coast.after_burn);
     if (coastTime >= ascent.coast_limit_s || coast.reserve < ascent.insertion_cost+ascent.minimum_reserve)
       return {phase:"Insertion held · low reserve",next:"Abort ascent",reserve:coast.reserve};
@@ -274,16 +276,53 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
       next:coast.can_insert ? "Commit orbital insertion" : "Coast to the insertion window",
       advance:!coast.can_insert,insert:coast.can_insert,reserve:coast.reserve};
   }
+  function ascentSample(time) {
+    const tickIndex = Math.max(0,Math.floor((time-state.separation)/tick));
+    return ascent.coast[Math.min(ascent.coast.length-1,tickIndex)];
+  }
+
+  function upperReserve(reserve) {
+    return reserve - (state.phasing === null ? 0 : propulsion.costs.transfer)
+      - (state.matchedAt === null ? 0 : propulsion.costs.match);
+  }
+
+  function returnReserve(upper) {
+    const starting = propulsion.separateReturn ? propulsion.return : upper;
+    return starting - (state.departedAt === null ? 0 : propulsion.costs.departure)
+      - (state.deorbitAt === null ? 0 : propulsion.costs.retrograde);
+  }
+
+  function propellantState(flight) {
+    const solid = state.separation !== null ? 0 : propulsion.solid * Math.max(0,1-
+      (state.ignition === null ? 0 : (state.time-state.ignition)/ascent.burn_s));
+    const reserve = state.insertion === null ? flight.reserve ?? propulsion.upper
+      : upperReserve(ascentSample(state.insertion).after_burn);
+    const returned = returnReserve(reserve);
+    return {solid, upper:propulsion.separateReturn && state.departedAt !== null ? 0 : reserve,
+      returned:propulsion.separateReturn ? returned : null};
+  }
+
+  function propulsionReadout(flight) {
+    const budget = propellantState(flight);
+    const mixture = mass=>Math.max(0,mass*.4).toFixed(1)+" kg fuel / "+Math.max(0,mass*.6).toFixed(1)+" kg oxidizer";
+    find("solid-propellant").textContent = state.separation === null ? budget.solid.toFixed(1)+" kg" : "Stage detached";
+    find("orbital-propellant").textContent = state.departedAt !== null && propulsion.separateReturn
+      ? "Stage left at station" : mixture(propulsion.separateReturn ? budget.upper : returnReserve(budget.upper));
+    find("return-propellant-row").hidden = budget.returned === null;
+    find("return-propellant").textContent = budget.returned === null ? "" : mixture(budget.returned);
+    find("steering-propellant").textContent = state.rcs+" cold-gas pulses";
+  }
+
   function orbitalState(reserve) {
     if (activeBurn?.kind === "insertion") {
       return {phase:"Orbital insertion burn",next:"Raise periapsis into the parking orbit",reserve};
     }
     if (!demo.active && exteriorBusy(config.id,state.time)) {
       return {phase:"Exterior crew active",next:"Wait for the spacewalker to return before maneuvering",
-        reserve:reserve-(state.phasing === null ? 0 : rendezvous.phasing_cost),orbit:true,advance:true,exteriorHold:true};
+        reserve:upperReserve(reserve),orbit:true,advance:true,exteriorHold:true};
     }
     if (!rendezvous) {
-      const remaining = reserve-(state.deorbitAt === null ? 0 : returnPlan.reserve_cost);
+      const remaining = returnReserve(reserve);
       const checkout = state.systemsCheckAt === null ? {phase:"Stable orbit",next:"Assign Ivo to orbital systems check"}
         : state.time < state.systemsCheckAt + config.checkout_s
           ? {phase:"Orbital systems checkout",next:"Wait for Ivo’s systems check",advance:true}
@@ -292,9 +331,9 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
         ...(state.deorbitAt === null ? checkout : returnState())};
     }
     if (state.retreat !== null) return {phase:"Station approach ended",next:"Safe orbit",
-      reserve:reserve-(state.phasing === null ? 0 : rendezvous.phasing_cost),terminal:true,orbit:true};
+      reserve:upperReserve(reserve),terminal:true,orbit:true};
     if (state.phasing === null) {
-      const canPhase = reserve >= rendezvous.phasing_cost+rendezvous.retreat_reserve;
+      const canPhase = reserve >= propulsion.costs.transfer+propulsion.costs.match+rendezvous.retreat_reserve;
       const departure = state.insertion + config.navigation.departureS;
       if (!demo.active && antennaUnverified(config.id,state.time)) {
         return {phase:"ISS transfer held · antenna unverified",next:"Finish exterior inspection and verify safe return in Workflows",
@@ -302,10 +341,15 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
       }
       if (canPhase && state.time < departure) return {phase:"Parking orbit · waiting for ISS window",
         next:"Coast to the departure point · "+missionStamp(departure),reserve,orbit:true,advance:true,warpTo:departure};
+      if (!demo.active && state.groundRequired && !campaignGround.cleared(state.groundDirection,state.time)) {
+        const relay = campaignGround.status(state.groundDirection,state.time);
+        return {phase:"ISS transfer held · Ground readiness",next:"Open Ground or Orders to clear the readiness direction",
+          reserve,orbit:true,groundHold:true,canWaitForCrew:["pending","assigned","report pending"].includes(relay)};
+      }
       return {phase:"Stable orbit · ISS window open",next:canPhase ? "Commit ISS transfer burn" : "Approach held · reserve below minimum",
         reserve,orbit:true,phaseBurn:canPhase};
     }
-    const remaining = reserve-rendezvous.phasing_cost;
+    const remaining = upperReserve(reserve);
     if (activeBurn?.kind === "transfer") {
       return {phase:"ISS transfer burn",next:"Raise apoapsis to station altitude",reserve:remaining,orbit:true};
     }
@@ -314,7 +358,10 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
         reserve:remaining,orbit:true,advance:true,warpTo:state.transferArrival};
     }
     if (state.transferArrival !== null && state.matchedAt === null) {
-      return {phase:"At transfer apoapsis",next:"Match the station’s orbit before approaching",reserve:remaining,orbit:true,matchBurn:true};
+      const ready = remaining >= propulsion.costs.match+rendezvous.retreat_reserve;
+      return {phase:ready ? "At transfer apoapsis" : "Orbit match held · low reserve",
+        next:ready ? "Match the station’s orbit before approaching" : "Retreat to safe orbit",
+        reserve:remaining,orbit:true,matchBurn:ready};
     }
     if (activeBurn?.kind === "match") {
       return {phase:"Orbit matching burn",next:"Raise periapsis and match station speed",reserve:remaining,orbit:true};
@@ -322,7 +369,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     const elapsed = (state.capture ?? state.time)-(state.matchedAt ?? state.phasing);
     const sample = rendezvous.approach.find(point=>point.seconds===elapsed);
     if (state.capture !== null) {
-      return {reserve:remaining-(state.deorbitAt === null ? 0 : returnPlan.reserve_cost),orbit:true,sample,...dockingState()};
+      return {reserve:state.departedAt === null ? remaining : returnReserve(remaining),orbit:true,sample,...dockingState()};
     }
     return {
       phase:state.approachHeld ? "Approach held" : sample.state,
@@ -556,6 +603,10 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     onCanvas(inOrbit ? canvasState(flight) : null,procedureEvents,{
       mode:launch ? (demo.active ? config.id+"-timed-demo" : config.id) : view,
       time:launch ? state.time : null,
+      campaign:launch && !demo.active && rendezvous && state.insertion !== null ? {
+        order:state.groundDirection, required:state.groundRequired && state.phasing === null,
+        issueAllowed:state.phasing === null,
+      } : null,
     });
   }
 
@@ -731,6 +782,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     if (flight.insert) return "launch-insert";
     if (flight.warpTo !== undefined) return "launch-coast";
     if (flight.phaseBurn) return "launch-phasing";
+    if (flight.groundHold) return "show-workflow";
     if (flight.matchBurn) return "launch-match";
     if (flight.sample?.expired && state.capture === null) return "launch-retreat";
     if (state.approachHeld) return "launch-approach-hold";
@@ -791,6 +843,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
       };
       return maneuver[activeBurn.kind];
     }
+    if (flight.groundHold) return ["coast","Ground readiness holds ISS transfer","Open Orders to review the direction or Ground to request one."];
     if (control === "launch-coast") return state.phasing === null
       ? ["coast","Coast to the departure point","Let the ship drift in orbit until it lines up for the trip to the station."]
       : ["coast","Coast to the top of the orbit","Let the ship drift to the station’s altitude before matching speed."];
@@ -864,7 +917,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     scene.setCheckout({systems:cues,crew,power:fraction,time});
   }
   function reserveReadout(flight) {
-    return flight.reserve === undefined ? "Upper stage standby" : flight.reserve+" game units";
+    return flight.reserve === undefined ? "Upper stage standby" : flight.reserve+" kg liquid propellant";
   }
 
   function renderLaunchStack(flight) {
@@ -926,6 +979,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     find("launch-status").textContent = flight.phase;
     find("launch-next").textContent = flight.next;
     find("launch-reserve").textContent = reserveReadout(flight);
+    propulsionReadout(flight);
     if (!find("pad-controls").hidden) {
       const elapsed = state.ignition === null ? 0 : state.time-state.ignition;
       const phase = state.aborted ? "abort" : state.separation !== null ? "upper" : state.ignition === null ? "pad" : "ascent";
@@ -952,6 +1006,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     find("launch-research").hidden = state.transferAt === null || state.researchAt !== null;
     const researchDone = state.researchAt !== null && state.time >= state.researchAt+returnPlan.research_s;
     find("launch-archive").hidden = !researchDone || state.archivedAt !== null;
+    find("launch-depart").disabled = propulsion.return < propulsion.costs.departure+propulsion.costs.retrograde;
     find("launch-depart").hidden = state.archivedAt === null || state.departedAt !== null || Boolean(exteriorBusy(config.id,state.time));
     find("station-research-board").hidden = state.hatchAt === null || state.departedAt !== null;
     find("station-research-progress").value = state.researchAt === null ? 0 :
@@ -965,7 +1020,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     renderGuidance(flight,shot);
     find("launch-systems-check").hidden = Boolean(rendezvous) || !flight.orbit || state.systemsCheckAt !== null;
     find("launch-deorbit").hidden = !flight.canDeorbit;
-    find("launch-deorbit").disabled = (flight.reserve ?? 0) < returnPlan.reserve_cost;
+    find("launch-deorbit").disabled = (flight.reserve ?? 0) < propulsion.costs.retrograde;
     find("launch-land").hidden = state.deorbitAt === null || state.time < state.deorbitAt+returnPlan.entry_s+returnPlan.descent_s || state.landedAt !== null;
     find("launch-recover").hidden = state.landedAt === null || state.recoveredAt !== null;
     find("launch-abort").hidden = state.ignition === null || flight.orbit || flight.terminal || Boolean(activeBurn);
@@ -1033,6 +1088,14 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     const ref = config.navigation;
     const target = {insertion:ref.parking,transfer:ref.transfer,match:ref.station}[kind];
     const deltaV = {insertion:ref.insertionDeltaV,transfer:ref.transferDeltaV,match:ref.matchDeltaV}[kind];
+    const preview = kind ?? (flight.canDeorbit ? "retrograde" : state.archivedAt !== null && state.departedAt === null ? "departure" : null);
+    const cost = propulsion.costs[preview];
+    const reserve = preview === "departure" ? propulsion.return : flight.reserve;
+    const burnBudget = find("maneuver-budget");
+    burnBudget.hidden = cost == null;
+    const remaining = Math.max(0,(reserve ?? 0)-cost);
+    burnBudget.textContent = cost == null ? "" : cost + " kg liquid propellant · " +
+      (activeBurn ? "committed" : (reserve ?? 0) + " kg available · " + remaining + " kg after commit");
     const progress = activeBurn ? burnProgress(now) : 0;
     const destination = activeBurn?.destination ?? flight.warpTo;
     const coastTime = state.time+((destination ?? state.time)-state.time)*progress;
@@ -1046,7 +1109,9 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
         + (activeBurn ? " · Burn playback stretched" : "")
       : mode === "coast" && destination !== undefined
         ? "Engines off · "+missionStamp(Math.floor(coastTime))+" → "+missionStamp(destination)
-        : flight.next;
+        : preview === "retrograde" ? "Retrograde · Δv " + (rendezvous ? ref.retrogradeDeltaV : ref.checkoutRetrogradeDeltaV)
+          + " m/s · target 0 km periapsis · synthetic entry corridor"
+          : preview === "departure" ? "Clear the station before targeting the Earth entry corridor" : flight.next;
     const canvas = find("maneuver-track");
     canvas.setAttribute("aria-label",config.ship+" · "+mode+" guidance");
     find("maneuver-progress").hidden = !activeBurn;
@@ -1546,8 +1611,27 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     });
   }
 
+  function updateGroundDirection(action, {reason,origin} = {}) {
+    if (demo.active || view !== "launch" || !rendezvous || state.insertion === null || state.phasing !== null) return;
+    const current = state.groundDirection;
+    const status = campaignGround.status(current,state.time);
+    let order;
+    if (action === "issue" && ["missing","held","expired","verified"].includes(status)) {
+      order = campaignGround.issue(current,state.time,state.insertion+config.navigation.departureS);
+    } else if (action === "report") {
+      order = campaignGround.report(current,state.time);
+    } else {
+      order = campaignGround.receiveDecision(current,state.time,action,reason,origin);
+    }
+    if (!order) return;
+    state.groundRequired = true;
+    state.groundDirection = order;
+    persist();
+    renderView(false);
+  }
+
   return {advance:()=>{if (!demo.active) advance();},advanceToCheckpoint,togglePlayback,cycleSpeed,refreshCrewWork:()=>renderView(false),
-    paintNavigation:time=>navigation.showAt(time)};
+    paintNavigation:time=>navigation.showAt(time),updateGroundDirection};
 }
 
 function missionStamp(seconds) {

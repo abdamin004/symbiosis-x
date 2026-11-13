@@ -102,3 +102,178 @@ const flightWorkflow = (() => {
   return {key, read, send, canSend, canDecide, decide, canComplete, complete, status, job, routine, routineDue, timebox,
     reset: () => localStorage.removeItem(key)};
 })();
+
+// Browser-local training relay. Its operational record lives inside the selected Flight save.
+const campaignGround = (() => {
+  const uplink = 45;
+  const downlink = 30;
+  const holdReasons = ["Readiness evidence incomplete", "Crew or station unavailable", "Operational conditions require review"];
+  const issuer = "Simulated Ground · Flight Director";
+
+  function issue(current, time, departure) {
+    const expires = Math.max(departure + 300, time + uplink + 90);
+    return {
+      issuer, basis: "ISS departure readiness · checkpoint T+" + clock(departure),
+      sent: time, arrives: time + uplink, expires,
+      sequence: (current?.sequence ?? 0) + 1,
+    };
+  }
+
+  function job(order, time) {
+    if (order?.decision !== "assigned" || order.report || time < order.arrives || time >= order.expires) return null;
+    const {work} = order;
+    return {...work, state:time < work.assigned ? "Queued" : time < work.arrival ? "Travelling"
+      : time < work.finishes ? "Inspecting" : "Ready to report"};
+  }
+
+  function status(order, time) {
+    if (!order) return "missing";
+    if (time < order.arrives) return "pending";
+    if (order.report && time >= order.report.delivers) return order.report.result;
+    if (time >= order.expires) return "expired";
+    return order.report ? "report pending" : order.decision ?? "received";
+  }
+
+  function receiveDecision(order, time, decision, reason, origin) {
+    if (!["received","acknowledged"].includes(status(order,time))) return null;
+    const acknowledged = order.acknowledged ?? time;
+    if (decision === "hold" && holdReasons.includes(reason)) {
+      return {...order, acknowledged, decision:"held", reason,
+        report:{result:"held",sent:time,delivers:time + downlink}};
+    }
+    if (decision === "assign" && origin) {
+      const work = flightWorkflow.timebox(time);
+      if (work.finishes + downlink > order.expires) return null;
+      return {...order, acknowledged, decision:"assigned", work:{...work,origin}};
+    }
+    if (decision === "acknowledge") return {...order, acknowledged, decision:"acknowledged"};
+    return null;
+  }
+
+  function report(order, time) {
+    if (job(order,time)?.state !== "Ready to report" || time + downlink > order.expires) return null;
+    return {...order, report:{result:"verified",sent:time,delivers:time + downlink}};
+  }
+
+  function cleared(order, time) {
+    return status(order,time) === "verified" && time <= order.expires;
+  }
+
+  return {issuer, downlink, holdReasons, issue, status, job, receiveDecision, report, cleared};
+})();
+function bindExerciseInspector({find, runId, clock, session}) {
+  const panel = find("exercise-preview");
+  const refresh = find("exercise-preview-refresh");
+  const commit = find("exercise-preview-commit");
+  const status = find("exercise-preview-status");
+  let plan, debrief, busy = false, eligible = false, pending;
+  const path = "/api/v1/runs/"+encodeURIComponent(runId);
+  const number = (value,digits) => value.toFixed(digits);
+
+  async function request(suffix, body) {
+    const {crew} = await session();
+    const headers = {Authorization:"Bearer "+crew};
+    if (body) headers["Content-Type"] = "application/json";
+    return fetch(path+suffix,{method:body ? "POST" : "GET",headers,cache:"no-store",
+      body:body ? JSON.stringify(body) : undefined});
+  }
+
+  function paint() {
+    paintDebrief();
+    panel.hidden = !eligible || !plan;
+    if (panel.hidden) return;
+    find("exercise-preview-basis").textContent = "Basis v"+plan.decision_rev+" · T+"+clock(plan.mission_s)
+      +" · horizon "+plan.horizon_s+" s · CO₂ limit "+plan.co2_limit_ppm+" ppm · minimum headroom "
+      +number(plan.minimum_headroom_kw,2)+" kW";
+    find("exercise-preview-options").replaceChildren(...plan.options.map(option=>{
+      const row = document.createElement("li");
+      const action = option.candidate_id === "keep_exercise" ? "Keep exercise" : "Defer exercise";
+      const power = option.reason_code === "POWER_LIMIT" ? " · Held · power limit"
+        : option.reason_code === "CO2_PEAK_LIMIT" ? " · Held · CO₂ limit" : " · Eligible";
+      const standby = option.standby;
+      row.textContent = action+power+" · projected "+number(option.projected_co2_ppm,2)+" ppm CO₂ · peak "
+        +number(option.peak_co2_ppm,2)+" ppm · "+number(option.headroom_kw,2)+" kW headroom"
+        +" · Standby "+standby.outcome+" ("+number(standby.required_kw,2)+" kW required, "
+        +number(standby.available_kw,2)+" kW available)";
+      return row;
+    }));
+    const {decision,outcome} = plan;
+    find("exercise-preview-outcome").textContent = decision
+      ? "Deferred at T+"+clock(decision.decided_at_s)+" · predicted "+number(decision.projected_co2_ppm,2)+" ppm CO₂"
+        + (outcome ? " · observed "+number(outcome.co2_ppm,2)+" ppm CO₂ at T+"+clock(outcome.observed_at_s)
+          +" · "+number(outcome.headroom_kw,2)+" kW headroom" : " · awaiting outcome")
+      : outcome ? "Exercise kept · observed "+number(outcome.co2_ppm,2)+" ppm CO₂" : "";
+    commit.hidden = !plan.can_commit;
+    commit.disabled = busy || !plan.options.some(option=>option.candidate_id === "defer_exercise" && option.result === "feasible");
+    refresh.disabled = busy;
+  }
+
+  function paintDebrief() {
+    const panel = find("wearable-debrief");
+    panel.hidden = !eligible || !debrief;
+    if (panel.hidden) return;
+    const {recheck,ground_report:report,outcome} = debrief;
+    const stamp = value => value == null ? "Pending" : "T+"+clock(value);
+    find("wearable-debrief-delays").textContent =
+      "Detection to verified check · "+(debrief.time_to_verified_s == null ? "Pending" : debrief.time_to_verified_s+" s")
+      +" · Ground delivery lag · "+(debrief.ground_delivery_lag_s == null ? "Pending" : debrief.ground_delivery_lag_s+" s");
+    const milestones = [
+      ["Motion artifact detected",recheck?.opened_at_s],
+      ["Crew observer assigned",recheck?.assigned_at_s],
+      ["Repeat verified",recheck?.completed_at_s],
+      ["Commander deferred exercise",debrief.decision_at_s],
+      ["Cabin outcome recorded",outcome?.observed_at_s],
+      ["Ground operational update",report?.delivered_at_s],
+    ];
+    find("wearable-debrief-events").replaceChildren(...milestones.map(([label,at])=>{
+      const row = document.createElement("li");
+      row.textContent = label+" · "+stamp(at);
+      if (label === "Ground operational update" && report && at == null) row.textContent += " · due "+stamp(report.deliver_at_s);
+      return row;
+    }));
+  }
+
+  async function load() {
+    const response = await request("/crew/exercise-preview");
+    if (response.status === 404) { plan = debrief = null; return; }
+    if (!response.ok) throw new Error("Exercise preview unavailable.");
+    const next = await response.json();
+    if (next.run_id !== runId) throw new Error("Exercise preview is for a different run.");
+    plan = next;
+    const debriefResponse = await request("/crew/wearable-debrief");
+    debrief = debriefResponse.ok ? await debriefResponse.json() : null;
+    if (debrief?.run_id !== runId) debrief = null;
+  }
+
+  async function refreshPlan() {
+    if (busy || !eligible) return;
+    busy = true;
+    paint();
+    try { await load(); status.textContent = ""; }
+    catch (error) { status.textContent = error.message; }
+    finally { busy = false; paint(); }
+  }
+
+  refresh.addEventListener("click",refreshPlan);
+  commit.addEventListener("click",async ()=>{
+    if (busy || !plan?.can_commit) return;
+    if (pending?.basis_decision_rev !== plan.decision_rev) pending = {
+      operation_id:"exercise-"+crypto.randomUUID(),candidate_id:"defer_exercise",
+      basis_decision_rev:plan.decision_rev,basis_snapshot_id:plan.basis_snapshot_id,expires_at_s:plan.outcome_at_s,
+    };
+    busy = true;
+    paint();
+    try {
+      const response = await request("/actions",pending);
+      if (!response.ok) throw new Error("Exercise decision could not be confirmed.");
+      const receipt = await response.json();
+      pending = null;
+      await load();
+      status.textContent = receipt.applied ? "Exercise deferral accepted."
+        : "Decision held · "+receipt.reason_code.toLowerCase().replaceAll("_"," ")+".";
+    } catch (error) { status.textContent = error.message; }
+    finally { busy = false; paint(); }
+  });
+
+  return {open(replay) { eligible = Boolean(replay && runId); paint(); if (eligible) refreshPlan(); }};
+}

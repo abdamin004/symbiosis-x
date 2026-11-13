@@ -47,6 +47,13 @@
       "purpose": "Confirm the simulated range has cleared the launch."
     }
   ],
+  "propulsion": {
+    "booster_solid_kg": 180,
+    "return_liquid_kg": 22,
+    "rcs_pulses": 12,
+    "match_cost": 5,
+    "departure_cost": 4
+  },
   "ascent": {
     "burn_s": 45,
     "separation_deadline_s": 90,

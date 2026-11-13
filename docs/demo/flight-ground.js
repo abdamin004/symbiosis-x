@@ -123,7 +123,7 @@ function bindFlightGround({panel, crewReceipt, clock, workflow, replayPacket, re
   function paint() {
     renderCrew();
     if (!context.groundVisible) return;
-    const {frame, mode} = context;
+    const {frame, mode, campaign} = context;
     const live = activeRun ? views.get("ground") : null;
     const replay = !activeRun && mode === "replay";
     const localPacket = replay && frame.time >= replayPacket.delivery.received_at_s ? replayPacket : null;
@@ -133,11 +133,12 @@ function bindFlightGround({panel, crewReceipt, clock, workflow, replayPacket, re
     const delivered = packet?.delivery;
     const age = delivered ? missionTime - delivered.observed_at_s : null;
     panel.dataset.state = unavailable.has("ground") ? "unavailable" : packet ? "received" : "empty";
-    value("source", drill?.source ?? (activeRun ? "Run " + activeRun : replay ? "ISS Research Replay · synthetic" : "Local flight · synthetic"));
+    value("source", drill?.source ?? (activeRun ? "Run " + activeRun : campaign ? campaignGround.issuer : replay ? "ISS Research Replay · synthetic" : "Local flight · synthetic"));
     value("clock", missionTime == null ? "—" : time(missionTime));
     value("link", unavailable.has("ground") ? (packet ? "Feed unavailable · last delivery shown" : "Feed unavailable")
       : packet ? "Delayed · packet received"
       : activeRun && !live ? "Reading relay…"
+      : campaign ? "Simulated campaign relay"
       : replay || live ? "Awaiting first delivery" : "Relay unavailable for this run");
     field("telemetry").hidden = !packet;
     if (packet) {
@@ -174,6 +175,7 @@ function bindFlightGround({panel, crewReceipt, clock, workflow, replayPacket, re
     const localState = order && frame.time >= order.sent
       ? frame.time >= (order.reportDue ?? Infinity) ? "received" : "pending"
       : "empty";
+    field("advice").hidden = Boolean(campaign);
     field("advice").dataset.state = replay ? localState : state;
     value("advice", replay ? workflow.status(frame, clock, true) : text);
     value("send-error", sendError ?? "");
@@ -212,6 +214,76 @@ function bindFlightGround({panel, crewReceipt, clock, workflow, replayPacket, re
       if (epoch === requestEpoch) { busy = false; paint(); }
     }
   });
+
+  return {update};
+}
+
+function bindCampaignGround({find, clock, act, inspectionReady, origin}) {
+  const issue = find("campaign-ground-issue");
+  const ack = find("campaign-ground-ack");
+  const assign = find("campaign-ground-assign");
+  const hold = find("campaign-ground-hold");
+  const reason = find("campaign-ground-hold-reason");
+  const report = find("campaign-ground-report");
+  let selectedOrder;
+  reason.replaceChildren(new Option("Select a reason",""),...campaignGround.holdReasons.map(label=>new Option(label,label)));
+
+  const stamp = seconds => "T+" + clock(seconds);
+  const statusText = (order, time) => [
+    order.issuer, order.basis, "Sent " + stamp(order.sent),
+    (time < order.arrives ? "Uplink due " : "Received onboard ") + stamp(order.arrives),
+    time < order.arrives ? "In transit" : time >= order.expires ? "Expired" : "Fresh · age " + clock(time-order.arrives),
+    "Deadline " + stamp(order.expires),
+  ].join(" · ");
+
+  function update(campaign, time) {
+    find("campaign-ground-order").hidden = !campaign;
+    find("campaign-ground-relay").hidden = !campaign;
+    if (!campaign) { selectedOrder = null; reason.value = ""; return; }
+    const {order, required, issueAllowed} = campaign;
+    if (selectedOrder !== order?.sequence) reason.value = "";
+    selectedOrder = order?.sequence;
+    const status = campaignGround.status(order,time);
+    const work = campaignGround.job(order,time);
+    const facts = order ? statusText(order,time) : required
+      ? "No Ground direction received. ISS transfer requires a readiness report."
+      : "No Ground direction in this saved campaign.";
+    const delivery = order?.report;
+    let downlink = "";
+    if (delivery) {
+      downlink = time < delivery.delivers ? " · Awaiting report delivery"
+        : " · Ground received " + (delivery.result === "verified" ? "readiness verified" : "a hold")
+          + " at " + stamp(delivery.delivers) + (order.reason ? " · " + order.reason : "");
+    } else if (order && time >= order.arrives) {
+      downlink = " · Awaiting onboard report";
+    }
+    find("campaign-ground-status").textContent = facts + downlink;
+    issue.hidden = !issueAllowed;
+    issue.disabled = !["missing","held","expired","verified"].includes(status);
+    let onboard = order && time >= order.arrives ? facts : order ? "No direction delivered yet." : facts;
+    if (order?.acknowledged != null) onboard += " · Acknowledged " + stamp(order.acknowledged);
+    if (work) onboard += " · Ivo Reyes · " + work.state + " at the scrubber rack";
+    if (status === "held") onboard += " · Commander hold · " + order.reason;
+    if (delivery) onboard += " · " + (delivery.result === "held" ? "Hold" : "Readiness report")
+      + " sent " + stamp(delivery.sent) + downlink;
+    find("campaign-ground-receipt").textContent = onboard;
+
+    const canDecide = issueAllowed && ["received","acknowledged"].includes(status);
+    ack.hidden = !canDecide || status === "acknowledged";
+    assign.hidden = !canDecide;
+    assign.disabled = !inspectionReady(time) || flightWorkflow.timebox(time).finishes+campaignGround.downlink > (order?.expires ?? 0);
+    find("campaign-ground-hold-label").hidden = hold.hidden = !canDecide;
+    hold.disabled = !reason.value.trim();
+    report.hidden = !issueAllowed || work?.state !== "Ready to report";
+    report.disabled = Boolean(order && time+campaignGround.downlink > order.expires);
+  }
+
+  issue.addEventListener("click",()=>act("issue"));
+  ack.addEventListener("click",()=>act("acknowledge"));
+  assign.addEventListener("click",()=>{if (!assign.disabled) act("assign",{origin:origin()});});
+  reason.addEventListener("input",()=>{hold.disabled = !reason.value.trim();});
+  hold.addEventListener("click",()=>act("hold",{reason:reason.value.trim()}));
+  report.addEventListener("click",()=>act("report"));
 
   return {update};
 }

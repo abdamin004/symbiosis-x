@@ -5,6 +5,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from symbiosis_x.application.exercise_schedule import EXERCISE_SCENARIO
 from symbiosis_x.application.runs import load_active_run, next_event_seq
 from symbiosis_x.application.wearables import WEARABLE_SCENARIO, record_wearable
 from symbiosis_x.crew.wearable_series import load_wearable_fixture, recheck_observation
@@ -33,7 +34,7 @@ def apply_recheck(
     """Record one assignment and one independently observed repeat in the same run."""
     with repository.write() as db:
         run = load_active_run(db, run_id)
-        if (run["scenario_id"], run["scenario_version"]) != WEARABLE_SCENARIO:
+        if (run["scenario_id"], run["scenario_version"]) not in (WEARABLE_SCENARIO, EXERCISE_SCENARIO):
             raise RecheckNotFound("RECHECK_NOT_FOUND")
         mission_s = run["mission_s"]
         fixture = load_wearable_fixture()

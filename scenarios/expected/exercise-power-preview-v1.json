@@ -1,0 +1,7 @@
+{
+  "scenario_id": "exercise-power-preview",
+  "seed": 4242,
+  "standby_demand_kw": 0.40,
+  "reduced_headroom_kw": 0.20,
+  "outcome_at_s": 210
+}

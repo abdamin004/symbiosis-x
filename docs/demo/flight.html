@@ -1026,6 +1026,16 @@ __HUD_ICONS__
     <div class="order-card">
       <strong id="ground-order-heading">Ground · Fault inspection</strong>
       <p id="flight-crew-receipt" role="status" hidden></p>
+      <div id="campaign-ground-order" hidden>
+        <p id="campaign-ground-receipt" role="status"></p>
+        <button id="campaign-ground-ack" type="button">Acknowledge direction</button>
+        <button id="campaign-ground-assign" type="button">Assign Ivo to readiness check</button>
+        <label id="campaign-ground-hold-label">Reason for holding
+          <select id="campaign-ground-hold-reason"></select>
+        </label>
+        <button id="campaign-ground-hold" type="button">Hold direction</button>
+        <button id="campaign-ground-report" type="button">Ivo · Send readiness report</button>
+      </div>
       <div id="replay-ground-order">
         <p id="workflow-state"></p>
         <p id="monitor-state"></p>
@@ -1229,6 +1239,10 @@ __HUD_ICONS__
         <button type="submit">Queue advice</button>
       </form>
       <p data-ground="send-error" role="alert"></p>
+      <div id="campaign-ground-relay" hidden>
+        <p id="campaign-ground-status" role="status"></p>
+        <button id="campaign-ground-issue" type="button">Simulate Ground direction</button>
+      </div>
     </section>
   </div>
   <p id="map-current"><span id="map-current-icon"></span><span id="map-current-copy">
@@ -1287,6 +1301,20 @@ __HUD_ICONS__
   <button id="process-verify" type="button" hidden>Verify safe return</button>
   <button id="process-comm-check" type="button" hidden>Toggle suit link fault</button>
   <p id="process-config" role="status"></p>
+  <section id="wearable-debrief" hidden aria-labelledby="wearable-debrief-title">
+    <h3 id="wearable-debrief-title">Private wearable debrief</h3>
+    <p id="wearable-debrief-delays"></p>
+    <ol id="wearable-debrief-events"></ol>
+  </section>
+  <section id="exercise-preview" hidden aria-labelledby="exercise-preview-title">
+    <h3 id="exercise-preview-title">Exercise schedule · synthetic</h3>
+    <p id="exercise-preview-basis"></p>
+    <ul id="exercise-preview-options"></ul>
+    <p id="exercise-preview-outcome"></p>
+    <p id="exercise-preview-status" role="status"></p>
+    <button id="exercise-preview-refresh" type="button">Refresh schedule evidence</button>
+    <button id="exercise-preview-commit" type="button" hidden>Commander · Defer exercise</button>
+  </section>
   <section id="process-trace" aria-label="Process event log">
     <h3>Process event log</h3>
     <p id="process-summary"></p>
@@ -1565,6 +1593,10 @@ __HUD_ICONS__
         <div><dt>Flight phase</dt><dd id="launch-status" role="status"></dd></div>
         <div><dt>Next action</dt><dd id="launch-next"></dd></div>
         <div><dt>Maneuver reserve</dt><dd id="launch-reserve"></dd></div>
+        <div><dt>Solid booster</dt><dd id="solid-propellant"></dd></div>
+        <div><dt>Orbital stage</dt><dd id="orbital-propellant"></dd></div>
+        <div id="return-propellant-row"><dt>Return capsule</dt><dd id="return-propellant"></dd></div>
+        <div><dt>Cold-gas steering</dt><dd id="steering-propellant"></dd></div>
       </dl>
       <section id="flight-guidance" aria-label="Flight guidance" hidden>
         <h3 class="guidance-heading"><span id="guidance-mode"></span><strong id="maneuver-title"></strong></h3>
@@ -1573,6 +1605,7 @@ __HUD_ICONS__
           <figcaption id="docking-caption"></figcaption>
         </figure>
         <p id="maneuver-target"></p>
+        <p id="maneuver-budget" hidden></p>
         <canvas id="maneuver-track" width="440" height="170" role="img" aria-label="Spacecraft trajectory" hidden></canvas>
         <progress id="maneuver-progress" max="1" value="0" aria-label="Engine burn progress" hidden></progress>
       </section>
@@ -1782,7 +1815,7 @@ const allocator = createFlightAllocator({
       (jobOwns(other,job.member) || (job.support != null && jobOwns(other,job.support)) || other.asset === job.asset))) return "The assignee or station already has a job.";
     if ([job.member,job.support].some(member=>member != null && peerWork(member,job.queued))) return "The assignee is performing a crew observation.";
     if (job.member === 1 && connectedFlight?.stationWork) return "The assignee is collecting station research samples.";
-    const ground = !connectedFlight && groundInspection(currentFrame());
+    const ground = groundInspection(currentFrame());
     if (ground && (job.member === 2 || job.asset === "scrubber")) return "The Ground inspection occupies this assignee or station.";
     return "";
   },
@@ -1839,7 +1872,10 @@ function taskAt(asset, time) {
 }
 
 function groundInspection(frame) {
-  if (connectedFlight) return null;
+  if (connectedFlight) {
+    const job = campaignGround.job(groundFlightContext?.campaign?.order,frame.time);
+    return job && {...job,asset:"scrubber",member:2};
+  }
   const job = flightWorkflow.job(frame);
   if (!["Queued","Travelling","Inspecting","Ready to report"].includes(job?.state)) return null;
   const origin = job.work.origin ?? stationPoint("engineering-01",2);
@@ -3600,7 +3636,9 @@ choices("process-list",Object.entries(flightProcedures).map(([id,process])=>[id,
   setChoices("process-list",id);
   loadProcessSettings();
 });
+const exerciseInspector = bindExerciseInspector({find:element, runId:flightHealthRun, clock, session:crewWearableSession});
 function openProcesses(mode) {
+  exerciseInspector.open(mode === "replay");
   processMode = mode;
   if (mode === "pad") selectedProcess = "checkout";
   loadProcessSettings();
@@ -3756,6 +3794,13 @@ hudSize.observe(document.querySelector(".hud"));
 hudSize.observe(shelf);
 hudSize.observe(element("mission-resources"));
 let groundFlightContext;
+const campaignRelay = bindCampaignGround({
+  find:element, clock,
+  act:(...args)=>launchMission.updateGroundDirection(...args),
+  inspectionReady:(time)=>!activeTask(2,time) && !peerWork(2,time) &&
+    !tasks.some(job=>job.mode===crewMode() && job.asset==="scrubber" && job.queued<=time && time<job.finishes),
+  origin:()=>crewPositions.get(pawns.get(2)),
+});
 const groundPanel = bindFlightGround({
   panel:element("map-ground"), crewReceipt:element("flight-crew-receipt"),
   clock, workflow:flightWorkflow, replayPacket:data.replay_ground, redraw:render,
@@ -3763,15 +3808,18 @@ const groundPanel = bindFlightGround({
 function updateGround(frame) {
   const mode = groundFlightContext?.mode ?? "menu";
   const relayRunId = mode === "replay" ? flightHealthRun : null;
-  element("ground-order-heading").textContent = relayRunId ? "Ground · Advisory receipt" : "Ground · Fault inspection";
-  element("replay-ground-order").hidden = Boolean(relayRunId);
+  const campaign = groundFlightContext?.campaign;
+  element("ground-order-heading").textContent = campaign ? "Ground · ISS departure readiness"
+    : relayRunId ? "Ground · Advisory receipt" : "Ground · Fault inspection";
+  element("replay-ground-order").hidden = Boolean(relayRunId || campaign);
   groundPanel.update({
-    mode, relayRunId, frame:groundFlightContext?.time == null ? frame : {...frame,time:groundFlightContext.time},
+    mode, relayRunId, campaign, frame:groundFlightContext?.time == null ? frame : {...frame,time:groundFlightContext.time},
     groundVisible:!element("map-ground").closest("[hidden]"),
     crewVisible:!element("workflow-widget").closest("[hidden]"),
   });
+  campaignRelay.update(campaign,groundFlightContext?.time);
 }
-const ordersWindow = widgets.register(element("workflow-widget"), element("show-workflow"), () => ({x:14,y:35}));
+const ordersWindow = widgets.register(element("workflow-widget"), element("show-workflow"), () => ({x:14,y:35}), {compactPriority:true});
 const groundVisibility = new MutationObserver(() => updateGround(currentFrame()));
 groundVisibility.observe(element("workflow-widget"), {attributes:true, attributeFilter:["hidden"]});
 groundVisibility.observe(element("map-widget"), {attributes:true, attributeFilter:["hidden"]});
