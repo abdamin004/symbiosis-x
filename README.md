@@ -6,7 +6,7 @@ Use the [Jira board](https://crewsync-1794569647227.atlassian.net/jira/software/
 
 ## Start on your laptop
 
-Clone the private repository with your GitHub account and run the contract checks from the repository root. If you already have a clone, open that folder and check out the branch you want to verify.
+Clone the private repository with your GitHub account and run the contract checks from the repository root. If you already have a clone, run `git fetch origin` before switching to your member branch.
 
 ```sh
 git clone https://github.com/abdamin004/symbiosis-x.git
@@ -16,8 +16,6 @@ source .venv/bin/activate
 python -m pip install -r contracts/requirements-test.txt
 python -m pytest backend/tests/integration/test_contract_examples.py -q
 ```
-
-While KAN-9 is in review, run `git switch --track origin/KAN-9/sx-01a-shared-contract-examples` after cloning and before installing the test dependencies.
 
 On Windows PowerShell use `py -3 -m venv .venv` and `.\.venv\Scripts\Activate.ps1`. This setup exercises the shared JSON contract. The backend bootstrap, app health checks and dashboard launch are tracked as separate build tickets.
 
@@ -40,17 +38,37 @@ Mohamed coordinates shared contract changes and Sama reviews SX-01A. Use these e
 
 Open the repository root in a new Codex chat, or run `codex` from the repository root. Ask for a specialist by its exact name. The role files live in [`.codex/agents/`](.codex/agents) and use the parent session's model and permissions. [Official OpenAI documentation](https://learn.chatgpt.com/docs/agent-configuration/subagents)
 
-| Codex agent | Human owner | First pull |
-| --- | --- | --- |
-| `sx_integration` | Mohamed | [KAN-9 / SX-01A](https://crewsync-1794569647227.atlassian.net/browse/KAN-9), then KAN-16 / SX-21B after backend bootstrap |
-| `sx_backend` | Sama | [KAN-10 / SX-21A](https://crewsync-1794569647227.atlassian.net/browse/KAN-10), backend bootstrap |
-| `sx_spacecraft` | Ahmed | [KAN-11 / SX-03](https://crewsync-1794569647227.atlassian.net/browse/KAN-11), cabin CO₂ |
-| `sx_crew_health` | Jana | [KAN-12 / SX-04A](https://crewsync-1794569647227.atlassian.net/browse/KAN-12), confirmed activity, and [KAN-18 / SX-23B](https://crewsync-1794569647227.atlassian.net/browse/KAN-18), measurement catalog |
-| `sx_relay` | Abdelrahman | [KAN-13 / SX-07A](https://crewsync-1794569647227.atlassian.net/browse/KAN-13), first allowlisted runtime tool |
-| `sx_frontend` | Suhad | [KAN-14 / SX-08A](https://crewsync-1794569647227.atlassian.net/browse/KAN-14), ship deck, and [KAN-17 / SX-08C](https://crewsync-1794569647227.atlassian.net/browse/KAN-17), launcher and role routes |
+| Codex agent | Human owner | Member branch | First pull |
+| --- | --- | --- | --- |
+| `sx_integration` | Mohamed | `mohamed` | [KAN-9 / SX-01A](https://crewsync-1794569647227.atlassian.net/browse/KAN-9), then KAN-16 / SX-21B after backend bootstrap |
+| `sx_backend` | Sama | `sama` | [KAN-10 / SX-21A](https://crewsync-1794569647227.atlassian.net/browse/KAN-10), backend bootstrap |
+| `sx_spacecraft` | Ahmed | `ahmed` | [KAN-11 / SX-03](https://crewsync-1794569647227.atlassian.net/browse/KAN-11), cabin CO₂ |
+| `sx_crew_health` | Jana | `jana` | [KAN-12 / SX-04A](https://crewsync-1794569647227.atlassian.net/browse/KAN-12), confirmed activity, and [KAN-18 / SX-23B](https://crewsync-1794569647227.atlassian.net/browse/KAN-18), measurement catalog |
+| `sx_relay` | Abdelrahman | `abdelrahman` | [KAN-13 / SX-07A](https://crewsync-1794569647227.atlassian.net/browse/KAN-13), first allowlisted runtime tool |
+| `sx_frontend` | Suhad | `suhad` | [KAN-14 / SX-08A](https://crewsync-1794569647227.atlassian.net/browse/KAN-14), ship deck, and [KAN-17 / SX-08C](https://crewsync-1794569647227.atlassian.net/browse/KAN-17), launcher and role routes |
 
 Example prompt for independent checks on the current branch:
 
 > Spawn `sx_integration` to run the SX-01A contract tests, `sx_relay` to review the delivered Ground example for privacy and timestamps, and `sx_frontend` to check whether the role examples are ready for UI mocks. Keep the review read-only, wait for all three, and report test results and blockers.
 
-For implementation, give the specialist one ticket and its owned paths. Use one feature branch per ticket from the agreed base commit. Include the Jira key in the branch name, commit subject and pull request title, for example `KAN-10-backend-bootstrap` and `KAN-10 Bootstrap the FastAPI package`. Link the Jira issue in the pull request and the pull request in Jira if they do not appear automatically. Handoff includes the branch, commit, changed paths, test command and result, affected consumers, and remaining blockers.
+## Branches and merges
+
+The team uses `main` for integration and one long-lived branch per member, listed above. Give each specialist one Jira ticket and its owned paths. Each member publishes one reviewable batch at a time from their branch.
+
+On your first checkout, replace `sama` with your branch name.
+
+```sh
+git switch --track origin/sama
+```
+
+Before each new ticket, update your branch with the latest integrated code.
+
+```sh
+git fetch origin
+git merge --ff-only origin/sama
+git merge origin/main
+```
+
+Run the ticket checks, push to your member branch, and open a pull request into `main`. Put the Jira key in the commit subject and PR title, for example `KAN-10 Bootstrap the FastAPI package`. Link Jira and GitHub in both directions. Use **Create a merge commit** on GitHub to keep the branch history shared with `main`. Keep your member branch after merge and update it before starting the next ticket.
+
+In the PR, record the test command and result, affected consumers, and any blockers. Move the Jira ticket to In Review when the PR is open and to Done after the change merges and meets its acceptance criteria.
