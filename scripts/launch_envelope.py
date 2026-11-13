@@ -51,3 +51,30 @@ def rendezvous_envelope(config: dict) -> dict:
             for sample in track
         ],
     }
+
+
+
+def propulsion_envelope(config: dict) -> dict:
+    """Build authored stage budgets and burn costs in synthetic kilograms."""
+    model = config["propulsion"]
+    if any(type(value) is not int or value < 0 for value in model.values()):
+        raise ValueError("Propulsion inventory and costs must be nonnegative integers")
+    ascent, recovery = config["ascent"], config["return"]
+    if model["booster_solid_kg"] <= 0 or model["return_liquid_kg"] < recovery["reserve_cost"] + model["departure_cost"]:
+        raise ValueError("Propulsion inventory cannot cover ascent or return")
+    separate_return = "rendezvous" in config
+    if separate_return and (not model["match_cost"] or not model["departure_cost"]):
+        raise ValueError("Rendezvous needs independent matching and departure burns")
+    return {
+        "solid": model["booster_solid_kg"],
+        "upper": ascent["reserve_initial"],
+        "return": model["return_liquid_kg"],
+        "separateReturn": separate_return,
+        "costs": {
+            "insertion": ascent["insertion_cost"],
+            "transfer": config.get("rendezvous", {}).get("phasing_cost", 0),
+            "match": model["match_cost"],
+            "departure": model["departure_cost"],
+            "retrograde": recovery["reserve_cost"],
+        },
+    }

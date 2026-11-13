@@ -9,14 +9,14 @@ if __package__:
     from .flight_health_rehearsal import build_health_rehearsal
     from .build_cabin_preview import ACTIVITY_S, ROOT
     from .iss_mission_replay import build_replays, crew_history
-    from .launch_envelope import launch_envelope, rendezvous_envelope
+    from .launch_envelope import launch_envelope, propulsion_envelope, rendezvous_envelope
     from .flight_orbit import navigation_reference
 else:
     from flight_airlock_rehearsal import build_airlock_rehearsal
     from flight_health_rehearsal import build_health_rehearsal
     from build_cabin_preview import ACTIVITY_S, ROOT
     from iss_mission_replay import build_replays, crew_history
-    from launch_envelope import launch_envelope, rendezvous_envelope
+    from launch_envelope import launch_envelope, propulsion_envelope, rendezvous_envelope
     from flight_orbit import navigation_reference
 
 
@@ -27,8 +27,9 @@ def build(output: Path) -> None:
     missions = []
     for preset in ("launch-checkout-v1", "orbital-systems-checkout-v1"):
         mission = json.loads((ROOT / f"scenarios/variants/{preset}.json").read_text())
+        mission["propulsion_budget"] = propulsion_envelope(mission)
         mission["ascent"] = launch_envelope(mission)
-        mission["navigation"] = navigation_reference(mission["ascent"])
+        mission["navigation"] = navigation_reference(mission["ascent"], mission["propulsion"]["rcs_pulses"])
         if "rendezvous" in mission:
             mission["rendezvous"] = rendezvous_envelope(mission)
         missions.append(mission)

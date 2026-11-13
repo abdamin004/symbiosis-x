@@ -108,6 +108,9 @@ test("Horizon burns into orbit, reaches ISS and returns to Earth in one saved mi
   await button("Rotate +15°").click();
   await expect(navigation.locator("#navigation-attitude")).toContainText("15°");
   await expect(navigation.locator("#navigation-reserve")).toContainText("11 cold-gas pulses");
+  await expect(page.locator("#solid-propellant")).toHaveText("Stage detached");
+  await expect(page.locator("#orbital-propellant")).toHaveText("11.6 kg fuel / 17.4 kg oxidizer");
+  await expect(page.locator("#return-propellant")).toHaveText("8.8 kg fuel / 13.2 kg oxidizer");
   await button("Close").click();
   await expect(page).toHaveURL(missionUrl);
   const instrument = page.getByRole("button",{name:"Steer spacecraft"});
@@ -166,6 +169,7 @@ test("Horizon burns into orbit, reaches ISS and returns to Earth in one saved mi
   await expect(button("Coast to transfer apoapsis")).toBeEnabled({timeout:12_000});
   await page.reload();
   await expect(page.locator("#launch-status")).toHaveText("Transfer coast · engines off");
+  await expect(page.locator("#orbital-propellant")).toHaveText("8.0 kg fuel / 12.0 kg oxidizer");
   await expect(flightPlayback.getByRole("button",{name:"Play",exact:true})).toBeEnabled();
   await guide.getByRole("button",{name:"Go to control"}).click();
   await expect(button("Match station orbit")).toBeHidden();
@@ -200,8 +204,12 @@ test("Horizon burns into orbit, reaches ISS and returns to Earth in one saved mi
   await button("Verify and archive research").click();
   await expect(page.locator("#station-research-status")).toContainText("Paired sample archived");
   await button("Seal hatch and board return capsule").click();
+  await expect(page.locator("#orbital-propellant")).toHaveText("Stage left at station");
+  await expect(page.locator("#return-propellant")).toHaveText("7.2 kg fuel / 10.8 kg oxidizer");
+  await expect(page.locator("#maneuver-target")).toContainText("synthetic entry corridor");
   await expect(page.locator("#docking-caption")).toContainText("Undocking");
   await button("Commit deorbit").click();
+  await expect(page.locator("#return-propellant")).toHaveText("2.4 kg fuel / 3.6 kg oxidizer");
   const returnScene = page.getByRole("figure",{name:"Command pod Earth return"});
   await expect(returnScene).toHaveAttribute("data-phase","separation");
   await advance(2);
@@ -521,7 +529,7 @@ test("Flight Command shows guidance and stops three minutes before each coast ch
   await expect(resources).toContainText("Headroom");
   await expect(resources.locator("#command-phase")).toContainText("waiting for ISS window");
   await expect(resources.locator("#command-next")).toContainText("Coast to the departure point");
-  await expect(resources.locator("#command-reserve")).toHaveText("29 game units");
+  await expect(resources.locator("#command-reserve")).toHaveText("29 kg liquid propellant");
   const playbackBox = await transport.boundingBox();
   const resourceBox = await resources.boundingBox();
   const guideBox = await guide.boundingBox();
@@ -669,4 +677,24 @@ test("mission plan and orbit map stay in their own corners from checkout through
   await expect(overview).toContainText("Crew safely back on Earth");
   await expect(orbit).toContainText("Earth recovery");
   expect(errors).toEqual([]);
+});
+
+test("a low upper-stage reserve holds the ISS burn and preserves the independent return supply", async ({ page }) => {
+  await page.route(url=>url.pathname === "/flight",route=>route.fulfill({contentType:"text/html",body:flightHtml}));
+  await page.addInitScript(()=>{
+    localStorage.setItem("sx:launch-checkout:v1",JSON.stringify({
+      time:6000,jobs:{},ignition:60,separation:105,insertion:150,
+    }));
+  });
+  await page.goto("/flight?view=launch");
+  await page.getByRole("button",{name:"Flight command",exact:true}).click();
+  await expect(page.locator("#launch-status")).toHaveText("Stable orbit · ISS window open");
+  await expect(page.locator("#launch-next")).toContainText("reserve below minimum");
+  const transfer = page.getByRole("button",{name:"Commit ISS transfer burn"});
+  await expect(transfer).toBeDisabled();
+  const before = await page.locator("#orbital-propellant").textContent();
+  await transfer.dispatchEvent("click");
+  await expect(page.locator("#orbital-propellant")).toHaveText(before);
+  await expect(page.locator("#return-propellant")).toHaveText("8.8 kg fuel / 13.2 kg oxidizer");
+  expect(await page.evaluate(()=>JSON.parse(localStorage.getItem("sx:launch-checkout:v1")).phasing)).toBeUndefined();
 });

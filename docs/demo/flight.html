@@ -1579,6 +1579,10 @@ __HUD_ICONS__
         <div><dt>Flight phase</dt><dd id="launch-status" role="status"></dd></div>
         <div><dt>Next action</dt><dd id="launch-next"></dd></div>
         <div><dt>Maneuver reserve</dt><dd id="launch-reserve"></dd></div>
+        <div><dt>Solid booster</dt><dd id="solid-propellant"></dd></div>
+        <div><dt>Orbital stage</dt><dd id="orbital-propellant"></dd></div>
+        <div id="return-propellant-row"><dt>Return capsule</dt><dd id="return-propellant"></dd></div>
+        <div><dt>Cold-gas steering</dt><dd id="steering-propellant"></dd></div>
       </dl>
       <section id="flight-guidance" aria-label="Flight guidance" hidden>
         <h3 class="guidance-heading"><span id="guidance-mode"></span><strong id="maneuver-title"></strong></h3>
@@ -1587,6 +1591,7 @@ __HUD_ICONS__
           <figcaption id="docking-caption"></figcaption>
         </figure>
         <p id="maneuver-target"></p>
+        <p id="maneuver-budget" hidden></p>
         <canvas id="maneuver-track" width="440" height="170" role="img" aria-label="Spacecraft trajectory" hidden></canvas>
         <progress id="maneuver-progress" max="1" value="0" aria-label="Engine burn progress" hidden></progress>
       </section>
