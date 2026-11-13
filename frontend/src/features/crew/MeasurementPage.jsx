@@ -54,13 +54,28 @@ export default function MeasurementPage() {
   const guide = useMemo(() => HEALTH_GUIDES.get(metric), [metric]);
   const selected = HEALTH_METRICS.find((item) => item.id === metric);
   const update = (key) => (value) => setValues((old) => ({ ...old, [key]: value }));
-  function changeMetric(value) { setMetric(value); setValues(EMPTY); setError(""); setPreview(null); }
+  function changeMetric(value) { setMetric(value); setValues(EMPTY); setError(""); setPreview(null); setSaved(null); setSaveError(""); measurementId.current = null; }
   function submit(event) {
     event.preventDefault();
     const measurement = buildMeasurement(metric, values);
     const message = validate(metric, measurement);
     setError(message);
     setPreview(message ? null : measurement);
+    setSaved(null);
+    setSaveError("");
+  }
+  async function saveMeasurement() {
+    if (!preview) return;
+    setSaving(true);
+    setSaveError("");
+    if (!measurementId.current) measurementId.current = createOperationId("measurement");
+    const context = metric === "heart_rate" ? { activity: values.activity } : {};
+    try {
+      const receipt = await saveCrewMeasurement(runId, { measurement_id: measurementId.current, crew_id: "SIM-01", synthetic: true, measurement: preview, context });
+      setSaved(receipt);
+      measurementId.current = null;
+    } catch (e) { setSaveError(e.message); }
+    finally { setSaving(false); }
   }
   return (
     <main className="mx-auto max-w-5xl px-4 py-8" data-testid="measurement-page">
