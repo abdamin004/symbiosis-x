@@ -2,10 +2,11 @@
 function bindLaunchCheckout(config, pauseReplay) {
   const find = id => document.getElementById(id);
   const storageKey = "sx:" + config.id + ":v" + config.version;
-  const fresh = () => ({time:0,jobs:{},hold:false,ignition:null,separation:null,insertion:null,aborted:false,phasing:null,capture:null,retreat:null,approachHeld:false});
+  const fresh = () => ({time:0,jobs:{},hold:false,armed:null,ignition:null,separation:null,insertion:null,aborted:false,phasing:null,capture:null,retreat:null,approachHeld:false});
   const ascent = config.ascent;
   const rendezvous = config.rendezvous;
   const tick = ascent.tick_s;
+  const countdown = config.sequence.countdown_s;
   let state = fresh();
   try {
     const saved = JSON.parse(localStorage.getItem(storageKey));
@@ -21,9 +22,15 @@ function bindLaunchCheckout(config, pauseReplay) {
   }
   function flightState() {
     if (state.aborted) return {phase:"Ascent aborted",next:"Exercise ended",terminal:true};
-    if (state.ignition === null) return {
-      phase:"Launchpad",next:"First-stage ignition",advance:config.jobs.some(job=>state.jobs[job.id]?.due>state.time),
-    };
+    if (state.ignition === null) {
+      const counting = state.armed !== null && state.time < state.armed+countdown;
+      const jobsRunning = config.jobs.some(job=>state.jobs[job.id]?.due>state.time);
+      let next = "Assign crew checks";
+      if (state.hold) next = "Release the launch hold";
+      else if (ready()) next = state.armed === null ? "Arm countdown" : counting ? "Advance countdown · " + (state.armed+countdown-state.time) + " s remaining" : "Commit liftoff";
+      return {phase:state.hold ? "Launch held" : counting ? "Countdown armed" : "Launchpad",
+        next,advance:jobsRunning || (counting && !state.hold)};
+    }
     if (state.separation === null) {
       const burn = state.time - state.ignition;
       if (burn >= ascent.separation_deadline_s) return {phase:"Separation window missed",next:"Abort ascent"};
@@ -59,16 +66,53 @@ function bindLaunchCheckout(config, pauseReplay) {
       capture:!state.approachHeld && sample.capture,
     };
   }
+  function renderObjectives(flight) {
+    const times = {
+      checks:ready() ? Math.max(...config.jobs.map(job=>state.jobs[job.id].due)) : null,
+      countdown:state.ignition,separation:state.separation,insertion:state.insertion,
+      phasing:state.phasing,capture:state.capture,
+    };
+    let nextFound = false;
+    for (const objective of config.sequence.objectives) {
+      const {label,badge,row} = objectiveRows.get(objective.id);
+      const actual = times[objective.id];
+      let status = "Upcoming";
+      if (actual != null) status = "Verified · " + missionStamp(actual);
+      else if (objective.planned_s === null) status = "Follow-on phase";
+      else if (!nextFound) {
+        const canAdvance = flight.advance || flight.separate || flight.insert || flight.phaseBurn || flight.capture;
+        const held = state.hold || state.approachHeld || (state.ignition !== null && !canAdvance);
+        status = flight.terminal ? "Incomplete" : held ? "Held" : "Next";
+        nextFound = true;
+      }
+      row.dataset.status = status.split(" ")[0].toLowerCase();
+      label.textContent = objective.label;
+      badge.textContent = (objective.planned_s === null ? "" : "Plan "+missionStamp(objective.planned_s)+" · ") + status;
+    }
+    find("mission-objective-next").textContent = flight.phase + " · " + flight.next;
+  }
+
+  function missionStamp(seconds) {
+    return "T+" + Math.floor(seconds/60) + ":" + String(seconds%60).padStart(2,"0");
+  }
   function render() {
     find("launch-time").textContent = Math.floor(state.time / 60) + ":" + String(state.time % 60).padStart(2, "0");
     const flight = flightState();
     find("launch-status").textContent = flight.phase;
     find("launch-next").textContent = flight.next;
     find("launch-reserve").textContent = flight.reserve === undefined ? "Upper stage standby" : flight.reserve + " game units";
+    const scene = find("launch-scene");
+    const elapsed = state.ignition === null ? 0 : state.time-state.ignition;
+    scene.dataset.phase = state.aborted ? "abort" : flight.orbit ? "orbit" : state.separation !== null ? "upper" : state.ignition === null ? "pad" : "ascent";
+    scene.style.setProperty("--climb", Math.min(95,elapsed*2.1)+"px");
+    scene.dataset.separated = String(state.separation !== null);
+    renderObjectives(flight);
     find("launch-stack").dataset.ignited = String(flight.phase === "Booster ascent");
     find("launch-stack").querySelector("[data-stage=booster]").hidden = state.separation !== null;
     find("launch-go").hidden = state.ignition !== null;
-    find("launch-go").disabled = state.hold || !ready();
+    find("launch-arm").hidden = state.ignition !== null || state.armed !== null;
+    find("launch-arm").disabled = state.hold || !ready();
+    find("launch-go").disabled = state.hold || !ready() || state.armed === null || state.time < state.armed+countdown;
     find("launch-step").disabled = !flight.advance;
     find("launch-separate").hidden = state.ignition === null || state.separation !== null || flight.terminal;
     find("launch-separate").disabled = !flight.separate;
@@ -103,6 +147,15 @@ function bindLaunchCheckout(config, pauseReplay) {
     }
   }
   const rows = new Map();
+  const objectiveRows = new Map();
+  for (const objective of config.sequence.objectives) {
+    const row = document.createElement("li");
+    const label = document.createElement("strong");
+    const badge = document.createElement("small");
+    row.append(label,badge);
+    find("mission-objective-list").append(row);
+    objectiveRows.set(objective.id,{row,label,badge});
+  }
   find("launch-title").textContent = config.title;
   find("launch-subtitle").textContent = config.vehicle;
   for (const stage of config.stages) {
@@ -141,10 +194,30 @@ function bindLaunchCheckout(config, pauseReplay) {
     pauseReplay();
     find("mission-menu").showModal();
   });
-  find("open-checkout").addEventListener("click", () => {
-    find("mission-menu").close();
+  function openCheckout() {
+    if (find("mission-menu").open) find("mission-menu").close();
+    if (find("mission-objectives").open) find("mission-objectives").close();
+    pauseReplay();
     render();
     find("launch-checkout").showModal();
+  }
+  find("open-checkout").addEventListener("click",openCheckout);
+  find("objective-open-launch").addEventListener("click",openCheckout);
+  find("show-objectives").addEventListener("click",()=>{
+    pauseReplay();
+    render();
+    find("mission-objectives").showModal();
+  });
+  find("launch-open-objectives").addEventListener("click",()=>{
+    find("launch-checkout").close();
+    render();
+    find("mission-objectives").showModal();
+  });
+  find("launch-arm").addEventListener("click",()=>{
+    if (state.hold || !ready() || state.armed !== null || state.ignition !== null) return;
+    state.armed = state.time;
+    persist();
+    render();
   });
   find("launch-step").addEventListener("click", () => {
     if (find("launch-step").disabled) return;
@@ -159,7 +232,7 @@ function bindLaunchCheckout(config, pauseReplay) {
     render();
   });
   find("launch-go").addEventListener("click", () => {
-    if (state.hold || !ready() || state.ignition !== null) return;
+    if (find("launch-go").disabled || state.ignition !== null) return;
     state.ignition = state.time;
     persist();
     render();
