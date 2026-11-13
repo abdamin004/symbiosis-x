@@ -34,6 +34,15 @@ class AdvanceReceipt(RunReceipt):
     advance_id: Identifier
 
 
+class ResetRunRequest(Contract):
+    reset_id: Identifier
+
+
+class ResetReceipt(RunReceipt):
+    reset_id: Identifier
+    reset_from_run_id: Identifier
+
+
 class RejectedCandidate(Contract):
     status: Literal["rejected"]
 

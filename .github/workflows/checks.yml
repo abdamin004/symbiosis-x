@@ -1,0 +1,59 @@
+# SX-20D: CI runs the same command as a developer's machine.
+#   Local:  python scripts/check.py --browser
+#   CI:     this workflow, which calls that command after installing dependencies.
+#
+# Manual review, recorded per SX-20D (2026-11-13):
+#   1. `python scripts/check.py` passed: contracts, backend-unit, backend-integration
+#      and frontend-build, exit 0.
+#   2. An injected `assert False` in backend/tests/unit made backend-unit report
+#      FAILED and the command exit 1. The assertion was then removed.
+#   3. `python scripts/check.py --release` exits 1 and names health-replay (SX-26A)
+#      and privacy (SX-11A) as MISSING until those tickets land their tests.
+name: checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            backend/pyproject.toml
+            contracts/requirements-test.txt
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install backend and contract test dependencies
+        run: |
+          python -m pip install -e 'backend[test]'
+          python -m pip install -r contracts/requirements-test.txt
+
+      - name: Install frontend dependencies and Chromium
+        working-directory: frontend
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Run checks
+        run: python scripts/check.py --browser

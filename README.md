@@ -28,7 +28,9 @@ python -m pip install -e 'backend[test]'
 python -m uvicorn symbiosis_x.main:app --host 127.0.0.1 --port 8766 --no-proxy-headers
 ```
 
-Open [OpenAPI docs](http://127.0.0.1:8766/docs). Startup migrates the local database to revision 3. By default the file is `symbiosis-x.sqlite3` in the working directory. Set `SYMBIOSIS_X_DB_PATH` to use a different file. Use a temporary path for tests. The pilot canvas currently runs from generated replay data. The simulation API routes and health probes have their own tickets.
+Open [OpenAPI docs](http://127.0.0.1:8766/docs). Startup migrates the local database to revision 3. By default the file is `symbiosis-x.sqlite3` in the working directory. Set `SYMBIOSIS_X_DB_PATH` to use a different file. Use a temporary path for tests. The pilot canvas currently runs from generated replay data.
+
+`GET /health/live` returns `{"status": "live"}` while FastAPI responds. It does not open SQLite or read the mission clock. The facilitator resets a run with `POST /api/v1/runs/{run_id}/reset` and a stable `reset_id`. One transaction closes the old run and starts a new run with the same scenario and seed. The old run stays readable and rejects further steps with `RUN_CLOSED`.
 
 ## Run the frontend
 
@@ -47,6 +49,18 @@ Run the browser smoke test from `frontend/`. The first run needs `npx playwright
 ```sh
 npx playwright test tests/smoke.spec.js
 ```
+
+## Run the checks
+
+Run the same checks locally that CI runs on each pull request. From the repository root, with the backend and frontend dependencies installed:
+
+```sh
+python scripts/check.py            # contracts, backend unit and integration, frontend build
+python scripts/check.py --browser  # also the Playwright smoke test, as CI does
+python scripts/check.py --list     # show each suite and whether it has landed
+```
+
+The command exits nonzero if any suite fails. `--release` also requires the health replay (SX-26A) and privacy (SX-11A) suites and fails until they land.
 
 ## SX-01A handoff
 
