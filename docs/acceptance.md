@@ -78,6 +78,91 @@ The chart is environmental context. It feeds no health assessment, alert, planne
 
 This matches S1 and S2: with delayed or no contact, the crew acts first and Ground is informed when the link allows.
 
+## Tagged release rehearsal
+
+SX-11B, rehearsed on 2026-11-13 by Abdelrahman.
+
+| Item | Value |
+| --- | --- |
+| Tag | [`v0.1.0-rc.1`](https://github.com/abdamin004/symbiosis-x/releases/tag/v0.1.0-rc.1), annotated, on `main` at `5c3b7c5` ("fix(KAN-14): show role-scoped deck telemetry") |
+| Scenario | `sx01-golden` v1, seed 4242, model `cabin-1`, policy `demo-1` |
+| Health replay | `scenarios/variants/health-demo-v1.json`, with expected values in `scenarios/expected/health-demo-v1.json` |
+| Machine | macOS (Darwin 25.3), Python 3.14, Node from `frontend/package-lock.json`, Chrome via Claude in Chrome |
+| CI on the tagged commit | `checks` passed ([run 43503302975](https://github.com/abdamin004/symbiosis-x/actions/runs/43503302975)) |
+
+### Clean checkout
+
+The checkout was a separate `git worktree` with no tracked changes, a new virtual environment and `npm ci`. It was detached at `5c3b7c5`, and `git describe --tags --exact-match` reports `v0.1.0-rc.1`. To repeat it:
+
+```sh
+git worktree add --detach ../release v0.1.0-rc.1 && cd ../release
+python3 -m venv .venv
+.venv/bin/python -m pip install -e 'backend[test]'
+.venv/bin/python -m pip install -r contracts/requirements-test.txt
+(cd frontend && npm ci && npx playwright install chromium)
+CI=1 SX_TEST_PYTHON=$PWD/.venv/bin/python .venv/bin/python scripts/check.py --release --browser
+```
+
+| Suite | Result |
+| --- | --- |
+| contracts | 4 passed |
+| backend-unit | 120 passed |
+| backend-integration | 74 passed |
+| frontend-build | passed |
+| browser-smoke | 45 passed |
+| asteria-flight | 9 passed |
+| health-replay (`tests/health-demo.spec.js`) | 2 passed |
+| privacy (`test_privacy.py`) | 1 passed |
+
+The first attempt reported three browser suites as failed before any test ran, because another local Playwright run was holding port 4173. The rerun, with the port free, passed every suite.
+
+### Manual browser rehearsal
+
+The rehearsal ran from the same checkout:
+
+- **Backend:** `SYMBIOSIS_X_LOCAL_DEMO=1 SYMBIOSIS_X_DB_PATH=<new file> python -m uvicorn symbiosis_x.main:app --host 127.0.0.1 --port 8769 --no-proxy-headers`
+- **Frontend:** `SYMBIOSIS_X_API_URL=http://127.0.0.1:8769 npx vite --port 5180`
+
+Three tabs were used: facilitator (launcher), Crew and Ground. The health run was `3254a738…`. The collapse drill ran on a separate run, `5d10ee29…`.
+
+| Step | Role | Observed | Result |
+| --- | --- | --- | --- |
+| Start run | Facilitator | 32-character run ID, `sx01-golden` v1, seed 4242, mission time 0 | Pass |
+| Enter readings | Crew | Heart rate at rest: 76 bpm at 00:00, 88 bpm at 01:00 and 95 bpm at 06:00. Each was saved privately for SIM-01. | Pass |
+| Reading and explanation | Crew | 95 bpm is outside the personal range (57–87 bpm, `ABOVE_PERSONAL_RANGE`) and within the Earth-based reference (60–100 bpm, `WITHIN_REFERENCE`). The two comparisons are shown separately. The trend reads "rising from 76 to 95 bpm across 3 comparable synthetic samples". The heart-rate reminder is scheduled with "Review with the crew medical officer", and blood pressure is overdue. Cabin CO₂ is shown separately. | Pass |
+| Private check-in | Crew | Saved with `SX26A_PRIVATE_MARKER` at 360 s | Pass |
+| Chest-pain drill | Crew | Opened at 360 s, responder SIM-02, `local_alert`, "Ground link not required". Acknowledged locally at 360 s, then shared as `health-case-…`, due at Ground at 660 s. Reminders switch to "Emergency takes precedence". | Pass |
+| Before delivery | Ground | At 08:00: "Pending · no case status has been delivered to Ground", with zero cases | Pass |
+| After delivery | Ground | At 13:00: one case ("Urgent review · Responder acknowledged onboard · Delivered 11:00"), basis `ground-v102`, power headroom 0.60 kW. "Acknowledge receipt" shows "Receipt acknowledged 13:00". | Pass |
+| Private-field exclusion | Ground | The Ground page text and the `GET /api/v1/runs/{id}/ground` body (951 bytes) contain none of `expected.ground.never_contains` (marker, SIM-01, chest, drill and case IDs, `health_profile`, `health_followup`, `health_trend`). As a control, the Crew projection contains seven of the eight. The check-in marker is not in the Crew view response either, because check-ins are stored separately. | Pass |
+| Collapse drill | Crew | Separate run. SIM-04 finds SIM-03, responsiveness unresponsive, heart-rate data unavailable, `local_alert`. Acknowledged at 0 s. | Pass |
+
+### One-laptop offline fallback
+
+- **Service stopped:** port 8769 was closed, and the dev proxy returned 502 for `/health/ready`.
+- **Bundle served alone:** the built bundle was served on its own with `npx vite preview --port 5181`.
+- **`/backup` result:** it shows "Offline backup · saved frames · no live service" and `sx01-golden v1 · seed 4242 · model cabin-1 · policy demo-1 · synthetic fixture`.
+  - Beats 00:00, 01:00, 08:00, 10:00 and 13:00 play from saved frames.
+  - Crew and Ground each show only their own projection.
+  - **Result: pass.**
+- **Health path:** the five frames cover the golden cabin story, not the health path. The health fallback is the short evidence capture attached to the [release](https://github.com/abdamin004/symbiosis-x/releases/tag/v0.1.0-rc.1): six screenshots from the rehearsal above.
+  - Crew Health at 06:00
+  - reminders and trend
+  - chest-pain drill
+  - Ground case at 13:00
+  - collapse drill
+  - offline backup
+
+  Download them to the demo laptop before presenting.
+
+### Not verified
+
+- **Subtitled demo video:** playback and English subtitles belong to SX-11C, which has no recording yet.
+- **Cabin replay as a second demonstration:** the `/mission` canvas was not part of this rehearsal. Its browser tests passed in `browser-smoke`.
+- **Fresh `git clone`:** the clean checkout was a worktree of an existing clone, not a new clone.
+- **Other operating systems:** Windows and Linux were not rehearsed by hand, although CI runs the same suite on Ubuntu.
+- **Offline health player:** a health-specific offline player does not exist. The evidence capture stands in for it.
+
 ### Commands
 
 ```sh
