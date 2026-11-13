@@ -108,3 +108,34 @@ test("approval retries use the same operation ID", async ({ page }) => {
   expect(lookups).toEqual([operationId]);
   await expect(page.getByTestId("approval-operation-id")).toHaveText(operationId);
 });
+
+
+test("Crew can submit a private check-in", async ({ page }) => {
+  await mockLiveRun(page);
+  let submitted;
+  await page.route(`**/api/v1/runs/${RUN_ID}/crew/check-ins`, async (route) => {
+    submitted = route.request().postDataJSON();
+    await route.fulfill(json({
+      check_in_id: submitted.check_in_id,
+      run_id: RUN_ID,
+      crew_id: submitted.crew_id,
+      note: submitted.note,
+      mission_s: 780,
+      synthetic: true,
+    }, 201));
+  });
+
+  const marker = "SAMA_PRIVATE_CHECKIN_ACCEPTANCE";
+  await page.goto(`/runs/${RUN_ID}/crew`);
+  const form = page.getByTestId("private-checkin");
+  await expect(form).toBeVisible();
+  await form.getByRole("textbox").fill(marker);
+  await form.getByRole("button", { name: "Save private check-in" }).click();
+  await expect(page.getByTestId("checkin-receipt")).toContainText(marker);
+  expect(submitted).toMatchObject({ crew_id: "SIM-01", note: marker, synthetic: true });
+  expect(submitted.check_in_id).toMatch(/^checkin-/);
+
+  await page.goto(`/runs/${RUN_ID}/ground`);
+  await expect(page.getByText(marker, { exact: true })).toHaveCount(0);
+  await expect(page.getByTestId("private-checkin")).toHaveCount(0);
+});
