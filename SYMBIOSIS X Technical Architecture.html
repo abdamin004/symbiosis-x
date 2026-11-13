@@ -1,0 +1,363 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SYMBIOSIS X — Technical Architecture</title>
+<style>
+:root{color-scheme:dark;--bg:#101820;--panel:#192833;--line:#3c5665;--ink:#edf5f4;--dim:#bacecf;--green:#a8efcb;--blue:#b2d5ff;--amber:#ffca88}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,sans-serif}p,h1,h2,h3{margin:0}h1{font-size:clamp(2.75rem,7vw,6rem);line-height:1;letter-spacing:-.065em;margin:12px 0 19px}h2{font-size:clamp(1.8rem,4vw,3.05rem);line-height:1.08;letter-spacing:-.045em;margin-bottom:13px}h3{font-size:1.08rem;line-height:1.26;margin-bottom:7px}a{color:var(--green);text-underline-offset:.24em}button{font:inherit;color:inherit;background:#233743;border:1px solid #65808e;border-radius:6px;padding:7px 12px;cursor:pointer}button[aria-pressed=true]{background:var(--green);color:#102c22;border-color:var(--green);font-weight:650}:focus-visible{outline:2px solid white;outline-offset:4px}.wrap{width:min(1240px,calc(100% - 42px));margin:auto}header{padding:clamp(42px,7vw,95px) 0 37px;background:radial-gradient(ellipse at 80% 10%,#264744,transparent 70%);border-bottom:1px solid var(--line)}.eyebrow,th{font:650 .75rem/1.5 ui-monospace,monospace;letter-spacing:.07em;color:var(--green)}.eyebrow{text-transform:uppercase}.lead{font-size:1.13rem;max-width:840px;color:#dceae7}.intro,.note{color:var(--dim)}.intro{max-width:950px;margin-bottom:15px}.note{font-size:.88rem}.spaced{margin-top:21px}nav{display:flex;flex-wrap:wrap;gap:9px 20px;padding:13px 0;font-size:.89rem}nav a{text-decoration:none}main>section{border-top:1px solid var(--line);padding:37px 0;scroll-margin-top:8px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:11px 0}.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}.grid>*{min-width:0}.card,.flow li{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:14px}.flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;list-style:none;padding:0;margin:12px 0}.flow li{position:relative}.flow li+li::before{content:"›";color:var(--green);position:absolute;top:40%;left:-10px;font-weight:bold}.note-box{border-left:3px solid var(--blue);background:#1b2d37;padding:10px 12px;margin:12px 0}.svgscroll,.tablewrap,pre{overflow:auto}.diagram{display:block;width:100%;height:auto;min-width:810px}.diagram text{fill:var(--ink);font:650 15px system-ui}.diagram .small{fill:#c0d3d6;font:12px system-ui}.diagram .label{fill:var(--green);font:650 13px ui-monospace,monospace}.diagram rect{fill:#26404d;stroke:#7a9ca8}.diagram .frame{fill:#15232b;stroke:#536e7e}.diagram path.arrow{fill:none;stroke:var(--green);stroke-width:2;marker-end:url(#arrow)}.diagram path.command{fill:none;stroke:var(--amber);stroke-width:2;stroke-dasharray:6 4;marker-end:url(#cmd-arrow)}table{border-collapse:collapse;width:100%;min-width:745px;margin:10px 0}th,td{text-align:left;padding:10px 12px;vertical-align:top;border-bottom:1px solid var(--line)}th{background:#22343e}td{color:#dfe9e8;font-size:.9rem}td:first-child{font-weight:650}pre{margin:0;background:#15232c;border:1px solid var(--line);border-radius:8px;padding:14px;color:#d5e6ed;font:13px/1.55 ui-monospace,monospace}code{color:var(--blue);overflow-wrap:anywhere}.filters,.links{display:flex;gap:7px 13px;flex-wrap:wrap;margin:10px 0}.filters button{font-size:.87rem}.chip{display:inline-block;border:1px solid #5f7e8a;border-radius:4px;padding:1px 6px;color:var(--green);font:650 .74rem/1.45 ui-monospace,monospace;white-space:nowrap}.later{color:var(--amber)}[hidden]{display:none!important}
+@media(max-width:820px){.flow{display:flex;overflow:auto;padding-bottom:5px}.flow li{flex:0 0 195px}}
+@media(max-width:660px){.wrap{width:calc(100% - 26px)}.grid,.grid.two{grid-template-columns:minmax(0,1fr)}main>section{padding:28px 0}}
+@media print{tr[hidden]{display:table-row!important}.filters,nav{display:none}.diagram{min-width:0}.tablewrap,.svgscroll,pre{overflow:visible}.card{break-inside:avoid}}
+</style></head>
+<body>
+<header><div class="wrap"><p class="eyebrow">SYMBIOSIS X / Proposed implementation plan</p><h1>Technical architecture</h1><p class="lead">Build the flight simulator with Python, FastAPI and SQLite, and render the original 2D spacecraft in React and Tailwind. Two subteams integrate on separate machines. A tagged release runs the same seeded simulator on one demo laptop, with Crew and Ground watching their own views.</p></div></header>
+<nav class="wrap" aria-label="Sections"><a href="#architecture">Components</a><a href="#runtime">Runtime and storage</a><a href="#telemetry">Sensors and rollups</a><a href="#scenarios">Scenarios and seeds</a><a href="#repo">Folder structure</a><a href="#astronaut">Astronaut twin</a><a href="#agents">Agent workflow</a><a href="#frontend">React canvases</a><a href="#backlog">Feature backlog</a><a href="#scrum">Scrum and merge</a><a href="#demo">Multi-laptop demo</a></nav>
+<main class="wrap">
+<section id="architecture"><h2>One simulator, separate views</h2>
+<p class="intro">Build one deployable application with Python modules owned by different people. The mission package defines the route, crew, devices, timing and fixtures. The runtime simulates that plan. The twin accepts observations, workflows react, and the command gate controls changes to the simulated plant.</p>
+<div class="svgscroll" tabindex="0" aria-label="Scrollable major component diagram">
+<svg class="diagram" viewBox="0 0 1140 430" role="img" aria-label="Component architecture from mission package through simulator, workflow, SQLite and separate Crew, Ground and BPM canvases">
+<defs><marker id="arrow" markerWidth="8" markerHeight="7" refX="7" refY="3" orient="auto"><path d="M0 0L7 3L0 6Z" fill="#a8efcb"/></marker><marker id="cmd-arrow" markerWidth="8" markerHeight="7" refX="7" refY="3" orient="auto"><path d="M0 0L7 3L0 6Z" fill="#ffca88"/></marker></defs>
+<rect class="frame" x="207" y="10" width="677" height="406" rx="11"/><text class="label" x="222" y="34">PYTHON / FASTAPI · SHARED DEMO HOST</text>
+<rect class="frame" x="909" y="10" width="224" height="406" rx="11"/><text class="label" x="923" y="34">REACT / VITE / TAILWIND</text>
+<path class="arrow" d="M189 99H226"/><path class="arrow" d="M401 88H448"/><path class="arrow command" d="M448 112H401"/><path class="arrow" d="M401 204H421V119H448"/>
+<path class="arrow" d="M548 126V171"/><path class="arrow command" d="M576 171V126"/><path class="arrow" d="M484 126H434V332H448"/><path class="arrow" d="M448 365H441V150H510V126"/><path class="arrow" d="M644 91H696"/><path class="arrow" d="M644 198H696"/><path class="arrow command" d="M696 220H644"/>
+<path class="arrow" d="M644 348H696"/><path class="arrow" d="M866 92H930"/><path class="arrow" d="M866 199H930"/><path class="arrow" d="M866 348H930"/>
+<path class="arrow command" d="M930 112H893V60H602V72"/><path class="arrow command" d="M930 220H866"/>
+<rect x="12" y="72" width="177" height="63" rx="7"/><text x="25" y="97">Mission package</text><text class="small" x="25" y="117">Route, assets and fixtures</text>
+<rect x="226" y="72" width="175" height="54" rx="7"/><text x="238" y="94">P2 · Simulation</text><text class="small" x="238" y="113">Clock, route, gas and power</text>
+<rect x="226" y="177" width="175" height="54" rx="7"/><text x="238" y="198">P3 · Crew model</text><text class="small" x="238" y="217">Activity and private lane</text>
+<rect x="448" y="72" width="196" height="54" rx="7"/><text x="460" y="94">P4 · Twin and gate</text><text class="small" x="460" y="113">Accepted evidence and effects</text>
+<rect x="448" y="171" width="196" height="69" rx="7"/><text x="460" y="195">P5 · Workflow handlers</text><text class="small" x="460" y="215">Monitor, Planner, Relay</text><text class="small" x="460" y="231">Typed intents and tasks</text>
+<rect x="448" y="313" width="196" height="69" rx="7"/><text x="460" y="339">P4 · SQLite journal</text><text class="small" x="460" y="359">Runs, events, receipts</text>
+<rect x="696" y="72" width="170" height="54" rx="7"/><text x="708" y="95">Crew projection</text><text class="small" x="708" y="114">Accepted state and role</text>
+<rect x="696" y="171" width="170" height="69" rx="7"/><text x="708" y="195">Ground projection</text><text class="small" x="708" y="215">Relay-delivered evidence</text>
+<rect x="696" y="313" width="170" height="69" rx="7"/><text x="708" y="339">Authorized trace</text><text class="small" x="708" y="359">Operational cases only</text>
+<rect x="930" y="72" width="186" height="54" rx="7"/><text x="942" y="94">P6 · Crew console</text><text class="small" x="942" y="113">Flight, deck and approval</text>
+<rect x="930" y="171" width="186" height="69" rx="7"/><text x="942" y="195">P6 · Ground console</text><text class="small" x="942" y="215">Delivered deck and advice</text>
+<rect x="930" y="313" width="186" height="69" rx="7"/><text x="942" y="339">P6 · BPM and replay</text><text class="small" x="942" y="359">Status, evidence and timing</text>
+</svg></div>
+<p class="note">Solid lines carry model data, records or projections. Dashed lines carry simulated commands, Crew approval requests Ground advice and agent intents. P4 owns the writer and gate. P5 returns typed intents and never writes plant state directly. P1 owns the shared contract, integration and release.</p>
+<div class="tablewrap" tabindex="0" aria-label="Major and subordinate software components"><table><thead><tr><th scope="col">Major component</th><th scope="col">Subcomponents</th><th scope="col">Boundary</th></tr></thead><tbody>
+<tr><td>Mission and plant · P2</td><td>Package loader, pure clock and scenario schedule, navigation and ETA, atmosphere and electrical power.</td><td>Pure models take typed state and inputs. They emit observations. Route changes are explicit approved revisions. Oxygen, pressure and docking can be scripted or unavailable until supported.</td></tr>
+<tr><td>Astronaut twin · P3</td><td>Task and activity events, synthetic baseline, private check-in and follow-up.</td><td>Confirmed operational activity feeds the plant. Schedule and private wellbeing stay out of the cabin source term.</td></tr>
+<tr><td>Decision core and API · P4</td><td>Runtime scheduler and durable clock cursor, reducer, forecasts, candidate evaluation, command gate, role checks, projections and persistence.</td><td>Only the application writer changes canonical state. The engine applies committed commands. React never decides feasibility or ticks mission time.</td></tr>
+<tr><td>Agent workflows and relay · P5</td><td>Trigger registry, Monitor, Planner wrapper, Relay queue, incident and task state.</td><td>Handlers return typed intents with evidence and an owner. Routine allowlist can assign an inspection or queue a message. Crew approval is required for protected effects.</td></tr>
+<tr><td>Operator canvases · P6</td><td>Flight route, 2D deck and asset inspector, Crew panels, Ground advisory, BPM trace.</td><td>Reuse rendering across roles and fetch separate server-approved payloads.</td></tr>
+<tr><td>Integration and evidence · P1</td><td>Contract examples, scenario identity, acceptance matrix, decisions and release checklist.</td><td>Producer and consumer agree on shared changes. Release evidence comes from a clean run against the merged revision.</td></tr>
+</tbody></table></div>
+</section>
+<section id="runtime"><h2>The run, event order and database</h2>
+<ol class="flow" aria-label="Technical execution sequence">
+<li><h3>Load</h3><p class="note">Validate the package. Freeze run ID, seed, schema, scenario, model and policy versions.</p></li>
+<li><h3>Advance</h3><p class="note">Advance integer mission seconds to the next target. Process intermediate due events even when the UI steps across them.</p></li>
+<li><h3>Reduce</h3><p class="note">Apply accepted observations first, then due deliveries. Dispatch subscribed workflows in stable order.</p></li>
+<li><h3>Recheck</h3><p class="note">At command time validate role, basis, expiry, freshness, phase and current feasibility. Prepare the authorized effect.</p></li>
+<li><h3>Project</h3><p class="note">Commit command and receipt atomically. Derive plant state from committed events, then refresh Crew and queue the filtered Ground snapshot. Reads never tick the clock.</p></li>
+</ol>
+<div class="grid two">
+<article class="card"><h3>SQLite owns the durable record</h3><p class="note"><code>runs</code> stores mission clock, status and revision. <code>events</code> is an ordered journal. <code>operations</code> stores idempotency key, normalized request digest and receipt. <code>messages</code> tracks due delivery and expiry. <code>snapshots</code> stores immutable role projections. Private payloads stay in a protected lane. Use indexed run and due-time lookups and a unique operation key per run and command scope. Start/reset keys are scoped to the authenticated caller and start endpoint because a run ID may not exist yet.</p></article>
+<article class="card"><h3>Keep effects atomic and replayable</h3><p class="note">Authorize the caller before resolving a prior receipt. Look up duplicates before cursor and closed-run guards. For a new operation use one short write transaction for clock, journal, command, receipt and relevant delivery state. Derive plant state from committed events. Reset closes the old run and starts a new one atomically. Use <code>event_seq</code> for order, <code>decision_rev</code> for applicability, and <code>snapshot_id</code> for exact evidence.</p></article>
+</div>
+<p class="note-box note">Ground sees only delivered allowlisted fields with sample, receive time and age. Never expose private check-in content, timing, IDs or gaps in a shared journal cursor. Reconnection and receipt of fresh evidence are separate. A rejected action may have an audit receipt while producing zero applied plant effects.</p>
+<div class="tablewrap" tabindex="0" aria-label="REST contract and proposed additions"><table><thead><tr><th scope="col">Contract surface</th><th scope="col">Request and response</th><th scope="col">Owner</th></tr></thead><tbody>
+<tr><td>Run and step · existing contract</td><td><code>POST /api/v1/runs</code> and <code>POST /api/v1/runs/{id}/advance</code>. Start/reset and step carry stable IDs. Step names the expected cursor. Readiness events have stable ordering.</td><td>P4 with P2</td></tr>
+<tr><td>Crew and Ground · existing contract</td><td><code>GET …/{id}/crew</code>, <code>GET …/{id}/ground</code>. Separate typed DTOs. <code>POST …/{id}/crew/check-ins</code> is private.</td><td>P4 with P3/P5</td></tr>
+<tr><td>Decisions and advice · existing contract</td><td><code>POST …/{id}/plans/evaluate</code>, <code>POST …/{id}/ground/advisories</code>, <code>POST …/{id}/actions</code> and <code>GET …/{id}/actions/{operation_id}</code>. Preserve typed receipts and basis IDs.</td><td>P4 and P5</td></tr>
+<tr><td>Proposed additive endpoints</td><td>Run/pause and authored fault injection, task command, and authorized trace read. Freeze only the shapes the team will use. Existing step and scripted events already support the first integrated run.</td><td>P1/P4, producers and P6</td></tr>
+</tbody></table></div>
+<p class="note">Use FastAPI OpenAPI and checked-in examples to keep the Python and JavaScript boundary aligned. Pin compatible runtimes and lock dependencies in the project. <a href="https://fastapi.tiangolo.com/advanced/generate-clients/">FastAPI OpenAPI client generation</a> · <a href="https://sqlite.org/lang_transaction.html">SQLite transactions</a></p>
+</section>
+<section id="telemetry"><h2>From component readings to a mission twin</h2>
+<p class="intro">Keep a component catalog, a sensor catalog and the observation stream separate. A sensor belongs to a device, crew member or environment zone. The 2D map resolves the same stable IDs the backend uses. The hardware for this build is simulated in software. An adapter can replay a supplied dataset through the same envelope.</p>
+<ol class="flow" aria-label="Sensor and twin aggregation pipeline">
+<li><h3>Simulate</h3><p class="note">Each model advances its own state. Hidden truth is available to test fixtures.</p></li>
+<li><h3>Observe</h3><p class="note">Each virtual sensor samples on mission time. Apply configured noise, dropout or drift to readings.</p></li>
+<li><h3>Validate</h3><p class="note">Normalize unit and time. Retain source, quality and evidence. Invalid or out-of-order samples cannot silently replace accepted values.</p></li>
+<li><h3>Aggregate</h3><p class="note">Reduce readings into component, subsystem and mission views using explicit dependencies and freshness rules.</p></li>
+<li><h3>Publish</h3><p class="note">Crew gets the current allowed twin. Relay sends a separate operational snapshot. The workflow journal links back to its evidence.</p></li>
+</ol>
+<div class="tablewrap" tabindex="0" aria-label="Vehicle and astronaut component aggregation"><table><thead><tr><th scope="col">Registry group</th><th scope="col">Components and readings</th><th scope="col">Aggregate into the twin</th></tr></thead><tbody>
+<tr><td>Atmosphere · P2</td><td>Cabin zone, CO₂ sensor, primary scrubber, standby scrubber, ventilation fan. Pressure, O₂, humidity and temperature have separate signal IDs.</td><td>Use the accepted CO₂ sample, effective removal and power evidence for cabin readiness. Multiple compartments can reference one modeled air zone. Unknown secondary signals stay unknown or are clearly scripted.</td></tr>
+<tr><td>Electrical · P2</td><td>Supply, essential bus, feeder, standby load and optionally battery. Headroom in kW and stored energy in kWh.</td><td>Publish standby eligibility from headroom, connection and demand. Missing feeder evidence stays unknown when the rule requires it.</td></tr>
+<tr><td>Vehicle and mission · P2/P4</td><td>Navigation waypoint, command phase, docking ring, hatch, storage and communications link.</td><td>Use the current flight plan and verified readiness to set phase and ETA. Track mechanical capture, seal, hatch, crew movement and cargo separately.</td></tr>
+<tr><td>Crew · P3</td><td>Roster, compartment, assigned task, confirmed activity, synthetic sleep/vitals and voluntary wellbeing check-in.</td><td>Sum supported confirmed CO₂ generation by modeled zone once per person or use the legacy fixture’s declared aggregate. Keep private health in the Crew view. Operational exposure and workload flags can be shown as conditions without assigning a mental-state score.</td></tr>
+<tr><td>Ground · P5</td><td>Relay queue, observed time, delivered time, snapshot basis and advice disposition.</td><td>Assemble only allowlisted delivered fields. Display freshness and outcome independently. Trace availability follows its own role policy.</td></tr>
+</tbody></table></div>
+<div class="grid two">
+<article class="card"><h3>Component and sensor records</h3><p class="note">Component records name <code>entity_id</code>, kind, owning subsystem, compartment or physical zone, and relationships such as <code>powered_by</code> and <code>serves_zone</code>. Sensor records name <code>source_id</code>, target entity, metric, canonical unit, sample period, input kind and privacy. The observation envelope keeps the current <code>observed_at_s</code>, <code>received_at_s</code>, <code>model_version</code> and payload quality. Example mapping: prototype <code>cabin.co2</code> → source <code>sim.cabin.co2</code>, entity <code>cabin-01</code>, metric <code>co2</code>, unit <code>ppm</code>.</p></article>
+<article class="card"><h3>Aggregation rules</h3><p class="note">Aggregate domain quantities only where the model defines it. For example, add generation rates in a shared air zone and compute electrical headroom from modeled supply and load. For readiness, use required dependency checks with <strong>ready, blocked, unknown</strong> outcomes. Return the blocker and supporting event IDs. Missing data cannot turn a component green. Mission ETA can become conditional without changing the approved route.</p></article>
+</div>
+<div class="grid two">
+<article class="card"><h3>Intake for the team’s component lists</h3><p class="note">For every supplied item record its stable ID, owning person, parent space or crew member, source, dependencies and status. For each reading record its unit, sample cadence, clock, quality and whether it is modeled, scripted, replayed or unavailable. Ask the owner to confirm what the reading may change in the model and which view can see it.</p></article>
+<article class="card"><h3>What makes a component ready to merge</h3><p class="note">Commit the catalog entry, a synthetic observation example, and an expected rollup result. Check both a normal sample and a stale or missing sample. If the component has no supported model yet, expose its location and capability with a clearly labeled unavailable value.</p></article>
+</div>
+<p class="note-box note"><strong>First vertical slice.</strong> Prove virtual CO₂ sensor → accepted cabin reading → ship layer → Crew and delayed Ground view. Then add the power-to-standby dependency. Build out the remaining device, sensor and astronaut catalogs after the team’s component data arrives.</p>
+</section>
+<section id="scenarios"><h2>One engine, multiple versioned scenarios</h2>
+<p class="intro">Keep the five-event demo as the default. Add cases as data that drive the same runtime, gate and canvases. Separate the scenario’s inputs from the expected results that grade it. A new seed varies the configured observation process. A new scenario changes the schedule, assumptions or rules.</p>
+<div class="tablewrap" tabindex="0" aria-label="Scenario catalog"><table><thead><tr><th scope="col">Scenario</th><th scope="col">Inputs and rules</th><th scope="col">What the replay must prove</th></tr></thead><tbody>
+<tr><td><code>sx01-golden</code> · Default demo</td><td>Current 100 m³ contract baseline. Suggested fixed seed <code>4242</code> with noise off. Ground starts on v100 observed at −60 seconds. Main scrubber degrades at 01:00, delivery at 06:00, advice at 08:00, power drops at 10:00, stale advice arrives at 13:00, v103 reaches Ground at 15:00.</td><td>Show v102 advice against v103 and zero applied effects. Under the canonical model the estimate is about 2,063.74 ppm at 13:00. Preserve the five displayed beats and intermediate delivery events.</td></tr>
+<tr><td><code>nominal</code> · Acceptance</td><td>Working scrubber, baseline crew activity, no faults.</td><td>Nominal balance, repeatable observations and phase/ETA. A GET does not tick mission time.</td></tr>
+<tr><td><code>standby-approved</code> · Acceptance</td><td>Degraded primary, sufficient power and a fresh crew authorization.</td><td>Standby changes the plant once. Replaying the same operation ID returns the same receipt after restart.</td></tr>
+<tr><td><code>constrained</code> · Acceptance</td><td>Degraded scrubber, low power and a declared restriction on reduced activity.</td><td>Return no feasible plan when every candidate fails. A separate variant allows reduced activity so a blocked standby does not force the same result.</td></tr>
+<tr><td><code>sensor-quality</code> · Acceptance</td><td>Seeded noise, deterministic dropout and one stale or out-of-order reading.</td><td>Same seed yields the same sensor trace. A different seed changes noisy observations without changing physics under the same input and command history. Unavailable critical evidence produces an unknown or held result.</td></tr>
+<tr><td><code>sx01-p2-compact</code> · Research variant</td><td>P2 prototype’s 10 m³ cabin. Version and reconcile the starting Ground age, permissions and chosen noise profile separately.</td><td>Run the same qualitative fault chain with its own CO₂ trajectory and expected values. If standby is already on before the drop, test the separately declared load-shedding rule.</td></tr>
+<tr><td><code>lunar-phase</code> · Mission extension</td><td>Separately versioned route, approach, docking and return checkpoints. Optional link blackout or unknown seal.</td><td>Phase and ETA stay coherent. Separate capture, hatch and transfer gates hold as designed. Keep its MET clock distinct from the 15-minute demo.</td></tr>
+</tbody></table></div>
+<div class="grid two">
+<div><h3>What the scenario package owns</h3><pre aria-label="Illustrative scenario manifest">id: sx01-golden
+version: 1
+seed: 4242
+clock: integer mission seconds
+assets: sx01/component-catalog@1
+sensors: sx01/sensor-catalog@1
+models: cabin@1, power@1, phase@1
+policy: demo-operations@1
+noise_profile: off
+schedule:
+  60: primary scrubber degrades
+  600: power headroom falls
+link: simulated delay profile
+rules: permitted actions by phase
+expected: sx01-golden-v1 assertions</pre></div>
+<div><h3>Seed and replay rules</h3><p class="note">Use a dedicated deterministic stream per sensor, derived from the run seed and stable source ID, or equivalent keyed sampling. Draw only on scheduled samples. Inspector clicks, API polling and a newly added sensor cannot perturb existing streams. Pin the model, policy, sensor profile and fixture versions. Compare stable events and role projections after stripping generated run IDs and wall-clock timestamps.</p><h3 class="spaced">Generate the backup from the release</h3><p class="note">Export the five frames from the integrated engine with the fixture, versions and seed recorded. Compare saved and fresh replay frames in a test. The offline player shows these approved frames. Simulator truth and test-only fingerprints stay in test evidence. An action that fails a power check does not by itself prove the stale-advice gate was exercised.</p></div>
+</div>
+<div class="note-box note"><strong>What we took from P2.</strong> Use its zone inspectors, seeded sensor replay, explicit power → standby → removal → CO₂ chain, and saved-frame backup. The prototype’s 10 m³ and five-minute opening Ground age differ from the team contract’s 100 m³ and one-minute opening age. Keep the current default fixture and review the compact variant with P2/P4. Label the 3,200 ppm demo rule separately from NASA’s nominal one-hour average ppCO₂ reference. A one-hour reading needs supported pressure and sufficient time coverage. <a href="https://claude.ai/artifact/DcGbKtsXCmRpEr5SWmjCEN#proto">P2 SX-01 Cabin Twin</a> · <a href="https://www.nasa.gov/reference/6-0-natural-and-induced-environments-vol-2/">NASA V2 6004</a></div>
+</section>
+<section id="repo"><h2>Where each person writes code</h2>
+<p class="intro">Proposed repository layout. Each owner can develop with a local database and the same versioned examples. Cross-team edits concentrate in contracts, fixtures and the small application wiring layer.</p>
+<div class="grid two">
+<div><h3>Backend and persistence</h3><pre aria-label="Backend folder tree">backend/
+├── pyproject.toml                 # Python dependencies and tooling
+├── src/symbiosis_x/
+│   ├── main.py                    # FastAPI and dependency wiring · P4
+│   ├── api/                       # HTTP adapters and role checks · P4
+│   │   ├── runs.py
+│   │   ├── crew.py
+│   │   ├── ground.py
+│   │   └── decisions.py
+│   ├── contracts/                 # Pydantic boundary types · P1/P4
+│   │   ├── events.py
+│   │   ├── commands.py
+│   │   └── projections.py
+│   ├── simulation/                # Pure plant and scenario clock · P2
+│   │   ├── clock.py
+│   │   ├── scenario.py
+│   │   └── spacecraft/
+│   │       ├── navigation.py
+│   │       ├── atmosphere.py
+│   │       ├── electrical.py
+│   │       └── mechanical.py      # Added when its rules are modeled
+│   ├── crew/                      # Crew domain · P3
+│   │   ├── roster.py
+│   │   ├── activity.py
+│   │   ├── wellbeing.py
+│   │   └── radiation.py           # Archived instrument context
+│   ├── telemetry/                 # Sensor and observation boundary
+│   │   ├── registry.py            # Source and component catalog checks
+│   │   ├── sampling.py            # Scheduled virtual sensors · P2/P3
+│   │   ├── normalize.py           # Units, time and quality · P4
+│   │   └── adapters.py            # Simulated and replay sources
+│   ├── twin/                      # Accepted state and constraints · P4
+│   │   ├── reducer.py
+│   │   ├── aggregate.py           # Component → subsystem → role state
+│   │   ├── forecast.py
+│   │   └── constraints.py
+│   ├── workflows/                 # Trigger handlers · P5
+│   │   ├── dispatcher.py
+│   │   ├── runner.py              # Invocation budget and deduplication
+│   │   ├── tools.py               # Role allowlists and typed intents
+│   │   ├── monitor.py
+│   │   ├── planner.py
+│   │   ├── relay.py
+│   │   └── incident.py
+│   ├── application/               # Write orchestration · P4
+│   │   ├── runs.py
+│   │   ├── commit.py
+│   │   └── projections.py
+│   └── storage/                   # Persistence adapter · P4
+│       ├── sqlite.py
+│       ├── repository.py
+│       └── migrations/001_initial.sql
+└── tests/
+    ├── unit/
+    └── integration/</pre></div>
+<div><h3>Frontend and shared contracts</h3><pre aria-label="Frontend and shared folder tree">frontend/
+├── package.json
+├── vite.config.js                # Vite + Tailwind plugin · P6
+└── src/
+    ├── main.jsx
+    ├── App.jsx                    # Route roots and layouts
+    ├── styles.css                 # Tailwind and visual tokens
+    ├── api/
+    │   ├── client.js              # Role-scoped HTTP calls
+    │   ├── validateFixture.js     # Check examples at the API boundary
+    │   └── useRunProjection.js
+    ├── features/
+    │   ├── mission/               # Flight route, status, facilitator
+    │   ├── deck/                  # Original cutaway, layers, inspector
+    │   ├── crew/                  # Tasks, check-in, plans and approvals
+    │   ├── ground/                # Delivered snapshot and advice
+    │   └── workflow/              # Agent status strip, BPM and timeline
+    └── ui/                        # Badges, units, empty/error states
+
+contracts/
+├── openapi.json                   # Exported API snapshot · P1/P4
+└── examples/
+    ├── crew-v103.json
+    ├── ground-v102.json
+    ├── candidate-results.json
+    └── action-receipts.json
+catalogs/
+├── sx01/components.json          # Devices, spaces and relationships
+├── sx01/sensors.json              # Source, metric, unit and sampling
+└── crew/synthetic-roster.json     # Fictional crew and assignments
+scenarios/
+├── sx01-golden-v1.json            # Default live demo
+├── variants/                      # Separate sensor, fault and mission cases
+└── expected/                      # Test assertions separate from inputs
+docs/
+├── decisions/                     # Changes to boundaries and assumptions
+└── acceptance.md                 # Replay evidence and release checklist
+README.md                         # Setup and verification · P1
+.gitignore                        # Databases, credentials, build outputs
+.github/
+├── CODEOWNERS                    # Review routing by feature path
+└── workflows/checks.yml          # Backend, web and contract checks</pre></div>
+</div>
+<div class="grid two">
+<article class="card"><h3>Local developer loop</h3><p class="note">The proposed README should pin the Python and Node versions and document installing the backend package, running <code>uvicorn symbiosis_x.main:app</code>, starting the Vite dev server with a proxy to <code>/api</code>, and running <code>pytest</code> and the production React build. Every laptop starts from the same base commit, a named scenario and its own seeded database.</p></article>
+<article class="card"><h3>Add a subsystem through its boundary</h3><p class="note">Add a typed observation or intent, register the trigger, add an asset and fixture, then add the projection field and inspector. Verify the old seed and the new case. A new dataset adapter or simulated subsystem leaves the API shape stable where possible.</p></article>
+</div>
+<p class="note-box note">Dependency direction is API → application → domain. Domain modules do not import FastAPI, React or SQLite. P5 wraps P4’s planner through a typed interface. Persistence implements the application’s needs and does not decide policy. Keep model constants in the versioned mission package when they can vary by fixture.</p>
+</section>
+<section id="astronaut"><h2>Jana’s astronaut twin and dashboard handoffs</h2>
+<p class="intro">Jana’s plan centers on SIM-01, a fictional astronaut with a personal baseline, timestamped readings, confirmed activity and private check-ins. The Crew dashboard can line up environmental context and health observations in mission time. Their coincidence does not establish a cause. <a href="Team%20Inputs/SYMBIOSIS%20X%20%C2%B7%20Person%203%20%C2%B7%20Astronaut%20Twin.html">Person 3 design reference</a></p>
+<div class="tablewrap" tabindex="0" aria-label="Astronaut twin streams and dashboard handoffs"><table><thead><tr><th scope="col">Stream</th><th scope="col">Producer and consumer</th><th scope="col">Integration behavior</th></tr></thead><tbody>
+<tr><td>Operational activity</td><td>Jana → Sama’s event boundary → Ahmed’s cabin model</td><td>Publish a confirmed mode, mission time, crew and modeled zone through the shared envelope. Scheduled work and private check-ins leave CO₂ generation unchanged. Apply one accepted activity event once.</td></tr>
+<tr><td>Private health and baseline</td><td>Jana → Sama’s private Crew projection → Suhad’s Crew dashboard</td><td>Show synthetic heart rate, breathing rate, oxygen saturation, skin temperature, sleep or symptoms as supported. Include sample quality, last good time and source. Mark missing or rejected data as unknown. Map field names and units into the shared schema before wiring the additional vital signals.</td></tr>
+<tr><td>Private follow-up</td><td>Jana → authorized onboard reviewer</td><td>Use the three-sample activity-adjusted baseline deviation as a proposed demo rule. Count only valid, fresh samples in sequence. Agree on cadence, reset on gaps, and the review reason. Keep the result, evidence IDs and timestamps out of shared operational traces.</td></tr>
+<tr><td>Cabin context</td><td>Ahmed → Sama’s accepted spacecraft twin → Suhad</td><td>Read cabin CO₂, scrubber and power from the selected role projection. For the golden case use the current 100 m³ model, with about 2,063.74 ppm at 13:00 in the proposed reference. Keep the prototype’s authored CO₂ sequence in the reference file.</td></tr>
+<tr><td>Archived radiation context</td><td>Jana → separately labeled Crew timeline</td><td>Use the documented RadLab instrument series. Preserve spacecraft, instrument, original UTC interval, measured quantity and unit. Plot by timestamp, preserve gaps and show any fictional replay offset. Require source metadata before labeling an imported CSV as NASA data. Instrument readings describe the archive, not SIM-01’s personal dose.</td></tr>
+</tbody></table></div>
+<div class="grid two">
+<article class="card"><h3>Test the actual Ground response</h3><p class="note">The standalone example builds the Ground packet from the current storyboard row while labeling it with the older Ground revision. Build the integrated response from the delivered immutable snapshot only. At 13:00 assert Ground v102 still shows its delivered 0.60 kW, Crew v103 shows 0.20 kW, and Ground receives v103 at 15:00. Keep advisory disposition tied to its own delivery.</p></article>
+<article class="card"><h3>Test privacy across each output</h3><p class="note">Insert a synthetic private marker through the real check-in path. Assert the authorized Crew response can read it. Assert the actual Ground response, Relay payload, shared trace and diagnostics exclude its text, timing, IDs and derived private fields. The source file’s local marker example illustrates the check. Keep role or station on Ground only if the allowlist explicitly permits it.</p></article>
+</div>
+<p class="note-box note"><strong>P3 handoff.</strong> Jana supplies canonical sample events, the personal baseline and rule inputs, and the archive manifest. Ahmed verifies the activity effect. Sama and Abdelrahman verify role projections and privacy. Suhad wires the baseline card, missing-data state, cabin context and separately labeled radiation chart. <a href="../Masters%20Smart%20Health/Code/SYMBIOSIS%20X/Research%20Reviews/2026-11-11/Research%20and%20Data%20Review.md">Existing RadLab source review</a></p>
+</section>
+<section id="agents"><h2>Abdelrahman’s workflow inside Sama’s backend</h2>
+<p class="intro">The P5 planning file adds a bounded tool registry, per-trigger agent runs and a dashboard trace. Use those inside the existing FastAPI application. Keep the proposal for eight tool steps and two sensor retries configurable until the team freezes its policy. <a href="Team%20Inputs/SYMBIOSIS_X_Agent_Workflow.html">Team agent workflow prototype</a></p>
+<ol class="flow" aria-label="Agent event handoff">
+<li><h3>Classify evidence</h3><p class="note">Sama’s twin accepts or rejects readings and publishes a typed quality result.</p></li>
+<li><h3>Monitor</h3><p class="note">Abdelrahman’s Monitor deduplicates incident evidence and requests an allowed resample or assigns review.</p></li>
+<li><h3>Planner agent</h3><p class="note">Ask Sama’s deterministic planner for a revision-bound evaluation. Record reasons and who acts next.</p></li>
+<li><h3>Relay</h3><p class="note">Queue a filtered snapshot, deliver due messages, and hold advice that is stale, expired or invalid.</p></li>
+<li><h3>Display and verify</h3><p class="note">Suhad’s dashboard shows each handoff. Crew approval goes to Sama’s gate. A later reading verifies the effect.</p></li>
+</ol>
+<div class="tablewrap" tabindex="0" aria-label="Agent runner agreements"><table><thead><tr><th scope="col">Boundary</th><th scope="col">How to integrate it</th><th scope="col">What proves it</th></tr></thead><tbody>
+<tr><td>One clock and writer</td><td>P4 dispatches committed input events in mission order. P5 handles events with typed tools and returns intents. P4 writes the resulting operational records and receipts. Any future autoplay uses the same run scheduler as manual stepping.</td><td>Duplicate triggers create one case or message. Restart and replay preserve ordered outcomes. An agent has no plant write tool.</td></tr>
+<tr><td>Bounded tools</td><td>Use an allowlist by agent, an invocation budget, and a deduplication key such as agent + trigger event. Persist retry count by incident and source. Stop on denied tool, timeout or exhausted budget and route to a named owner.</td><td>Test an unauthorized tool, missing reading, planner timeout and duplicate delivery. Each ends with an explicit reason and no simulator effect.</td></tr>
+<tr><td>Clear decision states</td><td>Replan for decision-relevant evidence changes or a Relay replan request. Distinguish <code>NO_FEASIBLE_PLAN</code>, <code>INSUFFICIENT_EVIDENCE</code>, and invalid request or tool failure. The commander owns the hold and next review.</td><td>Known constraint, missing evidence and invalid input produce different outcomes. A stale advisory can trigger fresh evaluation without authorizing a command.</td></tr>
+<tr><td>Private and shared records</td><td>Jana’s health alert can open a private follow-up for an onboard reviewer. Keep private evidence out of operational agent records and shared trace. Relay constructs a dedicated Ground allowlist. Use fixed briefing templates for the demo.</td><td>A private marker is absent from Ground snapshots, agent trace exports and shared diagnostics. Health check-ins leave the plant and operational decision revision unchanged.</td></tr>
+<tr><td>Agent status dashboard</td><td>Publish role-scoped summaries with <code>agent_run_id</code>, public case ID where allowed, trigger, mission time, basis, status, reason and next owner. Crew and Ground read different projections. Poll or refresh after step first. WebSocket remains an optional transport for the same projections.</td><td>At 13:00 Crew shows the stale-advice hold while Ground still shows v102 and a pending disposition. Keep raw tool arguments and private evidence out of dashboard payloads.</td></tr>
+</tbody></table></div>
+<p class="note-box note"><strong>Proposed rehearsal defaults.</strong> Script the 08:00 Ground advisory in the golden scenario and exercise manual sending in a separate walkthrough. Treat expiry as a scenario or policy input. The prototype’s T+38 example is a placeholder. Sama owns observation quality and final checks. Abdelrahman owns routing, tools, retries and workflow status. Freeze the exact contract after the backend and dashboard plans are reviewed.</p>
+</section>
+<section id="frontend"><h2>Build three connected React canvases</h2>
+<p class="intro">Use JavaScript and JSX with React, Vite and Tailwind. Keep OpenAPI as the API contract and validate the checked-in JSON examples in tests. Port the original 800×405 cutaway to React-rendered SVG. Use SVG for the route and BPM nodes too. The geometry stays sharp at different sizes and selectable assets can have focus, labels and keyboard handlers. Consider an HTML canvas only if a later dense visualization has a measured rendering bottleneck.</p>
+<div class="grid">
+<article class="card"><h3>Flight and deck</h3><p class="note"><code>MissionConsole</code>, <code>FlightRoute</code>, <code>MissionClock</code>, <code>PhaseAndEta</code>, <code>ShipDeck</code>, <code>AssetNode</code>, <code>LayerPicker</code>, <code>AssetInspector</code>. Display planned route and accepted position or phase separately. Color shows state alongside a text label. Keyboard and list selection open the same asset.</p></article>
+<article class="card"><h3>Crew and Ground</h3><p class="note"><code>CrewTaskBoard</code>, <code>CheckInForm</code>, <code>PersonalBaseline</code>, <code>RadiationContext</code>, <code>CandidateList</code>, <code>ApprovalPanel</code>, <code>GroundSnapshot</code>, <code>AdvisoryForm</code>, <code>ActionReceipt</code>. Separate route roots use separate API payloads. Ground shows delivered age and link status. Crew has approval controls and authorized private panels.</p></article>
+<article class="card"><h3>BPM and debrief</h3><p class="note"><code>WorkflowCanvas</code>, <code>WorkflowDetail</code>, <code>AgentStatusStrip</code>, <code>TraceTimeline</code>. Show designed path and recorded milestones with distinct states. Link a selected step to its event and affected asset. Keep open intervals visible and separate timing from modeled risk.</p></article>
+</div>
+<div class="tablewrap" tabindex="0" aria-label="Canvas data ownership"><table><thead><tr><th scope="col">Where state lives</th><th scope="col">What it owns</th><th scope="col">Useful UI behavior</th></tr></thead><tbody>
+<tr><td>Python projection</td><td>Clock, flight phase, ETA basis, accepted readings, asset conditions, recommendations and receipts.</td><td>Show measured, simulated, scripted, stale and unknown as explicit states. Keep planned ETA conditional when readiness is held.</td></tr>
+<tr><td>React route and component state</td><td>Selected role view, asset, layer, workflow and local panel.</td><td>Preserve selection across refreshes. Add deep links by run, asset or case. Respect reduced motion. Prefer Tailwind status tokens over ad hoc styles.</td></tr>
+<tr><td>Projection hook</td><td>Fetch, retry, abort and last successful role-scoped payload.</td><td>Fetch on entry and after commands. Poll lightly for multiple laptops. Abort or ignore obsolete responses when run or role changes. Browser connection loss and simulated link outage get separate labels.</td></tr>
+</tbody></table></div>
+<p class="note">Start with static examples for Crew v103 and Ground v102. Switch to the API using the same adapter shape. Reuse stable <code>asset_id</code>, <code>incident_id</code> and workflow IDs from the backend. Keep the browser out of the simulation and access-control decisions. <a href="https://react.dev/reference/react-dom/components">React DOM and SVG support</a> · <a href="https://tailwindcss.com/docs/installation/using-vite">Tailwind Vite setup</a></p>
+</section>
+<section id="backlog"><h2>Component backlog</h2>
+<p class="note-box note"><a href="SYMBIOSIS%20X%20Feature%20Backlog%20and%20Build%20Plan.html">Pull tickets and follow the build plan</a> for owner-specific tasks, dependencies and acceptance checks.</p>
+<p class="intro">Start with one integrated slice and add features behind tested boundaries. Core items prove the runtime and fault handoff. Expansion items are candidates when the team has usable data or spare capacity.</p>
+<div class="filters" role="group" aria-label="Filter backlog"><button type="button" data-filter="all" aria-pressed="true">All features</button><button type="button" data-filter="core" aria-pressed="false">Core</button><button type="button" data-filter="expand" aria-pressed="false">Expansion</button></div>
+<p class="note" id="backlog-count" aria-live="polite"></p>
+<div class="tablewrap" tabindex="0" aria-label="Feature backlog"><table><thead><tr><th scope="col">ID and priority</th><th scope="col">Feature and owner</th><th scope="col">Depends on</th><th scope="col">Acceptance evidence</th></tr></thead><tbody id="backlog-rows">
+<tr data-track="core"><td>SX-01 · Core</td><td>Contract and example payloads · P1/P4</td><td>Agreed role and model boundaries</td><td>Four shared examples validate. P2–P6 can use them independently.</td></tr>
+<tr data-track="core"><td>SX-02 · Core</td><td>Seeded flight clock, plan, phase and ETA · P2/P4</td><td>SX-01</td><td>Same scenario and seed reproduce state and timing. Reads leave mission time unchanged.</td></tr>
+<tr data-track="core"><td>SX-03 · Core</td><td>Cabin CO₂, scrubber and electrical headroom · P2</td><td>SX-01</td><td>Nominal and degraded model fixtures match oracles. Standby requires 0.40 kW, so 0.20 kW blocks it.</td></tr>
+<tr data-track="core"><td>SX-04 · Core</td><td>Confirmed activity and private check-in · P3</td><td>SX-01</td><td>Confirmed activity feeds the plant once. A scheduled activity and a private marker leave the cabin input unchanged. Actual Ground, Relay and shared exports exclude the marker and private metadata. A missing vital shows unknown.</td></tr>
+<tr data-track="core"><td>SX-05 · Core</td><td>SQLite journal, clock orchestration and reset · P4</td><td>SX-01</td><td>Restart preserves run state and receipts. Reset closes the old run atomically. Retried advance and conflicting requests respect the cursor.</td></tr>
+<tr data-track="core"><td>SX-06 · Core</td><td>Planner and Crew command gate · P4</td><td>SX-03, SX-05</td><td>Known no-feasible differs from insufficient evidence. Fresh replayed approval applies once. Stale, expired or unauthorized requests apply zero times.</td></tr>
+<tr data-track="core"><td>SX-07 · Core</td><td>Monitor, Planner wrapper and Relay · P5</td><td>SX-01 fixtures first, SX-05 at integration</td><td>Deduplicated case and routine task, bounded tool retries, and explicit handoff status. Advice based on v102 is held against v103. Ground sees disposition after delivery.</td></tr>
+<tr data-track="core"><td>SX-08 · Core</td><td>Flight canvas, cutaway and layer inspector · P6</td><td>SX-01 fixtures first, SX-02 at integration</td><td>Route, mission clock and the original deck share one run. Keyboard and narrow-screen interaction work.</td></tr>
+<tr data-track="core"><td>SX-09 · Core</td><td>Crew and Ground role panels · P6 with P3–P5</td><td>SX-04, SX-06, SX-07, SX-08</td><td>Two laptops read one run through separate role scopes. Crew and Ground show the correct differing basis and action availability.</td></tr>
+<tr data-track="core"><td>SX-10 · Core</td><td>BPM case timeline and agent status · P5/P6</td><td>SX-05, SX-07</td><td>Agent, basis, reason and next owner show on the dashboard. Case milestones link to the asset and checkpoint. Open steps have no fabricated completion time. Agree on the trace read shape before wiring it.</td></tr>
+<tr data-track="core"><td>SX-17 · Core</td><td>Component catalog, virtual sensor and rollups · P2/P3/P4</td><td>SX-01</td><td>Accepted sensor readings link to device and zone. Crew activity aggregates once, stale or missing data stays visible, and Ground sees only delivered fields.</td></tr>
+<tr data-track="core"><td>SX-18 · Core</td><td>Scenario manifests, seeded noise and backup frames · P1/P2/P4/P6</td><td>SX-02, SX-03, SX-05 and SX-07 for exported replay</td><td>Separate scenario inputs and expected outputs. Reproduce seeded traces and generate matching backup frames from the tagged demo.</td></tr>
+<tr data-track="core"><td>SX-11 · Core</td><td>Cross-role replay and release evidence · P1</td><td>SX-02 through SX-10 and SX-17 through SX-19</td><td>Clean launch, nominal run, stale-advice branch, separate apply-once fixture, and single-laptop fallback all verified.</td></tr>
+<tr data-track="core"><td>SX-19 · Core</td><td>Archived RadLab context · P3/P6</td><td>SX-04, SX-08 and a sourced instrument export</td><td>Show UTC coverage, detector, quantity and units separately from synthetic astronaut readings. A missing series stays unavailable.</td></tr>
+<tr data-track="expand"><td>SX-12 · Expansion</td><td>Organizer data adapter and new fixture · P1–P4</td><td>Documented data scope, units and coverage</td><td>Typed mapping with provenance, quality, timebase and explicit gaps. Original seed still reproduces.</td></tr>
+<tr data-track="expand"><td>SX-13 · Expansion</td><td>O₂, pressure, feeder isolation and battery energy · P2/P4</td><td>SX-03 and evidence for each model</td><td>Each subsystem has a unit, a model boundary and its own validation case.</td></tr>
+<tr data-track="expand"><td>SX-14 · Expansion</td><td>Docking and transfer · P2/P4/P6</td><td>SX-02 and validated phase gates</td><td>Mechanical capture and verified hatch are separate. An unknown seal holds transfer and gas exchange.</td></tr>
+<tr data-track="expand"><td>SX-15 · Expansion</td><td>Continuous run/pause and facilitator injection · P4/P6</td><td>SX-05 and typed controls agreement</td><td>Server driver and manual step use the same writer. Pause stops automatic ticks. Injection records scenario actor and reason.</td></tr>
+<tr data-track="expand"><td>SX-16 · Expansion</td><td>Compare workflow variants and evaluate ML · P1/P5/P6</td><td>SX-10 and repeatable runs</td><td>Compare elapsed stage distributions and alert quality against the deterministic baseline. ML suggestions remain advisory.</td></tr>
+</tbody></table></div>
+<p class="note-box note"><strong>Protect the reference fixtures.</strong> The 00:00–15:00 golden integration case proves v102/v103 handoffs. Other scenarios exercise different model or policy conditions. The longer flight storyboard illustrates phase and ETA. Give them separate IDs, versions and expected outputs. Promote an authored storyboard into an acceptance fixture only after defining its model and expected state transitions.</p>
+</section>
+<section id="scrum"><h2>How two subteams build and merge</h2>
+<p class="intro"><strong>Sprint goal</strong> · Demonstrate a seeded flight with a fault branch, onboard and delayed Ground views, and an auditable decision. P1 orders the backlog and owns release. The builders own their sprint work. Pick a facilitator to surface blockers and keep integration visible.</p>
+<p class="note">Proposed team split. Individual roles come from the team workflow file and your confirmation of Abdelrahman’s second-team lead role. Jana supplies confirmed activity to Ahmed and Sama through the shared contract.</p>
+<div class="grid two" aria-label="Two integration teams">
+<article class="card"><h3>Team A · Simulation and data</h3><p class="note"><strong>Mohamed · Ahmed · Sama.</strong> Mohamed leads the stream and overall integration. Ahmed owns spacecraft simulation. Sama owns the backend, planner and gate. Build component models, sensor sampling, observation validation and SQLite on separate feature branches. Merge to <code>integration/sim</code> on the first team laptop. Produce a running API, schema examples and reproducible sensor and decision traces.</p></article>
+<article class="card"><h3>Team B · Operations and presentation</h3><p class="note"><strong>Abdelrahman · Jana · Suhad.</strong> Abdelrahman leads this stream and owns agents and the Ground link. Jana owns the astronaut twin. Suhad owns the React dashboards. Build crew workflows and Crew/Ground/BPM views against Team A’s examples. Merge to <code>integration/ops</code> on the second team laptop. Produce a fixture-backed UI first, then verify it against the current Team A API.</p></article>
+</div>
+<p class="note-box note"><strong>Integration path</strong> · Developer feature branches → team integration branches → rehearsal merge on a release branch → <code>main</code> → tagged demo checkout. P1 coordinates the release merge. Sama and Abdelrahman review conflicts at the event/API boundary. Jana and Ahmed verify the crew-activity handoff before the release. Rehearse the combined run after boundary changes and retain the last known-good tag. The demo laptop can be either integration machine or a third machine.</p>
+<div class="grid two">
+<article class="card"><h3>When GitHub is available</h3><p class="note">Use one repo, shared base commit, short feature branches and reviewed pull requests. Both team branches take shared contract updates from the same commit. Every handoff includes branch, commit, changed paths and the fixture or test to run.</p></article>
+<article class="card"><h3>When the remote is unavailable</h3><p class="note">Keep local Git and exchange <code>git bundle</code> files over the team’s local transfer path. On the sending checkout, create a bundle of the named branch with <code>git bundle create team-a.bundle integration/sim</code>. On the receiving checkout, run <code>git bundle verify team-a.bundle</code>, then <code>git fetch team-a.bundle integration/sim:refs/heads/review/team-a</code>. Review the diff before merging the review branch. If Git itself is unavailable, exchange only reviewed changed files with the baseline checksum and path manifest. Use AI for a proposed three-way resolution, then have owners review and run the same checks before promoting it. <a href="https://git-scm.com/docs/git-bundle">Git bundle reference</a></p></article>
+</div>
+<ol class="flow" aria-label="Scrum and integration cycle">
+<li><h3>Plan the sprint</h3><p class="note">Freeze shared examples, names, units and the reference replay. Assign an owner and a reviewer to each item.</p></li>
+<li><h3>Build by path</h3><p class="note">P2, P3 and P5 build pure modules against examples. P6 builds the canvases against fixtures. P4 wires one writer.</p></li>
+<li><h3>Sync and merge</h3><p class="note">Use a short Daily Scrum for the next goal and blockers. Merge small PRs, run checks, then replay across changed boundaries.</p></li>
+<li><h3>Review the increment</h3><p class="note">Demo from the tagged release built from merged main. Run nominal, stale advice and accepted retry. Check actual Crew and Ground screens.</p></li>
+<li><h3>Retrospect</h3><p class="note">Name the biggest blocker and one process change. Reorder upcoming features from what the team learned.</p></li>
+</ol>
+<div class="grid two">
+<article class="card"><h3>One Git board</h3><p class="note">Ready → Doing → Review → Integrated. Mark blocked items visibly. Use one main issue per owner at a time and short feature branches. Interface changes get review from the producer and affected consumer. Keep app code, fixture changes and screenshots in small reviewable PRs.</p></article>
+<article class="card"><h3>Definition of done</h3><p class="note">Reviewed and merged, reproducible on another laptop, acceptance evidence attached, and any affected contract or fixture updated. Run model tests, API/SQLite integration, UI build and replay. Check the actual role boundary for privacy and the receipt for action effects.</p></article>
+<article class="card"><h3>Merge order by working slice</h3><p class="note">Start with schemas, examples and minimal app wiring. First merge target is start → step → read Crew and Ground. Add model faults and the decision gate next. Connect agent messages, BPM and the release checklist after the shared run is reproducible.</p></article>
+<article class="card"><h3>Integrate new data during the event</h3><p class="note">Record source, intended benefit, owner and affected consumers. Map new units, timebase, privacy and missing values before use. Add or version fixtures first, update both sides of any contract together, and rerun the original scenario. Promote an expansion only if the integrated path remains demonstrable.</p></article>
+</div>
+<p class="note">Use Scrum’s planning, daily coordination, review and retrospective as the base. The merge-triggered replay and one-board policy are proposed team practices for the event. <a href="https://scrumguides.org/scrum-guide.html">Official Scrum Guide</a></p>
+</section>
+<section id="demo"><h2>Develop on many laptops. Demo one mission.</h2>
+<div class="grid">
+<article class="card"><h3>Contributor laptops</h3><p class="note">Each person clones the same Git repo and uses their own environment, SQLite file and seeded fixtures. Merge source, schema and examples. Keep local databases, secrets and raw private data out of Git.</p></article>
+<article class="card"><h3>Final demo laptop</h3><p class="note">Check out the tested release tag and start a fresh seeded run. Run one FastAPI instance and one local SQLite database. Serve the built React app and API on the same origin. Crew and Ground browsers on the event network connect to that host with separate role sessions. Use one facilitator to advance the run.</p></article>
+<article class="card"><h3>Rehearsal and fallback</h3><p class="note">Check network reachability and firewall on the actual venue setup. Check both browsers against the same run ID and confirm the simulated link lag. If venue isolation prevents peers from reaching the host, use two separate sessions on the host laptop.</p></article>
+</div>
+<p class="note-box note">The network carries HTTP requests, not database files. Keep SQLite on the host’s local disk. If the team adopts WAL for read/write overlap, verify the installed SQLite build and use a local filesystem. <a href="https://sqlite.org/wal.html">SQLite write-ahead logging</a></p>
+<h3 class="spaced">Team design inputs</h3>
+<div class="tablewrap" tabindex="0" aria-label="Team design input status"><table><thead><tr><th scope="col">Input</th><th scope="col">Status</th><th scope="col">How it feeds the architecture</th></tr></thead><tbody>
+<tr><td>Ahmed · Cabin prototype</td><td><a href="https://claude.ai/artifact/DcGbKtsXCmRpEr5SWmjCEN#proto">Reviewed prototype</a></td><td>Seeded faults, sensor readings, power chain and backup frames.</td></tr>
+<tr><td>Abdelrahman · Agent workflow</td><td><a href="Team%20Inputs/SYMBIOSIS_X_Agent_Workflow.html">Reviewed planning file</a></td><td>Agent tool boundaries, incident handoff, delayed advice and dashboard status.</td></tr>
+<tr><td>Jana · Astronaut twin</td><td><a href="Team%20Inputs/SYMBIOSIS%20X%20%C2%B7%20Person%203%20%C2%B7%20Astronaut%20Twin.html">Reviewed planning file</a></td><td>Personal baseline and private signals, confirmed activity, archived radiation context, and integration acceptance checks.</td></tr>
+<tr><td>Suhad · Dashboard plan</td><td>Pending file</td><td>Align screen navigation and role-specific status payloads with the existing React canvases.</td></tr>
+<tr><td>Sama · Backend plan, if provided</td><td>Pending file</td><td>Reconcile route names, persisted records, planner inputs and the P4/P5 event handoff.</td></tr>
+</tbody></table></div>
+<div class="links"><a href="SYMBIOSIS%20X%20Flight%20Simulation%20Design.html">Flight design and original 2D deck</a><a href="SYMBIOSIS%20X%20Mission%20Control%20Design.html#workflows">Incident and BPM workflows</a><a href="../Masters%20Smart%20Health/Code/SYMBIOSIS%20X/Research%20Reviews/2026-11-11/Shared%20Data%20and%20API%20Contract.md">Current team API contract</a></div>
+</section>
+</main>
+<script>
+const filters = [...document.querySelectorAll("[data-filter]")];
+const rows = [...document.querySelectorAll("#backlog-rows tr")];
+const count = document.querySelector("#backlog-count");
+function filterBacklog(track) {
+  for (const button of filters) button.setAttribute("aria-pressed", String(button.dataset.filter === track));
+  for (const row of rows) row.hidden = track !== "all" && track !== row.dataset.track;
+  count.textContent = rows.filter(row => !row.hidden).length + " features shown";
+}
+for (const button of filters) button.addEventListener("click", () => filterBacklog(button.dataset.filter));
+filterBacklog("all");
+</script></body></html>

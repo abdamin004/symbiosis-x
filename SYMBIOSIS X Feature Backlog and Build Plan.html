@@ -1,0 +1,770 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SYMBIOSIS X — Feature Backlog and Build Plan</title>
+<style>
+:root{color-scheme:dark;--bg:#101820;--panel:#192a34;--line:#43606d;--ink:#f0f6f2;--dim:#c0d1d5;--green:#a7edca;--blue:#b6d6fb;--amber:#ffca8c}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,sans-serif}p,h1,h2,h3{margin:0}a{color:var(--green);text-underline-offset:.2em}button,select,textarea{font:inherit;color:inherit;background:#233946;border:1px solid #678592;border-radius:6px;padding:7px 10px}button{cursor:pointer}button:hover{border-color:var(--green)}:focus-visible{outline:2px solid white;outline-offset:3px}.wrap{width:min(1230px,calc(100% - 42px));margin:auto}header{padding:clamp(45px,7vw,87px) 0 37px;background:radial-gradient(ellipse at 84% 15%,#2a4a43,transparent 67%);border-bottom:1px solid var(--line)}h1{font-size:clamp(2.9rem,7vw,6.1rem);line-height:1;letter-spacing:-.07em;margin:9px 0 18px}h2{font-size:clamp(1.8rem,4vw,3.05rem);letter-spacing:-.05em;line-height:1.08;margin-bottom:12px}h3{font-size:1.08rem;line-height:1.25;margin-bottom:6px}.lead{max-width:780px;font-size:1.13rem;color:#dceae7}.meta,.ticket-id{font:650 .76rem/1.4 ui-monospace,monospace;letter-spacing:.07em;color:var(--green);text-transform:uppercase}.intro,.note{color:var(--dim)}.intro{max-width:920px;margin-bottom:16px}.note{font-size:.89rem}nav{display:flex;flex-wrap:wrap;gap:8px 22px;padding:13px 0;font-size:.9rem}nav a{text-decoration:none}main>section{border-top:1px solid var(--line);padding:35px 0;scroll-margin-top:10px}.flow,.grid{display:grid;gap:10px;margin:11px 0}.flow{grid-template-columns:repeat(4,minmax(0,1fr));list-style:none;padding:0}.flow li,.card,details{background:var(--panel);border:1px solid var(--line);border-radius:9px}.flow li,.card{padding:13px}.flow li{position:relative}.flow li+li::before{content:"›";color:var(--green);position:absolute;left:-11px;top:38%;font-weight:bold}.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}.note-box{border-left:3px solid var(--blue);background:#1b2d37;padding:10px 12px;margin:12px 0}.toolbar{display:flex;flex-wrap:wrap;align-items:end;gap:9px;margin:13px 0}.toolbar label{display:flex;flex-direction:column;gap:4px}.toolbar label span{font-size:.82rem;color:var(--dim)}.toolbar select,.toolbar button{font-size:.9rem}details{margin:8px 0;scroll-margin-top:11px}summary{cursor:pointer;padding:12px 14px}summary .ticket-id{margin-right:9px}summary strong{margin-right:8px}.chip{font-size:.74rem;font-weight:650;display:inline-block;border:1px solid #688794;border-radius:5px;padding:0 6px;color:var(--blue);margin:0 4px 3px 0}.chip.expand{color:var(--amber)}.ticket-body{padding:2px 14px 13px}.ticket-body p+p{margin-top:7px}.ticket-body button{font-size:.82rem;margin:8px 7px 0 0}.ticket-body textarea{display:block;width:100%;min-height:130px;margin-top:9px}code{color:var(--blue);overflow-wrap:anywhere}ul{margin:7px 0;padding-left:20px}.links{display:flex;flex-wrap:wrap;gap:8px 19px;margin-top:13px}[hidden]{display:none!important}
+@media(max-width:820px){.flow{display:flex;overflow:auto;padding-bottom:6px}.flow li{flex:0 0 195px}}
+@media(max-width:650px){.wrap{width:calc(100% - 26px)}.grid,.grid.two{grid-template-columns:1fr}main>section{padding:26px 0}}
+@media print{details[hidden]{display:block!important}.toolbar,nav,.ticket-body button{display:none}.ticket-body{display:block}}
+</style></head><body>
+<header><div class="wrap"><p class="meta">SYMBIOSIS X / Build handoff · 12 November 2026</p><h1>Feature backlog</h1><p class="lead">A build order and pullable tickets for the six-person team. Start with one shared flight run. Add the incident, Crew and Ground handoff, and release evidence in that order.</p></div></header>
+<nav class="wrap" aria-label="Sections"><a href="#plan">Build plan</a><a href="#first">First tickets</a><a href="#tickets">Ticket board</a><a href="#release">Release checks</a></nav>
+<main class="wrap">
+<section id="plan"><h2>Build in four checkpoints</h2>
+<p class="intro"><strong>Sprint goal.</strong> Start and advance a seeded flight on one host, show Crew and delayed Ground views, and demonstrate an auditable Crew decision. Team A integrates simulation and backend. Team B integrates crew, agents and the React views.</p>
+<ol class="flow" aria-label="Build and integration plan">
+<li><p class="meta">Start</p><h3>Agree on the boundary</h3><p class="note">Freeze the first payload examples and scenario ID. Start the backend, deck, cabin, crew and workflow modules in parallel.</p></li>
+<li><p class="meta">First slice</p><h3>Start → step → read</h3><p class="note">Run one mission through FastAPI and SQLite. Read separate Crew and Ground projections. Connect the route, deck and first accepted sensors.</p></li>
+<li><p class="meta">Golden run</p><h3>Replay the complete handoff</h3><p class="note">Combine cabin faults, power rules, the command gate, agent status, Relay and both views. Check the stale advice and separate accepted retry.</p></li>
+<li><p class="meta">Release</p><h3>Rehearse from the tag</h3><p class="note">Export backup frames, verify privacy and role views on two laptops, then prepare the subtitled demo and submission.</p></li>
+</ol>
+<div class="grid two">
+<article class="card"><h3>Team A · Simulation and backend</h3><p class="note">Mohamed leads integration, Ahmed owns the spacecraft, and Sama owns FastAPI, SQLite and the approval gate. Merge feature branches into <code>integration/sim</code>.</p></article>
+<article class="card"><h3>Team B · Crew and operations</h3><p class="note">Abdelrahman leads agents and Relay, Jana owns the astronaut twin, and Suhad owns the React views. Merge feature branches into <code>integration/ops</code>.</p></article>
+</div>
+<p class="note-box note">Use the same base commit and folder structure on every laptop. P1 coordinates the joint release merge. In the short Daily Scrum, each person identifies the next pull, any blocker, and the next cross-team handoff. After a boundary change, run the integrated replay. End with a review from the release checkout and a short retrospective.</p>
+</section>
+<section id="first"><h2>What each member pulls first</h2>
+<div class="grid">
+<article class="card"><h3>Mohamed</h3><p class="note"><a href="#SX-01A">SX-01A · Freeze examples</a>. Share the golden fixture ID and identify the producer and consumer of each payload.</p></article>
+<article class="card"><h3>Ahmed</h3><p class="note"><a href="#SX-03">SX-03 · Cabin and power</a>. Start the pure model and check the 100 m³ reference.</p></article>
+<article class="card"><h3>Sama</h3><p class="note"><a href="#SX-05A">SX-05A · Run service</a>. Prepare the app and migration while the team agrees on payloads.</p></article>
+<article class="card"><h3>Abdelrahman</h3><p class="note"><a href="#SX-07A">SX-07A · Workflow runner</a>. Build trigger and tool boundaries against example events.</p></article>
+<article class="card"><h3>Jana</h3><p class="note"><a href="#SX-04A">SX-04A · Confirmed activity</a>. Provide one sample event and get Ahmed to validate the cabin input.</p></article>
+<article class="card"><h3>Suhad</h3><p class="note"><a href="#SX-08A">SX-08A · 2D deck</a>. Port the original SVG in React JSX and build against the fixtures.</p></article>
+</div>
+<p class="note">Members can prepare these tickets in parallel. Dependencies on SX-01A mean the example payload needs agreement before those changes are integrated. Use the planned owner as the default and coordinate any reassignment on the shared board.</p>
+</section>
+<section id="tickets"><h2>Pull a ticket</h2>
+<p class="intro">Filter by member or checkpoint, then expand a ticket and copy it into the shared Git issue board. This HTML is the planning copy. Claim the issue and track <strong>Ready → Doing → Review → Integrated</strong> in the team’s shared board. JSON export carries ticket IDs, owners, dependencies and acceptance checks for other tools.</p>
+<div class="toolbar" role="group" aria-label="Filter or export the backlog">
+<label><span>Owner</span><select id="owner"><option value="">Everyone</option></select></label>
+<label><span>Checkpoint</span><select id="milestone"><option value="">All checkpoints</option></select></label>
+<button id="export" type="button">Download all tickets as JSON</button>
+</div>
+<p class="note" id="count" aria-live="polite"></p><div id="board"></div>
+</section>
+<section id="release"><h2>Definition of done and release checks</h2>
+<div class="grid two">
+<article class="card"><h3>Before merging a ticket</h3><p class="note">Name the dependency and affected consumer. Attach the passing fixture or test. Have the owning team review the diff. Verify model logic at the API boundary or UI behavior in the actual screen, depending on the ticket. Record known gaps with their own issue.</p></article>
+<article class="card"><h3>Before tagging the release</h3><p class="note">Verify nominal, stale advice and fresh retry from a clean checkout. Test exact Ground snapshot values and private-field exclusion. Rehearse both browser sessions on one host and the offline backup. Test playback and English subtitles before final submission.</p></article>
+</div>
+<p class="note-box note"><strong>Golden replay.</strong> Five display beats at 00:00, 01:00, 08:00, 10:00 and 13:00. Relay also delivers at 06:00 and 15:00. At 13:00 Crew is on v103 with 0.20 kW and Ground remains on v102 with 0.60 kW. The stale advisory produces zero applied effects. The separate fresh approval test applies once.</p>
+<div class="links"><a href="SYMBIOSIS%20X%20Technical%20Architecture.html">Technical architecture and file ownership</a><a href="SYMBIOSIS%20X%20Flight%20Simulation%20Design.html">Flight simulation and 2D deck</a></div>
+</section>
+</main>
+<script type="application/json" id="ticket-data">[
+  {
+    "id": "SX-01A",
+    "title": "Freeze kickoff examples and demo contract",
+    "owner": "Mohamed",
+    "reviewers": [
+      "Sama",
+      "Abdelrahman",
+      "Suhad"
+    ],
+    "milestone": "Start",
+    "deps": [],
+    "paths": [
+      "contracts/examples/",
+      "docs/decisions/"
+    ],
+    "build": "Agree IDs, role payloads, timebase, quality and authority. Publish Crew v103, Ground v102, candidate and receipt examples plus the golden scenario ID.",
+    "done": "All consumers acknowledge the same example revision. Ground v102 and Crew v103 include the correct distinct values."
+  },
+  {
+    "id": "SX-05A",
+    "title": "Boot the shared FastAPI and SQLite run",
+    "owner": "Sama",
+    "reviewers": [
+      "Mohamed",
+      "Ahmed"
+    ],
+    "milestone": "Start",
+    "deps": [
+      "SX-01A"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/main.py",
+      "backend/src/symbiosis_x/storage/",
+      "backend/src/symbiosis_x/api/runs.py"
+    ],
+    "build": "Wire one writer, migrations and role context. Start a seeded stub run and serve initial Crew and Ground payloads.",
+    "done": "Fresh database migrates. Start returns a run ID. Crew and Ground reads return typed examples and GET leaves mission time unchanged."
+  },
+  {
+    "id": "SX-03",
+    "title": "Model cabin CO₂, scrubber and power",
+    "owner": "Ahmed",
+    "reviewers": [
+      "Sama"
+    ],
+    "milestone": "Start",
+    "deps": [
+      "SX-01A"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/simulation/spacecraft/atmosphere.py",
+      "backend/src/symbiosis_x/simulation/spacecraft/electrical.py",
+      "backend/tests/unit/"
+    ],
+    "build": "Build pure atmosphere and power functions. Use the current 100 m³ golden assumption. Model primary removal 20 → 4 m³/h and headroom 0.60 → 0.20 kW.",
+    "done": "Nominal balance is near 2,000 ppm. The golden model yields about 2,063.74 ppm at 13:00. A 0.40 kW standby request cannot pass at 0.20 kW."
+  },
+  {
+    "id": "SX-04A",
+    "title": "Confirm crew activity with a stable event",
+    "owner": "Jana",
+    "reviewers": [
+      "Ahmed",
+      "Sama"
+    ],
+    "milestone": "Start",
+    "deps": [
+      "SX-01A"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/crew/activity.py",
+      "catalogs/crew/synthetic-roster.json",
+      "contracts/examples/"
+    ],
+    "build": "Emit a confirmed synthetic activity with crew, modeled zone, mode and time. Keep planned activity separate.",
+    "done": "A planned exercise leaves the source term unchanged. Confirmed activity changes it once and a repeated event cannot double count a person."
+  },
+  {
+    "id": "SX-07A",
+    "title": "Build the bounded workflow runner",
+    "owner": "Abdelrahman",
+    "reviewers": [
+      "Sama"
+    ],
+    "milestone": "Start",
+    "deps": [
+      "SX-01A"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/workflows/dispatcher.py",
+      "backend/src/symbiosis_x/workflows/runner.py",
+      "backend/src/symbiosis_x/workflows/tools.py"
+    ],
+    "build": "Register typed triggers and tool allowlists. Return intents to Sama’s writer. Make retry and step limits policy inputs.",
+    "done": "Duplicate trigger does not produce a second intent. Denied tool or exhausted budget ends with a reason and no plant effect."
+  },
+  {
+    "id": "SX-08A",
+    "title": "Render the original 2D deck from fixtures",
+    "owner": "Suhad",
+    "reviewers": [
+      "Ahmed",
+      "Mohamed"
+    ],
+    "milestone": "Start",
+    "deps": [
+      "SX-01A"
+    ],
+    "paths": [
+      "frontend/src/features/deck/",
+      "frontend/src/ui/",
+      "frontend/src/api/validateFixture.js"
+    ],
+    "build": "Port the 800×405 cutaway into React JSX. Link asset IDs to the inspector, layers and status labels. Use Tailwind and fixture responses.",
+    "done": "Keyboard and pointer open the same device. One visual zone may reference the common cabin model. Unknown readings stay labeled at phone width."
+  },
+  {
+    "id": "SX-02",
+    "title": "Run mission phase, clock and ETA",
+    "owner": "Ahmed",
+    "reviewers": [
+      "Sama",
+      "Suhad"
+    ],
+    "milestone": "First slice",
+    "deps": [
+      "SX-03"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/simulation/clock.py",
+      "backend/src/symbiosis_x/simulation/spacecraft/navigation.py",
+      "scenarios/"
+    ],
+    "build": "Return scheduled phase, next waypoint and ETA basis from pure flight inputs. Apply due scenario events in mission time. Hold phase when readiness is unmet.",
+    "done": "The same run inputs reproduce the phase sequence. A held phase shows a conditional ETA. The route plan changes only on a new approved revision."
+  },
+  {
+    "id": "SX-05B",
+    "title": "Persist advance, reset and event ordering",
+    "owner": "Sama",
+    "reviewers": [
+      "Ahmed",
+      "Abdelrahman"
+    ],
+    "milestone": "First slice",
+    "deps": [
+      "SX-05A"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/application/runs.py",
+      "backend/src/symbiosis_x/storage/repository.py",
+      "backend/tests/integration/"
+    ],
+    "build": "Implement one authoritative scheduler and atomic step/reset. At equal mission time apply scenario changes and observations before delivery, then checks and commits. Separate event sequence from decision revision.",
+    "done": "Same advance ID returns its prior receipt. Two different requests for one cursor yield one advance. Reset closes the old run, and a restart preserves state."
+  },
+  {
+    "id": "SX-17",
+    "title": "Register devices, sample sensors and reduce state",
+    "owner": "Ahmed",
+    "reviewers": [
+      "Jana",
+      "Sama"
+    ],
+    "milestone": "First slice",
+    "deps": [
+      "SX-03",
+      "SX-04A"
+    ],
+    "paths": [
+      "catalogs/sx01/",
+      "backend/src/symbiosis_x/telemetry/",
+      "backend/src/symbiosis_x/twin/aggregate.py"
+    ],
+    "build": "Map CO₂ sensor, scrubber and bus to stable IDs. Produce canonical observations with units, quality and mission timestamps. Coordinate the acceptance and rollup adapter with Sama.",
+    "done": "Valid samples update their device and zone. Stale, missing or out-of-order samples do not silently replace accepted readings. No simulator truth enters a role payload."
+  },
+  {
+    "id": "SX-04B",
+    "title": "Add private check-ins and personal baseline",
+    "owner": "Jana",
+    "reviewers": [
+      "Sama",
+      "Suhad"
+    ],
+    "milestone": "First slice",
+    "deps": [
+      "SX-04A",
+      "SX-05A"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/crew/wellbeing.py",
+      "backend/src/symbiosis_x/api/crew.py",
+      "contracts/examples/"
+    ],
+    "build": "Add one synthetic profile, timestamped baseline observations and a private check-in. Document the proposed alert rule and missing sample behavior.",
+    "done": "Authorized Crew can read the private record and see unknown for missing data. A check-in neither changes cabin state nor advances the operational decision revision."
+  },
+  {
+    "id": "SX-08B",
+    "title": "Connect flight route and deck to a real run",
+    "owner": "Suhad",
+    "reviewers": [
+      "Ahmed",
+      "Sama"
+    ],
+    "milestone": "First slice",
+    "deps": [
+      "SX-08A",
+      "SX-02",
+      "SX-05B",
+      "SX-17"
+    ],
+    "paths": [
+      "frontend/src/features/mission/",
+      "frontend/src/api/client.js",
+      "frontend/src/api/useRunProjection.js"
+    ],
+    "build": "Use the real role projection for the flight route, mission clock and layer inspector. Reuse shared SVG and format ETA from the server.",
+    "done": "Start → step → read Crew and Ground on one run. Reads never tick time. Selecting a deck asset does not change the run."
+  },
+  {
+    "id": "SX-06",
+    "title": "Evaluate plans and gate crew commands",
+    "owner": "Sama",
+    "reviewers": [
+      "Ahmed",
+      "Abdelrahman"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-05B",
+      "SX-17"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/twin/forecast.py",
+      "backend/src/symbiosis_x/twin/constraints.py",
+      "backend/src/symbiosis_x/application/commit.py",
+      "backend/src/symbiosis_x/api/decisions.py"
+    ],
+    "build": "Evaluate hold, standby and allowed reduced activity from accepted state. Commit only after checking authority, freshness, basis, policy and power. Persist the stable receipt.",
+    "done": "Known no-feasible differs from insufficient evidence. Stale or rejected approval applies zero effects. A fresh retry returns the same receipt and applies once across restart."
+  },
+  {
+    "id": "SX-07B",
+    "title": "Connect Monitor and Planner handoffs",
+    "owner": "Abdelrahman",
+    "reviewers": [
+      "Sama",
+      "Jana"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-07A",
+      "SX-06"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/workflows/monitor.py",
+      "backend/src/symbiosis_x/workflows/planner.py",
+      "backend/src/symbiosis_x/workflows/incident.py"
+    ],
+    "build": "Open one owned incident from accepted equipment evidence. Request missing evidence within policy. Ask Sama’s planner and publish reason and next owner.",
+    "done": "Repeated trigger leaves one incident. Known constraints and missing evidence produce distinct outputs. The agent cannot commit a plant action."
+  },
+  {
+    "id": "SX-07C",
+    "title": "Deliver snapshots and recheck Ground advice",
+    "owner": "Abdelrahman",
+    "reviewers": [
+      "Sama",
+      "Suhad"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-07A",
+      "SX-05B"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/workflows/relay.py",
+      "backend/src/symbiosis_x/application/projections.py",
+      "backend/src/symbiosis_x/api/ground.py"
+    ],
+    "build": "Queue allowed immutable snapshots. Stamp observation time and receipt time. Receive advisory and recheck its cited basis and expiry. Disposition uses separate delivery.",
+    "done": "At 13:00 Ground v102 still shows 0.60 kW, while Crew v103 shows 0.20. Advice is held with zero applied effects. Ground receives v103 at 15:00."
+  },
+  {
+    "id": "SX-09A",
+    "title": "Wire the private Crew review and approval panel",
+    "owner": "Suhad",
+    "reviewers": [
+      "Jana",
+      "Sama"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-08B",
+      "SX-04B",
+      "SX-06"
+    ],
+    "paths": [
+      "frontend/src/features/crew/"
+    ],
+    "build": "Show baseline, quality and last good time. Display options, constraint reasons and approval receipt. Use one operation ID across retries.",
+    "done": "Only the Crew projection supplies private data. Rejected approval shows the real reason. Retry resolves the same receipt."
+  },
+  {
+    "id": "SX-09B",
+    "title": "Wire Ground received view and advice",
+    "owner": "Suhad",
+    "reviewers": [
+      "Abdelrahman",
+      "Sama"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-08B",
+      "SX-07C"
+    ],
+    "paths": [
+      "frontend/src/features/ground/"
+    ],
+    "build": "Show the last delivered deck and basis, sample age, link state and advisory status. Submit advice against the selected delivered snapshot.",
+    "done": "Browser connectivity and simulated link state are distinguishable. No onboard disposition appears before its own delivery."
+  },
+  {
+    "id": "SX-10",
+    "title": "Connect agent status and BPM case trace",
+    "owner": "Abdelrahman",
+    "reviewers": [
+      "Suhad",
+      "Sama"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-07B",
+      "SX-07C"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/workflows/",
+      "backend/src/symbiosis_x/application/projections.py",
+      "frontend/src/features/workflow/"
+    ],
+    "build": "Agree the minimal trace/status payload. Suhad renders actor, basis, reason, next owner and step times. Link case events to the affected asset.",
+    "done": "Show actual 5m downlink, 2m receipt-to-issue and 5m uplink on the golden replay. Open work stays open. Private details and raw tool arguments are excluded."
+  },
+  {
+    "id": "SX-19",
+    "title": "Show a separate archived RadLab timeline",
+    "owner": "Jana",
+    "reviewers": [
+      "Suhad",
+      "Mohamed"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-04B",
+      "SX-08A"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/crew/radiation.py",
+      "frontend/src/features/crew/",
+      "docs/acceptance.md"
+    ],
+    "build": "Use a documented instrument export and hand Suhad the timestamped series with spacecraft, detector, quantity, unit and UTC coverage.",
+    "done": "Chart labels source and gaps. Radiation remains archive context separate from SIM-01 and from planner inputs."
+  },
+  {
+    "id": "SX-18A",
+    "title": "Version scenarios and prove seeded sensor replay",
+    "owner": "Ahmed",
+    "reviewers": [
+      "Mohamed",
+      "Sama"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-02",
+      "SX-17",
+      "SX-05B"
+    ],
+    "paths": [
+      "scenarios/sx01-golden-v1.json",
+      "scenarios/variants/",
+      "scenarios/expected/",
+      "backend/tests/integration/"
+    ],
+    "build": "Freeze the golden defaults with the team. Create nominal, fresh-standby, constrained and sensor-quality fixtures. Keep expected assertions separate. Use stable per-sensor random streams.",
+    "done": "Same seed reproduces observation traces. A changed noise seed affects observation noise with the same command history. The golden run preserves the internal 06:00 and 15:00 deliveries."
+  },
+  {
+    "id": "SX-18B",
+    "title": "Export backup frames from the integrated run",
+    "owner": "Mohamed",
+    "reviewers": [
+      "Ahmed",
+      "Suhad"
+    ],
+    "milestone": "Release",
+    "deps": [
+      "SX-18A",
+      "SX-07C",
+      "SX-09A",
+      "SX-09B"
+    ],
+    "paths": [
+      "scenarios/expected/",
+      "docs/acceptance.md",
+      "frontend/src/features/mission/"
+    ],
+    "build": "Generate five display frames from the tagged run. Preserve scenario versions, seed and role-scoped evidence. Document how to play the offline backup.",
+    "done": "Fresh golden replay matches saved frames at each beat. The offline backup opens without the API. No private fields appear in the shareable Ground frames."
+  },
+  {
+    "id": "SX-11A",
+    "title": "Verify privacy, idempotency and the golden replay",
+    "owner": "Mohamed",
+    "reviewers": [
+      "Sama",
+      "Abdelrahman",
+      "Jana"
+    ],
+    "milestone": "Release",
+    "deps": [
+      "SX-06",
+      "SX-07C",
+      "SX-09A",
+      "SX-09B",
+      "SX-10",
+      "SX-18A"
+    ],
+    "paths": [
+      "backend/tests/integration/",
+      "docs/acceptance.md"
+    ],
+    "build": "Run nominal, golden, separate successful retry and rejected approval cases. Inject a synthetic marker through the actual private API and inspect all shared outputs.",
+    "done": "Ground packet matches the delivered revision and values. Shared trace and logs omit the marker and private metadata. Golden stale advice and a failed commit each produce zero effects."
+  },
+  {
+    "id": "SX-11B",
+    "title": "Rehearse and release on the demo laptop",
+    "owner": "Mohamed",
+    "reviewers": [
+      "Abdelrahman",
+      "Suhad"
+    ],
+    "milestone": "Release",
+    "deps": [
+      "SX-11A",
+      "SX-18B",
+      "SX-19"
+    ],
+    "paths": [
+      "README.md",
+      "docs/acceptance.md"
+    ],
+    "build": "Test a clean checkout of the candidate release with separate browser sessions on the shared host, then rehearse the single-laptop fallback. Attach evidence and tag the passing revision.",
+    "done": "Two views reference the same run with distinct roles. Backup frames open, the demo script follows the five beats, and the team can reproduce the build from the release tag."
+  },
+  {
+    "id": "SX-11C",
+    "title": "Package the submission and 30-second story",
+    "owner": "Mohamed",
+    "reviewers": [
+      "Suhad",
+      "Abdelrahman"
+    ],
+    "milestone": "Release",
+    "deps": [
+      "SX-11B"
+    ],
+    "paths": [
+      "README.md",
+      "docs/acceptance.md"
+    ],
+    "build": "Collect P6 screen clips and record the reference story. Include English subtitles, project page draft, dataset/source links and submission checklist.",
+    "done": "The recording opens with subtitles, shows the same released behavior and has correct source labels. Check submission assets against the team’s confirmed event instructions."
+  },
+  {
+    "id": "SX-12",
+    "title": "Adapt newly supplied data",
+    "owner": "Mohamed",
+    "reviewers": [
+      "Ahmed",
+      "Jana",
+      "Sama"
+    ],
+    "milestone": "Expansion",
+    "deps": [
+      "SX-17",
+      "SX-18A"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/telemetry/adapters.py",
+      "scenarios/variants/",
+      "docs/decisions/"
+    ],
+    "build": "Record provenance, units, timebase, coverage and privacy. Add an adapter and a separate fixture.",
+    "done": "Missing data stays explicit. The new fixture validates and the original golden case still passes."
+  },
+  {
+    "id": "SX-13",
+    "title": "Extend atmosphere and electrical models",
+    "owner": "Ahmed",
+    "reviewers": [
+      "Sama"
+    ],
+    "milestone": "Expansion",
+    "deps": [
+      "SX-17",
+      "SX-18A"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/simulation/spacecraft/",
+      "catalogs/sx01/"
+    ],
+    "build": "Add evidence-supported O₂, pressure, feeder isolation or energy one at a time, each with units and dependencies.",
+    "done": "Each added model has a nominal and a fault test. An unsupported quantity is labeled scripted or unknown."
+  },
+  {
+    "id": "SX-14",
+    "title": "Model docking and transfer",
+    "owner": "Ahmed",
+    "reviewers": [
+      "Sama",
+      "Suhad"
+    ],
+    "milestone": "Expansion",
+    "deps": [
+      "SX-02",
+      "SX-08B"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/simulation/spacecraft/mechanical.py",
+      "scenarios/variants/",
+      "frontend/src/features/mission/"
+    ],
+    "build": "Use a separate mission case to model mechanical capture, verified seal, hatch and crew/cargo movement.",
+    "done": "Unknown seal holds transfer and gas exchange after capture. Crew and cargo generate separate receipts."
+  },
+  {
+    "id": "SX-15",
+    "title": "Add server-driven play, pause and injection",
+    "owner": "Sama",
+    "reviewers": [
+      "Suhad",
+      "Abdelrahman"
+    ],
+    "milestone": "Expansion",
+    "deps": [
+      "SX-05B",
+      "SX-08B"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/application/runs.py",
+      "frontend/src/features/mission/"
+    ],
+    "build": "Route autoplay, pause and permitted fault injection through the same writer as manual step. Confirm command shapes first.",
+    "done": "Pause stops ticks. Facilitation permissions are enforced by the server. Injection has an audit record."
+  },
+  {
+    "id": "SX-16",
+    "title": "Compare workflow variants and agent quality",
+    "owner": "Abdelrahman",
+    "reviewers": [
+      "Mohamed",
+      "Suhad"
+    ],
+    "milestone": "Expansion",
+    "deps": [
+      "SX-10",
+      "SX-18A"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/workflows/",
+      "frontend/src/features/workflow/",
+      "docs/acceptance.md"
+    ],
+    "build": "Compare seeded traces and agent outcomes. Evaluate any learned advisory against deterministic checks.",
+    "done": "Reports distinguish elapsed and open intervals and compare false alerts and escalation lead time without granting action authority."
+  }
+]</script>
+<script>
+const tickets = JSON.parse(document.getElementById("ticket-data").textContent);
+const board = document.getElementById("board");
+const owner = document.getElementById("owner");
+const milestone = document.getElementById("milestone");
+const count = document.getElementById("count");
+const cards = new Map();
+
+function element(tag, text, className) {
+  const node = document.createElement(tag);
+  if (text) node.textContent = text;
+  if (className) node.className = className;
+  return node;
+}
+
+for (const [select, values] of [[owner,["Mohamed","Ahmed","Sama","Abdelrahman","Jana","Suhad"]],[milestone,["Start","First slice","Golden run","Release","Expansion"]]]) {
+  for (const value of values) {
+    const option = element("option",value);
+    option.value = value;
+    select.append(option);
+  }
+}
+
+function issueText(t) {
+  return [
+    "## " + t.id + " · " + t.title,
+    "**Owner** " + t.owner,
+    "**Reviewers** " + t.reviewers.join(", "),
+    "**Checkpoint** " + t.milestone,
+    "**Depends on** " + (t.deps.join(", ") || "Kickoff agreement"),
+    "**Paths** " + t.paths.map(path=>"`"+path+"`").join(", "),
+    "### Build",
+    t.build,
+    "### Acceptance",
+    "- [ ] " + t.done,
+    "### Evidence",
+    "- [ ] Link the passing check and the pull request."
+  ].join("\n\n");
+}
+
+function showIssue(ticket, target, copyButton) {
+  const text = issueText(ticket);
+  const fallback = () => {
+    target.hidden = false;
+    target.value = text;
+    target.focus();
+    target.select();
+    copyButton.textContent = "Issue text ready to copy";
+  };
+  if (!navigator.clipboard) {
+    fallback();
+    return;
+  }
+  navigator.clipboard.writeText(text).then(() => {
+    copyButton.textContent = "Copied";
+  }).catch(fallback);
+}
+
+function field(label, text) {
+  const paragraph = element("p",null,"note");
+  paragraph.append(element("strong",label+" "),document.createTextNode(text));
+  return paragraph;
+}
+
+for (const ticket of tickets) {
+  const card = element("details");
+  card.id = ticket.id;
+  const summary = element("summary");
+  summary.append(element("span",ticket.id,"ticket-id"),element("strong",ticket.title),
+    element("span",ticket.owner,"chip"),
+    element("span",ticket.milestone,"chip"+(ticket.milestone==="Expansion"?" expand":"")));
+  const body = element("div",null,"ticket-body");
+  const depends = field("Depends on",ticket.deps.length?"":"Kickoff agreement");
+  ticket.deps.forEach((id,i)=>{
+    if (i) depends.append(document.createTextNode(", "));
+    const link = element("a",id);
+    link.href = "#"+id;
+    depends.append(link);
+  });
+  const paths = field("Paths","");
+  ticket.paths.forEach((path,i)=>{
+    if (i) paths.append(document.createTextNode(" · "));
+    paths.append(element("code",path));
+  });
+  const copy = element("button","Copy issue");
+  copy.type = "button";
+  const fallback = element("textarea");
+  fallback.hidden = true;
+  fallback.readOnly = true;
+  fallback.setAttribute("aria-label",ticket.id+" issue text");
+  copy.addEventListener("click",()=>showIssue(ticket,fallback,copy));
+  body.append(field("Reviewers",ticket.reviewers.join(", ")),depends,paths,
+    field("Build",ticket.build),field("Acceptance",ticket.done),copy,fallback);
+  card.append(summary,body);
+  cards.set(ticket.id,card);
+  board.append(card);
+}
+
+function filter() {
+  let visible = 0;
+  for (const ticket of tickets) {
+    const match = (!owner.value||ticket.owner===owner.value)&&(!milestone.value||ticket.milestone===milestone.value);
+    cards.get(ticket.id).hidden = !match;
+    if (match) visible++;
+  }
+  count.textContent = visible+" of "+tickets.length+" tickets"+(visible?".":" match these filters.");
+}
+
+function openLinkedTicket() {
+  const card = cards.get(location.hash.slice(1));
+  if (!card) return;
+  if (card.hidden) {
+    owner.value = "";
+    milestone.value = "";
+    filter();
+  }
+  card.open = true;
+  card.scrollIntoView({block:"start"});
+}
+
+owner.addEventListener("change",filter);
+milestone.addEventListener("change",filter);
+window.addEventListener("hashchange",openLinkedTicket);
+document.getElementById("export").addEventListener("click",()=>{
+  const file = new Blob([JSON.stringify({schema_version:1,project:"SYMBIOSIS X",tickets},null,2)+"\n"],{type:"application/json"});
+  const link = element("a");
+  link.href = URL.createObjectURL(file);
+  link.download = "symbiosis-x-feature-backlog.json";
+  link.click();
+  setTimeout(()=>URL.revokeObjectURL(link.href),1000);
+});
+filter();
+openLinkedTicket();
+</script></body></html>

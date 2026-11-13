@@ -1,0 +1,1 @@
+"""Feasibility constraints · P4."""

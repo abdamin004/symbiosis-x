@@ -1,0 +1,428 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SYMBIOSIS X — Flight Simulation Design</title>
+<style>
+:root{color-scheme:dark;--bg:#101820;--panel:#192833;--stroke:#405a69;--ink:#edf5f3;--muted:#b8cbd1;--green:#a6efcb;--blue:#accff5;--amber:#ffca88}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,sans-serif}p,h1,h2,h3,dl,dd{margin:0}a{color:var(--green);text-underline-offset:.25em}button,select{font:inherit;color:inherit;background:#20323f;border:1px solid #5d7b89;border-radius:6px;padding:7px 11px;cursor:pointer}button[aria-pressed=true]{color:#12352b;background:var(--green);border-color:var(--green);font-weight:650}button:disabled{opacity:.55;cursor:default}:focus-visible{outline:2px solid white;outline-offset:3px}.wrap{width:min(1230px,calc(100% - 42px));margin:auto}header{padding:clamp(46px,8vw,95px) 0 35px;background:radial-gradient(ellipse at 82% 9%,#284544,transparent 67%);border-bottom:1px solid var(--stroke)}h1{font-size:clamp(2.8rem,7.5vw,6.2rem);letter-spacing:-.07em;line-height:1;margin:10px 0 20px}h2{font-size:clamp(1.75rem,4vw,3.1rem);letter-spacing:-.05em;line-height:1.05;margin-bottom:13px}h3{font-size:1.08rem;line-height:1.22;margin-bottom:7px}.lead{max-width:870px;font-size:1.16rem;color:#dce8e7}.meta,th{font:650 .74rem/1.45 ui-monospace,monospace;letter-spacing:.07em;color:var(--green)}.meta{text-transform:uppercase}.note,.intro{color:var(--muted)}.intro{max-width:900px;margin-bottom:17px}.note{font-size:.9rem}nav{display:flex;gap:10px 21px;flex-wrap:wrap;padding:13px 0;font-size:.9rem}nav a{text-decoration:none}main>section{border-top:1px solid var(--stroke);padding:36px 0;scroll-margin-top:12px}.panel,.card,.step{background:var(--panel);border:1px solid var(--stroke);border-radius:10px}.card,.step{padding:14px}.toolbar,.controls{display:flex;align-items:center;flex-wrap:wrap;gap:7px}.toolbar{justify-content:space-between;padding:12px 15px;border-bottom:1px solid var(--stroke)}.controls{font-size:.87rem}.grid{display:grid;gap:10px;grid-template-columns:repeat(3,minmax(0,1fr));margin:11px 0}.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}.route-box{display:grid;grid-template-columns:minmax(0,1fr) 255px;gap:10px;padding:12px 15px;border-bottom:1px solid var(--stroke)}.route-box svg{display:block;width:100%;height:auto}.route-box aside{align-self:center}.route-box dt{color:var(--muted);font-size:.82rem}.route-box dd{margin-bottom:5px;font-weight:650}.flight-layout{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:10px;padding:12px 15px}.map-scroll{overflow:auto;min-width:0;border:1px solid var(--stroke);border-radius:8px}.map-scroll svg{display:block;width:100%;height:auto;min-width:600px}.map-item{cursor:pointer;color:#a7cbdb}.module{fill:#254653;stroke:#75a2ae;stroke-width:1.5}.svg-label{fill:#f2f7f7;font:650 14px system-ui}.svg-fine{fill:#b8ced9;font:600 11px ui-monospace,monospace}.crew-node circle{fill:#223f51;stroke:#b2d8f2;stroke-width:1.5}.crew-node text,.agent-node text{fill:#dbeef0;font:650 12px ui-monospace,monospace}.agent-node rect{fill:#254354;stroke:#83c2c9}.map-item.dim{opacity:.28}.map-item.selected{opacity:1}.map-item.selected .module,.map-item.selected>circle,.map-item.selected>rect{stroke:white;stroke-width:3}.map-item.warn .module{fill:#573b26;stroke:var(--amber)}.inspector p+p{margin-top:8px}.inspector .note{margin-bottom:10px}.inspector .controls{margin-top:10px}.live{font-weight:700;color:var(--green)}.warn-text{color:var(--amber)}.events{padding:12px 15px;border-top:1px solid var(--stroke)}.event-tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}.event-tags button{font-size:.82rem}.flowline{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;list-style:none;padding:0;margin:13px 0}.step{position:relative}.step:not(:last-child)::after{position:absolute;right:-11px;top:40%;content:"›";color:var(--green);font-weight:bold;z-index:1}.return-line{border-left:3px solid var(--green);padding:7px 10px;background:#1c3435}.flow-panel{padding:14px;margin-top:12px}.flow-panel .flowline{grid-template-columns:repeat(4,minmax(0,1fr))}.branch{border-left:3px solid var(--amber);padding:9px 12px;background:#322c27;margin:9px 0}.tablewrap,.svgscroll{overflow:auto}table{border-collapse:collapse;width:100%;min-width:655px}th,td{text-align:left;vertical-align:top;border-bottom:1px solid var(--stroke);padding:11px}th{background:#20313a}td{color:#dce7e9;font-size:.91rem}td:first-child{font-weight:650}.links{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:15px}.diagram{display:block;width:100%;min-width:780px;height:auto}.diagram rect{fill:#243d49;stroke:#7092a0}.diagram .frame{fill:#14232b;stroke:#4a6978}.diagram .caption{fill:#a6efcb;font:650 13px ui-monospace,monospace}.diagram text{fill:#eef5f4;font:650 15px system-ui}.diagram .sub{fill:#bcd1d5;font:12px system-ui}.diagram .arrow{stroke:#a6efcb;fill:none;stroke-width:2;marker-end:url(#arrow)}.diagram .cmd{stroke:#ffca88;stroke-dasharray:6 4;marker-end:url(#cmd)}[hidden]{display:none!important}
+@media(max-width:840px){.flight-layout,.route-box{grid-template-columns:1fr}.flowline,.flow-panel .flowline{display:flex;overflow:auto;padding-bottom:6px}.flowline li{flex:0 0 186px}}
+@media(max-width:620px){.wrap{width:calc(100% - 26px)}.grid,.grid.two{grid-template-columns:1fr}main>section{padding:28px 0}.flight-layout,.route-box,.toolbar,.events{padding:10px}}
+@media print{.flow-panel[hidden]{display:block!important}.flow-panel,.card{break-inside:avoid}.toolbar,nav{display:none}.diagram,.map-scroll svg{min-width:0}.svgscroll,.map-scroll{overflow:visible}}
+</style></head>
+<body>
+<header><div class="wrap"><p class="meta">SYMBIOSIS X / Team design review · 12 November 2026</p><h1>Flight simulation design</h1><p class="lead">Load a planned mission, fly it in software, and see what the ship, crew and Ground are doing at every checkpoint. Routine workflows run throughout the flight. An incident starts when one of them needs a decision outside its normal authority.</p></div></header>
+<nav class="wrap" aria-label="Sections"><a href="#console">Flight and deck</a><a href="#demo-scenario">Main demo</a><a href="#runtime">Main flight workflow</a><a href="#systems">Subsystem workflows</a><a href="#authority">Agents and authority</a><a href="#controls">Operator controls</a><a href="#architecture">Architecture</a><a href="#team">Team and handoffs</a><a href="#review">Team decisions</a></nav>
+<main class="wrap">
+<section id="console"><h2>See the flight and look inside the ship</h2>
+<p class="intro">A fictional crew follows an approved outbound route to a lunar outpost, hands over a payload and returns. Open the route, look inside the ship or switch to Ground. This clickable storyboard reuses the original team deck drawing and illustrates states with authored data. Checkpoints jump through mission time and the preview relays only the snapshots shown. The proposed Python runtime produces the actual simulation state.</p>
+<div class="panel">
+<div class="toolbar">
+<div class="controls" aria-label="Facilitator preview controls"><button type="button" id="play">Run preview</button><button type="button" id="step">Step checkpoint</button><button type="button" id="reset">Reset</button><button type="button" id="inject" disabled>Inject scrubber fault</button></div>
+<div class="controls" role="group" aria-label="Preview scenario" id="scenarios"></div>
+<div class="controls" role="group" aria-label="Operator viewpoint" id="roles"></div>
+</div>
+<div class="route-box">
+<div>
+<svg id="route" viewBox="0 0 745 186" role="img" aria-label="Planned route from Earth to a lunar outpost and back">
+<defs><pattern id="route-grid" width="25" height="25" patternUnits="userSpaceOnUse"><path d="M25 0H0V25" fill="none" stroke="#28414d"/></pattern></defs>
+<rect width="745" height="186" rx="9" fill="#13222c"/><rect width="745" height="186" rx="9" fill="url(#route-grid)"/>
+<path d="M90 101Q300 -20 599 81" stroke="#a6efcb" stroke-width="2.4" fill="none"/><path d="M599 105Q310 190 90 119" stroke="#a8ccf2" stroke-width="2.4" stroke-dasharray="7 6" fill="none"/>
+<circle cx="70" cy="109" r="26" fill="#397a93" stroke="#a8dff3"/><circle cx="625" cy="93" r="24" fill="#536b7d" stroke="#c9d9e0"/>
+<path d="M650 61h19m-9-9v18" stroke="#ffca88" stroke-width="2"/><text x="45" y="155" class="svg-label">Earth</text><text x="591" y="148" class="svg-label">Lunar outpost</text>
+<text x="230" y="28" class="svg-fine">PLANNED OUTBOUND LEG</text><text x="285" y="174" class="svg-fine">PLANNED RETURN LEG</text>
+<g id="route-marker"><circle r="12" fill="#213747" stroke="#f6fff9" stroke-width="2.4"/><path d="M-5 4L0-6l5 10z" fill="#a6efcb"/></g>
+</svg>
+</div>
+<aside aria-live="polite"><p class="meta" id="projection"></p><h3 id="phase"></h3><dl><dt>Mission clock</dt><dd id="clock"></dd><dt id="eta-label">Planned ETA</dt><dd id="eta"></dd><dt>Route and checkpoint</dt><dd id="route-state"></dd></dl><p class="note" id="age"></p></aside>
+</div>
+<div class="toolbar"><div class="controls" role="group" id="layers" aria-label="Deck layer"></div><p class="note">Select a compartment, crew member or agent. In nominal transit the facilitator can inject a scrubber fault.</p></div>
+<div class="flight-layout">
+<div class="map-scroll" tabindex="0" aria-label="Scrollable 2D spacecraft deck">
+<svg id="ship-map" viewBox="0 0 800 405" aria-labelledby="ship-title ship-desc">
+      <title id="ship-title">SYMBIOSIS X spacecraft schematic</title>
+      <desc id="ship-desc">A selectable plan view showing four simulated crew, the life-support rack, power bus, medical kit, communications, habitat, stores, command and three software agent roles.</desc>
+      <defs>
+        <pattern id="deck-grid" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M24 0H0V24" fill="none" stroke="#1e3746" stroke-width="1"/></pattern>
+        <pattern id="solar-grid" width="18" height="16" patternUnits="userSpaceOnUse"><rect x="1" y="1" width="16" height="14" rx="1" fill="#203d57" stroke="#4d7195" stroke-width=".7"/></pattern>
+        <linearGradient id="shell" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#284956"/><stop offset="1" stop-color="#172b38"/></linearGradient>
+        <symbol id="person" viewBox="0 0 30 30"><circle cx="15" cy="10" r="4.2" fill="currentColor"/><path d="M7.8 23c.3-4.4 3-7 7.2-7s6.9 2.6 7.2 7" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></symbol>
+      </defs>
+      <rect width="800" height="405" fill="#0b1923"/><rect width="800" height="405" fill="url(#deck-grid)" opacity=".57"/>
+      <g class="svg-fine" opacity=".9"><path d="M22 40h34m-17-17v34M744 40h34m-17-17v34M22 352h34m-17-17v34" stroke="#426173"/><text x="52" y="29">AFT</text><text x="708" y="29">FORE</text><text x="40" y="345">DECK PLAN</text></g>
+      <g aria-hidden="true">
+        <path d="M207 82v37m0 194v24M506 82v36m0 197v22" stroke="#567990" stroke-width="8"/>
+        <rect x="122" y="49" width="172" height="34" rx="4" fill="url(#solar-grid)" stroke="#607d99"/>
+        <rect x="420" y="49" width="172" height="34" rx="4" fill="url(#solar-grid)" stroke="#607d99"/>
+        <path d="M54 174h47v106H54l-13-18v-69z" fill="#162c3c" stroke="#62869b" stroke-width="2"/>
+        <path d="M45 198h29m-29 14h29m-29 14h29m-29 14h29m-29 14h29" stroke="#3c5b6d" stroke-width="2"/>
+        <path d="M100 150l38-38h482c64 0 116 40 143 111-27 71-79 111-143 111H138l-38-38z" fill="url(#shell)" stroke="#92adbb" stroke-width="2.4"/>
+        <path d="M111 157l32-33h479c55 0 106 39 128 99-22 60-73 99-128 99H143l-32-33z" fill="#10212c" stroke="#536e79"/>
+        <path d="M121 207h568l27 16-27 16H121z" fill="#2b4650" stroke="#78979d" stroke-dasharray="4 5"/>
+        <path d="M116 220h588" stroke="#93c4bc" opacity=".4"/>
+      </g>
+      <g class="map-item" data-pick="scrubber" role="button" tabindex="0" aria-label="Inspect life support and scrubber">
+        <rect class="module" x="135" y="136" width="174" height="64" rx="5"/><text x="149" y="156" class="svg-label">01 / LIFE SUPPORT</text>
+        <circle cx="168" cy="178" r="12" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M168 169q12 0 4 9 5 10-6 7-9-5 2-9z" fill="currentColor"/>
+        <text x="190" y="183" class="svg-fine">CO₂ SCRUBBER</text><circle id="scrubber-led" cx="292" cy="151" r="4" fill="#83e7bf"/>
+      </g>
+      <g class="map-item" data-pick="medical" role="button" tabindex="0" aria-label="Inspect medical kit">
+        <rect class="module" x="319" y="136" width="148" height="64" rx="5"/><text x="331" y="156" class="svg-label">02 / MEDICAL</text>
+        <rect x="333" y="165" width="27" height="22" rx="4" fill="none" stroke="currentColor"/><path d="M346.5 170v12m-6-6h12" stroke="currentColor" stroke-width="2"/><text x="370" y="181" class="svg-fine">MED KIT</text>
+      </g>
+      <g class="map-item" data-pick="comms" role="button" tabindex="0" aria-label="Inspect communications and ground link">
+        <rect class="module" x="477" y="136" width="136" height="64" rx="5"/><text x="489" y="156" class="svg-label">03 / COMMS</text>
+        <path d="M496 171q11-9 22 0m-18 4q7-6 14 0m-10 4q3-3 6 0" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="507" cy="184" r="1.5" fill="currentColor"/><text x="524" y="183" class="svg-fine">LINK</text>
+      </g>
+      <g class="map-item" data-pick="power" role="button" tabindex="0" aria-label="Inspect power bus">
+        <rect class="module" x="135" y="246" width="174" height="64" rx="5"/><text x="149" y="266" class="svg-label">04 / POWER BUS</text>
+        <rect x="149" y="276" width="30" height="16" rx="3" fill="none" stroke="currentColor"/><path d="M180 280h3v8h-3m-21-4h12m-6-4v8" stroke="currentColor" fill="none"/><text x="190" y="288" class="svg-fine">LOAD MARGIN</text><circle id="power-led" cx="292" cy="261" r="4" fill="#83e7bf"/>
+      </g>
+      <g class="map-item" data-pick="habitat" role="button" tabindex="0" aria-label="Inspect habitat and rest facilities">
+        <rect class="module" x="319" y="246" width="148" height="64" rx="5"/><text x="331" y="266" class="svg-label">05 / HABITAT</text>
+        <path d="M335 277h32v19h-32zM375 277h32v19h-32z" fill="#233d48" stroke="#4c6a77"/><path d="M340 277v19m40-19v19" stroke="#7492a0"/>
+      </g>
+      <g class="map-item" data-pick="stores" role="button" tabindex="0" aria-label="Inspect food and water stores">
+        <rect class="module" x="477" y="246" width="136" height="64" rx="5"/><text x="489" y="266" class="svg-label">06 / STORES</text>
+        <path d="M492 277h19v16h-19zm25 0h19v16h-19zm25 0h19v16h-19z" fill="#244351" stroke="#557b8a"/>
+      </g>
+      <g class="map-item" data-pick="command" role="button" tabindex="0" aria-label="Inspect command procedures and training">
+        <path class="module" d="M625 143q67 8 109 80-42 70-109 80z"/>
+        <path d="M653 160q41 18 63 63-22 44-63 63" fill="none" stroke="#6a9caa" stroke-width="2"/>
+        <text x="642" y="223" class="svg-label">COMMAND</text>
+      </g>
+      <g class="map-item crew-node" data-pick="c03" role="button" tabindex="0" aria-label="Inspect crew C03 systems engineer" transform="translate(249 222)"><circle r="15"/><use href="#person" x="-12" y="-12" width="24" height="24"/><text x="-12" y="-20">C03</text></g>
+      <g class="map-item crew-node" data-pick="c02" role="button" tabindex="0" aria-label="Inspect crew C02 medical officer" transform="translate(399 222)"><circle r="15"/><use href="#person" x="-12" y="-12" width="24" height="24"/><text x="-12" y="-20">C02</text></g>
+      <g class="map-item crew-node" data-pick="c04" role="button" tabindex="0" aria-label="Inspect crew C04 communications specialist" transform="translate(550 222)"><circle r="15"/><use href="#person" x="-12" y="-12" width="24" height="24"/><text x="-12" y="-20">C04</text></g>
+      <g class="map-item crew-node" data-pick="c01" role="button" tabindex="0" aria-label="Inspect crew C01 commander" transform="translate(669 253)"><circle r="15"/><use href="#person" x="-12" y="-12" width="24" height="24"/><text x="-12" y="30">C01</text></g>
+      <path d="M234 311v38h131m40-35v35m135-39v39H445" stroke="#65a9b4" stroke-dasharray="3 4" fill="none" opacity=".7"/>
+      <text x="79" y="374" class="svg-fine">SOFTWARE ROLES</text>
+      <g class="map-item agent-node" data-pick="monitor" role="button" tabindex="0" aria-label="Inspect Monitor agent" transform="translate(208 352)"><rect width="116" height="32" rx="6"/><text x="13" y="20">01  MONITOR</text></g>
+      <g class="map-item agent-node" data-pick="planner" role="button" tabindex="0" aria-label="Inspect Planner agent" transform="translate(343 352)"><rect width="116" height="32" rx="6"/><text x="13" y="20">02  PLANNER</text></g>
+      <g class="map-item agent-node" data-pick="relay" role="button" tabindex="0" aria-label="Inspect Relay agent" transform="translate(478 352)"><rect width="116" height="32" rx="6"/><text x="13" y="20">03  RELAY</text></g>
+      <path d="M328 368h11m123 0h12" stroke="#8dd5d4" stroke-width="2"/>
+    </svg>
+</div>
+<aside class="card inspector" aria-live="polite"><p class="meta" id="inspect-system"></p><h3 id="inspect-name"></h3><p class="live" id="inspect-state"></p><p class="note" id="inspect-detail"></p><a href="#systems" id="inspect-link">Open this workflow</a></aside>
+</div>
+<div class="events"><p class="meta" id="runtime-title">Workflows active at this checkpoint</p><p id="checkpoint" class="note"></p><div id="active-workflows" class="event-tags" role="group" aria-label="Inspect active workflows"></div><p class="note" id="fault-link" hidden><a href="SYMBIOSIS%20X%20Mission%20Control%20Design.html#workflows">Open the detailed incident and Ground advice workflows</a></p></div>
+</div>
+</section>
+<section id="demo-scenario"><h2>The main demo uses a fixed scenario</h2>
+<p class="intro">The flight preview above uses authored mission checkpoints. The integrated five-event demo uses the separate <code>sx01-golden</code> fixture, with the current 100 m³ cabin baseline and proposed seed <code>4242</code> with noise off. Use this same fixture for rehearsal and generate the offline backup frames from the integrated release.</p>
+<ol class="flowline" aria-label="Five-event reference demo in simulated minutes">
+<li class="step"><span class="meta">00:00</span><h3>Start nominal</h3><p class="note">Crew v101. Ground v100, observed one minute before start.</p></li>
+<li class="step"><span class="meta">01:00</span><h3>Scrubber degrades</h3><p class="note">Removal falls from 20 to 4 m³/h. Monitor opens the case on v102.</p></li>
+<li class="step"><span class="meta">08:00</span><h3>Ground sends advice</h3><p class="note">Ground received v102 at 06:00 and recommends standby.</p></li>
+<li class="step"><span class="meta">10:00</span><h3>Available power drops</h3><p class="note">Crew moves to v103. Standby needs 0.40 kW and has 0.20 kW available.</p></li>
+<li class="step"><span class="meta">13:00</span><h3>Hold the old advice</h3><p class="note">Crew sees the hold and zero applied effects. Ground receives v103 at 15:00.</p></li>
+</ol>
+<p class="note">Keep the compact 10 m³ research case, seeded sensor faults, and lunar phase replay as separate scenarios. That preserves the main demonstration and gives the team space to try new inputs and rules.</p>
+</section>
+<section id="runtime"><h2>The workflow that runs the flight</h2>
+<p class="intro">The run starts from a versioned mission package. Navigation tracks the approved plan. Scheduled events and changes from the simulation activate smaller workflows, even on a nominal flight. The flight loop continues when a nonblocking task is waiting for review.</p>
+<ol class="flowline" aria-label="Main flight simulation workflow">
+<li class="step"><span class="meta">Load run</span><h3>Open the mission package</h3><p class="note">Freeze route, checkpoints, asset and crew profiles, policies and event fixtures for this run.</p></li>
+<li class="step"><span class="meta">Advance</span><h3>Move the simulation clock</h3><p class="note">Apply due scenario inputs and accepted observations, then deliver due messages. Process equal-time events in stable order.</p></li>
+<li class="step"><span class="meta">Dispatch</span><h3>Run due workflows</h3><p class="note">Navigation, atmosphere, power, crew and Relay react to their configured events and scheduled checks.</p></li>
+<li class="step"><span class="meta">Decide</span><h3>Apply policy and authority</h3><p class="note">Routine work proceeds through approved tools. Protected actions wait for Crew approval and a current-state recheck in Sama’s gate.</p></li>
+<li class="step"><span class="meta">Publish</span><h3>Update both views</h3><p class="note">Record outcomes once. Publish onboard state and queue a filtered Ground snapshot. Update ETA and pending work.</p></li>
+</ol>
+<p class="return-line note">Repeat from <strong>Move the simulation clock</strong> until the run is paused, completed or terminated. Browser refreshes read projections without advancing the clock. A mission hold can freeze a phase transition while the clock and onboard checks continue.</p>
+<div class="grid two">
+<article class="card"><h3>Nominal flight path</h3><p class="note">Check readiness → follow the next scheduled leg → advance at the planned checkpoint when prerequisites pass. Minor state changes update the display and tasks. Route changes require a new approved plan revision.</p></article>
+<article class="card"><h3>Separate incident path</h3><p class="note">Subsystem escalates → open one case → compare options → get a decision → apply through the gate → verify → close or keep held. The existing incident canvas documents those branches.</p><div class="links"><a href="SYMBIOSIS%20X%20Mission%20Control%20Design.html#workflows">Incident and advice workflows</a><a href="SYMBIOSIS%20X%20Lunar%20Mission%20Lab.html">Numerical mission rehearsal</a></div></article>
+</div>
+</section>
+<section id="systems"><h2>Workflows that run inside the twin</h2>
+<p class="intro">Each workflow owns a piece of ship or crew state. Its trigger, dependency and result identify what the engine runs and what the deck shows. Phase schedules, limits and model fidelity are set by the mission package.</p>
+<div class="controls" id="systems-picker" role="group" aria-label="Flight subsystem workflow"></div>
+<div id="system-diagrams"></div>
+</section>
+<section id="authority"><h2>Humans lead, agents handle routine work</h2>
+<p class="intro">Abdelrahman’s Monitor, Planner agent and Relay run inside Sama’s FastAPI service. They use deterministic workflow rules, typed tools and bounded retries. Agents can carry out low-risk work in the simulation on their own. A language model can later explain a decision or organize evidence through the same limited tool interface.</p>
+<div class="tablewrap" tabindex="0" aria-label="Agent and human decision rights">
+<table><thead><tr><th scope="col">Actor</th><th scope="col">Can do routinely</th><th scope="col">When it hands off</th></tr></thead><tbody>
+<tr><td>Monitor</td><td>Run freshness and constraint checks. Deduplicate alerts, open an inspection task and assign the configured role.</td><td>Escalate when evidence is missing, a check is overdue or a modeled threshold is threatened.</td></tr>
+<tr><td>Planner</td><td>Compare the approved route with modeled progress. Calculate candidate feasibility and recommend a checklist.</td><td>Ask the commander before changing the route, energizing standby life support or overriding a phase hold.</td></tr>
+<tr><td>Relay</td><td>Queue approved operational snapshots, deliver eligible packets and record receipts.</td><td>Flag link loss and stale or expired advice. Ground suggestions return for onboard review.</td></tr>
+<tr><td>Crew and commander</td><td>Confirm actual activity, execute tasks, and approve or hold protected simulated changes.</td><td>The gate rechecks current evidence, role and feasibility and issues a receipt. Crew verifies effect separately.</td></tr>
+<tr><td>Ground controller</td><td>Review the last received ship snapshot and send advice tied to that revision.</td><td>Wait for a separately delivered disposition. Crew stays responsible for action when the link is unavailable.</td></tr>
+</tbody></table></div>
+<div class="grid two">
+<article class="card"><h3>Evaluate agent decisions</h3><p class="note">Record trigger, evidence and age, policy version, proposed action, actor, disposition and verification. In seeded replay, compare escalation correctness, missed and duplicate tasks, time to acknowledgment, and whether protected changes were blocked or applied once. A human can pause automation or take ownership of an open task.</p></article>
+<article class="card"><h3>Keep the BPM canvas connected</h3><p class="note">Suhad’s dashboards use the same run, asset and workflow IDs in the route, deck, task board and process trace. Show agent status, reason and next owner from the role-specific projection. Show designed path beside recorded milestones. Measure intervals from event timestamps and mark work that remains open. Exclude private health and wellbeing from shared exports.</p></article>
+</div>
+</section>
+<section id="controls"><h2>What an operator can control</h2>
+<div class="tablewrap" tabindex="0" aria-label="Simulation controls by role"><table>
+<thead><tr><th scope="col">Console</th><th scope="col">Controls</th><th scope="col">Effect and feedback</th></tr></thead><tbody>
+<tr><td>Simulation facilitator</td><td>Load package, select scenario and seed, run, pause, step, reset or inject an authored event.</td><td>Operate the training run. Reset creates a new run ID. Fault injection is a scenario action separate from an astronaut command.</td></tr>
+<tr><td>Crew on the ship</td><td>Inspect deck, acknowledge or confirm work, request a phase hold, review a candidate, approve or decline.</td><td>Requests name the affected asset and expected decision basis. Show accepted, held or rejected with the reason. A follow-up observation verifies effect.</td></tr>
+<tr><td>Ground mission control</td><td>Inspect delivered route and deck, review age and link, compose advice tied to delivered evidence.</td><td>Show queued, delivered or expired status as evidence arrives. Ground advice enters the onboard review queue.</td></tr>
+<tr><td>Mentor or debrief lead</td><td>Replay by phase, system or case. Compare expected workflow with recorded steps and assess agents.</td><td>Read the authorized trace, including open waits, duplicate attempts, escalation and verification.</td></tr>
+</tbody></table></div>
+</section>
+<section id="architecture"><h2>Architecture behind the flight</h2>
+<p class="intro">Python owns the clock, numerical models and deterministic policy. FastAPI serves role-specific projections and accepts typed commands. React with JavaScript/JSX and Tailwind draws the route, deck, workflow status and event history. Virtual sensor samples carry a source, timestamp, unit and quality before the twin aggregates them by component and subsystem. The simulator is the only plant this design operates.</p>
+<div class="svgscroll" tabindex="0" aria-label="Scrollable flight simulation architecture">
+<svg class="diagram" viewBox="0 0 1090 365" role="img" aria-label="Mission package, simulation and workflow engine, SQLite, separate crew and Ground projection and React canvas">
+<defs><marker id="arrow" markerWidth="8" markerHeight="7" refX="7" refY="3" orient="auto"><path d="M0 0L7 3L0 6Z" fill="#a6efcb"/></marker><marker id="cmd" markerWidth="8" markerHeight="7" refX="7" refY="3" orient="auto"><path d="M0 0L7 3L0 6Z" fill="#ffca88"/></marker></defs>
+<rect class="frame" x="198" y="10" width="620" height="347" rx="10"/><text class="caption" x="213" y="35">PYTHON / FASTAPI · ONE WRITER PER RUN</text>
+<rect class="frame" x="841" y="10" width="240" height="347" rx="10"/><text class="caption" x="856" y="35">REACT OPERATOR CANVASES</text>
+<path class="arrow" d="M179 103H222"/><path class="arrow" d="M425 95H481"/><path class="arrow cmd" d="M481 122H425"/><path class="arrow" d="M582 139V191"/><path class="arrow" d="M684 91H703V218H719"/><path class="arrow" d="M684 106H697V294H719"/>
+<path class="arrow" d="M799 218H864"/><path class="arrow" d="M799 294H864"/><path class="arrow" d="M683 224H694V324H854V152H864"/>
+<path class="arrow cmd" d="M864 204H833V54H591V72"/><path class="arrow cmd" d="M864 309H831V312H799"/><path class="arrow cmd" d="M719 309H710V128H684"/>
+<rect x="12" y="70" width="167" height="68" rx="8"/><text x="25" y="96">Mission package</text><text class="sub" x="25" y="115">Route, assets and fixtures</text>
+<rect x="222" y="72" width="203" height="67" rx="8"/><text x="237" y="98">Simulation engine</text><text class="sub" x="237" y="117">Clock, navigation, gas, power</text>
+<rect x="481" y="72" width="203" height="67" rx="8"/><text x="496" y="98">Twin and workflow core</text><text class="sub" x="496" y="117">Events, agents and command gate</text>
+<rect x="481" y="191" width="202" height="67" rx="8"/><text x="496" y="217">SQLite journal</text><text class="sub" x="496" y="236">Snapshots, tasks and receipts</text>
+<rect x="719" y="193" width="80" height="50" rx="7"/><text x="730" y="223">Crew</text>
+<rect x="719" y="268" width="80" height="55" rx="7"/><text x="730" y="291">Relay</text><text class="sub" x="730" y="309">Delivered</text>
+<rect x="864" y="123" width="195" height="50" rx="7"/><text x="877" y="154">Authorized BPM trace</text>
+<rect x="864" y="193" width="195" height="50" rx="7"/><text x="877" y="223">Flight and ship · Crew</text>
+<rect x="864" y="268" width="195" height="55" rx="7"/><text x="877" y="300">Flight and ship · Ground</text>
+</svg></div>
+<p class="note">Solid arrows carry observations, events and projections. Dashed arrows carry Crew requests, Ground advice or committed simulator commands. Relay delivers advice to the onboard event workflow. The server enforces role permissions and never builds Ground by hiding fields in a Crew response.</p>
+<div class="grid two">
+<article class="card"><h3>Mission package and incoming data</h3><p class="note">Map each supplied dataset field to a typed signal with source, unit, time, quality and coverage. Use it to initialize, calibrate or replay only the model it supports. Keep missing fields explicitly unknown or label synthetic defaults. Validate a new package before starting a run. Store package and policy versions with the replay.</p></article>
+<article class="card"><h3>One clock, distinct state</h3><p class="note">Keep simulator state, accepted twin estimates, and delivered Ground snapshots separate. Use journal sequence for order, decision revision for applicability and a snapshot ID for exact evidence. A reset starts a new run. One committed command has one simulator effect, even when retried.</p></article>
+</div>
+</section>
+<section id="team"><h2>Two teams, one integrated release</h2>
+<p class="intro">Proposed split for the two integration laptops. Each contributor works in a local Git checkout. Both streams converge into the tagged release on the demo host.</p>
+<div class="grid two">
+<article class="card"><h3>Simulation and backend</h3><p class="note">Mohamed leads integration. Ahmed builds the spacecraft twin and authored faults. Sama owns accepted telemetry, the planner, the crew approval gate and SQLite.</p></article>
+<article class="card"><h3>Crew and operations</h3><p class="note">Abdelrahman leads the second stream and owns the agents and Ground link. Jana builds the astronaut twin and confirmed activity events. Suhad owns the React dashboards.</p></article>
+</div>
+<p class="note">Jana supplies confirmed activity to the spacecraft model through the shared contract. Private health stays in the onboard view. Both teams verify the same seeded scenario before the release merge.</p>
+<div class="links"><a href="SYMBIOSIS%20X%20Technical%20Architecture.html">Technical architecture and folders</a><a href="SYMBIOSIS%20X%20Feature%20Backlog%20and%20Build%20Plan.html">Pull tickets and follow the build plan</a><a href="SYMBIOSIS%20X%20Technical%20Architecture.html#agents">Agent handoffs and dashboard contract</a></div>
+</section>
+<section id="review"><h2>Decisions for the team</h2>
+<div class="grid">
+<article class="card"><h3>Agree on the flight model</h3><p class="note">Proposed baseline is a preplanned phase-and-waypoint simulator with schedule-based ETA. Give navigation a true state and a phase gate. Add trajectory dynamics when the team has inputs it can validate.</p></article>
+<article class="card"><h3>Agree on subsystem depth</h3><p class="note">Proposed baseline models cabin CO₂ and power headroom. Oxygen, pressure, feeders and stored energy have their own states and workflows. Use explicitly scripted or unavailable signals until those models have evidence.</p></article>
+<article class="card"><h3>Agree on agent authority</h3><p class="note">Proposed baseline lets agents check, assign, route and record. Humans approve consequential simulated changes. Decide which additional routine commands, if any, qualify for a narrow automatic allowlist.</p></article>
+</div>
+<p class="note">The preview keeps the original drawing’s four crew stations. The team can combine duties and use one individually modeled synthetic profile. The route, ship controls and incident work all use the same mission package and event model.</p>
+<div class="links"><a href="SYMBIOSIS%20X%20Agentic%20Twin%20Design.html#canvas">Original team deck</a><a href="SYMBIOSIS%20X%20Mission%20Control%20Design.html#workflows">Incident BPM design</a><a href="SYMBIOSIS%20X%20P1%20Architecture%20Pack.html">Component and interface detail</a><a href="../Masters%20Smart%20Health/Code/SYMBIOSIS%20X/Research%20Reviews/2026-11-11/Shared%20Data%20and%20API%20Contract.md">Current team contract</a></div>
+</section></main>
+<script>
+const systems = {
+  nav:{name:"Navigation and flight phase",trigger:"Scheduled checkpoint, navigation sample or approved plan revision",owner:"Planner checks · Commander owns the flight plan",flow:[
+    ["Read plan","Load the active leg, waypoint, scheduled window and prerequisites."],
+    ["Compare progress","Use the simulator position or phase observation and mark its quality."],
+    ["Update flight view","Publish the current leg, next waypoint and schedule-based ETA."],
+    ["Check transition","Advance the scheduled leg only when the simulated readiness gate passes."]
+  ],branch:"If a prerequisite fails or evidence is unknown, keep the current phase held, mark ETA conditional and route a review. An approved replan creates a new route revision.",record:"NavigationProgress · CheckpointReached · PhaseHeld",couples:"Uses readiness from life support, power and the mission checklist."},
+  air:{name:"Atmosphere and life support",trigger:"Simulation tick, confirmed activity, ventilation or gas/equipment observation",owner:"Monitor watches · Systems specialist verifies",flow:[
+    ["Read cabin and equipment","Collect accepted CO₂, oxygen and pressure signals with units and quality."],
+    ["Update environment","Apply the supported gas model, crew activity and effective removal."],
+    ["Check the envelope","Compare modeled results to the phase policy. Preserve unknown signals."],
+    ["Publish or escalate","Update deck and forecast. Escalate a failed condition with evidence and owner."]
+  ],branch:"A failed scrubber opens a case through the incident workflow. Check airflow, power and feeder evidence before recommending standby. Oxygen and pressure can be scripted independently until numerical models exist.",record:"AtmosphereUpdated · EquipmentConditionChanged · IncidentRequested",couples:"Uses confirmed crew activity and supplied electrical power. Feeds readiness and incident decisions."},
+  power:{name:"Power and electrical distribution",trigger:"Load request, generation change, feeder observation or simulation tick",owner:"Monitor checks · Systems specialist reviews changes",flow:[
+    ["Read supply and load","Track modeled headroom, requested incremental kW and feeder status."],
+    ["Evaluate dependency","Check supply and delivery separately. Use stored energy in kWh only when modeled."],
+    ["Publish margin","Update the power layer and each dependent asset’s readiness."],
+    ["Apply or hold","Allow a routine check. Route consequential load changes to the command gate."]
+  ],branch:"An open feeder can block a device even when generation is sufficient. Missing feeder evidence remains unknown. A power drop causes dependent candidates to be reevaluated.",record:"PowerAvailabilityChanged · LoadEligibilityUpdated",couples:"Feeds life support, navigation readiness and the planner. Requests from a device carry the device ID."},
+  crew:{name:"Crew work and wellbeing",trigger:"Shift checkpoint, accepted task or voluntary synthetic check-in",owner:"Commander assigns · Astronaut confirms · Private reviewer follows up",flow:[
+    ["Assign routine work","Create an inspection, payload check, exercise or rest task from the plan."],
+    ["Confirm actual activity","Record what the crew member actually did and where."],
+    ["Update relevant views","Send confirmed operational activity to the environment model. Keep private observations onboard."],
+    ["Record outcome","Complete or hold the task. Route any private follow-up separately."]
+  ],branch:"A missed check creates an owned reminder. A private wellbeing note can request human follow-up, with its content, timestamps and identifiers excluded from Ground and shared debrief.",record:"TaskAssigned · ActivityConfirmed · TaskOutcomeRecorded",couples:"Confirmed activity affects the gas model. Private wellbeing stays in its own lane."},
+  comms:{name:"Communications and Ground oversight",trigger:"Snapshot due, scheduled delivery, restored link or advisory arrival",owner:"Relay operates · Ground advises · Crew decides",flow:[
+    ["Prepare snapshot","Select allowed operational fields and stamp observation time and basis."],
+    ["Queue and deliver","Use simulated mission time. Track link status and actual delivery."],
+    ["Show Ground state","Update the received route, deck and workflow projection when the packet arrives."],
+    ["Route advice","Ground can issue a basis-bound advisory. Onboard reviews it against current state."]
+  ],branch:"During an outage Ground retains its last received view. Crew continues locally. A fresh snapshot and an advisory disposition are separate deliveries.",record:"SnapshotQueued · SnapshotDelivered · AdvisoryReceived",couples:"Consumes onboard operational projections. Advice returns to the onboard workflow, not to actuator controls."},
+  mech:{name:"Mechanical interfaces and transfer",trigger:"Approach readiness, capture event or authorized hatch request",owner:"Commander and systems specialist",flow:[
+    ["Check readiness","Review flight phase, docking port, current conditions and evidence."],
+    ["Record capture","Connect the two vehicles mechanically after the capture event."],
+    ["Check hatch prerequisites","Require valid seal and pressure evidence plus a separate authorization."],
+    ["Transfer and reconcile","After the hatch opens, record crew movement and cargo custody separately."]
+  ],branch:"Unknown seal evidence keeps the hatch closed. Each air volume remains isolated and all transfer tasks remain held.",record:"CaptureRecorded · HatchStateChanged · TransferRecorded",couples:"Uses navigation readiness and atmosphere evidence. Hatch state changes the gas connection only when modeled."}
+};
+const assetInfo = {
+  scrubber:{name:"Life support rack",system:"air",detail:"Scrubber, ventilation and gas observations share a cabin zone. The deck displays oxygen and pressure separately from CO₂."},
+  power:{name:"Essential power bus",system:"power",detail:"Inspect available kW, standby demand and feeder state. A feeder is distinct from the source budget."},
+  command:{name:"Command deck",system:"nav",detail:"Review the approved flight plan, next checkpoint and phase readiness. Protected changes go through a typed request and an onboard recheck."},
+  comms:{name:"Communications",system:"comms",detail:"Inspect the link and delivered basis. Ground can send advice against that basis."},
+  medical:{name:"Medical and wellbeing station",system:"crew",detail:"Onboard reviewers can receive private follow-ups and view synthetic check-in evidence."},
+  habitat:{name:"Habitat and rest",system:"crew",detail:"Planned rest and exercise are schedule entries. Confirmed activity is a separate observation."},
+  stores:{name:"Payload and stores",system:"mech",detail:"Crew can inspect the manifest and assign a custody task. Opening a hatch does not complete transfer."},
+  c01:{name:"Commander",system:"nav",detail:"Owns flight readiness, phase decisions and protected authorizations."},
+  c02:{name:"Medical officer",system:"crew",detail:"Owns private follow-ups. The profile and any medical readings are synthetic."},
+  c03:{name:"Systems specialist",system:"air",detail:"Inspects atmosphere and equipment and verifies the response to any approved change."},
+  c04:{name:"Communications specialist",system:"comms",detail:"Reviews the delivered basis and coordinates the Ground handoff."},
+  monitor:{name:"Monitor agent",system:"air",detail:"Checks evidence, opens and deduplicates inspection tasks, and escalates modeled risk."},
+  planner:{name:"Planner agent",system:"nav",detail:"Updates flight progress and proposes feasible responses through typed tools."},
+  relay:{name:"Relay agent",system:"comms",detail:"Queues filtered snapshots and routes advice and receipts."}
+};
+const base = {min:0,rev:101,phase:"Departure",route:"Earth departure cleared",next:"Lunar approach",due:6960,point:[97,97],power:.60,removal:20,work:["nav","air","power","crew","comms"],event:"Launch the approved plan. Schedule checks and open the crew shift."};
+const transit = {...base,min:2880,rev:102,phase:"Outbound transit",route:"On the planned outbound leg",point:[328,53],event:"A scheduled flight check refreshes ETA. Monitor assigns a routine equipment inspection."};
+const approach = {...base,min:6960,rev:106,phase:"Lunar approach",route:"Approach checkpoint under review",next:"Mechanical capture",due:7020,point:[556,71],work:["nav","air","power","comms","mech"],event:"Check the simulated prerequisites for approach and docking."};
+const dock = {...base,min:7020,rev:107,phase:"Docked",route:"Mechanically captured",next:"Depart outpost",due:7560,point:[659,62],work:["mech","air","crew","comms"],event:"Mechanical capture is recorded. Verify the hatch before crew or payload transfer."};
+const home = {...base,min:9360,rev:111,phase:"Inbound transit",route:"On the planned return leg",next:"Earth recovery",due:14400,point:[355,142],work:["nav","air","power","crew","comms"],event:"The crew reconciles the payload and open work, then monitors the return leg."};
+const done = {...base,min:14400,rev:112,phase:"Return complete",route:"Earth recovery checkpoint reached",next:null,due:null,point:[98,121],work:["comms"],event:"Close the run and review the operational trace."};
+const fault = {...transit,min:2881,rev:103,phase:"Outbound transit",removal:4,incident:true,event:"Primary scrubber degradation triggers a life-support case. The flight plan remains active."};
+const drop = {...fault,min:2890,rev:104,power:.20,event:"The power drop invalidates the standby candidate. Reevaluate locally and keep the incident open."};
+const blocked = {...drop,min:6960,rev:105,phase:"Approach held",route:"Readiness gate held · route still approved",point:[548,69],held:true,event:"The scheduled checkpoint arrives. Keep the phase held while conditions and options are reviewed."};
+const previews = {nominal:[base,transit,approach,dock,home,done],fault:[base,transit,fault,drop,blocked]};
+const layerOptions=[["all","Deck overview"],["nav","Flight"],["air","Gases and airflow"],["power","Power and electrical"],["crew","Crew and wellbeing"],["comms","Ground link"],["mech","Mechanical and cargo"]];
+const primaryAsset={all:"command",nav:"command",air:"scrubber",power:"power",crew:"habitat",comms:"comms",mech:"stores"};
+const byId=id=>document.getElementById(id);
+let scenario="nominal", role="crew", current=0, selected="command", deckLayer="all", system="nav", timer;
+function button(group,id,label,handler){
+  const node=document.createElement("button");
+  node.type="button";node.dataset.value=id;node.textContent=label;
+  node.addEventListener("click",handler);group.append(node);
+}
+function toggle(group,id){
+  for (const node of group.children) node.setAttribute("aria-pressed",String(node.dataset.value===id));
+}
+function duration(min){
+  const hours=Math.floor(min/60);
+  return (hours?hours+"h ":"")+(min%60)+"m";
+}
+function missionTime(min){
+  return "MET "+Math.floor(min/1440)+"d "+String(Math.floor(min%1440/60)).padStart(2,"0")+":"+String(min%60).padStart(2,"0");
+}
+function observation(){
+  const runs=previews[scenario];
+  const now=runs[current];
+  const received=runs.slice(0,current+1).filter((entry,index)=>index===0||entry.min+5<=now.min).at(-1);
+  return {now,state:role==="crew"?now:received};
+}
+function assetValue(id,state) {
+  if(id==="scrubber") return state.removal+" m³/h effective removal · O₂ and pressure unmodeled";
+  if(id==="power") return state.power.toFixed(2)+" kW headroom · standby needs 0.40 kW";
+  if(id==="command") return state.route;
+  if(id==="comms"||id==="relay") return "Operational basis v"+state.rev;
+  if(id==="monitor") return state.incident?"Cabin incident open":"Routine inspections scheduled";
+  if(id==="planner") return state.held?"Phase review required":state.power<.4?"Standby blocked by power":"Following approved plan";
+  if(id==="stores") return state.phase==="Docked"?"Hatch and payload handoff pending":"Payload custody · mission manifest";
+  return "Assigned duty · synthetic mission roster";
+}
+const privateAssets = new Set(["medical","c01","c02","c03","c04","habitat","monitor","planner"]);
+function inspect(id){
+  selected=id;
+  const {state}=observation();
+  const asset=assetInfo[id];
+  byId("inspect-system").textContent=systems[asset.system].name;
+  byId("inspect-name").textContent=asset.name;
+  byId("inspect-state").textContent=assetValue(id,state);
+  byId("inspect-state").classList.toggle("warn-text",(id==="scrubber"&&state.removal<20)||(id==="power"&&state.power<.4));
+  byId("inspect-detail").textContent=asset.detail;
+  for(const node of document.querySelectorAll("#ship-map [data-pick]")){
+    node.classList.toggle("selected",node.dataset.pick===id);
+    node.setAttribute("aria-pressed",String(node.dataset.pick===id));
+  }
+}
+function selectSystem(id){
+  system=id;
+  toggle(byId("systems-picker"),id);
+  for(const node of byId("system-diagrams").children)node.hidden=node.id!=="flow-"+id;
+}
+function render(){
+  const {now,state}=observation();
+  const ground=role==="ground";
+  toggle(byId("roles"),role);
+  toggle(byId("scenarios"),scenario);
+  toggle(byId("layers"),deckLayer);
+  byId("layers").querySelector('[data-value="crew"]').hidden=ground;
+  byId("projection").textContent=(ground?"Ground · received":"Crew · onboard")+" · v"+state.rev;
+  byId("phase").textContent=state.phase;
+  byId("clock").textContent=missionTime(now.min);
+  byId("eta-label").textContent=state.held?"Planned window / current ETA":"Planned ETA at this basis";
+  byId("eta").textContent=state.next?(state.held?state.next+" · planned "+missionTime(state.due)+" · new ETA pending":state.next+" · "+missionTime(state.due)):"Run complete";
+  byId("route-state").textContent=state.route;
+  byId("age").textContent=ground?"Observed "+missionTime(state.min)+" · delivered "+missionTime(state.min===0?0:state.min+5)+" · age "+duration(now.min-state.min)+". Updates on delivery.":"Onboard view · current preview checkpoint.";
+  byId("route-marker").setAttribute("transform","translate("+state.point.join(" ")+")");
+  byId("runtime-title").textContent=ground?"Workflows visible in received snapshot":"Workflows active at this checkpoint";
+  byId("checkpoint").textContent=ground?"Delivered evidence only. Onboard workflow activity may have changed since this snapshot.":state.event;
+  byId("fault-link").hidden=ground||!state.incident;
+  byId("active-workflows").replaceChildren();
+  for(const id of state.work.filter(id=>!ground||id!=="crew")){
+    button(byId("active-workflows"),id,systems[id].name,()=>{
+      selectSystem(id);
+      byId("systems").scrollIntoView({block:"start"});
+      byId("systems-picker").querySelector('[data-value="'+id+'"]').focus({preventScroll:true});
+    });
+  }
+  for(const node of document.querySelectorAll("#ship-map [data-pick]")){
+    const id=node.dataset.pick;
+    node.toggleAttribute("hidden",ground&&privateAssets.has(id));
+    node.classList.toggle("dim",deckLayer!=="all"&&assetInfo[id].system!==deckLayer);
+    node.classList.toggle("warn",(id==="scrubber"&&state.removal<20)||(id==="power"&&state.power<.4));
+  }
+  if(ground&&privateAssets.has(selected))selected="command";
+  inspect(selected);
+  const done=current===previews[scenario].length-1;
+  byId("step").disabled=done;
+  byId("inject").disabled=ground||scenario!=="nominal"||current!==1;
+  byId("play").disabled=done;
+  byId("play").textContent=timer?"Pause preview":"Run preview";
+}
+function pause(){
+  clearInterval(timer);timer=undefined;
+}
+function advance(){
+  current=Math.min(current+1,previews[scenario].length-1);
+  if(current===previews[scenario].length-1)pause();
+  render();
+}
+for(const [id,label] of [["nominal","Nominal flight"],["fault","Cabin fault branch"]]){
+  button(byId("scenarios"),id,label,()=>{pause();scenario=id;current=0;render();});
+}
+for(const [id,label] of [["crew","Crew now"],["ground","Ground received"]]){
+  button(byId("roles"),id,label,()=>{role=id;if(id==="ground"&&deckLayer==="crew")deckLayer="all";render();});
+}
+for(const [id,label] of layerOptions){
+  button(byId("layers"),id,label,()=>{if(role==="ground"&&id==="crew")return;deckLayer=id;selected=primaryAsset[id];render();});
+}
+for(const node of document.querySelectorAll("#ship-map [data-pick]")){
+  node.addEventListener("click",()=>inspect(node.dataset.pick));
+  node.addEventListener("keydown",event=>{
+    if(event.key==="Enter"||event.key===" "){event.preventDefault();inspect(node.dataset.pick);}
+  });
+}
+for(const [id,flow] of Object.entries(systems)){
+  button(byId("systems-picker"),id,flow.name,()=>selectSystem(id));
+  const article=document.createElement("article");
+  article.id="flow-"+id;
+  article.className="panel flow-panel";
+  const title=document.createElement("h3");
+  title.textContent=flow.name;
+  const trigger=document.createElement("p");
+  trigger.className="note";trigger.textContent="Trigger · "+flow.trigger;
+  const chain=document.createElement("ol");
+  chain.className="flowline";chain.setAttribute("aria-label",flow.name+" steps");
+  for(const [name,description] of flow.flow){
+    const step=document.createElement("li");step.className="step";
+    const heading=document.createElement("h3");heading.textContent=name;
+    const text=document.createElement("p");text.className="note";text.textContent=description;
+    step.append(heading,text);chain.append(step);
+  }
+  const branch=document.createElement("p");
+  branch.className="branch note";branch.textContent=flow.branch;
+  const output=document.createElement("p");output.className="note";
+  output.textContent=flow.owner+" · Proposed events: "+flow.record+". "+flow.couples;
+  article.append(title,trigger,chain,branch,output);
+  byId("system-diagrams").append(article);
+}
+byId("play").addEventListener("click",()=>{if(timer)pause();else timer=setInterval(advance,1900);render();});
+byId("step").addEventListener("click",()=>{pause();advance();});
+byId("reset").addEventListener("click",()=>{pause();current=0;render();});
+byId("inject").addEventListener("click",()=>{
+  if(role!=="crew"||scenario!=="nominal"||current!==1)return;
+  pause();
+  scenario="fault";
+  current=2;
+  deckLayer="air";
+  selected="scrubber";
+  render();
+});
+byId("inspect-link").addEventListener("click",()=>selectSystem(assetInfo[selected].system));
+selectSystem(system);
+render();
+</script></body></html>
