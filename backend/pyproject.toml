@@ -22,3 +22,6 @@ test = [
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["symbiosis_x*"]
+
+[tool.setuptools.package-data]
+"symbiosis_x.storage" = ["migrations/*.sql"]
