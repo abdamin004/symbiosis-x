@@ -1,0 +1,351 @@
+{
+  "schema_version": 1,
+  "storyboard_id": "sx01-golden-storyboard",
+  "synthetic": true,
+  "provenance": "synthetic_fixture",
+  "generated_by": "scripts/export_golden_storyboard.py",
+  "scenario_id": "sx01-golden",
+  "scenario_version": "1",
+  "seed": 4242,
+  "model_version": "cabin-1",
+  "policy_version": "demo-1",
+  "time_unit": "s",
+  "clock": "mission",
+  "note": "Saved role-scoped frames for the offline backup player. Crew and Ground each show only their own projection; no run ID or private health data is stored.",
+  "frames": [
+    {
+      "beat_id": "beat-1-nominal",
+      "label": "Nominal cabin",
+      "mission_s": 0,
+      "crew": {
+        "decision_rev": 101,
+        "co2": {
+          "value": 2000.0,
+          "unit": "ppm",
+          "observed_at_s": 0,
+          "kind": "modeled_estimate"
+        },
+        "standby": {
+          "result": "unknown",
+          "reason_code": "HEADROOM_UNKNOWN",
+          "required_kw": 0.4,
+          "available_kw": null
+        },
+        "trace": []
+      },
+      "ground": {
+        "snapshot_id": "ground-v100",
+        "decision_rev": 100,
+        "co2": {
+          "value": 2000.0,
+          "unit": "ppm",
+          "observed_at_s": -60,
+          "kind": "delivered_observation"
+        },
+        "power_headroom": {
+          "value": 0.6,
+          "unit": "kW",
+          "observed_at_s": -60
+        },
+        "delivery": {
+          "observed_at_s": -60,
+          "received_at_s": 0,
+          "age_s": 60,
+          "link_status": "delayed"
+        },
+        "trace": []
+      }
+    },
+    {
+      "beat_id": "beat-2-scrubber-degraded",
+      "label": "Main scrubber degrades",
+      "mission_s": 60,
+      "crew": {
+        "decision_rev": 102,
+        "co2": {
+          "value": 2000.0,
+          "unit": "ppm",
+          "observed_at_s": 60,
+          "kind": "modeled_estimate"
+        },
+        "standby": {
+          "result": "unknown",
+          "reason_code": "HEADROOM_UNKNOWN",
+          "required_kw": 0.4,
+          "available_kw": null
+        },
+        "trace": [
+          {
+            "mission_s": 60,
+            "actor": "monitor",
+            "step": "incident_opened",
+            "result": "INSUFFICIENT_EVIDENCE",
+            "reason_code": null
+          }
+        ]
+      },
+      "ground": {
+        "snapshot_id": "ground-v100",
+        "decision_rev": 100,
+        "co2": {
+          "value": 2000.0,
+          "unit": "ppm",
+          "observed_at_s": -60,
+          "kind": "delivered_observation"
+        },
+        "power_headroom": {
+          "value": 0.6,
+          "unit": "kW",
+          "observed_at_s": -60
+        },
+        "delivery": {
+          "observed_at_s": -60,
+          "received_at_s": 0,
+          "age_s": 120,
+          "link_status": "delayed"
+        },
+        "trace": []
+      }
+    },
+    {
+      "beat_id": "beat-3-ground-advice",
+      "label": "Ground issues advice on v102",
+      "mission_s": 480,
+      "crew": {
+        "decision_rev": 102,
+        "co2": {
+          "value": 2037.25,
+          "unit": "ppm",
+          "observed_at_s": 480,
+          "kind": "modeled_estimate"
+        },
+        "standby": {
+          "result": "unknown",
+          "reason_code": "HEADROOM_UNKNOWN",
+          "required_kw": 0.4,
+          "available_kw": null
+        },
+        "trace": [
+          {
+            "mission_s": 60,
+            "actor": "monitor",
+            "step": "incident_opened",
+            "result": "INSUFFICIENT_EVIDENCE",
+            "reason_code": null
+          },
+          {
+            "mission_s": 480,
+            "actor": "ground",
+            "step": "advice_queued",
+            "result": "queued",
+            "reason_code": null
+          }
+        ]
+      },
+      "ground": {
+        "snapshot_id": "ground-v102",
+        "decision_rev": 102,
+        "co2": {
+          "value": 2000.0,
+          "unit": "ppm",
+          "observed_at_s": 60,
+          "kind": "delivered_observation"
+        },
+        "power_headroom": {
+          "value": 0.6,
+          "unit": "kW",
+          "observed_at_s": 60
+        },
+        "delivery": {
+          "observed_at_s": 60,
+          "received_at_s": 360,
+          "age_s": 420,
+          "link_status": "delayed"
+        },
+        "trace": [
+          {
+            "mission_s": 60,
+            "actor": "monitor",
+            "step": "incident_opened",
+            "result": "INSUFFICIENT_EVIDENCE",
+            "reason_code": null
+          },
+          {
+            "mission_s": 480,
+            "actor": "ground",
+            "step": "advice_queued",
+            "result": "queued",
+            "reason_code": null
+          }
+        ]
+      }
+    },
+    {
+      "beat_id": "beat-4-power-drops",
+      "label": "Power headroom drops",
+      "mission_s": 600,
+      "crew": {
+        "decision_rev": 103,
+        "co2": {
+          "value": 2047.86,
+          "unit": "ppm",
+          "observed_at_s": 600,
+          "kind": "modeled_estimate"
+        },
+        "standby": {
+          "result": "rejected",
+          "reason_code": "POWER_LIMIT",
+          "required_kw": 0.4,
+          "available_kw": 0.2
+        },
+        "trace": [
+          {
+            "mission_s": 60,
+            "actor": "monitor",
+            "step": "incident_opened",
+            "result": "INSUFFICIENT_EVIDENCE",
+            "reason_code": null
+          },
+          {
+            "mission_s": 480,
+            "actor": "ground",
+            "step": "advice_queued",
+            "result": "queued",
+            "reason_code": null
+          },
+          {
+            "mission_s": 600,
+            "actor": "monitor",
+            "step": "incident_opened",
+            "result": "INSUFFICIENT_EVIDENCE",
+            "reason_code": null
+          }
+        ]
+      },
+      "ground": {
+        "snapshot_id": "ground-v102",
+        "decision_rev": 102,
+        "co2": {
+          "value": 2000.0,
+          "unit": "ppm",
+          "observed_at_s": 60,
+          "kind": "delivered_observation"
+        },
+        "power_headroom": {
+          "value": 0.6,
+          "unit": "kW",
+          "observed_at_s": 60
+        },
+        "delivery": {
+          "observed_at_s": 60,
+          "received_at_s": 360,
+          "age_s": 540,
+          "link_status": "delayed"
+        },
+        "trace": [
+          {
+            "mission_s": 60,
+            "actor": "monitor",
+            "step": "incident_opened",
+            "result": "INSUFFICIENT_EVIDENCE",
+            "reason_code": null
+          },
+          {
+            "mission_s": 480,
+            "actor": "ground",
+            "step": "advice_queued",
+            "result": "queued",
+            "reason_code": null
+          }
+        ]
+      }
+    },
+    {
+      "beat_id": "beat-5-stale-advice",
+      "label": "Stale v102 advice meets v103",
+      "mission_s": 780,
+      "crew": {
+        "decision_rev": 103,
+        "co2": {
+          "value": 2063.74,
+          "unit": "ppm",
+          "observed_at_s": 780,
+          "kind": "modeled_estimate"
+        },
+        "standby": {
+          "result": "rejected",
+          "reason_code": "POWER_LIMIT",
+          "required_kw": 0.4,
+          "available_kw": 0.2
+        },
+        "trace": [
+          {
+            "mission_s": 60,
+            "actor": "monitor",
+            "step": "incident_opened",
+            "result": "INSUFFICIENT_EVIDENCE",
+            "reason_code": null
+          },
+          {
+            "mission_s": 480,
+            "actor": "ground",
+            "step": "advice_queued",
+            "result": "queued",
+            "reason_code": null
+          },
+          {
+            "mission_s": 600,
+            "actor": "monitor",
+            "step": "incident_opened",
+            "result": "INSUFFICIENT_EVIDENCE",
+            "reason_code": null
+          },
+          {
+            "mission_s": 780,
+            "actor": "relay",
+            "step": "advice_received",
+            "result": "held",
+            "reason_code": "STALE_BASIS"
+          }
+        ]
+      },
+      "ground": {
+        "snapshot_id": "ground-v102",
+        "decision_rev": 102,
+        "co2": {
+          "value": 2000.0,
+          "unit": "ppm",
+          "observed_at_s": 60,
+          "kind": "delivered_observation"
+        },
+        "power_headroom": {
+          "value": 0.6,
+          "unit": "kW",
+          "observed_at_s": 60
+        },
+        "delivery": {
+          "observed_at_s": 60,
+          "received_at_s": 360,
+          "age_s": 720,
+          "link_status": "delayed"
+        },
+        "trace": [
+          {
+            "mission_s": 60,
+            "actor": "monitor",
+            "step": "incident_opened",
+            "result": "INSUFFICIENT_EVIDENCE",
+            "reason_code": null
+          },
+          {
+            "mission_s": 480,
+            "actor": "ground",
+            "step": "advice_queued",
+            "result": "queued",
+            "reason_code": null
+          }
+        ]
+      }
+    }
+  ]
+}
