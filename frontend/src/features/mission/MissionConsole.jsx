@@ -6,6 +6,7 @@ import CheckInForm from "../crew/CheckInForm.jsx";
 import RadiationContext from "../crew/RadiationContext.jsx";
 import GroundHealthStatus from "../ground/GroundHealthStatus.jsx";
 import ServiceStatus from "./ServiceStatus.jsx";
+import LiveMissionConsole from "./LiveMissionConsole.jsx";
 
 const ROLE_TITLES = { crew: "Crew console", ground: "Ground console" };
 const CO2_KINDS = {
@@ -25,6 +26,8 @@ export default function MissionConsole({ role }) {
   const { runId } = useParams();
   const snapshot = fixtureFor(runId, role);
   const title = ROLE_TITLES[role];
+
+  if (!snapshot) return <LiveMissionConsole role={role} runId={runId} />;
 
   if (!snapshot) {
     return (
