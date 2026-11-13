@@ -189,15 +189,21 @@ test("Horizon burns into orbit, reaches ISS and returns to Earth in one saved mi
   await button("Seal hatch and board return capsule").click();
   await expect(page.locator("#docking-caption")).toContainText("Undocking");
   await button("Commit deorbit").click();
-  await advance(4);
+  const returnScene = page.getByRole("figure",{name:"Command pod Earth return"});
+  await expect(returnScene).toHaveAttribute("data-phase","separation");
+  await advance(2);
+  await expect(returnScene).toHaveAttribute("data-phase","chutes");
+  await advance(2);
   await button("Confirm landing").click();
+  await expect(returnScene).toHaveAttribute("data-phase","splashdown");
   await button("Confirm crew recovery").click();
 
   await page.reload();
   await expect(page.locator("#launch-status")).toHaveText("Crew recovered on Earth");
   await expect(guide).toHaveAttribute("data-state","complete");
   await expect(guide.locator("#guide-count")).toHaveText("14 / 14 complete");
-  await expect(page.locator("#ship canvas")).toBeVisible();
+  await expect(returnScene).toHaveAttribute("data-phase","recovered");
+  await expect(page.locator("#return-sea-backdrop")).toBeVisible();
   await expect(page).toHaveURL(missionUrl);
   await button("Open orbit minimap").click();
   await expect(navigation.locator("#navigation-reserve")).toContainText("9 cold-gas pulses");
