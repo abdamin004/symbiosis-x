@@ -88,6 +88,11 @@ export default function MissionConsole({ role }) {
       {role === "crew" && (
         <>
           <CrewHealthPanel health={CREW_HEALTH_FIXTURE} cabin={equipment.co2} />
+          <p className="mt-3">
+            <Link className="text-sm font-semibold text-selection underline" to={`/runs/${encodeURIComponent(runId)}/crew/measure`}>
+              Take a measurement
+            </Link>
+          </p>
           <RadiationContext />
         </>
       )}
