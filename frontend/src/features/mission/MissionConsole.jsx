@@ -1,6 +1,12 @@
 import { Link, useParams } from "react-router-dom";
 import { fixtureFor } from "../../api/fixtures.js";
+import { CREW_HEALTH_FIXTURE } from "../../api/crewHealthFixture.js";
+import CrewHealthPanel from "../crew/CrewHealthPanel.jsx";
+import CheckInForm from "../crew/CheckInForm.jsx";
+import RadiationContext from "../crew/RadiationContext.jsx";
+import GroundHealthStatus from "../ground/GroundHealthStatus.jsx";
 import ServiceStatus from "./ServiceStatus.jsx";
+import LiveMissionConsole from "./LiveMissionConsole.jsx";
 
 const ROLE_TITLES = { crew: "Crew console", ground: "Ground console" };
 const CO2_KINDS = {
@@ -20,6 +26,8 @@ export default function MissionConsole({ role }) {
   const { runId } = useParams();
   const snapshot = fixtureFor(runId, role);
   const title = ROLE_TITLES[role];
+
+  if (!snapshot) return <LiveMissionConsole role={role} runId={runId} />;
 
   if (!snapshot) {
     return (
@@ -81,7 +89,25 @@ export default function MissionConsole({ role }) {
         </ul>
       </section>
 
+      {role === "crew" && (
+        <>
+          <CrewHealthPanel health={CREW_HEALTH_FIXTURE} cabin={equipment.co2} />
+          <CheckInForm runId={runId} />
+          <p className="mt-3">
+            <Link className="text-sm font-semibold text-selection underline" to={`/runs/${encodeURIComponent(runId)}/crew/measure`}>
+              Take a measurement
+            </Link>
+            <Link className="ml-4 text-sm font-semibold text-red-700 underline" to={`/runs/${encodeURIComponent(runId)}/crew/emergency`}>
+              Open Emergency Assist
+            </Link>
+          </p>
+          <RadiationContext />
+        </>
+      )}
+
       {snapshot.delivery && <DeliveryPanel delivery={snapshot.delivery} />}
+
+      {role === "ground" && <GroundHealthStatus cases={snapshot.health_cases ?? []} />}
     </main>
   );
 }

@@ -188,16 +188,113 @@ button[aria-pressed=true]{background:#3d315e}
 .mission-dialog h3{margin:.1rem 0 .4rem}
 .mission-dialog p{color:var(--muted);font-size:.87rem;margin:.35rem 0}
 .dialog-top{display:flex;align-items:start;justify-content:space-between;gap:1rem;margin-bottom:1rem}
-.mission-options,.launch-board{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.8rem}
-.mission-options article,#launch-jobs li{background:#212d49;padding:.7rem;border-radius:8px}
-.mission-options button{margin-top:.45rem}
-.launch-board{grid-template-columns:minmax(160px,.75fr) minmax(0,1.3fr)}
-.launch-stack-area{display:grid;place-items:center;min-height:270px;background:radial-gradient(ellipse,#34355c,#11172f 72%);border-radius:9px}
-#launch-stack{width:min(160px,95%);margin:0;padding:0;list-style:none;text-align:center}
+[hidden]{display:none!important}
+@media(max-width:720px){.stage::after{width:70vw}}
+@media(max-width:520px){.flight-controls{top:calc(100% + 4.2rem)}.crew-strip{gap:.22rem}}
+@media(prefers-reduced-motion:reduce){.pawn{transition:none}.stage[data-playing=true]::before{animation:none}}
+/* Cutaway art layers share the same coordinate plane as the deck controls. */
+.ship{width:106%;margin-inline:-3%;min-width:700px}
+.pawn{width:34px;height:38px;border:0;background:transparent;box-shadow:none}
+.pawn:hover{background:#cad0ff24}
+.pawn[data-working=true]{box-shadow:none}
+.pawn .action-marker{top:-.32rem;left:82%}
+.crew-sprite{position:relative;width:24px;height:29px;transform:scaleX(var(--facing,1));filter:drop-shadow(0 2px 2px #090e1c)}
+.crew-sprite i{position:absolute;display:block}
+.crew-sprite .shadow{width:23px;height:6px;left:1px;bottom:-2px;background:#090c18b0;border-radius:50%}
+.crew-sprite .pack{width:19px;height:13px;left:3px;top:11px;background:#29314c;border-radius:3px;box-shadow:0 -2px #666e8b}
+.crew-sprite .torso{width:13px;height:13px;left:6px;top:11px;background:linear-gradient(125deg,var(--suit),#47526b);border-radius:3px}
+.crew-sprite .helmet{width:14px;height:12px;left:5px;top:1px;background:linear-gradient(155deg,#c9dcf2 10%,#354e75 12% 47%,var(--skin) 52% 85%,#33486d 89%);border:2px solid var(--suit);border-radius:45%}
+.crew-sprite .leg{width:5px;height:9px;top:21px;background:#65718e;border-bottom:2px solid #101623;border-radius:2px}
+.crew-sprite .leg-left{left:6px}
+.crew-sprite .leg-right{right:5px}
+.crew-sprite .arm{width:4px;height:11px;top:12px;background:var(--suit);border-radius:3px;transform-origin:center top}
+.crew-sprite .arm-left{left:3px;rotate:12deg}
+.crew-sprite .arm-right{right:2px;rotate:-12deg}
+[data-pose=move] .leg-left{transform:translateY(calc(2px * var(--stride,0)))}
+[data-pose=move] .leg-right{transform:translateY(calc(-2px * var(--stride,0)))}
+[data-pose=move] .arm-left{rotate:calc(22deg * var(--stride,0))}
+[data-pose=move] .arm-right{rotate:calc(-22deg * var(--stride,0))}
+[data-pose=work] .arm-right{rotate:calc(-58deg + 21deg * var(--stride,0))}
+[data-pose=rest] .crew-sprite{transform:rotate(-18deg)}
+@media(max-width:720px){.ship{margin-inline:0;width:100%}}
+.minimap-screen{background:radial-gradient(ellipse at 50% 0,#22294f,#0c1329 75%);border-radius:9px;min-height:84px;display:grid;align-items:center;padding:.25rem}
+.map-views button{flex:1}
+#deck-map{width:100%;height:79px;display:block}
+.map-systems{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.35rem}
+.map-systems div{padding:.35rem .25rem;background:#1d2646;border-radius:5px}
+.map-systems small{display:block;font-size:.65rem;color:var(--muted)}
+.map-systems strong{font:600 .75rem ui-monospace,monospace;color:var(--blue)}
+#lock-map{font-size:.72rem;padding:.2rem .42rem}
+#map-widget{max-height:min(57dvh,350px)}
+.panel{background:linear-gradient(150deg,#141c36f5,#090e22f7 72%);box-shadow:0 12px 34px #0008,inset 0 1px #788ac04d}
+.widget-bar{padding-bottom:.36rem;border-bottom:1px solid #828fc12c}
+.profile-data{grid-template-columns:minmax(0,1fr) minmax(0,1.08fr)}
+.profile-data dt,.profile-data dd{padding:.25rem .35rem;background:#27365845;border-radius:4px;overflow-wrap:anywhere}
+#vitals-chart{margin-top:.25rem;background:repeating-linear-gradient(0deg,#25345255 0 1px,transparent 1px 24px),#10182d}
+.personnel-hero{display:grid;grid-template-columns:65px minmax(0,1fr);align-items:center;gap:.65rem;padding:.6rem 0}
+.personnel-hero strong,.personnel-hero span{display:block}
+.personnel-hero strong{font-size:1.2rem}
+.personnel-hero span{color:var(--muted);font-size:.72rem}
+#personnel-art{display:grid;place-items:center;aspect-ratio:1;background:radial-gradient(circle,#46537c,#181e38);border-radius:10px;border-bottom:2px solid var(--profile-accent)}
+#personnel-art .crew-face{width:50px;height:50px}
+.profile-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.35rem}
+.profile-cards>div{background:#222d4b99;border-radius:6px;padding:.4rem .45rem}
+.profile-cards strong{font-size:.73rem;color:var(--blue)}
+.profile-cards strong .icon,.personnel-actions .icon{width:.75rem;height:.75rem;margin-right:.25rem}
+.profile-cards p{font-size:.73rem;margin:.15rem 0 0}
+.personnel-actions{margin:.55rem 0 0}
+.mission-dialog{width:min(720px,calc(100vw - 24px));max-height:calc(100dvh - 24px);color:var(--ink);border:1px solid #656b9d;background:#10172e;border-radius:14px;padding:1rem 1.2rem}
+.mission-dialog::backdrop{background:#030510c9}
+.mission-dialog h3{margin:.1rem 0 .4rem}
+.mission-dialog p{color:var(--muted);font-size:.87rem;margin:.35rem 0}
+.dialog-top{display:flex;align-items:start;justify-content:space-between;gap:1rem;margin-bottom:1rem}
+[hidden]{display:none!important}
+.launch-page{min-height:100dvh;background:#101b29;color:#f5f2eb}
+.launch-ribbon{position:relative;z-index:2;justify-content:space-between;background:#111b27;border-bottom:1px solid #bfc2bc30}
+.launch-ribbon strong{color:#f2f0e9;font-size:.8rem;letter-spacing:.15em}
+.launch-ribbon .launch-nav-actions{display:flex;gap:.35rem;align-items:center;flex-wrap:wrap}
+.launch-field{position:relative;display:grid;align-items:center;height:calc(100svh - 53px);isolation:isolate}
+.launch-visual{position:absolute;inset:0;z-index:-2;pointer-events:none}
+.launch-scene{width:100%;height:100%;display:block}
+.launch-field::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(90deg,#091421ee,#091421ad 27%,#09142112 56%,transparent 82%)}
+.game-menu{width:min(440px,44vw);padding:2rem 0 2rem clamp(1.25rem,7vw,7rem)}
+.game-kicker{color:#ffc08b;font:650 .73rem ui-monospace,monospace;letter-spacing:.13em;text-transform:uppercase}
+.game-menu h1{font-family:system-ui,sans-serif;font-weight:760;letter-spacing:-.075em;line-height:.9;font-size:clamp(3.35rem,8vw,7.8rem);margin:.64rem 0 1.12rem}
+.game-menu p:not(.game-kicker){max-width:26ch;color:#e6e3dd;font-size:clamp(.92rem,1.4vw,1.08rem)}
+.game-menu-actions{display:grid;justify-items:start;gap:.58rem;margin-top:1.45rem}
+.game-menu .start-game,#launch-go:not(:disabled){background:#ffc18f;color:#231d1d;font-weight:760}
+.game-menu .start-game{padding:.72rem 1.1rem;min-width:10.5rem;text-align:left}
+.game-menu .start-game:hover,#launch-go:not(:disabled):hover{background:#ffd7ae}
+.game-menu .start-game span{float:right;margin-left:1rem}
+.game-menu .replay-game{background:#101c29cc;border:1px solid #d7d9d64d;padding:.53rem .85rem}
+.launch-board{width:min(410px,42vw);margin:1rem 0 1rem clamp(.75rem,3.3vw,3rem);padding:.85rem;max-height:calc(100svh - 79px);overflow:auto;background:#111c2aeb;border:1px solid #cbd9de42;border-radius:10px;box-shadow:0 18px 52px #080b1466}
+.launch-heading h1{font-size:clamp(1.4rem,2.5vw,2.05rem);line-height:1.12;letter-spacing:-.035em}
+.launch-heading p,.launch-board p{color:#bfcbd3;font-size:.83rem;margin:.25rem 0}
+.launch-board h2{font-size:.95rem;margin-top:.75rem}
+.launch-board .choices{gap:.35rem}
+.launch-board #launch-stack .launch-stage{padding:.38rem .24rem}
+.launch-board #launch-stack small{font-size:.65rem}
+.launch-board .choices button,#launch-jobs button{font-size:.8rem;background-color:#233448}
+.launch-board .choices button:hover:not(:disabled),#launch-jobs button:hover:not(:disabled){background-color:#334a5c}
+#launch-go:not(:disabled){background-color:#ffc18f}
+.launch-board #launch-abort{background-color:#703f45}
+.launch-board #launch-jobs li{background:#1d2b3b;padding:.42rem .55rem;border-radius:5px}
+.launch-board .launch-readouts div{background:#1d2b3b}
+@media(max-width:660px){
+  .launch-field{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;height:auto;min-height:calc(100svh - 53px)}
+  .launch-visual{position:sticky;top:0;z-index:1;height:min(38svh,430px)}
+  .launch-field[data-view=menu] .launch-visual{position:relative;height:min(48svh,500px)}
+  .launch-field::before{display:none}
+  .game-menu,.launch-board{width:auto;margin:0 .9rem 1rem;padding:1rem}
+  .game-menu{padding-top:.85rem}
+  .launch-board{max-height:none;overflow:visible;margin-top:.7rem}
+  .game-menu h1{font-size:clamp(3.35rem,12vw,5.8rem)}
+  .game-menu-actions{display:flex;flex-wrap:wrap;align-items:center}
+}
+#launch-stack{display:flex;gap:.3rem;justify-content:center;margin:.65rem 0 0;padding:0;list-style:none;text-align:center}
 .launch-stage{margin:2px auto;padding:.6rem .25rem;background:linear-gradient(90deg,#273858,#536c90 48%,#273858);border:1px solid #91a8cb}
-.launch-stage[data-stage=capsule]{width:72%;padding-top:1.1rem;border-radius:45% 45% 3px 3px}
-.launch-stage[data-stage=upper]{width:83%;min-height:60px}
-.launch-stage[data-stage=booster]{width:94%;min-height:76px;border-bottom:5px solid #8394b1}
+.launch-stage{flex:1;border-radius:6px;font-size:.78rem}
+.launch-stage[data-stage=booster]{border-bottom:3px solid #8394b1}
 #launch-stack[data-ignited=true] [data-stage=booster]{border-bottom-color:#ffc68b;box-shadow:0 7px 17px #ff954e90}
 .launch-stage small,#launch-jobs small{display:block;color:#d7e2fa;font-size:.72rem}
 #launch-jobs{padding:0;list-style:none;display:grid;gap:.4rem}
@@ -206,38 +303,170 @@ button[aria-pressed=true]{background:#3d315e}
 .checkout-job-status{align-self:center;color:var(--blue)}
 .checkout-controls{align-items:center}
 #launch-time{color:var(--blue);font:700 .9rem ui-monospace,monospace;margin-right:.2rem}
-#launch-go{background:#4a3d7c}
-@media(max-width:540px){.mission-options,.launch-board{grid-template-columns:1fr}.launch-stack-area{min-height:240px}}
+#launch-go,#launch-insert,#launch-capture{background:#4a3d7c}
+#launch-track{width:100%;accent-color:var(--violet)}
+#launch-abort{background:#633548}
+.launch-readouts{display:grid;gap:.3rem;margin:.65rem 0}
+.launch-readouts div{display:grid;grid-template-columns:110px 1fr;gap:.4rem;padding:.32rem .5rem;background:#202e50;border-radius:5px}
+.launch-readouts dt{color:var(--muted);font-size:.75rem}
+.launch-readouts dd{color:var(--blue);font-size:.8rem;margin:0}
+.personnel-actions{margin:.3rem 0 .55rem}
+#personnel-widget{width:min(485px,calc(100% - 20px));max-height:min(100% - 16px,62dvh,515px)}
+.anatomy-tabs{margin:.6rem 0 .5rem}
+.anatomy-tabs button[aria-selected=true]{background:#3d315e;box-shadow:inset 0 -2px var(--violet)}
+.body-layout{display:grid;grid-template-columns:minmax(104px,1fr) minmax(0,1.1fr);gap:.55rem;margin-bottom:.45rem;align-items:start}
+.body-map{position:relative;isolation:isolate;width:100%;max-width:168px;aspect-ratio:2/3;margin-inline:auto;
+  background:radial-gradient(ellipse,#24395b,#10182f 78%);border:1px solid var(--edge);border-radius:8px}
+.anatomy-figure{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.body-map [data-region]{position:absolute;transform:translate(-50%,-50%);display:grid;place-items:center;
+  width:24px;height:24px;padding:0;border-radius:50%;border:1px solid #bddbff9c;background:#0a163bb8;color:#d9eeff}
+.body-map [data-region]::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
+.body-map [data-region][aria-pressed=true]{border-color:#fff;background:#45416d;color:#fff;box-shadow:0 0 10px var(--profile-accent)}
+#twin-layer-label{display:block;margin-bottom:.4rem;color:var(--violet)}
+#body-regions{margin-top:.15rem}
+.region-card{background:#202d4b;padding:.55rem .65rem;border-radius:8px}
+.region-card h3{margin:.2rem 0;font-size:.95rem}
+.region-card small{color:var(--muted);font-size:.72rem}
+.region-card strong{color:var(--blue);font-size:.85rem}
+.objective-list{margin:.8rem 0;padding-left:1.6rem}
+.objective-list li{padding:.35rem .6rem;margin:.25rem 0;background:#202c48;border-left:3px solid #4c5d83}
+.objective-list li[data-status=next]{border-color:var(--violet)}
+.objective-list li[data-status=held]{border-color:#ffb37f}
+.objective-list li[data-status=verified]{border-color:#8ed9bc}
+.objective-list small{display:block;color:var(--muted)}
+#mission-command-widget{width:min(350px,calc(100% - 20px));max-height:min(65vh,580px)}
+#mission-command-widget .launch-readouts div{grid-template-columns:95px 1fr}
+#mission-command-widget #launch-time,#mission-command-widget #launch-step{display:none}
+#mission-command-widget #launch-reset{margin-top:.35rem}
+.stage[data-asteria=true] #ship{animation:reveal-asteria .9s ease-out both;transition:transform .85s ease;transform-origin:center 56%}
+#orbital-station{position:absolute;right:2%;top:27%;width:17%;height:36%;opacity:0;transform:translateX(45%);transition:opacity .6s,transform .85s;pointer-events:none}
+.stage[data-vehicle=approach] #orbital-station,.stage[data-vehicle=docked] #orbital-station{opacity:1;transform:none}
+#orbital-station i{position:absolute;background:linear-gradient(135deg,#8195c0,#364a77 55%,#1d2c50);border:2px solid #8195bb;border-radius:4px}
+#orbital-station i:nth-child(1){inset:41% 3% 37% 0}
+#orbital-station i:nth-child(2){inset:6% 21% 6% 45%;background:repeating-linear-gradient(0deg,#202f64 0 7px,#5475a9 7px 8px)}
+#orbital-station i:nth-child(3){inset:36% 64% 32% 9%;border-radius:15px}
+.stage[data-vehicle=approach] #ship{transform:translateX(-3%) scale(.9)}
+.stage[data-vehicle=docked] #ship{transform:translateX(-5%) scale(.9)}
+.stage[data-vehicle=return] #ship{transform:scale(.86)}
+.stage[data-vehicle=entry] #ship{transform:rotate(-5deg) scale(.83)}
+.stage[data-vehicle=entry]{background:radial-gradient(ellipse at 68% 46%,#6b3c46,#201935 58%,#080a18)}
+.stage[data-vehicle=landed]{background:linear-gradient(#111a34 35%,#43516d 70%,#242b3c 70%)}
+.stage[data-vehicle=landed] #ship{transform:translateY(10%) scale(.8)}
+@media(prefers-reduced-motion:reduce){.stage[data-asteria=true] #ship,#orbital-station{transition:none}}
+@keyframes reveal-asteria{from{opacity:0;translate:-3% 6%;scale:.96}to{opacity:1;translate:0;scale:1}}
+@media(prefers-reduced-motion:reduce){.stage[data-asteria=true] #ship{animation:none}}
+.pad-transport{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;padding:.45rem clamp(1rem,4vw,4rem);background:#101b2ad9}
+.pad-transport button{padding:.35rem .65rem}
+#pad-clock,#pad-light{font:600 .8rem ui-monospace,monospace;color:#c4d8e8}
+#pad-light{margin-left:auto}
+#launch-systems{padding:.65rem 0;border-bottom:1px solid #91a7b050}
+#startup-status{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.3rem;list-style:none;padding:0;margin:.4rem 0 .55rem}
+#startup-status li{display:flex;justify-content:space-between;gap:.4rem;padding:.3rem .4rem;background:#253b48;font-size:.75rem}
+#startup-status span{color:#ffd4a2}#startup-status[data-online=true] span{color:#a4ead1}
+#launch-jobs .launch-assignee{grid-row:1/4;grid-column:2;display:flex;align-items:center;gap:.38rem;align-self:center}
+#launch-jobs .launch-assignee[aria-pressed=true]{background:#28524e}
+#launch-jobs .launch-assignee .crew-face{width:32px;height:32px;flex:none}
+#launch-jobs strong,#launch-jobs small{grid-column:1}
+#launch-jobs .checkout-job-status{font-size:.72rem}
+#orbit-track{width:100%;background:#0b1427;border-radius:7px}
+#orbit-status{color:var(--blue)}
+.hud,.launch-hud{position:fixed;inset:0 0 auto;z-index:10;pointer-events:none;background:linear-gradient(180deg,#080c1bde,transparent);box-shadow:none}
+.hud button,.hud a,.launch-hud button,.launch-hud a{pointer-events:auto}
+.ribbon{gap:.35rem .65rem;text-shadow:0 1px 8px #090b19}
+.ribbon button{background:#121b3590}
+.ribbon button:hover{background:#2c3457}
+.launch-ribbon{background:transparent;border:0}
+.launch-field{height:100svh}
+.launch-board{margin-top:calc(var(--launch-clearance,110px) + .5rem);max-height:calc(100svh - var(--launch-clearance,110px) - 1.5rem)}
+.pad-transport{justify-content:flex-end;margin-right:.75rem;padding:.15rem .25rem;background:none;text-shadow:0 1px 6px #080d17}
+#pad-light{margin-left:0}
+.pad-transport button{background:#111a32a8}
+.viewport{padding-top:max(var(--control-clearance,110px),6vh)}
+.play-area{min-height:100dvh}
+.device-links{display:flex;flex-wrap:wrap;gap:.3rem;margin:.35rem 0}
+.device-links button{font-size:.74rem;background:#193444}
+.twin-camera,.twin-peer{margin:.55rem 0;padding:.45rem .55rem;background:#131f37;border-radius:6px}
+.twin-camera strong,.twin-peer strong{display:block;font-size:.78rem;color:var(--blue)}
+.twin-camera output,.twin-peer output{display:block;font-size:.75rem;color:var(--muted)}
+.twin-peer button{margin:.35rem 0;font-size:.76rem}
+.deck-camera{position:absolute;z-index:2;padding:.16rem .24rem;background:#111c30a6;color:#a0dedf;transform:translate(-50%,-50%)}
+.deck-camera[data-tracking=true]{color:#d2fff3;box-shadow:0 0 12px #8cf5c156}
+.deck-camera .icon{display:block;width:.8rem;height:.8rem}
+.mission-resources{position:absolute;top:calc(100% + .35rem);left:.65rem;display:grid;grid-template-columns:repeat(2,max-content);gap:.15rem .65rem;padding:.38rem .52rem;background:#0e172bc7;border-radius:7px;font:600 .7rem ui-monospace,monospace;color:#dbe6ff}
+.mission-resources span{display:flex;gap:.25rem;align-items:center}
+.mission-resources .icon{width:.78rem;height:.78rem;color:var(--violet)}
+.pawn .action-marker{display:flex;align-items:center;gap:3px;left:92%;top:-.1rem;white-space:nowrap}
+.pawn .action-marker meter{width:29px;height:5px;accent-color:#b8e9cc}
+.pawn .action-marker meter::-webkit-meter-bar{background:#34425f;border:none}
+.pawn .action-marker meter::-webkit-meter-optimum-value{background:#a3e8c8}
+.wrist-readout{display:flex;align-items:center;gap:.65rem;margin:.4rem 0;padding:.42rem .55rem;border-radius:7px;background:#151f35}
+.wrist-readout svg{width:31px;height:37px;flex:none}
+.wrist-readout strong{display:block;color:#ffafbc;font:700 1.05rem ui-monospace,monospace}
+.wrist-readout small{display:block;color:var(--muted);font-size:.68rem}
+.profile-data meter,.duty-progress{width:100%;height:.55rem;accent-color:#a3e8c8}
+.profile-data dd:has(meter){min-width:5.5rem}
+.profile-data dd meter{display:block}
+@media(max-width:800px){.mission-resources{top:calc(100% + 4.2rem)}#widget-shelf{top:calc(100% + 7.6rem)}}
+@media(max-width:660px){
+  .launch-field{height:auto}
+  .launch-visual{position:sticky;top:0;height:min(43svh,430px)}
+  .launch-board{max-height:none;margin-top:.7rem}
+}
 </style>
 </head>
 <body>
 __HUD_ICONS__
 <main>
-<section class="stage" id="stage" aria-label="Spacecraft in flight">
-  <div class="hud"><div class="ribbon" aria-label="Mission resources">
-    <span class="resource"><svg class="icon" aria-hidden="true"><use href="#hud-map"/></svg><output id="resource-phase"></output></span><span class="resource"><svg class="icon" aria-hidden="true"><use href="#hud-wind"/></svg><output id="resource-air"></output></span><span class="resource"><svg class="icon" aria-hidden="true"><use href="#hud-zap"/></svg><output id="resource-power"></output></span><span class="resource"><svg class="icon" aria-hidden="true"><use href="#hud-users"/></svg><output id="resource-crew"></output></span>
+<section class="stage" id="stage" aria-label="Spacecraft in flight" hidden>
+  <div class="hud"><div class="ribbon" aria-label="Flight navigation">
+    <span class="resource"><svg class="icon" aria-hidden="true"><use href="#hud-map"/></svg><output id="resource-phase"></output></span>
     <button type="button" id="show-inspector" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#hud-activity"/></svg>Inspector</button>
     <button type="button" id="show-crew" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#hud-users"/></svg>Crew</button>
     <button type="button" id="show-workflow" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#hud-clipboard-list"/></svg>Orders</button>
-    <button type="button" id="show-missions"><svg class="icon" aria-hidden="true"><use href="#hud-map"/></svg>Missions</button>
+    <button type="button" id="show-orbit" hidden>Orbit map</button>
+    <button type="button" id="show-briefing">Briefing</button>
+    <button type="button" id="show-command" hidden>Flight command</button>
+    <button type="button" id="show-missions"><svg class="icon" aria-hidden="true"><use href="#hud-map"/></svg>Game menu</button>
+    <button type="button" id="show-objectives"><svg class="icon" aria-hidden="true"><use href="#hud-clipboard-list"/></svg>Mission objectives</button>
     <a href="/mission">Mission control</a>
+  </div>
+  <div class="mission-resources" id="mission-resources" role="group" aria-label="Mission resources">
+    <span><svg class="icon" aria-hidden="true"><use href="#hud-wind"/></svg><output id="resource-air"></output></span>
+    <span><svg class="icon" aria-hidden="true"><use href="#hud-zap"/></svg><output id="resource-power"></output></span>
+    <span><svg class="icon" aria-hidden="true"><use href="#hud-users"/></svg><output id="resource-crew"></output></span>
+    <span><svg class="icon" aria-hidden="true"><use href="#hud-package"/></svg><output id="resource-meals"></output></span>
+    <span><svg class="icon" aria-hidden="true"><use href="#hud-droplets"/></svg><output id="resource-water"></output></span>
   </div>
   <nav class="crew-strip" id="crew-strip" aria-label="Astronaut portraits"></nav>
   <div class="flight-controls"><div class="control-deck" role="group" aria-label="Flight playback">
     <button id="play" type="button" aria-label="Play" title="Play or pause"><svg class="icon" aria-hidden="true"><use id="play-icon" href="#hud-play"/></svg></button>
     <button id="speed-cycle" type="button" aria-label="Cycle speed" title="Cycle 1×, 2×, and 4×">1×</button>
     <button id="step" type="button" aria-label="Skip one mission hour" title="Skip one mission hour"><svg class="icon" aria-hidden="true"><use href="#hud-skip-forward"/></svg></button>
+    <output class="clock" id="hud-clock" aria-label="Flight clock"></output>
   </div></div>
   <div id="widget-shelf" hidden><span>Parked widgets</span></div><span id="widget-notice" role="status"></span></div>
   <div class="play-area">
   <div class="viewport" tabindex="0" aria-label="Scrollable spacecraft cutaway">
+    <div id="orbital-station" aria-hidden="true"><i></i><i></i><i></i></div>
     <div class="ship" id="ship">
       <canvas id="hull" width="1100" height="475" aria-hidden="true"></canvas>
     </div>
   </div>
 <div class="overlays" id="overlays">
+  <section class="panel" id="mission-command-widget" aria-labelledby="mission-command-title" hidden>
+    <div class="widget-bar">
+      <button class="move-widget" type="button" aria-label="Move flight command with drag or arrow keys"><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button>
+      <h2 id="mission-command-title">Flight command</h2>
+      <button class="widget-close" type="button" aria-label="Close flight command"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button>
+    </div>
+  </section>
   <section class="panel" id="workflow-widget" hidden aria-labelledby="workflow-title">
     <div class="widget-bar"><button class="move-widget widget-title" type="button" aria-label="Move orders with drag or arrow keys"><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button><h2 id="workflow-title">Onboard orders</h2><button class="widget-close" type="button" aria-label="Close orders"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button></div>
+    <div class="order-card" id="peer-order" hidden>
+      <strong id="peer-order-target"></strong>
+      <p id="peer-order-status"></p>
+      <button id="request-peer-check" type="button">Request crewmate check</button>
+    </div>
     <div class="order-card">
       <strong>Routine · Scrubber check</strong>
       <p id="routine-state"></p>
@@ -302,7 +531,7 @@ __HUD_ICONS__
     <button type="button" id="activity" hidden></button>
     <div id="crew-profile" hidden>
       <div id="profile-tabs" role="group" aria-label="Astronaut profile">
-        <button type="button" data-profile="personnel">Profile</button>
+        <button type="button" data-profile="personnel">Digital twin</button>
         <button type="button" data-profile="duty">Duty</button>
         <button type="button" data-profile="needs">Needs</button>
         <button type="button" data-profile="vitals">Vitals</button>
@@ -312,19 +541,62 @@ __HUD_ICONS__
   </section>
   <section class="panel profile-window" id="personnel-widget" hidden aria-labelledby="personnel-title">
     <div class="widget-bar">
-      <button class="move-widget widget-title" type="button" aria-label="Move Profile widget"><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button>
-      <h2 id="personnel-title">Crew profile</h2>
-      <button class="widget-close" type="button" aria-label="Close Profile widget"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button>
+      <button class="move-widget widget-title" type="button" aria-label="Move Digital twin widget"><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button>
+      <h2 id="personnel-title">Digital twin</h2>
+      <button class="widget-close" type="button" aria-label="Close Digital twin widget"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button>
     </div>
     <div class="personnel-hero">
       <div id="personnel-art"></div>
       <div><span id="personnel-role"></span><strong id="personnel-name"></strong><span id="personnel-location"></span></div>
     </div>
-    <div class="profile-cards" id="personnel-data"></div>
     <div class="choices personnel-actions" role="group" aria-label="Crew profile views">
+      <button type="button" data-twin-view="body" aria-pressed="true">Body</button>
+      <button type="button" data-twin-view="bio" aria-pressed="false">Bio</button>
+      <button type="button" data-twin-view="social" aria-pressed="false">Social</button>
       <button type="button" data-personnel-view="duty">Duty</button><button type="button" data-personnel-view="needs">Needs</button>
-      <button type="button" data-personnel-view="vitals">Vitals</button><button type="button" data-personnel-view="devices">Devices</button>
+      <button type="button" data-personnel-view="vitals">Vitals</button><button type="button" data-personnel-view="devices">Gear</button>
     </div>
+    <div id="twin-body">
+      <div class="choices anatomy-tabs" role="tablist" aria-label="Anatomy layers">
+        <button type="button" role="tab" id="layer-anatomy" aria-controls="twin-layer" aria-selected="true" data-layer="anatomy">Anatomy</button>
+        <button type="button" role="tab" id="layer-skeleton" aria-controls="twin-layer" aria-selected="false" tabindex="-1" data-layer="skeleton">Skeleton</button>
+        <button type="button" role="tab" id="layer-muscles" aria-controls="twin-layer" aria-selected="false" tabindex="-1" data-layer="muscles">Muscles</button>
+        <button type="button" role="tab" id="layer-cardiorespiratory" aria-controls="twin-layer" aria-selected="false" tabindex="-1" data-layer="cardiorespiratory">Heart &amp; lungs</button>
+        <button type="button" role="tab" id="layer-sensors" aria-controls="twin-layer" aria-selected="false" tabindex="-1" data-layer="sensors">Sensors</button>
+        <button type="button" role="tab" id="layer-suit" aria-controls="twin-layer" aria-selected="false" tabindex="-1" data-layer="suit">Suit</button>
+      </div>
+      <div id="twin-layer" role="tabpanel" aria-labelledby="layer-anatomy">
+        <div class="body-layout">
+          <div class="body-map" id="body-map" role="group" aria-label="Astronaut body regions">
+            __FLIGHT_ANATOMY__
+          </div>
+          <div class="region-card">
+            <small id="twin-layer-label"></small>
+            <small id="region-source"></small><h3 id="region-name"></h3>
+            <strong id="region-reading"></strong><p id="region-detail"></p><small id="region-time"></small>
+          </div>
+        </div>
+        <div class="device-links" aria-label="Crew wearable shortcuts">
+          <button id="inspect-wristband" type="button">Wristband · left wrist</button>
+          <button id="inspect-back-pod" type="button">Back pod · upper back</button>
+        </div>
+        <div class="wrist-readout" id="wrist-readout" hidden>
+          <svg viewBox="0 0 32 40" aria-hidden="true">
+            <rect x="9" width="14" height="40" rx="5" fill="#727da5"/>
+            <rect x="3" y="7" width="26" height="26" rx="8" fill="#101826" stroke="#b6bdd5"/>
+            <path d="M7 21h4l3-6 3 10 3-4h5" fill="none" stroke="#ffafbc" stroke-width="1.5"/>
+          </svg>
+          <div><strong id="wrist-bpm"></strong><small id="wrist-sample"></small></div>
+        </div>
+        <div class="choices" id="body-regions" role="group" aria-label="Select body region"></div>
+        <div class="twin-camera"><strong>Onboard camera tracking · simulated</strong><output id="crew-camera"></output><output id="crew-cabin"></output></div>
+        <div class="twin-peer" id="peer-check">
+          <strong>Crew observation</strong>
+          <output id="peer-check-status" aria-live="polite"></output>
+        </div>
+      </div>
+    </div>
+    <div class="profile-cards" id="personnel-data" hidden></div>
   </section>
   <section class="panel profile-window" id="duty-widget" hidden aria-labelledby="duty-title">
     <div class="widget-bar">
@@ -333,6 +605,7 @@ __HUD_ICONS__
       <button class="widget-close" type="button" aria-label="Close Duty widget"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button>
     </div>
     <dl class="profile-data" id="duty-data"></dl>
+    <meter class="duty-progress" id="duty-progress" min="0" max="1" aria-label="Current duty progress"></meter>
   </section>
   <section class="panel profile-window" id="needs-widget" hidden aria-labelledby="needs-title">
     <div class="widget-bar">
@@ -341,12 +614,6 @@ __HUD_ICONS__
       <button class="widget-close" type="button" aria-label="Close Needs widget"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button>
     </div>
     <dl class="profile-data" id="needs-data"></dl>
-      <div id="wellbeing">
-        <span class="choice-label" id="mood-label">Private simulated mood</span>
-        <div class="choices" id="mood" role="group" aria-labelledby="mood-label"></div>
-        <span class="choice-label" id="symptoms-label">Private symptom check-in</span>
-        <div class="choices" id="symptoms" role="group" aria-labelledby="symptoms-label"></div>
-      </div>
   </section>
   <section class="panel profile-window" id="vitals-widget" hidden aria-labelledby="vitals-title">
     <div class="widget-bar">
@@ -375,43 +642,140 @@ __HUD_ICONS__
 </div>
 </div>
 </section>
-<dialog id="mission-menu" class="mission-dialog" aria-labelledby="mission-menu-title">
-  <div class="dialog-top"><h2 id="mission-menu-title">Missions</h2><form method="dialog"><button>Close</button></form></div>
-  <div class="mission-options">
-    <article><h3>ISS Research Replay</h3><p>Outbound capsule · ISS laboratory · return capsule</p>
-      <form method="dialog"><button>Return to Flight replay</button></form></article>
-    <article><h3>Launch Checkout</h3><p>Prepare Asteria and clear first-stage ignition.</p>
-      <button id="open-checkout" type="button">Open Launch Checkout</button></article>
-  </div>
+<dialog id="mission-objectives" class="mission-dialog" aria-labelledby="mission-objective-title">
+  <div class="dialog-top"><h2 id="mission-objective-title">Mission objectives</h2><form method="dialog"><button>Close</button></form></div>
+  <p id="mission-objective-next"></p>
+  <ol id="mission-objective-list" class="objective-list"></ol>
+  <button id="objective-open-launch" type="button">Open launch command</button>
 </dialog>
-<dialog id="launch-checkout" class="mission-dialog" aria-labelledby="launch-title">
-  <div class="dialog-top"><div><h2 id="launch-title">Launch Checkout</h2><p id="launch-subtitle"></p></div>
-    <form method="dialog"><button>Close</button></form></div>
-  <div class="launch-board">
-    <div class="launch-stack-area">
-      <ol id="launch-stack" aria-label="Rocket stage stack"></ol>
+<dialog id="mission-briefing" class="mission-dialog" aria-labelledby="briefing-title">
+  <div class="dialog-top"><h2 id="briefing-title">Asteria mission briefing</h2><form method="dialog"><button>Close</button></form></div>
+  <p>Take four crew members to the research station, hand off the kit, and bring the crew home.</p>
+  <ol>
+    <li>Bring the electrical bus, hydraulics, oxygen supply, and CO₂ scrubber online.</li>
+    <li>Assign each check using its crew portrait. Press Play to let the checks finish.</li>
+    <li>Arm the countdown. Once it reaches zero, choose when to press Launch.</li>
+    <li>After insertion, use Flight command to approach, capture, verify the hatch, and return.</li>
+  </ol>
+</dialog>
+<dialog id="orbit-dialog" class="mission-dialog" aria-labelledby="orbit-title">
+  <div class="dialog-top"><h2 id="orbit-title">Orbit map</h2><form method="dialog"><button>Close</button></form></div>
+  <div id="orbit-dialog-content"></div>
+</dialog>
+<section id="launch-page" class="launch-page" aria-label="SYMBIOSIS X flight game" hidden>
+  <div class="launch-hud">
+  <nav class="ribbon launch-ribbon" aria-label="Flight navigation">
+    <strong>SYMBIOSIS X</strong>
+    <div class="launch-nav-actions">
+      <button id="launch-briefing" type="button">Briefing</button>
+      <button id="launch-open-missions" type="button" hidden>Game menu</button>
+      <button id="launch-open-objectives" type="button" hidden>Objectives</button>
+      <a href="/mission">Mission control</a>
     </div>
-    <div>
-      <h3>Crew checklist</h3>
-      <ul id="launch-jobs"></ul>
-      <p id="launch-status" role="status"></p>
+  </nav>
+  <div id="pad-transport" class="pad-transport" role="group" aria-label="Launch time controls" hidden>
+    <button id="pad-play" type="button"><svg class="icon" aria-hidden="true"><use id="pad-play-icon" href="#hud-play"/></svg><span id="pad-play-label">Play</span></button>
+    <button id="pad-speed" type="button" aria-label="Cycle launch speed">1×</button>
+    <button id="pad-step" type="button" aria-label="Advance one launch tick" title="Advance one launch tick"><svg class="icon" aria-hidden="true"><use href="#hud-skip-forward"/></svg></button>
+    <output id="pad-clock" aria-label="Launch clock">0:00</output>
+    <span id="pad-light"></span>
+  </div>
+  </div>
+  <div class="launch-field" id="launch-field" data-view="menu">
+    <div class="launch-visual"><canvas class="launch-scene" id="launch-scene" role="img" aria-label="Asteria on a concrete launchpad in front of a mountain range"></canvas></div>
+    <section class="game-menu" id="game-menu" aria-labelledby="game-title">
+      <p class="game-kicker">Flight simulation</p>
+      <h1 id="game-title" tabindex="-1">Asteria<br>Launch</h1>
+      <p>Take Asteria from the launchpad to the research station.</p>
+      <div class="game-menu-actions">
+        <button class="start-game" id="open-checkout" type="button"><b id="launch-start-label">Start mission</b><span aria-hidden="true">→</span></button>
+        <button class="replay-game" id="open-flight-replay" type="button">ISS research replay</button>
+      </div>
+    </section>
+    <section class="launch-board" id="pad-controls" aria-labelledby="launch-title" hidden>
+      <header class="launch-heading">
+        <h1 id="launch-title" tabindex="-1">Asteria Launch</h1><p id="launch-subtitle"></p>
+      </header>
+      <ol id="launch-stack" aria-label="Rocket stage stack"></ol>
+      <div id="launch-controls">
+      <section id="launch-systems" aria-labelledby="launch-systems-title">
+        <h2 id="launch-systems-title">Bring Asteria online</h2>
+        <ul id="startup-status"></ul>
+        <button id="startup" type="button"><svg class="icon" aria-hidden="true"><use href="#hud-zap"/></svg> Start ship systems</button>
+      </section>
+      <div id="launch-crew-checks">
+        <h2>Crew checklist</h2>
+        <p>Choose the qualified crew portrait on each check. Play advances their work.</p>
+        <ul id="launch-jobs"></ul>
+        <p id="launch-checklist"></p>
+      </div>
+      <dl class="launch-readouts">
+        <div><dt>Flight phase</dt><dd id="launch-status" role="status"></dd></div>
+        <div><dt>Next action</dt><dd id="launch-next"></dd></div>
+        <div><dt>Maneuver reserve</dt><dd id="launch-reserve"></dd></div>
+      </dl>
+      <div id="orbit-preview" hidden>
+        <canvas id="orbit-track" width="480" height="180" role="img" aria-label="Planned and current orbit around Earth"></canvas>
+        <dl class="launch-readouts">
+          <div><dt>Apoapsis</dt><dd id="orbit-ap"></dd></div>
+          <div><dt>Periapsis</dt><dd id="orbit-pe"></dd></div>
+        </dl>
+        <p id="orbit-status" aria-live="polite"></p>
+      </div>
+      <div id="launch-approach" hidden>
+        <progress id="launch-track" max="100" value="0" aria-label="Station approach progress"></progress>
+        <dl class="launch-readouts">
+          <div><dt>Station range</dt><dd id="launch-range"></dd></div>
+          <div><dt>Closing rate</dt><dd id="launch-closing"></dd></div>
+          <div><dt>Hatch</dt><dd id="launch-hatch"></dd></div>
+        </dl>
+      </div>
+      <div id="launch-docking" hidden>
+        <h3>Station handoff</h3>
+        <p>Simulated checks expire after 30 mission seconds.</p>
+        <dl class="launch-readouts">
+          <div><dt>Docking seal</dt><dd id="launch-seal"></dd></div>
+          <div><dt>Pressure match</dt><dd id="launch-pressure"></dd></div>
+          <div><dt>Research kit</dt><dd id="launch-custody"></dd></div>
+        </dl>
+        <div class="choices">
+          <button id="launch-check-seal" type="button">Check seal</button>
+          <button id="launch-check-pressure" type="button">Compare pressure</button>
+          <button id="launch-open-hatch" type="button">Authorize hatch opening</button>
+          <button id="launch-transfer" type="button" hidden>Hand off research kit</button>
+        </div>
+      </div>
       <div class="choices checkout-controls">
-        <output id="launch-time" aria-label="Checkout time"></output>
+        <output id="launch-time" aria-label="Mission elapsed time"></output>
         <button id="launch-step" type="button">Advance 15 s</button>
         <button id="launch-hold" type="button" aria-pressed="false">Hold launch</button>
-        <button id="launch-go" type="button">Commit ignition</button>
-        <button id="launch-reset" type="button">Reset checkout</button>
+        <button id="launch-arm" type="button">Arm countdown</button>
+        <button id="launch-go" type="button">Launch</button>
+        <button id="launch-abort" type="button" hidden>Abort ascent</button>
+        <button id="launch-phasing" type="button" hidden>Commit phasing</button>
+        <button id="launch-approach-hold" type="button" aria-pressed="false" hidden>Hold approach</button>
+        <button id="launch-capture" type="button" hidden>Capture station</button>
+        <button id="launch-retreat" type="button" hidden>Retreat to orbit</button>
+        <button id="launch-research" type="button" hidden>Assign Sana to station research</button>
+        <button id="launch-depart" type="button" hidden>Seal hatch and board return capsule</button>
+        <button id="launch-deorbit" type="button" hidden>Commit deorbit</button>
+        <button id="launch-land" type="button" hidden>Confirm landing</button>
+        <button id="launch-recover" type="button" hidden>Confirm crew recovery</button>
+        <button id="launch-reset" type="button">Restart at launchpad</button>
       </div>
-    </div>
+      </div>
+    </section>
   </div>
-</dialog>
+</section>
 </main>
 <script type="application/json" id="flight-data">__FLIGHT_DATA__</script>
 <script>
 __FLIGHT_WORKFLOW__
 __FLIGHT_WIDGETS__
 __FLIGHT_STATIONS__
+__LAUNCH_SCENE__
 __LAUNCH_CHECKOUT__
+__FLIGHT_CREW__
 </script>
 <script>
 const element = id => document.getElementById(id);
@@ -478,6 +842,8 @@ const stationDuties = [
 ];
 function station(duty, member) {
   const time = Math.floor(missionTime);
+  const check = peerWork(member,time);
+  if (check) return [check.room, time < check.arrival ? "Heading to a crew check" : "Checking in with " + characters[check.member].short];
   const task = activeTask(member, time);
   if (task && time >= task.assigned) {
     const asset = equipment.get(task.asset);
@@ -486,6 +852,10 @@ function station(duty, member) {
   const groundWork = member === 2 && groundInspection(currentFrame());
   if (groundWork && time >= groundWork.assigned) return ["life-support-01",
     time < groundWork.arrival ? "Walking to the scrubber rack" : "Inspect life support for the Commander"];
+  const waiting = peerChecks.find(check => check.mode === crewMode() && check.member === member && check.requested <= time && time < check.due);
+  if (waiting) return [waiting.room,"Available for crew observation"];
+  const job = crewRoutine(member);
+  if (job) return [equipment.get(job.asset).room, time < job.arrival ? "Heading to " + equipment.get(job.asset).name : job.action];
   return duty.stations[index] ?? stationDuties[member][index - duty.stations.length];
 }
 
@@ -502,6 +872,31 @@ const fixtures = [
 ];
 const equipment = new Map(fixtures.map(asset => [asset.id, asset]));
 const tasks = [];
+let crewSession;
+const crewRoutines = createCrewRoutines({
+  count:duties.length,tick:TICK_SECONDS,
+  occupied(member,asset,time) {
+    const frame = {...checkpoints[checkpoints.findLastIndex(point=>point.time<=time)],time};
+    const order = connectedFlight ? null : groundInspection(frame);
+    const manual = tasks.some(job => job.mode === crewMode() && job.queued <= time && time < job.finishes &&
+      (job.member === member || asset && job.asset === asset));
+    return manual || Boolean(order && (member === 2 || asset === "scrubber")) ||
+      peerChecks.some(check => check.mode === crewMode() && (check.observer === member || check.member === member) &&
+        check.requested <= time && time < check.due);
+  },
+});
+function crewRoutine(member) {
+  const ownJob = crewSession?.crew[member]?.active;
+  if (ownJob) return ownJob;
+  const visit = crewSession?.crew.find(person=>person.active?.checkup === member)?.active;
+  return visit && {...visit,previous:visit.patientPrevious,action:"Attend daily crew checkup"};
+}
+function updateCrewRoutines(frame) {
+  const mode = crewMode();
+  const revision = JSON.stringify([tasks,peerChecks.map(({mode,observer,requested,due})=>[mode,observer,requested,due]),
+    mode === "replay" ? flightWorkflow.read() : null]);
+  crewSession = crewRoutines.update(mode,connectedFlight?.crewStarted ?? 0,frame.time,revision);
+}
 const equipmentButtons = new Map();
 const fixtureFootprints = {
   bed:[430,157,105,39], wc:[596,153,32,35], galley:[552,154,38,32],
@@ -514,7 +909,7 @@ function placeArea(button, x, y, width, height) {
   button.style.height = height / 475 * 100 + "%";
 }
 function taskAt(asset, time) {
-  return tasks.findLast(task => task.asset === asset && task.queued <= time);
+  return tasks.findLast(task => task.mode === crewMode() && task.asset === asset && task.queued <= time);
 }
 
 function groundInspection(frame) {
@@ -525,7 +920,7 @@ function groundInspection(frame) {
 }
 
 function activeTask(member, time) {
-  return tasks.find(task => task.member === member && task.queued <= time && time < task.finishes);
+  return tasks.find(task => task.mode === crewMode() && task.member === member && task.queued <= time && time < task.finishes);
 }
 
 const roomById = new Map(data.rooms.map(room => [room.room_id, room]));
@@ -539,12 +934,17 @@ const checkpoints = data.frames[""];
 const last = checkpoints.length - 1;
 const endTime = checkpoints[last].time;
 let missionTime = 0;
+let connectedFlight = null;
+let connectedPlaying = false;
+let canvasAnimation = null;
+let canvasTickStarted = 0;
 let lastWallTime = 0;
 let index = 0;
 let timer = null;
 let speed = 1;
 let compressed = false;
 element("speed-cycle").addEventListener("click", () => {
+  if (connectedFlight) { launchMission.cycleSpeed(); return; }
   speed = speed === 4 ? 1 : speed * 2;
   compressed = false;
   render();
@@ -752,6 +1152,216 @@ function showInspector() {
 const profileMembers = new Map();
 const profileIcons = {personnel:"users",duty:"clipboard-list",needs:"bed-single",vitals:"activity",devices:"zap"};
 const profileRows = new Map();
+// Front-facing figure. Coordinates are percentages of each illustration.
+const bodyRegions = {
+  head:{label:"Head",body:[50,11],suit:[50,21]},
+  torso:{label:"Torso / back",body:[50,37],suit:[50,56]},
+  "right-arm":{label:"Right arm",body:[26,42],suit:[21,56]},
+  "left-arm":{label:"Left arm",body:[74,42],suit:[79,56]},
+  wrist:{label:"Left wrist",body:[80,54],suit:[86,71]},
+  "right-leg":{label:"Right leg",body:[39,74],suit:[37,86]},
+  "left-leg":{label:"Left leg",body:[61,74],suit:[63,86]},
+};
+const anatomyTabs = [...element("twin-body").querySelectorAll("[role=tab]")];
+const anatomyArt = [...element("body-map").querySelectorAll("[data-anatomy-art]")];
+const anatomyFigure = element("body-map").querySelector(".anatomy-figure");
+const suitFigure = element("body-map").querySelector("[data-anatomy-suit]");
+const suitId = suitFigure.querySelector("[data-twin-suit-id]");
+const bodyButtons = [];
+const peerChecks = [];
+const cameraRooms = Object.keys(zones).filter(room => room !== "habitat-01" && room !== "medical-01");
+const deckCameras = new Map();
+const cameraMotion = {move:"Moving",rest:"Resting",work:"At work",idle:"At station"};
+const crewMode = () => connectedFlight ? "asteria" : "replay";
+function peerWork(member,time) {
+  return peerChecks.find(check => check.mode === crewMode() && check.observer === member &&
+    check.requested <= time && time < check.due);
+}
+function availableObserver(member, time) {
+  const order = [characters[member].link, ...duties.keys()];
+  const groundJob = flightWorkflow.job(currentFrame());
+  return order.find(observer => observer !== member && !activeTask(observer,time) && !peerWork(observer,time) &&
+    !(observer === 2 && (groundInspection(currentFrame()) || groundJob?.state === "Offered")));
+}
+const anatomyLabels = {
+  anatomy:"Body regions · simulated crew",
+  skeleton:"Skeleton · anatomy illustration",
+  muscles:"Muscles · anatomy illustration",
+  cardiorespiratory:"Heart & lungs · anatomy illustration",
+  sensors:"Wearables · simulated crew",
+  suit:"Flight suit illustration",
+};
+let twinView = "body", activeLayer = "anatomy", selectedRegion = "torso";
+function setupBodyMap() {
+  const map = element("body-map");
+  const regions = element("body-regions");
+  for (const [id,{label}] of Object.entries(bodyRegions)) {
+    for (const container of [map,regions]) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.region = id;
+      if (container === map) button.setAttribute("aria-label", label + " on body map");
+      else button.textContent = label;
+      button.addEventListener("click",()=>{selectedRegion=id;render();});
+      container.append(button);
+      bodyButtons.push(button);
+    }
+  }
+  anatomyTabs.forEach((tab, index) => {
+    tab.addEventListener("click",()=>{activeLayer=tab.dataset.layer;render();});
+    tab.addEventListener("keydown",event=>{
+      const last = anatomyTabs.length - 1;
+      const target = {
+        ArrowLeft:(index + last) % anatomyTabs.length,
+        ArrowRight:(index + 1) % anatomyTabs.length,
+        Home:0, End:last,
+      }[event.key];
+      if (target === undefined) return;
+      event.preventDefault();
+      anatomyTabs[target].click();
+      anatomyTabs[target].focus();
+    });
+  });
+  for (const button of document.querySelectorAll("[data-twin-view]")) button.addEventListener("click",()=>{
+    twinView = button.dataset.twinView;
+    render();
+  });
+  for (const [id,region] of [["inspect-wristband","wrist"],["inspect-back-pod","torso"]]) {
+    element(id).addEventListener("click",()=>{
+      activeLayer = "sensors";
+      selectedRegion = region;
+      render();
+    });
+  }
+  element("request-peer-check").addEventListener("click",()=>{
+    if (element("request-peer-check").disabled) return;
+    const member = profileMembers.get("personnel");
+    const requested = Math.floor(missionTime);
+    const observer = availableObserver(member,requested);
+    const room = crewPositions.get(pawns.get(member)).room;
+    const arrival = nextTick(requested) + TICK_SECONDS;
+    for (let i = peerChecks.length-1; i >= 0; i--) {
+      if (peerChecks[i].mode === crewMode() && peerChecks[i].requested > requested) peerChecks.splice(i,1);
+    }
+    peerChecks.push({mode:crewMode(),member,observer,region:selectedRegion,requested,arrival,
+      due:arrival + TICK_SECONDS,origin:crewPositions.get(pawns.get(observer)),room});
+    if (connectedFlight) launchMission.refreshCrewWork();
+    render();
+  });
+}
+function renderAnatomyLayer() {
+  const suit = activeLayer === "suit";
+  anatomyFigure.toggleAttribute("hidden", suit);
+  suitFigure.toggleAttribute("hidden", !suit);
+  for (const group of anatomyArt) group.toggleAttribute("hidden", group.dataset.anatomyArt !== activeLayer);
+  for (const tab of anatomyTabs) {
+    const active = tab.dataset.layer === activeLayer;
+    tab.setAttribute("aria-selected", String(active));
+    tab.tabIndex = active ? 0 : -1;
+    if (active) element("twin-layer").setAttribute("aria-labelledby", tab.id);
+  }
+  for (const button of bodyButtons) {
+    const region = button.dataset.region;
+    button.setAttribute("aria-pressed", String(region === selectedRegion));
+    if (button.parentElement.id !== "body-map") continue;
+    const [x,y] = bodyRegions[region][suit ? "suit" : "body"];
+    button.style.left = x + "%";
+    button.style.top = y + "%";
+  }
+  element("twin-layer-label").textContent = anatomyLabels[activeLayer];
+}
+function regionTelemetry(sample) {
+  const unobserved = ["No measurement", "Unobserved", "No onboard sensor measures this region directly.", false];
+  if (activeLayer === "suit") return ["Equipment illustration", "Suit status unavailable", "This replay carries no suit sensor readings.", false];
+  if (activeLayer === "skeleton") return ["Anatomical reference", "Unobserved", "The replay carries no bone or joint assessment.", false];
+  if (activeLayer === "muscles") {
+    if (selectedRegion !== "torso") return unobserved;
+    return ["Simulated back-pod EMG", sample.emg + " mV RMS", "Synthetic research channel. Muscle condition is unobserved.", true];
+  }
+  if (activeLayer === "cardiorespiratory") {
+    if (selectedRegion !== "torso" && selectedRegion !== "wrist") return unobserved;
+    return ["Simulated optical wristband", sample.heart_rate + " bpm", "Heart rate is sampled at the left wrist. Breathing rate and blood oxygen are unavailable.", true];
+  }
+  if (activeLayer === "sensors" && selectedRegion === "torso") return ["Simulated back pod",
+    sample.pitch + "° pitch · " + sample.roll + "° roll",
+    sample.emg + " mV RMS synthetic EMG · " + sample.speed + " m/s motion estimate.", true];
+  if (selectedRegion === "torso") return ["Simulated back-pod IMU", sample.pitch + "° pitch · " + sample.roll + "° roll",
+    "Trunk orientation from the back pod.", true];
+  if (selectedRegion === "wrist") return ["Simulated optical wristband", sample.heart_rate + " bpm",
+    "Whole-person heart rate sampled at the left wrist.", true];
+  return unobserved;
+}
+function updateBodyMap(sample, member, frame) {
+  const map = element("body-map");
+  const state = activeLayer + ":" + selectedRegion;
+  if (map.dataset.view !== state) {
+    map.dataset.view = state;
+    renderAnatomyLayer();
+  }
+  map.style.setProperty("--profile-accent",duties[member].color);
+  suitId.textContent = data.crew[member];
+  const [source,reading,detail,observed] = regionTelemetry(sample);
+  element("region-name").textContent = bodyRegions[selectedRegion].label;
+  element("region-source").textContent = source;
+  element("region-reading").textContent = reading;
+  element("region-detail").textContent = detail;
+  element("region-time").textContent = observed ? "Observed T+" + clock(sample.time) +
+    (connectedFlight ? " · synthetic phase reference" : " · synthetic replay sample") : "";
+  element("wrist-readout").hidden = activeLayer !== "sensors" || selectedRegion !== "wrist";
+  element("wrist-bpm").textContent = sample.heart_rate + " bpm";
+  element("wrist-sample").textContent = (connectedFlight ? "Synthetic phase reference" : "Latest simulated sample") +
+    " · T+" + clock(sample.time);
+  const tracked = trackingRoom(member);
+  const camera = tracked ? roomById.get(tracked).name + " · " + cameraMotion[paintedPositions.get(member).activity] +
+    " · T+" + clock(frame.time) : "Outside camera coverage · no observation";
+  element("crew-camera").textContent = camera;
+  element("crew-cabin").textContent = "Cabin CO₂ " + frame.co2.toFixed(0) + " ppm · spacecraft twin";
+  const check = peerChecks.findLast(check=>check.mode === crewMode() && check.member === member &&
+    check.region === selectedRegion && check.requested <= frame.time);
+  const pending = check && frame.time < check.due;
+  const request = element("request-peer-check");
+  element("peer-check").hidden = observed && !check;
+  const observer = pending ? check.observer : availableObserver(member,frame.time);
+  const timeAvailable = connectedFlight ? connectedFlight.advance || connectedFlight.canWaitForCrew
+    : nextTick(frame.time) + 2 * TICK_SECONDS <= endTime;
+  request.disabled = Boolean(pending || observer === undefined || !timeAvailable);
+  request.hidden = Boolean(check || observed);
+  let status = timeAvailable ? observer === undefined ? "No crewmate is free for this check."
+    : characters[observer].short + " can make a visual check and ask about symptoms." : "Checks are unavailable during this phase.";
+  if (check) {
+    const name = characters[check.observer].short;
+    const outcome = check.completed
+      ? "recorded a visual check and asked about symptoms. No visible concerns recorded."
+      : "could not complete the check because the astronaut changed stations.";
+    status = pending ? name + (frame.time < check.arrival ? " is heading to " + roomById.get(check.room).name
+      : " is checking in with " + characters[member].short) + " · due T+" + clock(check.due)
+      : name + " " + outcome + " · T+" + clock(check.due);
+    request.hidden = pending || observed || outcome.startsWith("recorded");
+  }
+  const report = element("peer-check-status");
+  const dailyCheck = crewSession.crew[member].checkup;
+  if (!check && dailyCheck) status = characters[dailyCheck.observer].short +
+    " recorded a routine checkup · T+" + clock(dailyCheck.time) + " · no visible concerns recorded";
+  if (report.textContent !== status) report.textContent = status;
+  element("peer-order").hidden = observed && !check;
+  element("peer-order-target").textContent = characters[member].short + " · " + bodyRegions[selectedRegion].label;
+  element("peer-order-status").textContent = status;
+  if (check?.completed && !observed && ["anatomy","sensors"].includes(activeLayer)) {
+    element("region-source").textContent = "Simulated crewmate observation";
+    element("region-reading").textContent = "Normal · visual check";
+    element("region-detail").textContent = "No visible concern recorded. Internal condition remains unknown.";
+    element("region-time").textContent = "Observed T+" + clock(check.due);
+  }
+}
+
+function trackingRoom(member) {
+  const position = paintedPositions.get(member);
+  if (!position) return undefined;
+  return cameraRooms.find(room => {
+    const {x,y,w,h} = zones[room];
+    return position.x >= x && position.x < x+w && position.y >= y && position.y < y+h;
+  });
+}
 const profileWindows = new Map();
 const checkIns = new Map();
 let assetCrew = 0, selectedSignal = "heart_rate";
@@ -813,7 +1423,7 @@ function renderProfiles(frame) {
     const reports = checkIns.get(id + ":" + row.time) ?? {};
     const [zone, task] = station(duties[member], member);
     setIcon(element(kind + "-title"), profileIcons[kind],
-      characters[member].short + " · " + (kind==="personnel" ? "Profile" : kind[0].toUpperCase() + kind.slice(1)));
+      characters[member].short + " · " + (kind==="personnel" ? "Digital twin" : kind[0].toUpperCase() + kind.slice(1)));
     let rows;
     if (kind === "personnel") {
       const persona = characters[member];
@@ -826,19 +1436,26 @@ function renderProfiles(frame) {
       element("personnel-name").textContent = persona.name;
       element("personnel-role").textContent = duties[member].role + " · " + id;
       element("personnel-location").textContent = roomById.get(zone).name + " · " + task;
-      rows = [
-        ["Background",persona.bio,"clipboard-list"],
-        ["Traits and specialties",persona.traits + " · " + persona.strength,"zap"],
+      element("twin-body").hidden = twinView !== "body";
+      element("personnel-data").hidden = twinView === "body";
+      for (const button of document.querySelectorAll("[data-twin-view]"))
+        button.setAttribute("aria-pressed",String(button.dataset.twinView===twinView));
+      if (twinView === "body") updateBodyMap(row,member,frame);
+      rows = twinView === "social" ? [
         ["Crew relationship",characters[persona.link].name + " · " + persona.bond,"users"],
         ["Shared mission beat",crewBeat(frame,member),"radio"],
+      ] : [
+        ["Background",persona.bio,"clipboard-list"],
+        ["Traits and specialties",persona.traits + " · " + persona.strength,"zap"],
         ["Apparel",frame.phase==="Return transit" || frame.phase==="Departure"
           ? "Flight suit · phase wardrobe preview" : "Cabin wear · phase wardrobe preview","package"],
         ["Private check-in",reports.mood || "Mood not reported","activity"],
       ];
     } else if (kind === "needs") {
-      setChoices("mood", reports.mood ?? "");
-      setChoices("symptoms", reports.symptoms ?? "");
-      rows = [["Rest",frame.habitat.beds ? "Protected rest window" : "Scheduled"],["Meal and hydration",frame.habitat.meal],["WC",frame.habitat.wc]];
+      const person = crewSession.crew[member];
+      rows = [...crewRoutines.meters(person,frame.time),["Current activity",task],["Needs queue",person.blocked || "Clear"],
+        ["Crew checkup",person.checkup ? "Last T+" + clock(person.checkup.time) : "Every 24 mission hours"],
+        ["Private mood",reports.mood || "No report"],["Symptoms",reports.symptoms || "No report"]];
     } else if (kind === "devices") {
       rows = Object.entries(signals).map(([key,[label,unit,source]]) => [
         label + " · " + source, row[key] + " " + unit,
@@ -853,7 +1470,11 @@ function renderProfiles(frame) {
           ? row.heart_rate + " bpm" : reports[metric.id] || healthSources[metric.id]])];
     } else {
       const persona = characters[member];
+      const job = crewRoutine(member);
+      element("duty-progress").value = pawns.get(member).querySelector("meter").value;
       rows = [["Role",duties[member].role],["Station",roomById.get(zone).name],["Task",task],
+        ["Priority",peerWork(member,frame.time) ? "Crew observation" : activeTask(member,frame.time) || member === 2 && groundInspection(frame)
+          ? "Commander order" : job?.need ? "Personal need" : job ? "Role routine" : "On standby"],
         ["Background",persona.bio],["Traits",persona.traits],["Specialties",persona.strength],
         ["Crew relationship",characters[persona.link].name + " · " + persona.bond],
         ["Shared beat · scripted",crewBeat(frame,member)],["Vehicle",frame.vehicle],["Phase",frame.phase]];
@@ -876,6 +1497,13 @@ function renderProfiles(frame) {
     container.replaceChildren(...rows.flatMap(([label,value]) => {
       const dt = document.createElement("dt"), dd = document.createElement("dd");
       dt.textContent = label; dd.textContent = value;
+      if (kind === "needs" && /^\d+%$/.test(value)) {
+        const meter = document.createElement("meter");
+        meter.max = 100;
+        meter.value = Number.parseInt(value,10);
+        meter.setAttribute("aria-label",label);
+        dd.append(meter);
+      }
       return [dt,dd];
     }));
   }
@@ -998,7 +1626,7 @@ function inspect(frame) {
     assign.textContent = asset.task;
     const crew = assetCrew;
     setChoices("asset-crew",crew);
-    const memberBusy = activeTask(crew, frame.time) ||
+    const memberBusy = activeTask(crew, frame.time) || peerWork(crew,frame.time) ||
       (crew === 2 && groundInspection(frame)) || (asset.id === "scrubber" && groundInspection(frame));
     assign.disabled = Boolean(active || memberBusy || frame.habitat.beds && ["bed","wc"].includes(asset.id)
       || nextTick(missionTime) + TICK_SECONDS + WORK_SECONDS > endTime);
@@ -1040,18 +1668,25 @@ function inspect(frame) {
 
 function currentFrame() {
   const key = data.crew.filter(id => reduced.has(id)).join(",");
-  return {...data.frames[key][index], time:Math.floor(missionTime)};
+  const source = data.frames[key][index];
+  return {...source,...connectedFlight?.frame,time:Math.floor(missionTime)};
 }
 
 let lastRenderedSecond = -1;
 
 function render() {
   const frame = currentFrame();
+  updateCrewRoutines(frame);
+  for (const check of peerChecks) {
+    if (check.mode === crewMode() && frame.time >= check.due && check.completed === undefined) {
+      check.completed = crewPositions.get(pawns.get(check.member))?.room === check.room;
+    }
+  }
   lastRenderedSecond = frame.time;
   element("workflow-state").textContent = flightWorkflow.status(frame, clock);
   element("monitor-state").textContent = frame.removal != null && frame.removal < 20
     ? "Monitor · Primary scrubber degraded. Inspection records evidence." : "";
-  const routine = tasks.find(task=>task.routine && task.queued<=frame.time);
+  const routine = tasks.find(task=>task.mode === crewMode() && task.routine && task.queued<=frame.time);
   const scrubber = taskAt("scrubber",frame.time);
   const rackBusy = Boolean(scrubber && frame.time < scrubber.finishes);
   const ivoBusy = Boolean(activeTask(2,frame.time));
@@ -1068,11 +1703,20 @@ function render() {
   element("hold-order").hidden = !flightWorkflow.canDecide(frame);
   element("complete-order").hidden = !flightWorkflow.canComplete(frame);
   element("clock").textContent = clock(frame.time);
+  element("hud-clock").textContent = "T+" + clock(frame.time);
   element("phase").textContent = frame.phase + " · " + frame.label;
+  element("timeline").hidden = Boolean(connectedFlight);
+  element("one-hour").hidden = Boolean(connectedFlight);
+  element("next-event").textContent = connectedFlight ? "Advance 15 s" : "Next event";
+  element("stage").dataset.asteria = Boolean(connectedFlight);
+  element("stage").dataset.vehicle = connectedFlight?.visual ?? "";
+  element("ship").dataset.vehicle = connectedFlight?.visual ?? "";
   element("resource-phase").textContent = frame.phase + " · " + frame.vehicle;
   element("resource-air").textContent = "CO₂ " + frame.co2.toFixed(0) + " ppm";
   element("resource-power").textContent = frame.power == null ? "Power unmodeled" : "Headroom " + frame.power.toFixed(2) + " kW";
   element("resource-crew").textContent = "Crew " + data.crew.length;
+  element("resource-meals").textContent = crewSession.supplies.meals + " meals";
+  element("resource-water").textContent = crewSession.supplies.water.toFixed(2) + " L water";
   const routePoints = [[18,35],[33,27],[47,23],[62,20],[80,18],[102,16],[130,17],[188,18],[242,35]];
   const [mx,my] = routePoints[frame.route];
   element("ship-position").setAttribute("cx",mx);
@@ -1084,14 +1728,20 @@ function render() {
   element("map-location").textContent = frame.site + " · " + clock(frame.time);
   element("timeline").value = Math.floor(missionTime);
   element("timeline").setAttribute("aria-valuetext", clock(frame.time) + " " + frame.label);
-  element("stage").dataset.playing = timer !== null;
-  element("play").setAttribute("aria-label", timer !== null ? "Pause" : "Play");
-  element("play-icon").setAttribute("href", timer !== null ? "#hud-pause" : "#hud-play");
-  element("step").disabled = missionTime >= endTime;
-  element("next-event").disabled = missionTime >= endTime;
-  element("speed-cycle").textContent = compressed ? "1 h" : speed + "×";
-  element("speed-cycle").title = compressed ? "One-hour pacing active. Click for normal speeds."
-    : (4 * speed) + " mission seconds per real second. Click to change speed.";
+  const playing = connectedFlight ? connectedPlaying : timer !== null;
+  element("stage").dataset.playing = playing;
+  element("play").disabled = Boolean(connectedFlight && !connectedFlight.advance);
+  element("play").setAttribute("aria-label", playing ? "Pause" : "Play");
+  element("play-icon").setAttribute("href", playing ? "#hud-pause" : "#hud-play");
+  const skipLabel = connectedFlight ? "Advance one mission tick" : "Skip one mission hour";
+  element("step").setAttribute("aria-label",skipLabel);
+  element("step").title = skipLabel;
+  element("step").disabled = connectedFlight ? !connectedFlight.advance : missionTime >= endTime;
+  element("next-event").disabled = connectedFlight ? !connectedFlight.advance : missionTime >= endTime;
+  const displayedSpeed = connectedFlight?.speed ?? speed;
+  element("speed-cycle").textContent = !connectedFlight && compressed ? "1 h" : displayedSpeed + "×";
+  element("speed-cycle").title = !connectedFlight && compressed ? "One-hour pacing active. Click for normal speeds."
+    : (4 * displayedSpeed) + " mission seconds per real second. Click to change speed.";
   element("one-hour").setAttribute("aria-pressed", compressed);
   for (const [roomId, button] of roomButtons) {
     button.setAttribute("aria-pressed", selection.room === roomId);
@@ -1099,27 +1749,30 @@ function render() {
   duties.forEach((duty, i) => {
     const [roomId, task] = station(duty,i);
     const button = pawns.get(i);
+    const crewCheck = peerWork(i,frame.time);
     const work = activeTask(i, frame.time) || (i === 2 && groundInspection(frame));
     const asset = work && frame.time >= work.assigned ? equipment.get(work.asset) : null;
     const travelling = asset && frame.time < work.arrival;
     const sharedWork = !asset && ["Docked","Station research","Recovery"].includes(frame.phase);
-    const statusIcon = travelling ? "map" : asset?.icon ?? (sharedWork ? "users" : roomIcons[roomId]);
+    const routine = crewRoutine(i);
+    const statusIcon = crewCheck ? "users" : (work ? equipment.get(work.asset).icon : routine ? equipment.get(routine.asset).icon
+      : sharedWork ? "users" : roomIcons[roomId]);
     const marker = button.querySelector(".action-marker");
     const badge = portraits.get(i).querySelector(".crew-status");
     if (badge.dataset.icon !== statusIcon) {
-      setIcon(marker,statusIcon,""); setIcon(badge,statusIcon,"");
+      setIcon(marker.querySelector("i"),statusIcon,""); setIcon(badge,statusIcon,"");
       badge.dataset.icon = statusIcon;
     }
-    marker.hidden = !asset && !sharedWork;
+    marker.hidden = !work && !routine && !crewCheck;
     marker.style.color = travelling || sharedWork ? "#bed6ff" : "";
     button.setAttribute("aria-label", characters[i].name + " " + duty.role + " · " + task);
-    button.title = task;
-    button.dataset.working = Boolean(work);
+    button.title = "Open digital twin · " + task;
+    button.dataset.working = Boolean(work || routine || crewCheck);
     button.setAttribute("aria-pressed", selection.crew === i);
     roster.get(i).setAttribute("aria-pressed", selection.crew === i);
     const portrait = portraits.get(i);
     portrait.setAttribute("aria-pressed", selection.crew === i);
-    portrait.dataset.working = Boolean(work);
+    portrait.dataset.working = Boolean(work || routine || crewCheck);
     portrait.title = characters[i].name + " · " + duty.role + " · " + task;
     portrait.setAttribute("aria-label", "Inspect " + characters[i].name + " " + duty.role + " · " + task);
   });
@@ -1170,15 +1823,27 @@ function pointAlong(points,progress) {
 function crewMotion(member, frame) {
   const duty = duties[member];
   const [room] = station(duty,member);
+  const check = peerWork(member,frame.time);
+  if (check) return {origin:check.origin,destination:stationPoint(room,member),
+    start:check.arrival - TICK_SECONDS,end:check.arrival,activity:frame.time < check.arrival ? "move" : "work"};
   const task = activeTask(member,frame.time) || (member === 2 && groundInspection(frame));
   if (task && frame.time >= task.assigned) {
     const asset = equipment.get(task.asset);
     return {origin:task.origin,destination:stationPoint(room,member,asset),
       start:task.assigned,end:task.arrival,activity:frame.time >= task.arrival ? "work" : "move"};
   }
+  const job = crewRoutine(member);
+  if (job) {
+    const asset = equipment.get(job.asset);
+    const previous = equipment.get(job.previous);
+    const initialRoom = (duty.stations[0])[0];
+    return {origin:stationPoint(previous?.room ?? initialRoom,member,previous),
+      destination:stationPoint(room,member,asset),start:job.assigned,end:job.arrival,
+      activity:frame.time < job.arrival ? "move" : job.need?.id === "rest" ? "rest" : "work"};
+  }
   const priorRoom = index > 0 ? (duty.stations[index-1] ?? stationDuties[member][index-1-duty.stations.length])[0] : room;
   const motion = {origin:stationPoint(priorRoom,member),destination:stationPoint(room,member),
-    start:checkpoints[index].time,end:checkpoints[index].time+TICK_SECONDS,
+    start:connectedFlight?.phaseStarted ?? checkpoints[index].time,end:(connectedFlight?.phaseStarted ?? checkpoints[index].time)+TICK_SECONDS,
     activity:frame.phase === "Station rest" ? "rest" : "idle"};
   if (motion.start <= missionTime && missionTime < motion.end && room !== priorRoom) motion.activity = "move";
   return motion;
@@ -1192,27 +1857,37 @@ function doorClearance(x,y) {
   return Math.max(0,1-nearest/50);
 }
 
-function paintFlight(frame) {
+function paintFlight(frame, sceneTime = missionTime) {
+  const inspection = groundInspection(frame);
   for (const [member,button] of pawns) {
     const motion = crewMotion(member,frame);
     const route = pathBetween(motion.origin,motion.destination);
-    const progress = motion.activity !== "move" ? 1 : reducedMotion.matches ? 0
-      : Math.min(1,Math.max(0,(missionTime-motion.start)/(motion.end-motion.start)));
+    const progress = motion.activity !== "move" ? 1
+      : Math.min(1,Math.max(0,(sceneTime-motion.start)/(motion.end-motion.start)));
     const [x,y] = pointAlong(route,progress);
     const facing = pointAlong(route,Math.min(1,progress+.02))[0] < x ? -1 : 1;
-    const pose = reducedMotion.matches ? 0 : Math.sin(missionTime*(motion.activity==="move" ? 2.5 : 1.3));
-    place(button,x,y);
+    const pose = reducedMotion.matches ? 0 : Math.sin(sceneTime*(motion.activity==="move" ? 2.5 : 1.3));
+    place(button,...(motion.activity === "move" && reducedMotion.matches ? route[0] : [x,y]));
     button.dataset.pose = motion.activity;
     button.style.setProperty("--stride",pose.toFixed(2));
     button.style.setProperty("--facing",facing);
-    crewPositions.set(button,{room:motion.destination.room,x,y});
+    const job = peerWork(member,frame.time) || activeTask(member,frame.time) ||
+      (member === 2 && inspection) || crewRoutine(member);
+    if (job) {
+      const start = job.assigned ?? job.requested;
+      const end = job.finishes ?? job.due;
+      button.querySelector("meter").value = Math.min(1,Math.max(0,(sceneTime-start)/(end-start)));
+    } else button.querySelector("meter").value = 0;
+    crewPositions.set(button,{room:progress < .5 ? motion.origin.room : motion.destination.room,x,y});
     paintedPositions.set(member,{x,y,activity:motion.activity});
     if (!element("map-deck").hidden) {
       miniCrew.get(member).setAttribute("cx",x);
       miniCrew.get(member).setAttribute("cy",y);
     }
   }
-  element("stage").style.setProperty("--star-offset",reducedMotion.matches ? "0px" : -(missionTime%388)/4+"px");
+  const occupiedCameras = new Set(duties.map((_,member)=>trackingRoom(member)));
+  for (const [room,camera] of deckCameras) camera.dataset.tracking = occupiedCameras.has(room);
+  element("stage").style.setProperty("--star-offset",reducedMotion.matches ? "0px" : -(sceneTime%388)/4+"px");
   drawShip(frame);
   drawSelectedRoute(frame);
 }
@@ -1297,6 +1972,16 @@ function setupMinimap() {
     paintFlight(currentFrame());
   });
 }
+function openDigitalTwin(member, trigger) {
+  selection = {crew:member};
+  twinView = "body";
+  activeLayer = "anatomy";
+  selectedRegion = "torso";
+  profileMembers.set("personnel",member);
+  render();
+  profileWindows.get("personnel").open(trigger);
+}
+
 function crewFace(member) {
   const persona = characters[member], suit = duties[member].color;
   const art = document.createElementNS("http://www.w3.org/2000/svg","svg");
@@ -1329,13 +2014,18 @@ duties.forEach((duty,i) => {
   const activity = document.createElement("span");
   activity.className = "action-marker";
   activity.setAttribute("aria-hidden","true");
+  const activityIcon = document.createElement("i");
+  const activityProgress = document.createElement("meter");
+  activityProgress.max = 1;
+  activity.append(activityIcon,activityProgress);
   pawn.append(crewSprite(i), marker, activity);
   const member = document.createElement("button");
   member.type = "button";
   member.textContent = characters[i].name + " · " + duty.role;
-  const select = () => { selection = {crew:i}; showInspector(); render(); };
-  pawn.addEventListener("click", select);
-  member.addEventListener("click", select);
+  for (const button of [pawn,member]) {
+    button.setAttribute("aria-controls","personnel-widget");
+    button.addEventListener("click",()=>openDigitalTwin(i,button));
+  }
   const portrait = document.createElement("button");
   portrait.type = "button";
   portrait.className = "crew-portrait";
@@ -1348,12 +2038,8 @@ duties.forEach((duty,i) => {
   status.className = "crew-status";
   status.setAttribute("aria-hidden","true");
   portrait.append(crewFace(i),id,status);
-  portrait.addEventListener("click",()=>{
-    selection = {crew:i};
-    profileMembers.set("personnel",i);
-    profileWindows.get("personnel").open(portrait);
-    render();
-  });
+  portrait.setAttribute("aria-controls","personnel-widget");
+  portrait.addEventListener("click",()=>openDigitalTwin(i,portrait));
   portraits.set(i,portrait);
   element("crew-strip").append(portrait);
   pawns.set(i,pawn);
@@ -1382,6 +2068,21 @@ for (const asset of fixtures) {
   equipmentButtons.set(asset.id, button);
   element("ship").append(button);
 }
+for (const room of cameraRooms) {
+  const camera = document.createElement("button");
+  camera.type = "button";
+  camera.className = "deck-camera";
+  camera.setAttribute("aria-label",roomById.get(room).name + " camera");
+  setIcon(camera,"video","");
+  const {x,y,w} = zones[room];
+  place(camera,x+w-16,y+13);
+  camera.addEventListener("click",()=>{
+    const member = duties.findIndex((_,i)=>trackingRoom(i) === room);
+    if (member >= 0) openDigitalTwin(member,camera);
+  });
+  deckCameras.set(room,camera);
+  element("ship").append(camera);
+}
 choices("asset-crew", characters.map((persona, i)=>[i,persona.short,persona.name + " · " + duties[i].role]),
   value=>{assetCrew = value;});
 element("assign-asset").addEventListener("click", () => {
@@ -1392,11 +2093,11 @@ element("assign-asset").addEventListener("click", () => {
   const previous = crewPositions.get(pawns.get(assetCrew));
   const origin = {room:previous.room,x:previous.x,y:previous.y};
   // Assigning while scrubbed back branches the local task history.
-  while (tasks.length && tasks.at(-1).queued > queued) tasks.pop();
+  discardFutureTasks(queued);
   const result = asset.id === "bench"
     ? engineeringResult(benchMode,checkpoints[checkpoints.findLastIndex(frame=>frame.time<=arrival)])
     : asset.result;
-  tasks.push({asset:asset.id,action:asset.task,member:assetCrew,queued,assigned,arrival,origin,
+  tasks.push({mode:crewMode(),asset:asset.id,action:asset.task,member:assetCrew,queued,assigned,arrival,origin,
     finishes:arrival+WORK_SECONDS,result});
   render();
 });
@@ -1407,6 +2108,7 @@ element("timeline").addEventListener("input", event => {
   render();
 });
 element("play").addEventListener("click", () => {
+  if (connectedFlight) { launchMission.togglePlayback(); return; }
   if (timer !== null) stop();
   else {
     if (missionTime >= endTime) setMissionTime(0);
@@ -1416,17 +2118,21 @@ element("play").addEventListener("click", () => {
   render();
 });
 element("step").addEventListener("click", () => {
+  if (connectedFlight) { launchMission.advance(); return; }
   stop();
   setMissionTime(missionTime + 3600);
   render();
 });
 element("next-event").addEventListener("click", () => {
+  if (connectedFlight) { launchMission.advance(); return; }
   stop();
   if (index < last) setMissionTime(checkpoints[index + 1].time);
   render();
 });
 element("reset").addEventListener("click", () => {
-  stop(); setMissionTime(0); speed = 1; compressed = false; reduced.clear(); checkIns.clear(); tasks.length = 0; flightWorkflow.reset(); render();
+  if (connectedFlight) { launchMission.reset(); return; }
+  for (let i = peerChecks.length-1; i >= 0; i--) if (peerChecks[i].mode === "replay") peerChecks.splice(i,1);
+  stop(); setMissionTime(0); speed = 1; compressed = false; reduced.clear(); checkIns.clear(); discardFutureTasks(-1); flightWorkflow.reset(); render();
 });
 element("activity").addEventListener("click", () => {
   const id = data.crew[selection.crew];
@@ -1437,6 +2143,10 @@ element("activity").addEventListener("click", () => {
 for (const button of document.querySelectorAll("[data-profile]")) {
   button.addEventListener("click", () => {
     const kind = button.dataset.profile;
+    if (kind === "personnel") {
+      openDigitalTwin(selection.crew,button);
+      return;
+    }
     profileMembers.set(kind, selection.crew);
     profileWindows.get(kind).open(button);
     render();
@@ -1444,13 +2154,11 @@ for (const button of document.querySelectorAll("[data-profile]")) {
 }
 choices("series", Object.entries(signals).map(([key,[name]])=>[key,key==="emg"?"Synthetic EMG":name]),
   value=>{selectedSignal = value;});
-for (const [field,values] of Object.entries({
-  mood:["Settled","Focused","Overloaded"],symptoms:["None reported","Discomfort reported"],
-})) {
-  choices(field,[["","No report"],...values.map(value=>[value,value])],value=>{
-    const key = data.crew[profileMembers.get("needs")] + ":" + checkpoints[index].time;
-    checkIns.set(key,{...checkIns.get(key),[field]:value});
-  });
+function discardFutureTasks(time) {
+  const mode = crewMode();
+  for (let i = tasks.length-1; i >= 0; i--) {
+    if (tasks[i].mode === mode && tasks[i].queued > time) tasks.splice(i,1);
+  }
 }
 element("assign-routine").addEventListener("click", () => {
   if (element("assign-routine").disabled || element("assign-routine").hidden) return;
@@ -1458,8 +2166,8 @@ element("assign-routine").addEventListener("click", () => {
   const [room] = station(duties[2],2);
   const origin = stationPoint(room,2);
   const work = flightWorkflow.timebox(frame.time);
-  while (tasks.length && tasks.at(-1).queued > frame.time) tasks.pop();
-  tasks.push({...work,origin,queued:frame.time,asset:"scrubber",member:2,routine:true,
+  discardFutureTasks(frame.time);
+  tasks.push({...work,mode:crewMode(),origin,queued:frame.time,asset:"scrubber",member:2,routine:true,
     action:"Inspect the scrubber on the routine watch",result:"Routine scrubber check recorded"});
   render();
 });
@@ -1477,16 +2185,22 @@ const controller = document.querySelector(".flight-controls");
 const playArea = document.querySelector(".play-area");
 const shelf = element("widget-shelf");
 const widgets = createFlightWidgets(overlay,shelf,element("widget-notice"));
+const launchHud = document.querySelector(".launch-hud");
+new ResizeObserver(() => {
+  element("launch-field").style.setProperty("--launch-clearance", launchHud.offsetHeight + "px");
+}).observe(launchHud);
 const hudSize = new ResizeObserver(() => {
   const portraitsBottom = element("crew-strip").getBoundingClientRect().bottom;
-  const clearance = Math.max(controller.getBoundingClientRect().bottom, portraitsBottom, shelf.getBoundingClientRect().bottom)
-    - playArea.getBoundingClientRect().top + 8;
+  const clearance = Math.max(controller.getBoundingClientRect().bottom, portraitsBottom,shelf.getBoundingClientRect().bottom,
+    element("mission-resources").getBoundingClientRect().bottom)
+    + 8;
   playArea.style.setProperty("--control-clearance", Math.max(0, clearance) + "px");
 });
 hudSize.observe(controller);
 hudSize.observe(element("crew-strip"));
 hudSize.observe(document.querySelector(".hud"));
 hudSize.observe(shelf);
+hudSize.observe(element("mission-resources"));
 const ordersWindow = widgets.register(element("workflow-widget"), element("show-workflow"), () => ({x:14,y:35}));
 widgets.register(element("map-widget"),null,() => ({x:14,y:overlay.clientHeight}),{
   persistent:true,lock:element("lock-map"),
@@ -1497,8 +2211,8 @@ for (const [offset, kind] of ["personnel", "duty", "needs", "vitals", "devices"]
   const button = document.querySelector('[data-profile="'+kind+'"]');
   setIcon(button,profileIcons[kind],button.textContent);
   profileWindows.set(kind,widgets.register(element(kind + "-widget"),null,() => ({
-    x:Math.max(14,overlay.clientWidth - 355),y:10 + offset * 18,
-  })));
+    x:Math.max(14,overlay.clientWidth - (kind === "personnel" ? 500 : 355)),y:10 + offset * 18,
+  }),{compactPriority:kind === "personnel"}));
 }
 choices("medical-crew",characters.map((persona,i)=>[i,persona.short,persona.name]),
   value=>{medicalCrew=value;});
@@ -1513,7 +2227,57 @@ for (const button of document.querySelectorAll("[data-personnel-view]")) {
   });
 }
 setupMinimap();
-bindLaunchCheckout(data.launch,()=>{stop();render();});
+setupBodyMap();
+const commandPanel = widgets.register(element("mission-command-widget"),element("show-command"),() => ({
+  x:overlay.clientWidth-365,y:12,
+}));
+let replayTime = 0;
+const launchMission = bindLaunchCheckout(data.launch,{
+  crew: characters.map((character,index)=>({name:character.name,role:duties[index].role,portrait:()=>crewFace(index)})),
+  pauseReplay:stop,
+  onCanvas(flight) {
+    if (!connectedFlight && flight) {
+      replayTime = missionTime;
+      commandPanel.open(element("show-command"));
+    }
+    if (connectedFlight && !flight) {
+      commandPanel.close();
+      setMissionTime(replayTime);
+    }
+    connectedFlight = flight;
+    if (flight) {
+      if (missionTime !== flight.time) canvasTickStarted = performance.now();
+      missionTime = flight.time;
+      index = flight.frameIndex;
+    }
+    element("show-command").hidden = !flight;
+    element("show-orbit").hidden = !flight;
+    render();
+  },
+  onPlayback(playing) {
+    connectedPlaying = playing;
+    cancelAnimationFrame(canvasAnimation);
+    if (playing) {
+      canvasTickStarted = performance.now();
+      function animate(now) {
+        const elapsed = Math.min(TICK_SECONDS, (now-canvasTickStarted)*.004*(connectedFlight?.speed ?? 1));
+        if (!reducedMotion.matches && now-lastPaintAt >= 32) {
+          paintFlight(currentFrame(),missionTime+elapsed);
+          lastPaintAt = now;
+        }
+        canvasAnimation = requestAnimationFrame(animate);
+      }
+      canvasAnimation = requestAnimationFrame(animate);
+    }
+    render();
+  },
+  resetCrew() {
+    for (let i = peerChecks.length-1; i >= 0; i--) if (peerChecks[i].mode === "asteria") peerChecks.splice(i,1);
+    for (let i = tasks.length-1; i >= 0; i--) if (tasks[i].mode === "asteria") tasks.splice(i,1);
+    checkIns.clear();
+    reduced.clear();
+  },
+});
 widgets.layout();
 render();
 </script>

@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "scenario_id": "organizer-replay",
+  "scenario_version": "1",
+  "seed": 4242,
+  "synthetic": true,
+  "provenance": "synthetic_test_fixture",
+  "status": "not_organizer_approved",
+  "checkpoint_780": {
+    "mission_s": 780,
+    "crew_decision_rev": 103,
+    "ground_decision_rev": 102,
+    "crew_co2_ppm": 2073.74,
+    "ground_co2_ppm": 2010,
+    "crew_power_headroom_kw": 0.15,
+    "ground_power_headroom_kw": 0.55,
+    "ground_snapshot_id": "ground-v102",
+    "applied_effect_count": 0
+  },
+  "checkpoint_900": {
+    "mission_s": 900,
+    "ground_decision_rev": 103,
+    "ground_co2_ppm": 2057.86,
+    "ground_power_headroom_kw": 0.15,
+    "ground_snapshot_id": "ground-v103",
+    "applied_effect_count": 0
+  }
+}

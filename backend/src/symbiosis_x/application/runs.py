@@ -7,7 +7,8 @@ from symbiosis_x.application.nominal import deliver_nominal_ground, record_nomin
 from symbiosis_x.contracts.commands import (
     AdvanceReceipt, AdvanceRunRequest, DriverPauseRequest, DriverPauseReceipt, ResetReceipt, ResetRunRequest, RunReceipt, StartRunRequest,
 )
-from symbiosis_x.simulation.scenario import GOLDEN_SCENARIO, GOLDEN_STEPS_S, load_golden_manifest
+from symbiosis_x.simulation.scenario import (GOLDEN_SCENARIO, GOLDEN_STEPS_S, ORGANIZER_SCENARIO,
+    load_golden_manifest, load_organizer_manifest)
 from symbiosis_x.workflows.dispatcher import seed_golden, compose_golden_until
 from symbiosis_x.storage.repository import Repository
 from symbiosis_x.workflows.relay import deliver_due, receive_due_advisories
@@ -62,6 +63,10 @@ def start_run(repository: Repository, command: StartRunRequest, golden_manifest_
                 manifest = load_golden_manifest(golden_manifest_path)
                 if command.seed != manifest["seed"]:
                     raise RunConflict("GOLDEN_SEED_MISMATCH")
+            elif scenario == ORGANIZER_SCENARIO:
+                manifest = load_organizer_manifest()
+                if command.seed != manifest["seed"]:
+                    raise RunConflict("ORGANIZER_SEED_MISMATCH")
             elif scenario != NOMINAL_SCENARIO:
                 raise RunNotFound("SCENARIO_NOT_FOUND")
             run_id = uuid4().hex
@@ -94,6 +99,8 @@ def _record_start(db, run_id: str, payload_json: str) -> None:
     ).fetchone()
     if (scenario["scenario_id"], scenario["scenario_version"]) == GOLDEN_SCENARIO:
         seed_golden(db, run_id)
+    elif (scenario["scenario_id"], scenario["scenario_version"]) == ORGANIZER_SCENARIO:
+        seed_golden(db, run_id, variant=load_organizer_manifest())
 
 
 def reset_run(repository: Repository, run_id: str, command: ResetRunRequest) -> ResetReceipt:
@@ -171,7 +178,7 @@ def advance_run(repository: Repository, run_id: str, command: AdvanceRunRequest,
             ).fetchone()
             if paused is not None and paused["paused"]:
                 raise RunConflict("DRIVER_PAUSED")
-        if (run["scenario_id"], run["scenario_version"]) == GOLDEN_SCENARIO:
+        if (run["scenario_id"], run["scenario_version"]) in (GOLDEN_SCENARIO, ORGANIZER_SCENARIO):
             return _advance_golden(db, run_id, run, command)
         if (run["scenario_id"], run["scenario_version"]) != NOMINAL_SCENARIO:
             raise RunConflict("SCENARIO_NOT_ADVANCEABLE")
@@ -227,7 +234,8 @@ def _advance_golden(db, run_id: str, run, command: AdvanceRunRequest) -> Advance
     if target not in GOLDEN_STEPS_S or target <= current_s:
         raise RunConflict("GOLDEN_STEP_NOT_REACHABLE")
 
-    compose_golden_until(db, run_id, current_s, target)
+    variant = load_organizer_manifest() if (run['scenario_id'], run['scenario_version']) == ORGANIZER_SCENARIO else None
+    compose_golden_until(db, run_id, current_s, target, variant=variant)
     receipt = AdvanceReceipt(
         run_id=run_id, scenario_id=run["scenario_id"],
         scenario_version=run["scenario_version"], seed=run["seed"],

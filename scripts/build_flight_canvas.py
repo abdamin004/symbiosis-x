@@ -7,9 +7,11 @@ from pathlib import Path
 if __package__:
     from .build_cabin_preview import ACTIVITY_S, ROOT
     from .iss_mission_replay import build_replays, crew_history
+    from .launch_envelope import launch_envelope, rendezvous_envelope
 else:
     from build_cabin_preview import ACTIVITY_S, ROOT
     from iss_mission_replay import build_replays, crew_history
+    from launch_envelope import launch_envelope, rendezvous_envelope
 
 
 def build(output: Path) -> None:
@@ -17,6 +19,8 @@ def build(output: Path) -> None:
     crew_ids = [member["crew_id"] for member in crew]
     rooms = json.loads((ROOT / "catalogs/sx01/rooms.json").read_text())["rooms"]
     launch = json.loads((ROOT / "scenarios/variants/launch-checkout-v1.json").read_text())
+    launch["ascent"] = launch_envelope(launch)
+    launch["rendezvous"] = rendezvous_envelope(launch)
     scenario, frames = build_replays(crew)
     data = json.dumps({
         "metrics": json.loads((ROOT / "catalogs/crew/health-metrics.json").read_text())["metrics"],
@@ -27,12 +31,17 @@ def build(output: Path) -> None:
     workflow = (ROOT / "docs/demo/flight-workflow.js").read_text(encoding="utf-8")
     widgets = (ROOT / "docs/demo/flight-widgets.js").read_text(encoding="utf-8")
     stations = (ROOT / "docs/demo/flight-stations.js").read_text(encoding="utf-8")
+    launch_scene = (ROOT / "docs/demo/launch-scene.js").read_text(encoding="utf-8")
     checkout = (ROOT / "docs/demo/launch-checkout.js").read_text(encoding="utf-8")
+    anatomy = (ROOT / "docs/demo/flight-anatomy.html").read_text(encoding="utf-8")
+    crew_routines = (ROOT / "docs/demo/flight-crew.js").read_text(encoding="utf-8")
     icons = (ROOT / "frontend/src/ui/icons/lucide/flight.svg").read_text(encoding="utf-8")
     output.write_text(
         template.replace("__FLIGHT_DATA__", data)
         .replace("__FLIGHT_WORKFLOW__", workflow).replace("__FLIGHT_WIDGETS__", widgets)
-        .replace("__FLIGHT_STATIONS__", stations).replace("__LAUNCH_CHECKOUT__", checkout).replace("__HUD_ICONS__", icons),
+        .replace("__FLIGHT_STATIONS__", stations).replace("__LAUNCH_SCENE__", launch_scene)
+        .replace("__LAUNCH_CHECKOUT__", checkout).replace("__HUD_ICONS__", icons)
+        .replace("__FLIGHT_ANATOMY__", anatomy).replace("__FLIGHT_CREW__", crew_routines),
         encoding="utf-8",
     )
 

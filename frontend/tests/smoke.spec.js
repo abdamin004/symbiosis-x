@@ -35,6 +35,13 @@ test("launch links keep the same run ID", async ({ page }) => {
 });
 
 test("an unknown run shows the missing fixture state", async ({ page }) => {
+  await page.route("**/api/v1/demo/session", (route) => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({ facilitator: "fac-token", crew: "crew-token", ground: "ground-token" }),
+  }));
+  await page.route("**/api/v1/runs/run-unknown/ground", (route) => route.fulfill({
+    status: 404, contentType: "application/json", body: JSON.stringify({ detail: "RUN_NOT_FOUND" }),
+  }));
   await page.goto("/runs/run-unknown/ground");
 
   await expect(page.getByRole("status")).toHaveText("No fixture is available for run run-unknown.");
