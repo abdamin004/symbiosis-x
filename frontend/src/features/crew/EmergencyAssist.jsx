@@ -63,7 +63,9 @@ export default function EmergencyAssist() {
       {caseData && <section className="mt-6 rounded-lg border-2 border-amber-400 bg-amber-50 p-4" role="status" data-testid="emergency-case">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-lg font-semibold text-amber-950">Local alert · {caseData.status}</h2>
-          <span className="rounded-full bg-amber-200 px-3 py-1 text-xs font-semibold">Ground link not required</span>
+          <span className="rounded-full bg-amber-200 px-3 py-1 text-xs font-semibold" data-testid="emergency-ground-link">
+            {caseData.ground_link === "not_required" ? "Ground link not required" : "Ground link: " + String(caseData.ground_link ?? "unknown").replaceAll("_", " ")}
+          </span>
         </div>
         <p className="mt-2 text-sm">{caseData.report}</p>
         <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
