@@ -77,6 +77,20 @@ The [example schema](contracts/schemas/sx-01a.schema.json) validates these stati
 
 Mohamed coordinates shared contract changes and Sama reviews SX-01A. Use these examples for mocks, and carry their field names and units into [KAN-16 / SX-21B](https://crewsync-1794569647227.atlassian.net/browse/KAN-16).
 
+## Sources and acceptance evidence
+
+The [source register and source-to-feature review](docs/acceptance.md) record each NASA source the product uses. For each one, it gives the link, source date, data type, coverage and units, limitations, and the visible feature it supports. Environmental context and personal measurements are listed separately, as they are kept apart in the product.
+
+| Source | Kind | Visible use |
+| --- | --- | --- |
+| [NASA ExMC clinical decision support ConOps](https://ntrs.nasa.gov/citations/20220017856) (HRP project document, 2021) | Mission operations | Emergency Assist opens and acknowledges a case onboard before Ground delivery. |
+| [NASA HRP 5 Hazards](https://www.nasa.gov/hrp/hazards/) (updated 2026-06-12) | Mission operations | The "Distance from Earth" hazard is why the local alert never waits for Ground. |
+| [NASA OSDR RadLab](https://visualization.osdr.nasa.gov/radlab/gui/overview) ISS DosTel1 export, 2022-04-01 UTC, μGy/hour | Environmental context | The Crew **Archived radiation context** chart. It is not a personal dose and feeds no assessment. |
+| [NASA-STD-3001 Vol. 2 §6, V2 6004](https://www.nasa.gov/reference/6-0-natural-and-induced-environments-vol-2/) (updated 2026-04-21) | Environmental context | Cabin CO₂ context. The 3,200 ppm planner limit is a labelled demo rule, not V2 6004. |
+| [Measurement guides](catalogs/crew/health-guides.json) and [reference rules](catalogs/crew/health-reference-rules.json) | Personal measurements (synthetic crew) | Take Measurement help cards and the Crew Health assessment. Earth-based references are labelled. |
+
+The review also traces the RadLab chart from the screen back to the NASA export, and shows why local emergency response works before Ground delivery.
+
 ## Build with Codex
 
 Open the repository root in a new Codex chat, or run `codex` from the repository root. Ask for a specialist by its exact name. The role files live in [`.codex/agents/`](.codex/agents) and use the parent session's model and permissions. [Official OpenAI documentation](https://learn.chatgpt.com/docs/agent-configuration/subagents)
