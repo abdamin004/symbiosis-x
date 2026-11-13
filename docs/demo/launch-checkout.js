@@ -2,8 +2,9 @@
 function bindLaunchCheckout(config, pauseReplay) {
   const find = id => document.getElementById(id);
   const storageKey = "sx:" + config.id + ":v" + config.version;
-  const fresh = () => ({time:0,jobs:{},hold:false,ignition:null,separation:null,insertion:null,aborted:false});
+  const fresh = () => ({time:0,jobs:{},hold:false,ignition:null,separation:null,insertion:null,aborted:false,phasing:null,capture:null,retreat:null,approachHeld:false});
   const ascent = config.ascent;
+  const rendezvous = config.rendezvous;
   const tick = ascent.tick_s;
   let state = fresh();
   try {
@@ -31,11 +32,32 @@ function bindLaunchCheckout(config, pauseReplay) {
     }
     const coastTime = (state.insertion ?? state.time)-state.separation;
     const coast = ascent.coast.find(sample=>sample.seconds===coastTime);
-    if (state.insertion !== null) return {phase:"Stable orbit",next:"Orbital checkout",reserve:coast.after_burn,terminal:true};
+    if (state.insertion !== null) return orbitalState(coast.after_burn);
     if (coastTime >= ascent.coast_limit_s || coast.reserve < ascent.insertion_cost+ascent.minimum_reserve)
       return {phase:"Insertion held · low reserve",next:"Abort ascent",reserve:coast.reserve};
     return {phase:"Upper stage coast",next:"Commit orbital insertion",advance:true,
       insert:coast.can_insert,reserve:coast.reserve};
+  }
+  function orbitalState(reserve) {
+    if (state.retreat !== null) return {phase:"Station approach ended",next:"Safe orbit",
+      reserve:reserve-(state.phasing === null ? 0 : rendezvous.phasing_cost),terminal:true,orbit:true};
+    if (state.phasing === null) {
+      const canPhase = reserve >= rendezvous.phasing_cost+rendezvous.retreat_reserve;
+      return {phase:"Stable orbit",next:canPhase ? "Commit phasing" : "Approach held · reserve below minimum",
+        reserve,orbit:true,phaseBurn:canPhase};
+    }
+    const remaining = reserve-rendezvous.phasing_cost;
+    const elapsed = (state.capture ?? state.time)-state.phasing;
+    const sample = rendezvous.approach.find(point=>point.seconds===elapsed);
+    if (state.capture !== null) return {phase:"Station captured",next:"Hatch secured · seal and pressure checks pending",
+      reserve:remaining,terminal:true,orbit:true,sample};
+    return {
+      phase:state.approachHeld ? "Approach held" : sample.state,
+      next:sample.expired ? "Retreat to safe orbit" : sample.capture ? "Capture or retreat" : "Advance approach",
+      reserve:remaining,orbit:true,sample,
+      advance:!state.approachHeld && !sample.expired,
+      capture:!state.approachHeld && sample.capture,
+    };
   }
   function render() {
     find("launch-time").textContent = Math.floor(state.time / 60) + ":" + String(state.time % 60).padStart(2, "0");
@@ -50,9 +72,22 @@ function bindLaunchCheckout(config, pauseReplay) {
     find("launch-step").disabled = !flight.advance;
     find("launch-separate").hidden = state.ignition === null || state.separation !== null || flight.terminal;
     find("launch-separate").disabled = !flight.separate;
-    find("launch-insert").hidden = state.separation === null || flight.terminal;
+    find("launch-insert").hidden = state.separation === null || flight.orbit || flight.terminal;
     find("launch-insert").disabled = !flight.insert;
-    find("launch-abort").hidden = state.ignition === null || flight.terminal;
+    find("launch-abort").hidden = state.ignition === null || flight.orbit || flight.terminal;
+    find("launch-phasing").hidden = !flight.orbit || state.phasing !== null || flight.terminal;
+    find("launch-phasing").disabled = !flight.phaseBurn;
+    find("launch-approach-hold").hidden = !flight.sample || flight.terminal || flight.sample.expired;
+    find("launch-approach-hold").textContent = state.approachHeld ? "Resume approach" : "Hold approach";
+    find("launch-approach-hold").setAttribute("aria-pressed",String(state.approachHeld));
+    find("launch-capture").hidden = !flight.sample || flight.terminal;
+    find("launch-capture").disabled = !flight.capture;
+    find("launch-retreat").hidden = !flight.orbit || flight.terminal;
+    find("launch-approach").hidden = !flight.orbit;
+    find("launch-range").textContent = flight.sample ? flight.sample.range + " game units" : "Awaiting phasing";
+    find("launch-closing").textContent = flight.sample ? flight.sample.closing + " units/tick" : "—";
+    find("launch-hatch").textContent = state.capture !== null ? "Secured · verification pending" : "Secured";
+    find("launch-track").value = flight.sample ? 100-flight.sample.range : 0;
     find("launch-hold").hidden = state.ignition !== null;
     find("launch-hold").textContent = state.hold ? "Release hold" : "Hold launch";
     find("launch-hold").setAttribute("aria-pressed", String(state.hold));
@@ -144,6 +179,31 @@ function bindLaunchCheckout(config, pauseReplay) {
   find("launch-abort").addEventListener("click", () => {
     if (flightState().terminal || state.ignition === null) return;
     state.aborted = true;
+    persist();
+    render();
+  });
+  find("launch-phasing").addEventListener("click", () => {
+    if (!flightState().phaseBurn) return;
+    state.phasing = state.time;
+    persist();
+    render();
+  });
+  find("launch-approach-hold").addEventListener("click", () => {
+    if (find("launch-approach-hold").hidden) return;
+    state.approachHeld = !state.approachHeld;
+    persist();
+    render();
+  });
+  find("launch-capture").addEventListener("click", () => {
+    if (!flightState().capture) return;
+    state.capture = state.time;
+    persist();
+    render();
+  });
+  find("launch-retreat").addEventListener("click", () => {
+    const flight = flightState();
+    if (!flight.orbit || flight.terminal) return;
+    state.retreat = state.time;
     persist();
     render();
   });

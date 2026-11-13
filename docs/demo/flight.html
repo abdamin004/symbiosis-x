@@ -206,7 +206,8 @@ button[aria-pressed=true]{background:#3d315e}
 .checkout-job-status{align-self:center;color:var(--blue)}
 .checkout-controls{align-items:center}
 #launch-time{color:var(--blue);font:700 .9rem ui-monospace,monospace;margin-right:.2rem}
-#launch-go,#launch-insert{background:#4a3d7c}
+#launch-go,#launch-insert,#launch-capture{background:#4a3d7c}
+#launch-track{width:100%;accent-color:var(--violet)}
 #launch-abort{background:#633548}
 .launch-readouts{display:grid;gap:.3rem;margin:.65rem 0}
 .launch-readouts div{display:grid;grid-template-columns:110px 1fr;gap:.4rem;padding:.32rem .5rem;background:#202e50;border-radius:5px}
@@ -385,7 +386,7 @@ __HUD_ICONS__
   <div class="mission-options">
     <article><h3>ISS Research Replay</h3><p>Outbound capsule · ISS laboratory · return capsule</p>
       <form method="dialog"><button>Return to Flight replay</button></form></article>
-    <article><h3>Asteria Launch</h3><p>Prepare the crew and fly from the pad to stable orbit.</p>
+    <article><h3>Asteria Launch</h3><p>Prepare the crew and fly from the pad to station capture.</p>
       <button id="open-checkout" type="button">Open Asteria Launch</button></article>
   </div>
 </dialog>
@@ -403,8 +404,16 @@ __HUD_ICONS__
       <dl class="launch-readouts">
         <div><dt>Flight phase</dt><dd id="launch-status" role="status"></dd></div>
         <div><dt>Next action</dt><dd id="launch-next"></dd></div>
-        <div><dt>Insertion reserve</dt><dd id="launch-reserve"></dd></div>
+        <div><dt>Maneuver reserve</dt><dd id="launch-reserve"></dd></div>
       </dl>
+      <div id="launch-approach" hidden>
+        <progress id="launch-track" max="100" value="0" aria-label="Station approach progress"></progress>
+        <dl class="launch-readouts">
+          <div><dt>Station range</dt><dd id="launch-range"></dd></div>
+          <div><dt>Closing rate</dt><dd id="launch-closing"></dd></div>
+          <div><dt>Hatch</dt><dd id="launch-hatch"></dd></div>
+        </dl>
+      </div>
       <div class="choices checkout-controls">
         <output id="launch-time" aria-label="Checkout time"></output>
         <button id="launch-step" type="button">Advance 15 s</button>
@@ -413,6 +422,10 @@ __HUD_ICONS__
         <button id="launch-separate" type="button" hidden>Separate booster</button>
         <button id="launch-insert" type="button" hidden>Commit orbital insertion</button>
         <button id="launch-abort" type="button" hidden>Abort ascent</button>
+        <button id="launch-phasing" type="button" hidden>Commit phasing</button>
+        <button id="launch-approach-hold" type="button" aria-pressed="false" hidden>Hold approach</button>
+        <button id="launch-capture" type="button" hidden>Capture station</button>
+        <button id="launch-retreat" type="button" hidden>Retreat to orbit</button>
         <button id="launch-reset" type="button">Reset checkout</button>
       </div>
     </div>
