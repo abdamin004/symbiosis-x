@@ -189,15 +189,21 @@ test("Horizon burns into orbit, reaches ISS and returns to Earth in one saved mi
   await button("Seal hatch and board return capsule").click();
   await expect(page.locator("#docking-caption")).toContainText("Undocking");
   await button("Commit deorbit").click();
-  await advance(4);
+  const returnScene = page.getByRole("figure",{name:"Command pod Earth return"});
+  await expect(returnScene).toHaveAttribute("data-phase","separation");
+  await advance(2);
+  await expect(returnScene).toHaveAttribute("data-phase","chutes");
+  await advance(2);
   await button("Confirm landing").click();
+  await expect(returnScene).toHaveAttribute("data-phase","splashdown");
   await button("Confirm crew recovery").click();
 
   await page.reload();
   await expect(page.locator("#launch-status")).toHaveText("Crew recovered on Earth");
   await expect(guide).toHaveAttribute("data-state","complete");
   await expect(guide.locator("#guide-count")).toHaveText("14 / 14 complete");
-  await expect(page.locator("#ship canvas")).toBeVisible();
+  await expect(returnScene).toHaveAttribute("data-phase","recovered");
+  await expect(page.locator("#return-sea-backdrop")).toBeVisible();
   await expect(page).toHaveURL(missionUrl);
   await button("Open orbit minimap").click();
   await expect(navigation.locator("#navigation-reserve")).toContainText("9 cold-gas pulses");
@@ -611,7 +617,7 @@ test("mission plan and orbit map stay in their own corners from checkout through
   await overview.getByRole("button", { name:"Open plan" }).click();
   const plan = page.getByRole("dialog", { name:"Flight plan" });
   await expect(plan).toContainText("Launch Horizon, deliver the research kit to the ISS, and recover the crew on Earth.");
-  await expect(plan.locator(".plan-stage")).toHaveCount(5);
+  await expect(plan.locator(".plan-stage")).toHaveCount(6);
   await expect(plan.locator("[data-status=held]")).toContainText("Plan T+0:45 · Held");
   await expect(plan.locator("[data-status=upcoming] svg").first()).toBeVisible();
   await plan.getByRole("button", { name:"Close" }).click();
@@ -632,7 +638,7 @@ test("mission plan and orbit map stay in their own corners from checkout through
   await verifyCorners(390,660,true);
   await expect(page.getByRole("group", { name:"Flight playback" })).toBeInViewport();
   await expect(overview.locator('[aria-current="step"]')).toHaveAccessibleName("Rendezvous · Current");
-  await expect(overview.locator("[data-step=complete]")).toHaveCount(2);
+  await expect(overview.locator("[data-step=complete]")).toHaveCount(3);
   await overview.getByRole("button", { name:"Deck" }).click();
   await expect(overview.getByRole("img", { name:"Ship rooms and crew positions" })).toBeVisible();
   await overview.getByRole("button", { name:"Plan",exact:true }).click();
@@ -646,7 +652,7 @@ test("mission plan and orbit map stay in their own corners from checkout through
   });
   await page.reload();
   await verifyCorners(390,660,true);
-  await expect(overview.locator("[data-step=complete]")).toHaveCount(5);
+  await expect(overview.locator("[data-step=complete]")).toHaveCount(6);
   await expect(overview).toContainText("Crew safely back on Earth");
   await expect(orbit).toContainText("Earth recovery");
   expect(errors).toEqual([]);

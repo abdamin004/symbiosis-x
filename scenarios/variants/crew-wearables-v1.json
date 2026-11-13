@@ -44,6 +44,10 @@
       "reason_code": "MOTION_ARTIFACT", "motion_sample_id": "back-pod-motion"
     }
   ],
+  "recheck": {
+    "expires_at_s": 120,
+    "observers": {"SIM-01": 90, "SIM-03": 90, "SIM-04": 120}
+  },
   "recheck_repeat": {
     "sample_id": "wrist-recheck", "channel": "wristband",
     "observed_at_s": 100, "received_at_s": 100,

@@ -3,10 +3,12 @@
 import json
 from dataclasses import asdict, dataclass
 
+from symbiosis_x.crew.trends import HealthTrend, TrendSample, evaluate_trend
 from symbiosis_x.crew.wearable_series import (
     EVENT_TYPE, WearableObservation, WearableReading, load_wearable_fixture,
     wearable_deliveries, wearable_reading_at,
 )
+from symbiosis_x.workflows.monitor import WearableRecheck, read_wearable_recheck
 
 WEARABLE_SCENARIO = ("crew-wearables", "1")
 WEARABLE_STEPS_S = (0, 20, 50, 60, 70, 71, 72, 90, 100, 120)
@@ -18,25 +20,30 @@ def record_wearables(db, run_id: str, through_s: int, after_s: int = -1) -> None
     for sample in wearable_deliveries(
         fixture, run_id=run_id, crew_id=FIXTURE_CREW_ID, through_s=through_s, after_s=after_s,
     ):
-        event = db.execute(
-            """INSERT INTO events
-               (run_id, event_seq, event_id, event_type, mission_s, visibility, payload_json)
-               SELECT ?, COALESCE(MAX(event_seq), 0) + 1, ?, ?, ?, 'crew', ?
-               FROM events WHERE run_id = ?
-               ON CONFLICT(run_id, event_id) DO NOTHING""",
-            (run_id, sample.event_id, EVENT_TYPE, sample.received_at_s, json.dumps(asdict(sample)), run_id),
-        )
-        if not event.rowcount:
-            continue
-        db.execute(
-            """INSERT INTO health_observations
-               (run_id, event_id, crew_id, source_id, metric, observed_at_s, received_at_s,
-                numeric_value, unit, context_json, quality)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (run_id, sample.event_id, sample.crew_id, sample.source_id, sample.metric,
-             sample.observed_at_s, sample.received_at_s, sample.value,
-             sample.unit if sample.value is not None else None, json.dumps(sample.context), sample.quality),
-        )
+        record_wearable(db, sample)
+
+
+def record_wearable(db, sample: WearableObservation) -> None:
+    run_id = sample.run_id
+    event = db.execute(
+        """INSERT INTO events
+           (run_id, event_seq, event_id, event_type, mission_s, visibility, payload_json)
+           SELECT ?, COALESCE(MAX(event_seq), 0) + 1, ?, ?, ?, 'crew', ?
+           FROM events WHERE run_id = ?
+           ON CONFLICT(run_id, event_id) DO NOTHING""",
+        (run_id, sample.event_id, EVENT_TYPE, sample.received_at_s, json.dumps(asdict(sample)), run_id),
+    )
+    if not event.rowcount:
+        return
+    db.execute(
+        """INSERT INTO health_observations
+           (run_id, event_id, crew_id, source_id, metric, observed_at_s, received_at_s,
+            numeric_value, unit, context_json, quality)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        (run_id, sample.event_id, sample.crew_id, sample.source_id, sample.metric,
+         sample.observed_at_s, sample.received_at_s, sample.value,
+         sample.unit if sample.value is not None else None, json.dumps(sample.context), sample.quality),
+    )
 
 
 @dataclass(frozen=True)
@@ -54,6 +61,8 @@ class CrewWearables:
     crew_id: str
     mission_s: int
     channels: dict[str, WearableChannel]
+    recheck: WearableRecheck | None
+    resting_trend: HealthTrend | None
 
 
 def read_wearables(db, run_id: str, crew_id: str, mission_s: int) -> CrewWearables:
@@ -76,4 +85,16 @@ def read_wearables(db, run_id: str, crew_id: str, mission_s: int) -> CrewWearabl
             metric=channel["metric"], mission_s=mission_s, max_age_s=fixture["freshness_s"],
         )
         channels[name] = WearableChannel(**channel, reading=reading, history=history)
-    return CrewWearables(run_id, crew_id, mission_s, channels)
+    wrist_history = channels["wristband"].history
+    resting_samples = [
+        TrendSample(
+            sample.event_id, sample.crew_id, sample.metric, sample.value, sample.unit,
+            sample.observed_at_s, sample.quality, sample.source_id, sample.context,
+        )
+        for sample in wrist_history if sample.context["activity"] == "rest"
+    ]
+    return CrewWearables(
+        run_id, crew_id, mission_s, channels,
+        read_wearable_recheck(db, run_id, crew_id, mission_s, fixture),
+        evaluate_trend(resting_samples) if resting_samples else None,
+    )

@@ -427,6 +427,37 @@ button[aria-pressed=true]{background:#3d315e}
 #demo-time{font:650 .7rem ui-monospace,monospace;color:var(--blue)}
 #demo-status{flex-basis:100%;font-size:.75rem;font-weight:680;color:#e5edff}
 #demo-evidence{flex-basis:100%;font-size:.7rem;color:var(--blue)}
+#demo-scenario{flex-basis:100%;color:#d7c8ff;font-size:.7rem;font-weight:800}
+.crew-portrait[data-exposure=true]{outline:2px solid #ff9d9c;outline-offset:1px}
+.crew-portrait[data-exposure=true] .crew-status{background:#712f41;color:#fff}
+#crew-exposure{margin:.15rem 0 .35rem;padding:.2rem .35rem;border-left:3px solid #ff9d9c;color:#ffc6c5;font-size:.7rem}
+#eva-tether{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+#return-scene{position:relative;display:grid;justify-items:center;max-width:660px;margin:0 auto;color:#deefff;pointer-events:none}
+#return-art{width:min(100%,570px);height:min(48dvh,370px);overflow:visible}
+#return-sea-backdrop{display:none}
+.stage[data-vehicle=landed]::before,.stage[data-vehicle=landed]::after{display:none}
+.stage[data-vehicle=landed]{background:linear-gradient(#244964 2%,#7c9aaa 39%,#91b2bd 49%,#2e7296 50%,#102e42 100%)}
+.stage[data-vehicle=landed] .viewport{max-width:none;overflow:visible}
+.stage[data-vehicle=landed] #return-scene{max-width:none}
+.stage[data-vehicle=landed] #return-sea-backdrop{display:block;position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
+.stage[data-vehicle=landed] #return-art .return-environment{display:none}
+.stage[data-vehicle=landed] #return-art{filter:drop-shadow(0 12px 20px #031a2d88)}
+#return-scene .return-piece{display:none}
+#return-scene[data-phase=separation] #return-module,#return-scene[data-phase=entry] #return-heat,
+#return-scene[data-phase=chutes] #return-chutes,#return-scene:is([data-phase=splashdown],[data-phase=recovered]) #return-wake{display:inline}
+#return-scene:is([data-phase=splashdown],[data-phase=recovered]) #return-foam{display:inline}
+#return-scene[data-phase=separation] #return-module{animation:module-drift 2.8s ease-out both}
+#return-scene[data-phase=chutes] #return-chutes{animation:chutes-open .8s ease-out both;transform-origin:310px 128px}
+@keyframes module-drift{from{transform:translate(90px,-28px)}to{transform:translate(0,0)}}
+@keyframes chutes-open{from{transform:scale(.12);opacity:0}to{transform:scale(1);opacity:1}}
+@media(prefers-reduced-motion:reduce){
+  #return-scene[data-phase=separation] #return-module,#return-scene[data-phase=chutes] #return-chutes{animation:none}
+}
+#return-caption{grid-row:1;margin:0 0 .35rem;padding:.4rem .65rem;border-radius:8px;background:#0c1a30;text-align:center;font-size:.78rem}
+.stage[data-vehicle=entry] #ship,.stage[data-vehicle=landed] #ship{display:none}
+.pawn[data-exterior=true]{z-index:5;box-shadow:0 0 18px #bceaff}
+.pawn[data-exterior=true] .action-marker{outline:1px solid #a6ddff;color:#e6f7ff}
+#map-widget:has(#map-ground:not([hidden])){max-height:35dvh;overflow:auto}
 #demo-status[data-stopped]{color:#ffcb95}
 .launch-field[data-view=launch] .pad-checkout{padding-bottom:calc(clamp(116px,16vw,168px)*.6 + 2.8rem)}
 .launch-field[data-view=launch] .pad-checkout .launch-board{max-height:calc(100svh - var(--launch-clearance,100px) - clamp(116px,16vw,168px)*.6 - 3rem)}
@@ -921,9 +952,56 @@ __HUD_ICONS__
     <div id="orbital-station" aria-hidden="true"><i></i><i></i><i></i></div>
     <div class="ship" id="ship">
       <canvas id="hull" width="1100" height="475" aria-hidden="true"></canvas>
+      <svg id="eva-tether" viewBox="0 0 1100 475" aria-hidden="true" hidden><path fill="none" stroke="#a6ddff" stroke-width="2.5" stroke-dasharray="8 4"/></svg>
       <button type="button" id="eva-antenna" hidden>Exterior antenna</button>
     </div>
     <canvas id="orbital-burn-scene" role="img" aria-label="Exterior spacecraft burn" hidden></canvas>
+    <figure id="return-scene" aria-label="Command pod Earth return" hidden>
+      <svg id="return-sea-backdrop" viewBox="0 0 1000 600" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="splash-sky" x2="0" y2="1"><stop stop-color="#315871"/><stop offset="1" stop-color="#a9c4cb"/></linearGradient>
+          <linearGradient id="splash-water" x2="0" y2="1"><stop stop-color="#4084a5"/><stop offset=".48" stop-color="#235f82"/><stop offset="1" stop-color="#103043"/></linearGradient>
+        </defs>
+        <path d="M0 0H1000V290H0Z" fill="url(#splash-sky)"/>
+        <path d="M0 284Q260 275 500 286T1000 284V600H0Z" fill="url(#splash-water)"/>
+        <path d="M0 289Q242 278 500 290T1000 289M0 332q170-11 320 1t334 0t346-4M0 390q170-19 325 3t355 0t320-6M0 475q200-25 350 0t330 0t320-9M0 557q215-31 358 0t338 0t304-8" fill="none" stroke="#bdebfd" opacity=".25" stroke-width="2"/>
+        <path d="M42 314q58-5 110 0m668 5q74-7 125-4M102 359q86-9 172 0m452-3q97-7 192 3M0 437q110-8 205 3m608-6q83-7 187 0M84 529q106-12 192 0m412-8q111-15 214 4" fill="none" stroke="#8dd4ed" opacity=".32"/>
+      </svg>
+      <svg id="return-art" viewBox="0 0 620 350" aria-hidden="true">
+        <defs>
+          <linearGradient id="return-sky" x2="0" y2="1"><stop stop-color="#080f25"/><stop offset="1" stop-color="#406680"/></linearGradient>
+          <linearGradient id="return-sea" x2="0" y2="1"><stop stop-color="#226e95"/><stop offset="1" stop-color="#102631"/></linearGradient>
+        </defs>
+        <g class="return-environment">
+          <rect width="620" height="350" rx="22" fill="url(#return-sky)"/>
+          <path d="M0 288Q310 235 620 288V328Q620 350 598 350H22Q0 350 0 328Z" fill="url(#return-sea)"/>
+          <path d="M20 305q40 -4 80 0m36 24q45 -6 90 0m182 -36q42 -4 87 0m10 30q46 -5 90 0" stroke="#a2dcf5" opacity=".6" fill="none"/>
+        </g>
+        <g id="return-module" class="return-piece" fill="#687686" stroke="#ccd4e3">
+          <path d="M116 155h55l23 23-23 23h-55l-19-17v-16Z"/><path d="M103 163v30m23-38v46m39-46v46" fill="none"/>
+          <path d="M164 206l-22 31m-5 -10 5 10 12-1" fill="none" stroke="#ffb984" stroke-width="2"/>
+        </g>
+        <g id="return-heat" class="return-piece" fill="none" stroke-linecap="round">
+          <path d="M261 217Q310 264 359 217m-119 9q70 75 140 0" stroke="#ff825c" stroke-width="11" opacity=".48"/>
+          <path d="M263 214Q310 247 357 214" stroke="#ffe0a2" stroke-width="4"/>
+        </g>
+        <g id="return-chutes" class="return-piece">
+          <path d="M218 92Q238 18 310 14Q382 18 402 92Q377 80 354 93Q332 78 310 92Q288 78 266 93Q243 80 218 92Z" fill="#ec9c70" stroke="#ffecce" stroke-width="2"/>
+          <path d="M266 93Q274 32 310 14Q346 32 354 93Q332 78 310 92Q288 78 266 93Z" fill="#fff1d4"/>
+          <path d="M218 92l80 76m-32-75 36 75m8-76v76m44-75-35 75m83-76-80 76" fill="none" stroke="#e6f0ff"/>
+        </g>
+        <g id="return-wake" class="return-piece" fill="none" stroke="#a7ebff">
+          <ellipse cx="310" cy="287" rx="75" ry="12" stroke-width="3"/><ellipse cx="310" cy="287" rx="112" ry="23" opacity=".5"/>
+        </g>
+        <g id="return-pod" fill="#f1f4f5" stroke="#63778c" stroke-width="2">
+          <path d="M299 159h22l9 10 22 42-9 8h-66l-9-8 22-42Z"/>
+          <path d="M266 213h88l-12 13h-64Z" fill="#394451"/>
+          <rect x="298" y="181" width="24" height="10" rx="3" fill="#204e67" stroke="#9cbbce"/>
+        </g>
+        <path class="return-piece" id="return-foam" d="M239 284q35-6 71 0t71 0m-105 7q34-5 64 0" fill="none" stroke="#beedfc" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+      <figcaption id="return-caption"></figcaption>
+    </figure>
   </div>
 <div class="overlays" id="overlays">
   <section class="panel" id="mission-command-widget" aria-labelledby="mission-command-title" hidden>
@@ -993,6 +1071,18 @@ __HUD_ICONS__
       <div><span id="personnel-role"></span><strong id="personnel-name"></strong><span id="personnel-location"></span></div>
     </div>
     <a id="personnel-health" hidden>Open private health record</a>
+    <p id="crew-exposure" hidden>Suspected CO₂ exposure · simulated risk. Crew check requested.</p>
+    <div class="twin-peer" id="wearable-recheck" hidden>
+      <strong>Private wearable recheck</strong>
+      <output id="wearable-recheck-status" aria-live="polite"></output>
+      <output id="wearable-recheck-evidence"></output>
+      <label id="wearable-recheck-observer-label">Crewmate observer
+        <select id="wearable-recheck-observer"></select>
+      </label>
+      <button id="wearable-recheck-action" type="button"></button>
+      <output id="wearable-recheck-error" aria-live="polite"></output>
+      <a id="wearable-recheck-emergency">Open Emergency Assist</a>
+    </div>
     <div class="choices personnel-actions" role="group" aria-label="Crew profile views">
       <button type="button" data-twin-view="body" aria-pressed="true">Body</button>
       <button type="button" data-twin-view="bio" aria-pressed="false">Bio</button>
@@ -1385,6 +1475,7 @@ __HUD_ICONS__
   <div id="demo-banner" role="group" aria-label="Timed mission demo" hidden>
     <output id="demo-time" aria-label="Demo elapsed time" aria-live="off"></output>
     <small>Offline synthetic playback · no clinical diagnosis</small>
+    <output id="demo-scenario" aria-live="off" hidden></output>
     <span id="demo-status" role="status"></span>
     <output id="demo-evidence" aria-live="off" hidden></output>
     <button type="button" id="demo-pause">Pause demo</button>
@@ -2155,22 +2246,26 @@ const missionWearables = new Map();
 const pendingWearables = new Set();
 let wearableSession;
 
-function refreshWearables(crewId) {
-  if (connectedFlight?.timedDemo || pendingWearables.has(crewId)) return;
-  pendingWearables.add(crewId);
-  wearableSession ??= fetch("/api/v1/demo/session", {method:"POST",cache:"no-store"}).then(response=>{
+function wearableEndpoint(crewId, suffix = "") {
+  const path = "/api/v1/runs/"+encodeURIComponent(flightHealthRun)+"/crew/wearables";
+  return path+suffix+"?"+new URLSearchParams({crew_id:crewId});
+}
+
+function crewWearableSession() {
+  return wearableSession ??= fetch("/api/v1/demo/session", {method:"POST",cache:"no-store"}).then(response=>{
     if (!response.ok) throw new Error("Crew session unavailable");
     return response.json();
   });
-  wearableSession.then(async ({crew})=>{
-    const path = "/api/v1/runs/"+encodeURIComponent(flightHealthRun)+"/crew/wearables";
-    const response = await fetch(path+"?"+new URLSearchParams({crew_id:crewId}), {
+}
+
+function refreshWearables(crewId) {
+  if (connectedFlight?.timedDemo || pendingWearables.has(crewId)) return;
+  pendingWearables.add(crewId);
+  crewWearableSession().then(async ({crew})=>{
+    const response = await fetch(wearableEndpoint(crewId), {
       headers:{Authorization:"Bearer "+crew},cache:"no-store",
     });
-    if (!response.ok) {
-      if (response.status === 401) wearableSession = undefined;
-      throw new Error("Device stream unavailable");
-    }
+    if (!response.ok) throw new Error("Device stream unavailable");
     const result = await response.json();
     if (result.run_id !== flightHealthRun || result.crew_id !== crewId) throw new Error("Device stream mismatch");
     missionWearables.set(crewId,result);
@@ -2182,6 +2277,84 @@ function refreshWearables(crewId) {
     render();
   });
 }
+
+const recheckErrors = new Map();
+const pendingRechecks = new Set();
+const recheckReasons = {
+  EXPIRED:"The recheck deadline passed.",
+  OBSERVER_UNAVAILABLE:"No crewmate is available.",
+  REPEAT_EVIDENCE_UNAVAILABLE:"The repeat observation is not available yet.",
+  ALREADY_ASSIGNED:"A crewmate is already assigned.",
+  WRONG_OBSERVER:"Only the assigned crewmate can record the repeat.",
+};
+const observerName = id => characters[data.crew.indexOf(id)]?.name ?? id;
+
+function renderWearableRecheck(crewId, timed) {
+  const panel = element("wearable-recheck");
+  const snapshot = missionWearables.get(crewId);
+  const task = timed ? null : snapshot?.recheck;
+  panel.hidden = !task;
+  if (!task) return;
+  const time = seconds => "T+"+clock(seconds);
+  const status = {
+    offered:"Offered · choose a crewmate",
+    held:"On hold · "+recheckReasons[task.reason_code],
+    assigned:"Assigned to "+observerName(task.observer_id)+" at "+time(task.assigned_at_s),
+    verified:"Repeat verified by "+observerName(task.observer_id)+" at "+time(task.completed_at_s),
+  }[task.status];
+  element("wearable-recheck-status").textContent = status+" · due "+time(task.expires_at_s);
+  const readings = snapshot.channels.wristband.history;
+  const evidence = task.evidence_ids.map(id=>{
+    const sample = readings.find(reading=>reading.event_id === id);
+    return sample ? sample.quality+" "+sample.value+" "+sample.unit+" at "+time(sample.observed_at_s) : id;
+  });
+  if (task.status === "assigned" && snapshot.mission_s < task.repeat_available_at_s) {
+    evidence.push("Repeat available at "+time(task.repeat_available_at_s));
+  }
+  element("wearable-recheck-evidence").textContent = evidence.join(" · ");
+
+  const observer = element("wearable-recheck-observer");
+  const ids = task.available_observers.join(",");
+  if (observer.dataset.ids !== ids) {
+    observer.replaceChildren(...task.available_observers.map(id=>new Option(observerName(id),id)));
+    observer.dataset.ids = ids;
+  }
+  element("wearable-recheck-observer-label").hidden = task.status !== "offered";
+  const button = element("wearable-recheck-action");
+  button.hidden = !["offered","assigned"].includes(task.status);
+  button.disabled = pendingRechecks.has(crewId)
+    || task.status === "assigned" && snapshot.mission_s < task.repeat_available_at_s;
+  button.textContent = task.status === "offered" ? "Assign wearable recheck" : "Record simulated repeat";
+  element("wearable-recheck-error").textContent = recheckErrors.get(crewId) ?? "";
+  element("wearable-recheck-emergency").href = "/runs/"+encodeURIComponent(flightHealthRun)
+    +"/crew/emergency";
+}
+
+element("wearable-recheck-action").addEventListener("click",async ()=>{
+  const crewId = data.crew[profileMembers.get("personnel")];
+  const task = missionWearables.get(crewId)?.recheck;
+  if (!task || pendingRechecks.has(crewId) || !["offered","assigned"].includes(task.status)) return;
+  const action = task.status === "offered" ? "assign" : "record";
+  const observerId = task.observer_id ?? element("wearable-recheck-observer").value;
+  pendingRechecks.add(crewId);
+  recheckErrors.delete(crewId);
+  render();
+  try {
+    const {crew} = await crewWearableSession();
+    const response = await fetch(wearableEndpoint(crewId,"/rechecks/"+encodeURIComponent(task.task_id)),{
+      method:"POST",cache:"no-store",
+      headers:{Authorization:"Bearer "+crew,"Content-Type":"application/json"},
+      body:JSON.stringify({action,observer_id:observerId}),
+    });
+    if (response.status === 401) wearableSession = undefined;
+    if (!response.ok) throw new Error(recheckReasons[(await response.json()).detail] ?? "Recheck could not be saved.");
+  } catch (error) {
+    recheckErrors.set(crewId,error.message);
+  } finally {
+    pendingRechecks.delete(crewId);
+    refreshWearables(crewId);
+  }
+});
 
 function wearableSummary(channel) {
   const {status,accepted,age_s,evidence} = channel.reading;
@@ -2394,6 +2567,7 @@ function renderProfiles(frame) {
       element("personnel-data").hidden = twinView === "body";
       for (const button of document.querySelectorAll("[data-twin-view]"))
         button.setAttribute("aria-pressed",String(button.dataset.twinView===twinView));
+      renderWearableRecheck(id,timed);
       if (twinView === "body") updateBodyMap(row,member,frame);
       rows = twinView === "social" ? [
         ["Crew relationship",characters[persona.link].name + " · " + persona.bond,"users"],
@@ -2782,6 +2956,14 @@ function releaseInspection(procedure="shift") {
 function render() {
   const frame = currentFrame();
   const evidence = element("demo-evidence");
+  const scenario = element("demo-scenario");
+  const eva = activeEva(frame.time);
+  const scene = eva && connectedFlight?.timedDemo ? "03 / 03 · Exterior antenna service"
+    : !frame.healthDrill ? ""
+    : frame.healthDrill.exposureRisk ? "01 / 03 · Suspected CO₂ exposure"
+    : frame.healthDrill.co2.observed_at_s > connectedFlight.crewStarted ? "02 / 03 · Scrubber repair and recovery" : "";
+  scenario.hidden = !scene;
+  scenario.textContent = scene;
   evidence.hidden = !frame.healthDrill;
   evidence.textContent = frame.healthDrill ? frame.healthDrill.co2.value.toFixed(2) +
     " ppm cabin CO₂ · T+" + clock(frame.healthDrill.co2.observed_at_s) + " · scrubber " +
@@ -2920,6 +3102,8 @@ function render() {
     button.setAttribute("aria-pressed", selection.crew === i);
     roster.get(i).setAttribute("aria-pressed", selection.crew === i);
     const portrait = portraits.get(i);
+    const exposure = Boolean(frame.healthDrill?.exposureRisk && data.crew[i] === flightDemoCrew);
+    portrait.dataset.exposure = exposure;
     portrait.setAttribute("aria-pressed", selection.crew === i);
     portrait.dataset.working = Boolean(work || routine || crewCheck || flightWork);
     portrait.querySelector(".crew-activity").textContent = state;
@@ -2930,8 +3114,10 @@ function render() {
     portrait.title = characters[i].name+" · "+task+" · Simulated mood "+mood.value+"%: "+mood.driver+
       " · "+mood.need+" "+mood.reserve+"%";
     portrait.setAttribute("aria-label","Inspect "+characters[i].name+" "+duty.role+" · "+task+
-      " · Simulated mood: "+mood.state);
+      " · Simulated mood: "+mood.state+(exposure ? " · Suspected CO₂ exposure" : ""));
   });
+  element("crew-exposure").hidden = !(frame.healthDrill?.exposureRisk &&
+    data.crew[profileMembers.get("personnel")] === flightDemoCrew);
   for (const [id,button] of equipmentButtons) {
     const task = taskAt(id, frame.time);
     button.dataset.work = task ? (frame.time < task.finishes ? "active" : "complete") : "available";
@@ -3014,6 +3200,19 @@ function doorClearance(x,y) {
 }
 
 function paintFlight(frame, sceneTime = missionTime) {
+  const returnScene = element("return-scene");
+  const recovery = connectedFlight?.recovery;
+  returnScene.hidden = !recovery;
+  if (recovery) {
+    returnScene.dataset.phase = recovery.phase;
+    const labels = {separation:"Service module separates",entry:"Command pod enters the atmosphere",
+      chutes:"Parachutes deployed · descending to sea",splashdown:"Splashdown · command pod afloat",
+      recovered:"Sea recovery complete"};
+    element("return-caption").textContent = labels[recovery.phase]+" · 4 crew aboard";
+    const lowering = recovery.phase === "chutes" ? Math.max(0,Math.min(1,(sceneTime-recovery.start-recovery.entry)/recovery.descent))*53
+      : ["splashdown","recovered"].includes(recovery.phase) ? 65 : 0;
+    for (const id of ["return-pod","return-chutes"]) element(id).setAttribute("transform","translate(0 "+lowering+")");
+  }
   if (connectedFlight?.steering) {
     const ship = element("ship");
     const phase = (sceneTime-connectedFlight.crewStarted)*.075;
@@ -3024,12 +3223,14 @@ function paintFlight(frame, sceneTime = missionTime) {
     ship.style.setProperty("--ship-bank", (yaw*12+drift*1.7)+"deg");
   }
   const inspection = groundInspection(frame);
+  const eva = activeEva(frame.time);
+  const tether = element("eva-tether");
+  tether.toggleAttribute("hidden",true);
   for (const [member,button] of pawns) {
     const motion = crewMotion(member,frame);
     const route = pathBetween(motion.origin,motion.destination);
     const progress = motion.activity !== "move" ? 1
       : Math.min(1,Math.max(0,(sceneTime-motion.start)/(motion.end-motion.start)));
-    const eva = activeEva(frame.time);
     let [x,y] = pointAlong(route,progress);
     if (eva?.member === member) {
       const elapsed = sceneTime-eva.assigned;
@@ -3041,7 +3242,13 @@ function paintFlight(frame, sceneTime = missionTime) {
         const beforeRecall = Math.max(0,Math.min(1,(eva.recalledAt-eva.assigned-2*tick)/tick));
         exterior = beforeRecall*Math.max(0,(eva.finishes-sceneTime)/(eva.finishes-eva.recalledAt));
       }
-      if (elapsed >= tick) [x,y] = [281+70*exterior,145-94*exterior];
+      if (elapsed >= tick) [x,y] = [281+110*exterior,145-118*exterior];
+    }
+    const outside = eva?.member === member && y < 100;
+    button.dataset.exterior = outside;
+    if (outside) {
+      tether.toggleAttribute("hidden",false);
+      tether.firstElementChild.setAttribute("d",`M281 127 Q${x-40} ${y+28} ${x} ${y+9}`);
     }
     const facing = pointAlong(route,Math.min(1,progress+.02))[0] < x ? -1 : 1;
     const pose = reducedMotion.matches ? 0 : Math.sin(sceneTime*(motion.activity==="move" ? 2.5 : 1.3));
