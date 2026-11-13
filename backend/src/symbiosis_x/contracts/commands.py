@@ -28,10 +28,21 @@ class RunReceipt(Contract):
 class AdvanceRunRequest(Contract):
     advance_id: Identifier
     expected_step: NonnegativeInt
+    target_mission_s: NonnegativeInt | None = None
 
 
 class AdvanceReceipt(RunReceipt):
     advance_id: Identifier
+
+
+class DriverPauseRequest(Contract):
+    paused: bool
+
+
+class DriverPauseReceipt(Contract):
+    run_id: Identifier
+    paused: bool
+    mission_s: NonnegativeInt
 
 
 class ResetRunRequest(Contract):

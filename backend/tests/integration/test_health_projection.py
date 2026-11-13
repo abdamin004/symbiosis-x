@@ -39,3 +39,40 @@ def test_profile_is_crew_only(tmp_path):
         assert "history" not in ground_text
         assert "baselines" not in ground_text
         assert "synthetic.sim-01-health-baseline-v1" not in ground_text
+
+
+def test_assessment_appears_only_in_crew(tmp_path):
+    """The same SIM-01 reading is compared independently against two references."""
+    with local_client(tmp_path / "assessment.sqlite3") as client:
+        tokens = client.post("/api/v1/demo/session").json()
+        auth = lambda role: {"Authorization": "Bearer " + tokens[role]}  # noqa: E731
+        run_id = client.post("/api/v1/runs", json=START, headers=auth("facilitator")).json()["run_id"]
+        root = f"/api/v1/runs/{run_id}"
+        assert client.get(root + "/crew", headers=auth("crew")).json()["health_assessment"] is None
+        reading = {
+            "measurement_id": "assessment-hr-sim-01",
+            "crew_id": "SIM-01", "synthetic": True,
+            "measurement": {
+                "metric": "heart_rate", "value": 95, "unit": "bpm",
+                "observed_at_s": 0, "source_id": "synthetic.watch.sim-01",
+                "quality": "valid",
+            },
+            "context": {"activity": "rest"},
+        }
+        created = client.post(root + "/crew/measurements", json=reading, headers=auth("crew"))
+        assert created.status_code == 201, created.text
+        crew = client.get(root + "/crew", headers=auth("crew")).json()
+        assessment = crew["health_assessment"]
+        assert assessment["metric"] == "heart_rate"
+        assert assessment["crew_id"] == "SIM-01"
+        assert assessment["personal"]["status"] == "outside_personal_range"
+        assert assessment["reference"]["status"] == "within_reference"
+        assert assessment["personal"]["rule_id"] != assessment["reference"]["rule_id"]
+        assert assessment["reference"]["earth_based"] is True
+        assert assessment["synthetic"] is True
+        assert crew["decision_rev"] == 0
+        ground = client.get(root + "/ground", headers=auth("ground"))
+        assert ground.status_code == 200
+        assert "health_assessment" not in ground.text
+        assert "synthetic.watch.sim-01" not in ground.text
+        assert "outside_personal_range" not in ground.text

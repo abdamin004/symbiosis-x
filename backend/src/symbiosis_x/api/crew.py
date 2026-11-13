@@ -3,6 +3,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 
 from symbiosis_x.api.roles import require_role
+from symbiosis_x.crew.measurements import (
+    MeasurementConflict, MeasurementNotFound, MeasurementRejected,
+    MeasurementReceipt, SaveMeasurementRequest, read_measurement, save_measurement,
+)
 from symbiosis_x.application.projections import read_crew
 from symbiosis_x.application.runs import RunNotFound
 from symbiosis_x.contracts.projections import CurrentCrewView
@@ -82,3 +86,38 @@ def acknowledge_case(
         return acknowledge_emergency(request.app.state.repository, run_id, case_id, command)
     except (EmergencyNotFound, EmergencyRejected, EmergencyConflict) as error:
         raise _emergency_error(error) from error
+
+@router.post(
+    "/{run_id}/crew/measurements",
+    dependencies=[Depends(require_role("crew"))],
+    response_model=MeasurementReceipt,
+    status_code=201,
+)
+def save_crew_measurement(
+    run_id: str, command: SaveMeasurementRequest, request: Request, response: Response,
+) -> MeasurementReceipt:
+    """Save one private, typed, synthetic Crew measurement and return its stable ID."""
+    response.headers["Cache-Control"] = "no-store"
+    try:
+        return save_measurement(request.app.state.repository, run_id, command)
+    except MeasurementNotFound as error:
+        raise HTTPException(404, str(error)) from error
+    except MeasurementRejected as error:
+        raise HTTPException(422, str(error)) from error
+    except MeasurementConflict as error:
+        raise HTTPException(409, str(error)) from error
+
+
+@router.get(
+    "/{run_id}/crew/measurements/{measurement_id}",
+    dependencies=[Depends(require_role("crew"))],
+    response_model=MeasurementReceipt,
+)
+def get_crew_measurement(
+    run_id: str, measurement_id: str, request: Request, response: Response,
+) -> MeasurementReceipt:
+    response.headers["Cache-Control"] = "no-store"
+    try:
+        return read_measurement(request.app.state.repository, run_id, measurement_id)
+    except MeasurementNotFound as error:
+        raise HTTPException(404, str(error)) from error

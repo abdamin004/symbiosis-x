@@ -124,6 +124,7 @@ class CurrentCrewView(RunView):
     decision_rev: NonnegativeInt
     co2: AcceptedCO2 | None
     health_profile: AstronautHealthProfile
+    health_assessment: dict | None = None
 
 
 class GroundPacket(Contract):

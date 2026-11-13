@@ -5,8 +5,10 @@ from uuid import uuid4
 
 from symbiosis_x.application.nominal import deliver_nominal_ground, record_nominal_co2
 from symbiosis_x.contracts.commands import (
-    AdvanceReceipt, AdvanceRunRequest, ResetReceipt, ResetRunRequest, RunReceipt, StartRunRequest,
+    AdvanceReceipt, AdvanceRunRequest, DriverPauseRequest, DriverPauseReceipt, ResetReceipt, ResetRunRequest, RunReceipt, StartRunRequest,
 )
+from symbiosis_x.simulation.scenario import GOLDEN_SCENARIO, GOLDEN_STEPS_S, load_golden_manifest
+from symbiosis_x.workflows.dispatcher import seed_golden, compose_golden_until
 from symbiosis_x.storage.repository import Repository
 from symbiosis_x.workflows.relay import deliver_due, receive_due_advisories
 
@@ -42,7 +44,7 @@ def request_digest(command: StartRunRequest | AdvanceRunRequest | ResetRunReques
     return sha256(command.model_dump_json().encode()).hexdigest()
 
 
-def start_run(repository: Repository, command: StartRunRequest) -> RunReceipt:
+def start_run(repository: Repository, command: StartRunRequest, golden_manifest_path=None) -> RunReceipt:
     digest = request_digest(command)
     with repository.write() as db:
         prior = db.execute(
@@ -55,7 +57,12 @@ def start_run(repository: Repository, command: StartRunRequest) -> RunReceipt:
                 raise RunConflict("START_ID_REUSED")
             run_id = prior["run_id"]
         else:
-            if (command.scenario_id, command.scenario_version) != NOMINAL_SCENARIO:
+            scenario = (command.scenario_id, command.scenario_version)
+            if scenario == GOLDEN_SCENARIO:
+                manifest = load_golden_manifest(golden_manifest_path)
+                if command.seed != manifest["seed"]:
+                    raise RunConflict("GOLDEN_SEED_MISMATCH")
+            elif scenario != NOMINAL_SCENARIO:
                 raise RunNotFound("SCENARIO_NOT_FOUND")
             run_id = uuid4().hex
             db.execute(
@@ -82,6 +89,11 @@ def _record_start(db, run_id: str, payload_json: str) -> None:
         (run_id, payload_json),
     )
     record_nominal_co2(db, run_id, 0)
+    scenario = db.execute(
+        "SELECT scenario_id, scenario_version FROM runs WHERE run_id = ?", (run_id,)
+    ).fetchone()
+    if (scenario["scenario_id"], scenario["scenario_version"]) == GOLDEN_SCENARIO:
+        seed_golden(db, run_id)
 
 
 def reset_run(repository: Repository, run_id: str, command: ResetRunRequest) -> ResetReceipt:
@@ -136,7 +148,7 @@ def reset_run(repository: Repository, run_id: str, command: ResetRunRequest) -> 
 NOMINAL_STEPS_S = (0, 60)
 
 
-def advance_run(repository: Repository, run_id: str, command: AdvanceRunRequest) -> AdvanceReceipt:
+def advance_run(repository: Repository, run_id: str, command: AdvanceRunRequest, *, driver: bool = False) -> AdvanceReceipt:
     digest = request_digest(command)
     with repository.write() as db:
         run = db.execute("SELECT * FROM runs WHERE run_id = ?", (run_id,)).fetchone()
@@ -153,8 +165,18 @@ def advance_run(repository: Repository, run_id: str, command: AdvanceRunRequest)
             return AdvanceReceipt.model_validate_json(prior["receipt_json"])
         if run["status"] != "active":
             raise RunConflict("RUN_CLOSED")
+        if driver:
+            paused = db.execute(
+                "SELECT paused FROM run_driver_state WHERE run_id = ?", (run_id,)
+            ).fetchone()
+            if paused is not None and paused["paused"]:
+                raise RunConflict("DRIVER_PAUSED")
+        if (run["scenario_id"], run["scenario_version"]) == GOLDEN_SCENARIO:
+            return _advance_golden(db, run_id, run, command)
         if (run["scenario_id"], run["scenario_version"]) != NOMINAL_SCENARIO:
             raise RunConflict("SCENARIO_NOT_ADVANCEABLE")
+        if command.target_mission_s is not None:
+            raise RunConflict("TARGET_ONLY_FOR_GOLDEN")
         if command.expected_step >= len(NOMINAL_STEPS_S) or (
             NOMINAL_STEPS_S[command.expected_step] != run["mission_s"]
         ):
@@ -186,3 +208,71 @@ def advance_run(repository: Repository, run_id: str, command: AdvanceRunRequest)
         deliver_due(db, run_id, receipt.mission_s)
         receive_due_advisories(db, run_id, receipt.mission_s)
     return receipt
+
+
+def _advance_golden(db, run_id: str, run, command: AdvanceRunRequest) -> AdvanceReceipt:
+    """Compose all due scenario beats within the existing advance transaction."""
+    current_s = run["mission_s"]
+    if current_s not in GOLDEN_STEPS_S:
+        raise RunConflict("STALE_STEP")
+    step = GOLDEN_STEPS_S.index(current_s)
+    if command.expected_step != step:
+        raise RunConflict("STALE_STEP")
+    next_step = step + 1
+    if next_step >= len(GOLDEN_STEPS_S):
+        raise RunConflict("NO_NEXT_STEP")
+    target = command.target_mission_s
+    if target is None:
+        target = GOLDEN_STEPS_S[next_step]
+    if target not in GOLDEN_STEPS_S or target <= current_s:
+        raise RunConflict("GOLDEN_STEP_NOT_REACHABLE")
+
+    compose_golden_until(db, run_id, current_s, target)
+    receipt = AdvanceReceipt(
+        run_id=run_id, scenario_id=run["scenario_id"],
+        scenario_version=run["scenario_version"], seed=run["seed"],
+        mission_s=target, step=GOLDEN_STEPS_S.index(target),
+        advance_id=command.advance_id,
+    )
+    db.execute(
+        """INSERT INTO events
+           (run_id, event_seq, event_id, event_type, mission_s, visibility, payload_json)
+           SELECT ?, COALESCE(MAX(event_seq), 0) + 1, ?, 'run.advanced', ?,
+                  'operational', ? FROM events WHERE run_id = ?""",
+        (run_id, f"advance:{command.advance_id}", target, receipt.model_dump_json(), run_id),
+    )
+    db.execute(
+        """INSERT INTO operations (run_id, operation_scope, operation_id, request_digest, receipt_json)
+           VALUES (?, 'advance', ?, ?, ?)""",
+        (run_id, command.advance_id, request_digest(command), receipt.model_dump_json()),
+    )
+    return receipt
+
+
+def pause_driver(
+    repository: Repository, run_id: str, command: DriverPauseRequest,
+) -> DriverPauseReceipt:
+    """Pause/resume optional driver ticks without moving mission time."""
+    with repository.write() as db:
+        run = load_active_run(db, run_id)
+        stored = db.execute(
+            "SELECT paused FROM run_driver_state WHERE run_id = ?", (run_id,)
+        ).fetchone()
+        old_paused = bool(stored["paused"]) if stored else False
+        if old_paused != command.paused:
+            db.execute(
+                """INSERT INTO run_driver_state (run_id, paused) VALUES (?, ?)
+                   ON CONFLICT(run_id) DO UPDATE SET paused = excluded.paused""",
+                (run_id, int(command.paused)),
+            )
+            db.execute(
+                """INSERT INTO events
+                   (run_id, event_seq, event_id, event_type, mission_s, visibility, payload_json)
+                   VALUES (?, ?, ?, ?, ?, 'operational', ?)""",
+                (run_id, next_event_seq(db, run_id), f"driver:{uuid4().hex}",
+                 "run.driver_paused" if command.paused else "run.driver_resumed",
+                 run["mission_s"], '{"paused":' + str(command.paused).lower() + '}'),
+            )
+        return DriverPauseReceipt(
+            run_id=run_id, paused=command.paused, mission_s=run["mission_s"],
+        )
