@@ -953,7 +953,7 @@ __HUD_ICONS__
     <span><svg class="icon" aria-hidden="true"><use href="#hud-zap"/></svg><output id="resource-power"></output></span>
     <span><svg class="icon" aria-hidden="true"><use href="#hud-users"/></svg><output id="resource-crew"></output></span>
     <span><svg class="icon" aria-hidden="true"><use href="#hud-package"/></svg><output id="resource-meals"></output></span>
-    <span><svg class="icon" aria-hidden="true"><use href="#hud-droplets"/></svg><output id="resource-water"></output></span>
+    <span><svg class="icon" aria-hidden="true"><use href="#hud-droplets"/></svg><output id="resource-water"></output><button id="show-provisions" type="button" hidden>Provisions</button></span>
     <span class="command-resource" id="command-phase-readout" hidden><strong>Phase</strong><output id="command-phase" aria-label="Flight phase"></output></span>
     <span class="command-resource" id="command-next-readout" hidden><strong>Next</strong><output id="command-next" aria-label="Next action"></output></span>
     <span class="command-resource" id="command-reserve-readout" hidden><strong>Reserve</strong><output id="command-reserve" aria-label="Maneuver reserve"></output></span>
@@ -1355,6 +1355,23 @@ __HUD_ICONS__
   </dl>
   <h3>Crew</h3><ul id="briefing-crew"></ul>
   <h3>Flight plan</h3><ol id="briefing-steps"></ol>
+</dialog>
+<dialog id="provisions-dialog" class="mission-dialog" aria-labelledby="provisions-title">
+  <div class="dialog-top"><h2 id="provisions-title">Vehicle provisions</h2><form method="dialog"><button>Close provisions</button></form></div>
+  <p id="provisions-vehicle"></p>
+  <dl id="provisions-stock" class="campaign-facts"></dl>
+  <p id="provisions-ration"></p>
+  <div class="choices" aria-label="Commander provisions controls">
+    <button type="button" data-provision="standard">Standard ration</button>
+    <button type="button" data-provision="conserve">Conserve water</button>
+    <button type="button" data-provision="release_reserve">Release reserve water</button>
+    <button type="button" data-provision="oxygen_generation">Allocate water to oxygen generation</button>
+    <button type="button" data-provision="treat">Treat wastewater</button>
+    <button type="button" data-provision="verify">Verify treated water</button>
+    <button type="button" data-provision="reject">Reject treated water</button>
+    <button type="button" data-provision="replenish">Accept station water receipt</button>
+  </div>
+  <output id="provisions-receipt" role="status"></output>
 </dialog>
 <dialog id="replace-campaign" class="mission-dialog" aria-labelledby="replace-campaign-title">
   <div class="dialog-top"><h2 id="replace-campaign-title">Start a new run?</h2></div>
@@ -1846,6 +1863,7 @@ const allocator = createFlightAllocator({
 const tasks = allocator.tasks;
 let crewSession;
 const crewRoutines = createCrewRoutines({
+  rules:data.provisions,
   count:duties.length,tick:TICK_SECONDS,
   occupied(member,asset,time) {
     const frame = {...checkpoints[checkpoints.findLastIndex(point=>point.time<=time)],time};
@@ -1875,8 +1893,15 @@ function updateCrewRoutines(frame) {
   const mode = crewMode();
   const revision = JSON.stringify([tasks.filter(task=>task.mode === mode),
     peerChecks.filter(check=>check.mode === mode).map(({observer,requested,due})=>[observer,requested,due]),
-    mode === "replay" ? flightWorkflow.read() : connectedFlight?.stationWork]);
-  crewSession = crewRoutines.update(mode,connectedFlight?.crewStarted ?? 0,frame.time,revision);
+    mode === "replay" ? flightWorkflow.read() : connectedFlight?.stationWork, connectedFlight?.provisions]);
+  const campaign = connectedFlight?.provisions;
+  const powerAt = time => {
+    const checkpoint = time >= (campaign?.departure ?? Infinity) ? 9 : time >= (campaign?.transferAt ?? Infinity) ? 6 : 0;
+    return Math.max(0,data.frames[""][checkpoint].power ?? 0);
+  };
+  crewSession = crewRoutines.update(mode,connectedFlight?.crewStarted ?? 0,frame.time,revision,
+    campaign ? {...campaign,powerAt} : null);
+  if (campaign && element("provisions-dialog").open) renderProvisions(campaign);
 }
 const equipmentButtons = new Map();
 const fixtureFootprints = {
@@ -3084,6 +3109,7 @@ function render() {
   element("resource-crew").textContent = "Crew " + data.crew.length;
   element("resource-meals").textContent = crewSession.supplies.meals + " meals";
   element("resource-water").textContent = crewSession.supplies.water.toFixed(2) + " L water";
+  element("show-provisions").hidden = !connectedFlight?.provisions;
   const routePoints = [[18,35],[33,27],[47,23],[62,20],[80,18],[102,16],[130,17],[188,18],[242,35]];
   const [mx,my] = routePoints[frame.route];
   element("ship-position").setAttribute("cx",mx);
@@ -3674,6 +3700,50 @@ function openProcesses(mode, modal = true) {
   renderProcess(currentFrame());
 }
 element("show-processes").addEventListener("click",()=>openProcesses(crewMode()));
+const provisionsDialog = element("provisions-dialog");
+const provisionActions = [...document.querySelectorAll("[data-provision]")];
+
+function renderProvisions(campaign) {
+  const ledger = crewSession.provisions;
+  if (!ledger) return;
+  const stock = ledger.stock;
+  const returned = campaign.departure != null && missionTime>=campaign.departure;
+  const vehicle = returned ? "Return capsule" : campaign.vehicle === "asteria" ? "Horizon" : "Kestrel";
+  element("provisions-vehicle").textContent = vehicle+" · synthetic inventory";
+  const liters = ml => (ml/1000).toFixed(3)+" L";
+  const quantities = [
+    ["Potable",liters(stock.potable)],["Reserve",liters(stock.reserve)],["Wastewater",liters(stock.waste)],
+    ["Awaiting quality verification",liters(stock.held)],["Rejected flow",liters(stock.rejected)],
+    ["Consumed",liters(stock.used)],["Meal packs",String(stock.meals)],
+  ];
+  element("provisions-stock").replaceChildren(...quantities.flatMap(([label,value])=>{
+    const dt = document.createElement("dt"), dd = document.createElement("dd");
+    dt.textContent = label;
+    dd.textContent = value;
+    return [dt,dd];
+  }));
+  element("provisions-ration").textContent = ledger.ration === "conserve"
+    ? "Conservation · reduce meal preparation water and defer hygiene" : "Standard ration";
+  const latest = campaign.commands.at(-1);
+  const target = latest?.action === "replenish" || latest?.time >= (campaign.departure ?? Infinity)
+    ? crewSession.ledgers.returned : crewSession.ledgers.outbound;
+  const receipt = target.receipts.get(latest?.id);
+  element("provisions-receipt").textContent = receipt ? receipt.reason ??
+    (latest.action === "replenish" ? "Station water credited to the return capsule" : "Provision action recorded") : "";
+  for (const button of provisionActions) {
+    button.disabled = Boolean(campaign.commands.some(order=>order.time === Math.floor(missionTime) && order.action === button.dataset.provision));
+    if (button.dataset.provision === "replenish") button.disabled ||= campaign.transferAt == null || returned;
+  }
+}
+
+element("show-provisions").addEventListener("click",()=>{
+  if (!connectedFlight?.provisions) return;
+  launchMission.stopForProvisions();
+  renderProvisions(connectedFlight.provisions);
+  provisionsDialog.showModal();
+});
+for (const button of provisionActions) button.addEventListener("click",()=>launchMission.orderProvision(button.dataset.provision));
+
 const airlockDialog = element("airlock-dialog");
 const airlockCycle = element("airlock-cycle");
 const airlockFrames = data.airlock;

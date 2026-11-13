@@ -20,6 +20,11 @@ VEHICLE_STORES: dict[Vehicle, tuple[int, int, int]] = {
 }
 # Fictional training parameters, expressed in mL, kW, and whole meal packs.
 DRINK_ML: dict[Activity, int] = {"rest": 180, "routine": 250, "working": 320}
+MEAL_ML: dict[Ration, int] = {"standard": 180, "conserve": 125}
+HYGIENE_ML = 300
+HYGIENE_WASTE_ML = 260
+TREATMENT_YIELD_PERCENT = 80
+
 LOAD_KW: dict[Action, float] = {
     "prepare_meal": 0.12, "hygiene": 0.03, "oxygen_generation": 0.25, "treat": 0.18,
 }
@@ -121,7 +126,7 @@ class Ledger:
                 return None, "PROCESSOR_UNAVAILABLE"
             if amount > stock.wastewater_ml:
                 return None, "WASTEWATER_SHORT"
-            product = amount * 4 // 5
+            product = amount * TREATMENT_YIELD_PERCENT // 100
             return replace(stock, wastewater_ml=stock.wastewater_ml-amount,
                            held_ml=stock.held_ml+product,
                            rejected_ml=stock.rejected_ml+amount-product), "QUALITY_HOLD"
@@ -158,11 +163,11 @@ class Ledger:
             amount = DRINK_ML[order.activity]
             returned = amount // 2
         elif action == "prepare_meal":
-            amount = 125 if conserving else 180
+            amount = MEAL_ML[order.ration]
             returned = 0
         elif action == "hygiene":
-            amount = 300
-            returned = 260
+            amount = HYGIENE_ML
+            returned = HYGIENE_WASTE_ML
         else:
             amount = order.volume_ml
             returned = 0
@@ -174,3 +179,17 @@ class Ledger:
             stock, potable_ml=stock.potable_ml-amount, wastewater_ml=stock.wastewater_ml+returned,
             used_ml=stock.used_ml+amount-returned, meals=stock.meals-int(action == "prepare_meal"),
         ), "CONSUMED"
+
+
+def flight_rules() -> dict:
+    """Export fixed training parameters for the standalone Flight ledger."""
+    return {
+        "stores": VEHICLE_STORES,
+        "drink_ml": DRINK_ML,
+        "load_kw": LOAD_KW,
+        "meal_ml": MEAL_ML,
+        "hygiene_ml": HYGIENE_ML,
+        "hygiene_waste_ml": HYGIENE_WASTE_ML,
+        "treatment_yield_percent": TREATMENT_YIELD_PERCENT,
+        "transfer_ml": 750,
+    }
