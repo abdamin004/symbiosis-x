@@ -6,7 +6,7 @@ from os import environ
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from starlette.concurrency import run_in_threadpool
 
 from symbiosis_x.api.crew import router as crew_router
@@ -53,6 +53,17 @@ def create_app(
             if not path_to_canvas.is_file():
                 raise HTTPException(404, "MISSION_CANVAS_UNAVAILABLE")
             return FileResponse(path_to_canvas, media_type="text/html", headers={"Cache-Control": "no-store"})
+        flight_path = path_to_canvas.with_name("flight.html")
+
+        @application.get("/", include_in_schema=False)
+        def flight_home() -> RedirectResponse:
+            return RedirectResponse("/flight" if flight_path.is_file() else "/mission")
+
+        @application.get("/flight", include_in_schema=False)
+        def flight_canvas() -> FileResponse:
+            if not flight_path.is_file():
+                raise HTTPException(404, "FLIGHT_CANVAS_UNAVAILABLE")
+            return FileResponse(flight_path, media_type="text/html", headers={"Cache-Control": "no-store"})
     return application
 
 
