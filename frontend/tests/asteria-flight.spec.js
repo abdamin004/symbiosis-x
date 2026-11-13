@@ -34,12 +34,26 @@ test("Asteria hands off to the crew canvas and returns to Earth in one saved mis
   if (await start.isVisible()) await start.click();
   await expect(page.locator("#launch-status")).toHaveText("Launchpad");
 
-  for (const crew of ["Sana", "Ivo", "Noor"]) await button("Assign " + crew).click();
+  await button("Briefing").click();
+  await expect(page.getByRole("dialog", { name:"Asteria mission briefing" })).toBeVisible();
+  await button("Close").click();
+  for (const crew of ["Sana", "Ivo", "Noor"]) {
+    await button("Assign " + crew).click();
+    await expect(button("Assigned " + crew)).toHaveAttribute("aria-pressed", "true");
+  }
+  await expect(button("Arm countdown")).toBeDisabled();
+  await button("Start ship systems").click();
   const advance = async count => {
     for (let i = 0; i < count; i++) await button("Advance 15 s").click();
   };
   const liftoff = page.getByRole("button", { name: /^(Commit liftoff|Launch)$/ });
-  await advance(3);
+  const transport = page.getByRole("group", { name:"Launch time controls" });
+  await transport.getByRole("button", { name:"Cycle launch speed" }).click();
+  await transport.getByRole("button", { name:"Cycle launch speed" }).click();
+  await transport.getByRole("button", { name:"Play", exact:true }).click();
+  await expect(button("Arm countdown")).toBeEnabled({ timeout:6000 });
+  await expect(page.locator("#startup-status")).toHaveAttribute("data-online", "true");
+  await transport.getByRole("button", { name:"Pause", exact:true }).click();
   await button("Arm countdown").click();
   await expect(liftoff).toBeDisabled();
   await advance(1);
@@ -47,6 +61,9 @@ test("Asteria hands off to the crew canvas and returns to Earth in one saved mis
   await liftoff.click();
   await expect(page.locator("#ship canvas")).toBeVisible({ timeout: 15_000 });
   await expect(page.locator("#ship .pawn:visible")).toHaveCount(4);
+  await button("Orbit map").click();
+  await expect(page.getByRole("dialog", { name:"Orbit map" })).toContainText("175 km");
+  await button("Close").click();
   await expect(page).toHaveURL(missionUrl);
 
   const command = page.getByRole("region", { name: "Flight command" });

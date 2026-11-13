@@ -1,16 +1,34 @@
 // Local Commander training exercise. The live golden run has its own clock and command gate.
-function bindLaunchCheckout(config, {pauseReplay,onCanvas,onPlayback,resetCrew}) {
+function bindLaunchCheckout(config, {pauseReplay,onCanvas,onPlayback,resetCrew,crew}) {
   const find = id => document.getElementById(id);
+  const canvas = find("launch-scene");
+  const scene = createLaunchScene(canvas);
+  const padLabel = canvas.getAttribute("aria-label");
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   const storageKey = "sx:" + config.id + ":v" + config.version;
-  const fresh = () => ({time:0,jobs:{},hold:false,armed:null,ignition:null,separation:null,insertion:null,aborted:false,phasing:null,capture:null,retreat:null,approachHeld:false,sealAt:null,pressureAt:null,hatchAt:null,transferAt:null,researchAt:null,
+  const fresh = () => ({time:0,jobs:{},hold:false,startupAt:null,armed:null,ignition:null,separation:null,insertion:null,aborted:false,phasing:null,capture:null,retreat:null,approachHeld:false,sealAt:null,pressureAt:null,hatchAt:null,transferAt:null,researchAt:null,
     departedAt:null,deorbitAt:null,landedAt:null,recoveredAt:null});
   const ascent = config.ascent;
   const rendezvous = config.rendezvous;
   const docking = config.docking;
   const returnPlan = config.return;
-  let replay = false;
+  let view = "menu";
   let ascentTimer = null;
   let playback = null;
+  let speed = 1;
+  let tickStarted = 0;
+  let padAnimation = null;
+  let orbitConfirmation = null;
+  let orbitPreviewStarted = 0;
+  let orbitPreviewUntil = 0;
+  const skyOffset = config.pad.daylight_offset_s;
+  const skyCycle = config.pad.daylight_cycle_s;
+  const insertion = config.ascent.insertion_profile;
+  function lightAt(time) {
+    const angle = ((time+skyOffset)%skyCycle)/skyCycle*2*Math.PI;
+    const altitude = Math.sin(angle);
+    return {angle,altitude,light:Math.max(0,Math.min(1,(altitude+.12)*1.8))};
+  }
   const tick = ascent.tick_s;
   const countdown = config.sequence.countdown_s;
   let state = fresh();
@@ -23,6 +41,9 @@ function bindLaunchCheckout(config, {pauseReplay,onCanvas,onPlayback,resetCrew})
   function persist() {
     try { localStorage.setItem(storageKey, JSON.stringify(state)); } catch {}
   }
+  function systemsReady() {
+    return state.ignition !== null || state.startupAt !== null && state.time >= state.startupAt+config.pad.startup_s;
+  }
   function ready() {
     return config.jobs.every(job => state.jobs[job.id]?.due <= state.time);
   }
@@ -33,9 +54,10 @@ function bindLaunchCheckout(config, {pauseReplay,onCanvas,onPlayback,resetCrew})
       const jobsRunning = config.jobs.some(job=>state.jobs[job.id]?.due>state.time);
       let next = "Assign crew checks";
       if (state.hold) next = "Release the launch hold";
-      else if (ready()) next = state.armed === null ? "Arm countdown" : counting ? "Advance countdown · " + (state.armed+countdown-state.time) + " s remaining" : "Commit liftoff";
+      else if (!systemsReady()) next = state.startupAt === null ? "Start ship systems" : "Wait for systems to come online";
+      else if (ready()) next = state.armed === null ? "Arm countdown" : counting ? "Advance countdown · " + (state.armed+countdown-state.time) + " s remaining" : "Launch";
       return {phase:state.hold ? "Launch held" : counting ? "Countdown armed" : "Launchpad",
-        next,advance:jobsRunning || (counting && !state.hold)};
+        next,advance:jobsRunning || (counting && !state.hold),pad:true};
     }
     if (state.separation === null) {
       const burn = state.time - state.ignition;
@@ -156,54 +178,107 @@ function bindLaunchCheckout(config, {pauseReplay,onCanvas,onPlayback,resetCrew})
     }};
   }
 
-  function renderView() {
-    const flight = flightState();
-    const inOrbit = !replay && state.insertion !== null && !state.aborted;
+  function renderView(animate = true) {
+    const launch = view === "launch";
+    const menu = view === "menu";
+    const inOrbit = launch && state.insertion !== null && !state.aborted && performance.now() >= orbitPreviewUntil;
     const controlsHome = find(inOrbit ? "mission-command-widget" : "pad-controls");
     const controls = find("launch-controls");
     if (controls.parentElement !== controlsHome) controlsHome.append(controls);
-    find("stage").hidden = !replay && !inOrbit;
-    find("launch-checkout").hidden = replay || inOrbit;
-    if (!replay) render();
-    onCanvas(inOrbit ? canvasState(flight) : null);
+    find("stage").hidden = view !== "replay" && !inOrbit;
+    find("launch-page").hidden = view === "replay" || inOrbit;
+    find("game-menu").hidden = !menu;
+    find("pad-transport").hidden = !launch || inOrbit || state.ignition !== null;
+    find("pad-controls").hidden = !launch || inOrbit;
+    find("launch-open-missions").hidden = !launch;
+    find("launch-open-objectives").hidden = !launch;
+    find("launch-field").dataset.view = view;
+    if (menu) {
+      canvas.dataset.phase = "pad";
+      canvas.setAttribute("aria-label", padLabel);
+      scene.show({phase:"pad",elapsed:0,separated:false,burning:false},false);
+      const started = state.time > 0 || Object.keys(state.jobs).length > 0 || state.hold;
+      find("launch-start-label").textContent = started ? "Resume mission" : "Start mission";
+    }
+    if (launch) render(animate);
+    onCanvas(inOrbit ? canvasState(flightState()) : null);
   }
 
   function advance() {
-    if (!flightState().advance || state.ignition !== null && state.insertion === null) return;
+    if (!canAdvance()) return;
     state.time += tick;
     persist();
     renderView();
     const flight = flightState();
-    if (!flight.advance || flight.capture) stopPlayback();
+    if ((!flight.pad && !flight.advance) || flight.capture) stopPlayback();
   }
 
+  function canAdvance() {
+    if (view !== "launch") return false;
+    return state.ignition === null || state.insertion !== null && Boolean(flightState().advance);
+  }
+  function updatePadClock(time) {
+    const light = lightAt(time);
+    find("pad-clock").textContent = missionStamp(Math.floor(time));
+    find("pad-light").textContent = light.altitude > .2 ? "Daylight" : light.altitude < -.2 ? "Night" : "Twilight";
+    scene.setSky(light);
+  }
   function stopPlayback() {
     if (playback === null) return;
-    clearInterval(playback);
+    if (playback !== "pad") clearInterval(playback);
     playback = null;
+    cancelAnimationFrame(padAnimation);
+    find("pad-play-label").textContent = "Play";
+    find("pad-play-icon").setAttribute("href","#hud-play");
+    if (state.ignition === null) updatePadClock(state.time);
     onPlayback(false);
   }
 
   function togglePlayback() {
     if (playback !== null) {stopPlayback(); return;}
-    if (!flightState().advance) return;
-    playback = setInterval(advance,tick/4*1000);
-    onPlayback(true);
+    if (!canAdvance()) return;
+    if (state.ignition === null) {
+      const frame = now => {
+        const duration = tick/(4*speed)*1000;
+        if (now-tickStarted >= duration) {
+          tickStarted += duration;
+          advance();
+        }
+        if (playback === null) return;
+        updatePadClock(state.time + Math.min(tick,(now-tickStarted)*.004*speed));
+        padAnimation = requestAnimationFrame(frame);
+      };
+      tickStarted = performance.now();
+      playback = "pad";
+      padAnimation = requestAnimationFrame(frame);
+      find("pad-play-label").textContent = "Pause";
+      find("pad-play-icon").setAttribute("href","#hud-pause");
+    } else {
+      playback = setInterval(advance,tick/4*1000);
+      onPlayback(true);
+    }
   }
 
   function animateAscent() {
-    if (ascentTimer !== null || state.ignition === null || state.insertion !== null || state.aborted || replay) return;
+    if (ascentTimer !== null || state.ignition === null || state.insertion !== null || state.aborted || view !== "launch") return;
+    const liftoff = state.time === state.ignition;
+    const delay = liftoff && !reducedMotion.matches ? 2700 : 880;
     ascentTimer = setTimeout(()=>{
       ascentTimer = null;
       const flight = flightState();
       if (flight.separate) state.separation = state.time;
-      else if (flight.insert) state.insertion = state.time;
+      else if (flight.insert) {
+        state.insertion = state.time;
+        orbitPreviewStarted = performance.now();
+        orbitPreviewUntil = orbitPreviewStarted + (reducedMotion.matches ? 0 : 2400);
+        if (!reducedMotion.matches) orbitConfirmation = requestAnimationFrame(animateInsertion);
+      }
       else if (flight.advance) state.time += tick;
       else return;
       persist();
       renderView();
       animateAscent();
-    },750);
+    },delay);
   }
 
   function renderObjectives(flight) {
@@ -237,26 +312,39 @@ function bindLaunchCheckout(config, {pauseReplay,onCanvas,onPlayback,resetCrew})
   function missionStamp(seconds) {
     return "T+" + Math.floor(seconds/60) + ":" + String(seconds%60).padStart(2,"0");
   }
-  function render() {
+  function render(animate = true) {
+    if (state.ignition === null && playback !== "pad") updatePadClock(state.time);
+    const startup = find("startup-status");
+    startup.dataset.online = String(systemsReady());
+    for (const status of startup.querySelectorAll("span")) {
+      status.textContent = systemsReady() ? "Online" : state.startupAt === null ? "Off" : "Starting";
+    }
+    find("startup").disabled = state.startupAt !== null || state.ignition !== null;
+    find("launch-systems").hidden = state.ignition !== null;
     find("launch-time").textContent = Math.floor(state.time / 60) + ":" + String(state.time % 60).padStart(2, "0");
     const flight = flightState();
     find("launch-status").textContent = flight.phase;
     find("launch-next").textContent = flight.next;
     find("launch-reserve").textContent = flight.reserve === undefined ? "Upper stage standby" : flight.reserve + " game units";
-    const scene = find("launch-scene");
-    const elapsed = state.ignition === null ? 0 : state.time-state.ignition;
-    scene.dataset.phase = state.aborted ? "abort" : flight.orbit ? "orbit" : state.separation !== null ? "upper" : state.ignition === null ? "pad" : "ascent";
-    scene.setAttribute("aria-label", "Asteria · " + flight.phase);
-    scene.style.setProperty("--climb", Math.min(scene.clientHeight*.19, elapsed*2.1)+"px");
-    scene.dataset.separated = String(state.separation !== null);
+    if (!find("pad-controls").hidden) {
+      const elapsed = state.ignition === null ? 0 : state.time-state.ignition;
+      const phase = state.aborted ? "abort" : state.separation !== null ? "upper" : state.ignition === null ? "pad" : "ascent";
+      canvas.dataset.phase = phase;
+      canvas.setAttribute("aria-label", phase === "pad" ? padLabel : "Asteria · " + flight.phase);
+      scene.show({phase,elapsed,separated:state.separation !== null,burning:elapsed<ascent.burn_s},animate);
+    }
     renderObjectives(flight);
+    const orbit = find("orbit-preview");
+    orbit.hidden = state.separation === null || state.aborted ||
+      (state.insertion !== null && performance.now() >= orbitPreviewUntil);
+    if (!orbit.hidden) paintOrbit(orbit, state.insertion === null ? 0 : insertionProgress(performance.now()));
     find("launch-stack").dataset.ignited = String(flight.phase === "Booster ascent");
     find("launch-stack").querySelector("[data-stage=booster]").hidden = state.separation !== null;
     find("launch-go").hidden = state.ignition !== null;
     find("launch-arm").hidden = state.ignition !== null || state.armed !== null;
-    find("launch-arm").disabled = state.hold || !ready();
-    find("launch-go").disabled = state.hold || !ready() || state.armed === null || state.time < state.armed+countdown;
-    find("launch-step").disabled = !flight.advance || state.ignition !== null && state.insertion === null;
+    find("launch-arm").disabled = state.hold || !systemsReady() || !ready();
+    find("launch-go").disabled = state.hold || !systemsReady() || !ready() || state.armed === null || state.time < state.armed+countdown;
+    find("launch-step").disabled = !canAdvance();
     find("launch-crew-checks").hidden = state.ignition !== null;
     find("launch-research").hidden = state.transferAt === null || state.researchAt !== null;
     find("launch-depart").hidden = state.researchAt === null || state.time < state.researchAt+returnPlan.research_s || state.departedAt !== null;
@@ -299,12 +387,94 @@ function bindLaunchCheckout(config, {pauseReplay,onCanvas,onPlayback,resetCrew})
       const record = state.jobs[job.id];
       const row = rows.get(job.id);
       row.assign.disabled = Boolean(record) || state.ignition !== null;
+      row.assign.setAttribute("aria-pressed",String(Boolean(record)));
+      row.assignedLabel.textContent = record ? "Assigned" : "Assign";
+      row.assign.setAttribute("aria-label",(record ? "Assigned " : "Assign ") + job.crew.split(" ")[0]);
       row.status.textContent = !record ? "Awaiting assignment"
         : record.due <= state.time ? "Verified"
         : "In progress · " + (record.due-state.time) + " s";
     }
   }
+  function insertionProgress(now) {
+    return Math.max(0, Math.min(1, (now - orbitPreviewStarted) / 1200));
+  }
+
+  function animateInsertion(now) {
+    if (now >= orbitPreviewUntil) {
+      orbitConfirmation = null;
+      renderView();
+      return;
+    }
+    const orbit = find("orbit-preview");
+    if (!orbit.hidden) paintOrbit(orbit, insertionProgress(now));
+    orbitConfirmation = requestAnimationFrame(animateInsertion);
+  }
+
+  function paintOrbit(container, progress = 1) {
+    const orbitCanvas = container.querySelector("canvas");
+    const ctx = orbitCanvas.getContext("2d");
+    const pe = Math.round(insertion.initial_periapsis_km + progress *
+      (insertion.target_periapsis_km - insertion.initial_periapsis_km));
+    const stable = progress === 1 && pe >= insertion.minimum_periapsis_km;
+    container.querySelector("#orbit-ap").textContent = insertion.apoapsis_km + " km";
+    container.querySelector("#orbit-pe").textContent = pe + " km";
+    const status = container.querySelector("#orbit-status");
+    const message = stable ? "Insertion raised periapsis · orbit confirmed"
+      : state.insertion !== null ? "Insertion burn · raising periapsis" : "Coast trajectory · insertion needed";
+    if (status.textContent !== message) status.textContent = message;
+    ctx.clearRect(0,0,480,180);
+    function ring(cx,cy,rx,ry,color,dashes=[]) {
+      ctx.beginPath();
+      ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);
+      ctx.strokeStyle=color;
+      ctx.setLineDash(dashes);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    ctx.fillStyle="#315f88";
+    ctx.beginPath(); ctx.arc(240,90,52,0,Math.PI*2); ctx.fill();
+    ring(240,90,147,68,"#a9d8ff",[6,5]);
+    ring(268 - 28 * progress,90,119 + 28 * progress,39 + 29 * progress,
+      stable ? "#96ebca" : "#f1b688");
+    ctx.fillStyle="#f0f5ff";
+    ctx.font="12px system-ui";
+    ctx.fillText("AP",397,94);
+    ctx.fillText("PE",123 - 53 * progress,94);
+  }
+
   const rows = new Map();
+  for (const name of ["Electrical bus","Hydraulics","Oxygen supply","CO₂ scrubber"]) {
+    const row = document.createElement("li");
+    const status = document.createElement("span");
+    row.append(name,status);
+    find("startup-status").append(row);
+  }
+  find("startup").addEventListener("click",()=>{
+    if (state.startupAt !== null || state.ignition !== null) return;
+    state.startupAt = state.time;
+    persist();
+    render();
+  });
+  find("pad-play").addEventListener("click",togglePlayback);
+  find("pad-speed").addEventListener("click",()=>{
+    speed = speed === 4 ? 1 : speed*2;
+    tickStarted = performance.now();
+    find("pad-speed").textContent = speed+"×";
+  });
+  for (const id of ["show-briefing","launch-briefing"]) find(id).addEventListener("click",()=>{
+    stopPlayback();
+    find("mission-briefing").showModal();
+  });
+  find("show-orbit").addEventListener("click",()=>{
+    stopPlayback();
+    const copy = find("orbit-preview").cloneNode(true);
+    copy.removeAttribute("id");
+    copy.hidden = false;
+    paintOrbit(copy);
+    for (const element of copy.querySelectorAll("[id]")) element.removeAttribute("id");
+    find("orbit-dialog-content").replaceChildren(copy);
+    find("orbit-dialog").showModal();
+  });
   const objectiveRows = new Map();
   for (const objective of config.sequence.objectives) {
     const row = document.createElement("li");
@@ -334,10 +504,15 @@ function bindLaunchCheckout(config, {pauseReplay,onCanvas,onPlayback,resetCrew})
     const assign = document.createElement("button");
     title.textContent = job.title;
     assign.type = "button";
-    assign.textContent = "Assign " + job.crew.split(" ")[0];
+    const assignee = crew.find(person=>person.name===job.crew);
+    const assignedLabel = document.createElement("span");
+    assignedLabel.textContent = "Assign";
+    assign.className = "launch-assignee";
+    assign.title = assignee.name + " · " + assignee.role + " · qualified for this check";
+    assign.append(assignee.portrait(),assignedLabel," "+job.crew.split(" ")[0]);
     status.className = "checkout-job-status";
     const station = document.createElement("small");
-    station.textContent = job.station + " · " + job.duration_s + " s";
+    station.textContent = job.station + " · " + job.duration_s + " s. " + job.purpose;
     assign.addEventListener("click", () => {
       if (state.jobs[job.id] || state.ignition !== null) return;
       state.jobs[job.id] = {due:state.time + job.duration_s};
@@ -345,31 +520,31 @@ function bindLaunchCheckout(config, {pauseReplay,onCanvas,onPlayback,resetCrew})
       render();
     });
     row.append(title,station,status,assign);
-    rows.set(job.id,{status,assign});
+    rows.set(job.id,{status,assign,assignedLabel});
     find("launch-jobs").append(row);
   }
-  function openMissions() {
-    pauseReplay();
-    stopPlayback();
-    find("mission-menu").showModal();
+  function currentView() {
+    const route = new URLSearchParams(location.search).get("view");
+    return route === "replay" || route === "launch" ? route : "menu";
   }
 
-  function showView(showReplay, writeHistory = false) {
-    for (const dialog of [find("mission-menu"), find("mission-objectives")]) {
-      if (dialog.open) dialog.close();
-    }
+  function showView(next, navigate = false) {
+    if (find("mission-objectives").open) find("mission-objectives").close();
     pauseReplay();
     stopPlayback();
     clearTimeout(ascentTimer);
     ascentTimer = null;
-    replay = showReplay;
-    renderView();
+    view = next;
+    renderView(false);
     animateAscent();
-    if (writeHistory && (new URLSearchParams(location.search).get("view") === "replay") !== replay) {
+    if (navigate && currentView() !== view) {
       const url = new URL(location.href);
-      if (replay) url.searchParams.set("view", "replay");
-      else url.searchParams.delete("view");
-      history.pushState(null, "", url);
+      if (view === "menu") url.searchParams.delete("view");
+      else url.searchParams.set("view",view);
+      history.pushState(null,"",url);
+      const heading = view === "menu" ? "game-title" : find("stage").hidden ? "launch-title" : "show-missions";
+      find(heading).focus({preventScroll:true});
+      window.scrollTo(0,0);
     }
   }
 
@@ -380,15 +555,15 @@ function bindLaunchCheckout(config, {pauseReplay,onCanvas,onPlayback,resetCrew})
     find("mission-objectives").showModal();
   }
 
-  for (const id of ["show-missions","launch-open-missions"]) find(id).addEventListener("click",openMissions);
-  for (const id of ["open-checkout","objective-open-launch"]) find(id).addEventListener("click",()=>showView(false,true));
+  for (const id of ["show-missions","launch-open-missions"]) find(id).addEventListener("click",()=>showView("menu",true));
+  for (const id of ["open-checkout","objective-open-launch"]) find(id).addEventListener("click",()=>showView("launch",true));
   for (const id of ["show-objectives","launch-open-objectives"]) find(id).addEventListener("click",openObjectives);
-  find("open-flight-replay").addEventListener("click",()=>showView(true,true));
-  const syncView = () => showView(new URLSearchParams(location.search).get("view") === "replay");
+  find("open-flight-replay").addEventListener("click",()=>showView("replay",true));
+  const syncView = () => showView(currentView());
   window.addEventListener("popstate",syncView);
   queueMicrotask(syncView);
   find("launch-arm").addEventListener("click",()=>{
-    if (state.hold || !ready() || state.armed !== null || state.ignition !== null) return;
+    if (state.hold || !systemsReady() || !ready() || state.armed !== null || state.ignition !== null) return;
     state.armed = state.time;
     persist();
     render();
@@ -397,11 +572,13 @@ function bindLaunchCheckout(config, {pauseReplay,onCanvas,onPlayback,resetCrew})
   find("launch-hold").addEventListener("click", () => {
     if (state.ignition !== null) return;
     state.hold = !state.hold;
+    if (state.hold) state.armed = null;
     persist();
     render();
   });
   find("launch-go").addEventListener("click", () => {
     if (find("launch-go").disabled || state.ignition !== null) return;
+    stopPlayback();
     state.ignition = state.time;
     persist();
     renderView();
@@ -478,6 +655,9 @@ function bindLaunchCheckout(config, {pauseReplay,onCanvas,onPlayback,resetCrew})
     stopPlayback();
     clearTimeout(ascentTimer);
     ascentTimer = null;
+    cancelAnimationFrame(orbitConfirmation);
+    orbitConfirmation = null;
+    orbitPreviewUntil = 0;
     state = fresh();
     resetCrew();
     persist();

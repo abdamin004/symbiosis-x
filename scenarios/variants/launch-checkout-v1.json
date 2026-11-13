@@ -27,21 +27,24 @@
       "title": "Verify restraints and suit seals",
       "crew": "Sana Kepler",
       "station": "Crew cabin",
-      "duration_s": 30
+      "duration_s": 30,
+      "purpose": "Confirm the crew can stay secured through ascent."
     },
     {
       "id": "engine",
       "title": "Confirm propulsion readiness",
       "crew": "Ivo Reyes",
       "station": "Engineering",
-      "duration_s": 45
+      "duration_s": 45,
+      "purpose": "Verify the engines and flight controls are ready."
     },
     {
       "id": "link",
       "title": "Read back range clearance",
       "crew": "Noor Okafor",
       "station": "Communications",
-      "duration_s": 30
+      "duration_s": 30,
+      "purpose": "Confirm the simulated range has cleared the launch."
     }
   ],
   "ascent": {
@@ -52,7 +55,13 @@
     "reserve_initial": 100,
     "insertion_cost": 55,
     "minimum_reserve": 15,
-    "coast_cost_per_tick": 8
+    "coast_cost_per_tick": 8,
+    "insertion_profile": {
+      "apoapsis_km": 185,
+      "initial_periapsis_km": -45,
+      "target_periapsis_km": 175,
+      "minimum_periapsis_km": 150
+    }
   },
   "rendezvous": {
     "phasing_cost": 9,
@@ -176,5 +185,10 @@
     "entry_s": 30,
     "descent_s": 30,
     "reserve_cost": 12
+  },
+  "pad": {
+    "daylight_cycle_s": 240,
+    "daylight_offset_s": 35,
+    "startup_s": 15
   }
 }
