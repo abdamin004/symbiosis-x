@@ -141,6 +141,30 @@ def test_health_story_clear_review_emergency_and_private_ground_delivery(mission
                 assert cases[0]["ground_ack"] == checkpoint["ground_ack"]
 
 
+def test_gravity_context_follows_phase_boundaries_and_stays_onboard(mission):
+    request, run, _ = mission
+    assert twin(request, run, "SIM-02")["gravity_context"] is None
+    checkpoints = [
+        (0, "preflight", 0, 0, 60),
+        (59, "preflight", 59, 0, 60),
+        (60, "orbit", 0, 0, 900),
+        (899, "orbit", 839, 839, 900),
+        (900, "reentry", 0, 840, 960),
+        (960, "recovery", 0, 840, None),
+        (975, "recovery", 15, 840, None),
+    ]
+    for step, (target, phase, elapsed, exposure, next_at) in enumerate(checkpoints):
+        if step:
+            response = advance(request, run, step - 1, target)
+            assert response.status_code == 200, response.text
+        context = twin(request, run)["gravity_context"]
+        assert context["synthetic"] is True
+        assert context["baseline"]["mobility"] == "Walking"
+        assert (context["current"]["phase"], context["elapsed_in_phase_s"], context["orbital_exposure_s"],
+                context["next_phase_at_s"]) == (phase, elapsed, exposure, next_at)
+    assert "gravity_context" not in request("GET", run + "/ground", role="ground").json()
+
+
 def test_health_story_jump_is_atomic_retryable_and_resets(mission, monkeypatch):
     from symbiosis_x.crew import measurements
 

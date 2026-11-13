@@ -10,6 +10,12 @@
   "clock": "mission",
   "time_unit": "s",
   "subject_crew_id": "SIM-01",
+  "gravity_phases": [
+    { "phase": "preflight", "starts_at_s": 0, "mobility": "Walking", "orientation": "Upright while standing", "rest": "Rested in a bunk" },
+    { "phase": "orbit", "starts_at_s": 60, "mobility": "Floating with handholds", "orientation": "Aligned to the cabin deck", "rest": "Resting in a secured sleep bag" },
+    { "phase": "reentry", "starts_at_s": 900, "mobility": "Restrained in the command pod", "orientation": "Reclined in the seat", "rest": "Awake for reentry" },
+    { "phase": "recovery", "starts_at_s": 960, "mobility": "Walking with crew support", "orientation": "Upright during the recovery check", "rest": "Resting after recovery" }
+  ],
   "reading_template": {
     "metric": "heart_rate",
     "unit": "bpm",

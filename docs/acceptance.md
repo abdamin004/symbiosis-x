@@ -168,3 +168,9 @@ Three tabs were used: facilitator (launcher), Crew and Ground. The health run wa
 ```sh
 python -m pytest backend/tests/unit/test_radiation.py backend/tests/integration/test_emergency.py backend/tests/integration/test_health_relay.py -q
 ```
+
+## Gravity context in the Crew health story
+
+The `health-story` v1 fixture compares Mara's preflight mobility, orientation and rest with scripted observations in orbit, reentry and Earth recovery. The authored health story clock starts at T+0. It enters orbit at T+60, reentry at T+900 and recovery at T+960. Flight triggers the last two transitions at the corresponding mission milestones. Orbital exposure accrues while in orbit and remains visible after recovery. The Crew projection owns this context.
+
+NASA's study uses consistent measurements to characterize adaptation across multiple systems. The fixture uses this as research context for comparisons across phases. The observations and times are synthetic training data displayed in the private Crew twin alongside the separate health assessment. [NASA Spaceflight Standard Measures](https://www.nasa.gov/humans-in-space/spaceflight-standard-measures-characterizing-how-humans-adapt-in-space/)

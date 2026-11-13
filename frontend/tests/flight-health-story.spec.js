@@ -53,6 +53,11 @@ test("Mara's live Flight twin explains review and shares only a delayed case sta
   await expect(state).toHaveText("Baseline within personal range");
   await expect(story.getByRole("list",{name:"Health indicators"}).getByRole("listitem")).toHaveCount(7);
   await expect(story).toContainText("76 bpm");
+  const gravity = story.locator("#health-story-gravity");
+  await gravity.locator("summary").click();
+  await expect(gravity).toContainText("Preflight");
+  await expect(gravity).toContainText("Upright while standing");
+  await gravity.locator("summary").click();
   await expect(story).toContainText("Blood pressure · Unobserved");
   await expect(story.getByRole("button",{name:/chest-pain/})).toBeHidden();
 
@@ -61,6 +66,10 @@ test("Mara's live Flight twin explains review and shares only a delayed case sta
   await show.click();
   await expect(state).toHaveText("More evidence needed");
   await expect(story).toContainText("88 bpm");
+  await gravity.locator("summary").click();
+  await expect(gravity).toContainText("Orbital microgravity");
+  await expect(gravity).toContainText("Floating with handholds");
+  await gravity.locator("summary").click();
   await expect(story.locator("#health-story-trend")).toContainText("comparable valid samples");
 
   // The cabin, scrubber and EVA beats keep their own timing. A later Flight
@@ -105,6 +114,17 @@ test("Mara's live Flight twin explains review and shares only a delayed case sta
     expect(await groundAfter.text()).not.toContain(marker);
     expect(await groundPanel.textContent()).not.toContain(marker);
   }
+
+  await page.getByRole("button",{name:"Resume demo"}).dispatchEvent("click");
+  for (let i=0;i<10 && !await page.locator("#return-scene[data-phase=recovered]").isVisible();i++) {
+    await advance(12);
+  }
+  await expect(page.locator("#return-scene")).toHaveAttribute("data-phase","recovered");
+  const asCrew = {headers:{Authorization:"Bearer " + tokens.crew}};
+  await expect.poll(async () => {
+    const response = await request.get(run + "/crew/health-twin?crew_id=SIM-01",asCrew);
+    return (await response.json()).gravity_context?.current.phase;
+  }).toBe("recovery");
 
   await page.getByRole("button",{name:"Exit demo"}).dispatchEvent("click");
   await expect(show).toBeHidden();
