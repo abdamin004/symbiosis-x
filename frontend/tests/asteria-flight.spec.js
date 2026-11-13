@@ -24,7 +24,7 @@ test.afterAll(() => {
 });
 
 test("Horizon burns into orbit, reaches ISS and returns to Earth in one saved mission", async ({ page }) => {
-  test.setTimeout(65_000);
+  test.setTimeout(80_000);
   await page.route(url => url.pathname === "/flight", route => route.fulfill({ contentType: "text/html", body: flightHtml }));
   await page.goto("/flight");
   const button = name => page.getByRole("button", { name, exact: true });
@@ -117,9 +117,23 @@ test("Horizon burns into orbit, reaches ISS and returns to Earth in one saved mi
   await twin.getByRole("button", { name:"Close Digital twin widget" }).click();
 
   const command = page.getByRole("region", { name: "Flight command" });
-  await command.getByRole("button", { name: "Commit phasing", exact: true }).click();
+  await expect(button("Commit ISS transfer burn")).toBeDisabled();
+  await button("Coast to ISS departure window").click();
+  await expect(page.getByRole("progressbar",{name:"Coast progress"})).toBeVisible();
+  await command.getByRole("button", { name: "Commit ISS transfer burn", exact: true }).click();
   await expect(page.locator("#maneuver-target")).toContainText("71.3 m/s");
   await expect(page.locator("#maneuver-track")).toBeVisible();
+  await expect(page.locator("#docking-view")).toBeHidden();
+  await expect(button("Coast to transfer apoapsis")).toBeEnabled({timeout:12_000});
+  await page.reload();
+  await expect(page.locator("#launch-status")).toHaveText("Transfer coast · engines off");
+  await expect(button("Match station orbit")).toBeHidden();
+  await button("Coast to transfer apoapsis").click();
+  await expect(page.getByRole("progressbar",{name:"Coast progress"})).toBeVisible();
+  await expect(button("Match station orbit")).toBeVisible();
+  await expect(page.locator("#maneuver-target")).toContainText("420 × 420 km");
+  await button("Match station orbit").click();
+  await expect(page.locator("#launch-status")).toHaveText("Orbit matching burn");
   await expect(page.locator("#docking-view")).toBeVisible({timeout:12_000});
   await button("Hold approach").click();
   await expect(page.locator("#docking-caption")).toContainText("Approach held");
@@ -266,7 +280,7 @@ test("Flight resumes independent campaigns and preserves the legacy Asteria save
   await reopenedButton("Separate booster").click();
   await reopenedButton("Commit orbital insertion").click();
   await expect(reopened.locator("#flight-mission-name")).toHaveText("Orbital Systems Checkout");
-  await expect(reopenedButton("Commit phasing")).toBeHidden();
+  await expect(reopenedButton("Commit ISS transfer burn")).toBeHidden();
   await reopenedButton("Orbit map").click();
   await expect(reopened.locator("#navigation-pe")).toHaveText("160 km");
   await expect(reopened.locator("#navigation-approach")).toHaveText("Orbital checkout");

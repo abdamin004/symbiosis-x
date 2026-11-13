@@ -14,9 +14,16 @@ function createFlightNavigation(reference, hosts) {
   function paint(canvas, data) {
     const ctx = canvas.getContext("2d");
     const {width,height} = canvas;
-    const scale = Math.min(width,height)*.405/reference.earth;
+    const scale = Math.min(width,height)*(canvas === hosts.burn ? .35 : .405)/reference.earth;
     const center = [width/2,height/2];
-    const screen = (x,y)=>[center[0]+x*scale,center[1]+y*scale];
+    // Expand altitude on the maneuver canvas so changes of a few hundred km
+    // stay legible beside an Earth radius of more than six thousand km.
+    const screen = (x,y)=>{
+      const radius = Math.hypot(x,y);
+      const factor = canvas === hosts.burn && radius > 0
+        ? 1+4*(radius-reference.earth)/radius : 1;
+      return [center[0]+x*scale*factor,center[1]+y*scale*factor];
+    };
     function dot(x,y,r,color) {
       ctx.beginPath();
       ctx.arc(x,y,r,0,tau);
@@ -41,12 +48,12 @@ function createFlightNavigation(reference, hosts) {
     const orbit = data.inserted ? reference.parking : reference.insertion;
     const epoch = data.inserted ? data.insertion : data.ignition;
     const elapsed = Math.max(0,data.time-(epoch ?? data.time));
-    const target = pointAt(reference.station,elapsed + reference.station.period*.085);
+    const target = pointAt(reference.station,data.time-(data.insertion ?? data.ignition)+reference.stationEpochS);
     if (!data.checkout) {
       route(reference.station.points,"#778dc1",[4,4]);
       dot(...screen(...target),canvas === large ? 4 : 3,"#a6bcff");
     }
-    if (!data.captured && data.departure === null) {
+    if (!data.captured && data.departure === null && data.matched === null) {
       route(orbit.points,data.inserted ? "#8ce5cb" : "#f4bf8f",data.inserted ? [] : [3,3]);
     }
     let craft = pointAt(orbit,elapsed);
@@ -67,22 +74,28 @@ function createFlightNavigation(reference, hosts) {
       const angle = Math.atan2(atBurn[1],atBurn[0]);
       const align = ([x,y])=>[x*Math.cos(angle)-y*Math.sin(angle),x*Math.sin(angle)+y*Math.cos(angle)];
       const progress = data.burn?.kind === "transfer" ? data.burn.progress : 1;
+      const match = data.matched === null ? 0 : data.burn?.kind === "match" ? data.burn.progress : 1;
       const transfer = reference.transfer.points.map((point)=>{
         const [x,y] = align(point);
         const radius = Math.hypot(x,y);
         const base = reference.earth + reference.parking.ap;
-        const scale = (base + progress*(radius-base))/radius;
+        const scale = (base + progress*(radius-base) + match*(reference.earth+reference.station.ap-radius))/radius;
         return [x*scale,y*scale];
       });
-      route(reference.transfer.points.map(align),"#bd9bff",[3,4]);
+      if (match < 1) route(reference.transfer.points.map(align),"#bd9bff",[3,4]);
       route(transfer,"#ffbb89");
-      const index = 180+Math.min(179,Math.round((data.time-data.transfer)/reference.transfer.period*360));
+      const fraction = Math.min(1,(data.time-data.transfer)/reference.transferS);
+      const index = (180+Math.round(fraction*180))%360;
       craft = [...transfer[index],null];
+      if (match === 1) {
+        const [mx,my,v] = pointAt(reference.station,data.time-data.matched);
+        craft = [...align([mx,my]),v];
+      }
     }
     if (data.captured) craft = target;
     if (data.departure !== null) {
       const departureEpoch = data.departure-data.insertion;
-      const stationAtDeparture = pointAt(reference.station,departureEpoch + reference.station.period*.085);
+      const stationAtDeparture = pointAt(reference.station,departureEpoch + reference.stationEpochS);
       const departureAngle = Math.atan2(stationAtDeparture[1],stationAtDeparture[0]);
       const angle = departureAngle + tau*(data.time-data.departure)/reference.station.period;
       const radius = Math.hypot(stationAtDeparture[0],stationAtDeparture[1]);
@@ -107,7 +120,7 @@ function createFlightNavigation(reference, hosts) {
     ctx.save();
     ctx.translate(x,y);
     ctx.rotate(heading);
-    if (data.burn && data.burn.progress < 1) {
+    if (data.burn && data.burn.kind !== "coast" && data.burn.progress < 1) {
       ctx.fillStyle="#ff9c62";
       ctx.beginPath();
       ctx.moveTo(-3,-3);ctx.lineTo(-14,0);ctx.lineTo(-3,3);ctx.fill();
@@ -116,7 +129,11 @@ function createFlightNavigation(reference, hosts) {
     ctx.beginPath();
     ctx.moveTo(7,0);ctx.lineTo(-4,4);ctx.lineTo(-2,0);ctx.lineTo(-4,-4);ctx.closePath();ctx.fill();
     ctx.restore();
-    if (canvas === large && data.inserted && !data.captured && data.deorbit === null) {
+    if (canvas === hosts.burn) {
+      ctx.fillStyle="#b4c8de";
+      ctx.font="11px system-ui";
+      ctx.fillText("Altitude exaggerated",10,height-10);
+    } else if (canvas === large && data.inserted && !data.captured && data.deorbit === null && data.transfer === null) {
       ctx.fillStyle="#d8f6ed";
       ctx.font="12px system-ui";
       ctx.fillText("AP",center[0]+orbit.points[0][0]*scale-18,center[1]-8);
@@ -131,19 +148,22 @@ function createFlightNavigation(reference, hosts) {
     const craft = paint(minimap,data);
     if (hosts.dialog.open) paint(large,data);
     if (!hosts.burn.hidden) paint(hosts.burn,data);
-    const orbit = data.captured || data.departure !== null ? reference.station : data.inserted ? reference.parking : reference.insertion;
+    const orbit = data.captured || data.departure !== null || data.matched !== null ? reference.station
+      : data.inserted ? reference.parking : reference.insertion;
     hosts.caption.textContent = data.phase;
     const transferProgress = data.burn?.kind === "transfer" ? data.burn.progress : 1;
-    const transferring = data.transfer !== null && !data.captured && data.departure === null;
+    const transferring = data.transfer !== null && data.matched === null && !data.captured && data.departure === null;
     const ap = transferring ? Math.round(orbit.ap+(reference.transfer.ap-orbit.ap)*transferProgress) : orbit.ap;
     const pe = data.burn?.kind === "insertion"
       ? Math.round(reference.insertion.pe+(orbit.pe-reference.insertion.pe)*data.burn.progress)
+      : data.burn?.kind === "match" ? Math.round(reference.transfer.pe+(orbit.pe-reference.transfer.pe)*data.burn.progress)
       : transferring ? reference.transfer.pe : orbit.pe;
     fields.ap.textContent = data.deorbit === null ? ap+" km" : "—";
     fields.pe.textContent = data.deorbit === null ? pe+" km" : "—";
     fields.altitude.textContent = Math.round(Math.hypot(craft[0],craft[1])-reference.earth)+" km";
     fields.speed.textContent = craft[2] === null ? "Scripted segment" : craft[2].toFixed(2)+" km/s";
-    fields.period.textContent = data.inserted && data.deorbit === null ? Math.round((data.captured ? reference.station : orbit).period/60)+" min" : "—";
+    fields.period.textContent = data.inserted && data.deorbit === null
+      ? Math.round((transferring ? reference.transfer : orbit).period/60)+" min" : "—";
     fields.attitude.textContent = data.attitude+"° relative to prograde";
     fields.reserve.textContent = data.rcs+" cold-gas pulses";
     fields.stage.textContent = data.propulsion;
@@ -152,7 +172,8 @@ function createFlightNavigation(reference, hosts) {
     fields.approach.textContent = data.approach;
     fields.basis.textContent = data.captured ? "Station orbit reference" : data.deorbit !== null ? "Scripted descent path"
       : data.departure !== null ? "Departure reference in station orbit"
-      : data.transfer !== null ? "Ideal transfer reference · follow range for final approach"
+      : data.matched !== null ? "Matched orbit · final approach uses scripted range"
+      : data.transfer !== null ? "Ideal coplanar transfer · fictional station ephemeris"
       : data.inserted ? "Ideal two-body parking orbit · approach follows the range readout" : "Scripted ascent · dashed insertion reference";
     for (const button of hosts.attitudeControls) button.disabled = !data.canOrient;
   }

@@ -7,7 +7,7 @@ const flightProcedures = {
   relay: {name:"Ground fault inspection",source:"Handle a fault · W4 Ground advice",
     steps:["Ground sends advice","Relay delivers advice","Commander assigns or holds","Crew records result","Relay delivers report"]},
   docking: {name:"ISS approach and transfer",source:"Dock and open · Transfer and return · W6",
-    steps:["Commit phasing","Capture station","Verify seal and pressure","Authorize hatch","Accept cargo receipt","Archive research","Depart station"]},
+    steps:["Commit ISS transfer","Match station orbit","Capture station","Verify seal and pressure","Authorize hatch","Accept cargo receipt","Archive research","Depart station"]},
 };
 
 function createFlightAllocator({tick,booked,position}) {

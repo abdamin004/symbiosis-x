@@ -47,13 +47,25 @@ def navigation_reference(ascent: dict) -> dict:
     ap = insertion["apoapsis_km"]
     parking_pe = insertion["target_periapsis_km"]
     station_altitude = 420
+    parking = orbit_reference(ap, parking_pe)
+    station = orbit_reference(station_altitude, station_altitude)
+    transfer = orbit_reference(station_altitude, ap)
+    # Leave at the first return to parking apoapsis. Seed a fictional station
+    # ephemeris that is just ahead of the approach corridor on arrival.
+    departure_s = round(parking["period"])
+    transfer_s = round(transfer["period"] / 2)
+    station_epoch_s = station["period"] * 0.501 - departure_s - transfer_s
     return {
         "earth": EARTH_RADIUS_KM,
-        "parking": orbit_reference(ap, parking_pe),
+        "parking": parking,
         "insertion": orbit_reference(ap, insertion["initial_periapsis_km"]),
-        "station": orbit_reference(station_altitude, station_altitude),
-        "transfer": orbit_reference(station_altitude, ap),
+        "station": station,
+        "transfer": transfer,
+        "departureS": departure_s,
+        "transferS": transfer_s,
+        "stationEpochS": station_epoch_s,
         "insertionDeltaV": tangential_delta_v(ap, insertion["initial_periapsis_km"], parking_pe),
         "transferDeltaV": tangential_delta_v(ap, parking_pe, station_altitude),
+        "matchDeltaV": tangential_delta_v(station_altitude, ap, station_altitude),
         "rcsPulses": 12,
     }

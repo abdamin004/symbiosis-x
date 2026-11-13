@@ -266,6 +266,7 @@ button[aria-pressed=true]{background:#3d315e}
 .launch-field[data-view=menu]{height:auto;min-height:calc(100svh - 53px)}
 .game-menu{width:min(37rem,55vw);margin-left:clamp(1rem,5vw,5rem);padding:1.4rem 0 2rem}
 .game-menu h1{font-size:clamp(2rem,4.4vw,4rem);letter-spacing:-.055em;margin:0 0 1rem}
+.game-menu .game-kicker{color:#b5c7ed;font-size:.72rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;margin:0 0 .3rem}
 .game-menu fieldset{border:0;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:.5rem}
 .game-menu label{position:relative;cursor:pointer}
 .game-menu label span,.campaign-brief,.campaign-replay{border:1px solid #8194a75c;background:#101b29ed;border-radius:8px}
@@ -843,7 +844,8 @@ __HUD_ICONS__
   <div class="launch-field" id="launch-field" data-view="menu">
     <div class="launch-visual"><canvas class="launch-scene" id="launch-scene" role="img" aria-label="Ship on the launchpad"></canvas></div>
     <section class="game-menu" id="game-menu" aria-labelledby="game-title">
-      <h1 id="game-title" tabindex="-1">Choose a mission</h1>
+      <p class="game-kicker">Crew survival and mission command</p>
+      <h1 id="game-title" tabindex="-1">SYMBIOSIS X</h1>
       <div id="campaign-choices"></div>
       <div class="campaign-brief">
         <p id="campaign-objective"></p>
@@ -894,7 +896,7 @@ __HUD_ICONS__
       <section id="maneuver-plan" aria-labelledby="maneuver-title" hidden>
         <h3 id="maneuver-title"></h3>
         <p id="maneuver-target"></p>
-        <canvas id="maneuver-track" width="440" height="220" role="img" aria-label="Transfer trajectory during the ISS burn" hidden></canvas>
+        <canvas id="maneuver-track" width="440" height="220" role="img" aria-label="Horizon and ISS maneuver trajectories" hidden></canvas>
         <progress id="maneuver-progress" max="1" value="0" aria-label="Engine burn progress" hidden></progress>
       </section>
       <div id="orbit-preview" hidden>
@@ -947,7 +949,9 @@ __HUD_ICONS__
         <button id="launch-separate" type="button" hidden>Separate booster</button>
         <button id="launch-insert" type="button" hidden>Commit orbital insertion</button>
         <button id="launch-abort" type="button" hidden>Abort ascent</button>
-        <button id="launch-phasing" type="button" hidden>Commit phasing</button>
+        <button id="launch-coast" type="button" hidden>Coast to ISS departure window</button>
+        <button id="launch-phasing" type="button" hidden>Commit ISS transfer burn</button>
+        <button id="launch-match" type="button" hidden>Match station orbit</button>
         <button id="launch-approach-hold" type="button" aria-pressed="false" hidden>Hold approach</button>
         <button id="launch-capture" type="button" hidden>Capture station</button>
         <button id="launch-retreat" type="button" hidden>Retreat to orbit</button>
