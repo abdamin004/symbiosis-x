@@ -16,6 +16,13 @@
       "serves_zone": "cabin-01"
     },
     {
+      "entity_id": "pressure-sensor-01",
+      "name": "Cabin pressure sensor",
+      "kind": "sensor",
+      "subsystem": "atmosphere",
+      "serves_zone": "cabin-01"
+    },
+    {
       "entity_id": "primary-scrubber-01",
       "name": "Primary scrubber",
       "kind": "scrubber",

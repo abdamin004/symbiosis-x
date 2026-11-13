@@ -1,0 +1,39 @@
+{
+  "scenario_id": "sensor-noise",
+  "scenario_version": "1",
+  "synthetic": true,
+  "provenance": "synthetic_fixture",
+  "description": "SX-18C: the golden cabin CO₂ history sampled through one sensor with seeded Gaussian noise. The input history is the canonical model (100 m³, 0.04 m³/h generation, removal 20 → 4 m³/h at 01:00). Expected traces are computed by the test, not stored here.",
+  "reference_scenario": {"scenario_id": "sx01-golden", "scenario_version": "1"},
+  "seed": 4242,
+  "model_version": "cabin-1",
+  "time_unit": "s",
+  "clock": "mission",
+  "sensor": {
+    "source_id": "sim.cabin.co2",
+    "component_id": "co2-sensor-01",
+    "entity_id": "cabin-01",
+    "metric": "co2",
+    "unit": "ppm",
+    "sample_period_s": 60,
+    "input_kind": "simulated",
+    "visibility": "operational"
+  },
+  "noise": {"distribution": "gaussian", "sigma_ppm": 15.0, "unit": "ppm", "stream": "per (seed, source_id, mission_s)"},
+  "input_history": [
+    {"mission_s": 0, "true_co2_ppm": 2000.0},
+    {"mission_s": 60, "true_co2_ppm": 2000.0},
+    {"mission_s": 120, "true_co2_ppm": 2005.33},
+    {"mission_s": 180, "true_co2_ppm": 2010.66},
+    {"mission_s": 240, "true_co2_ppm": 2015.98},
+    {"mission_s": 300, "true_co2_ppm": 2021.3},
+    {"mission_s": 360, "true_co2_ppm": 2026.62},
+    {"mission_s": 420, "true_co2_ppm": 2031.94},
+    {"mission_s": 480, "true_co2_ppm": 2037.25},
+    {"mission_s": 540, "true_co2_ppm": 2042.55},
+    {"mission_s": 600, "true_co2_ppm": 2047.86},
+    {"mission_s": 660, "true_co2_ppm": 2053.16},
+    {"mission_s": 720, "true_co2_ppm": 2058.45},
+    {"mission_s": 780, "true_co2_ppm": 2063.74}
+  ]
+}
