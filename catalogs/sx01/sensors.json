@@ -1,0 +1,15 @@
+{
+  "catalog_version": 1,
+  "sensors": [
+    {
+      "source_id": "sim.cabin.co2",
+      "component_id": "co2-sensor-01",
+      "entity_id": "cabin-01",
+      "metric": "co2",
+      "unit": "ppm",
+      "sample_period_s": 60,
+      "input_kind": "simulated",
+      "visibility": "operational"
+    }
+  ]
+}

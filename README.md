@@ -1,6 +1,6 @@
 # SYMBIOSIS X
 
-SYMBIOSIS X is a software-only prototype for astronaut self-assessment in a simulated mission. The health demo follows one fictional astronaut through a measurement, an explained review alert, an onboard emergency drill and a delayed Ground receipt. The cabin twin provides mission context and a separate stale-advice replay.
+SYMBIOSIS X is a software-only prototype for astronaut self-assessment in a simulated mission. The ship carries four fictional astronauts (SIM-01 through SIM-04). The health demo follows SIM-01 through a measurement, an explained review alert, an onboard emergency drill and a delayed Ground receipt. The cabin twin provides mission context and a separate stale-advice replay.
 
 Use the [Jira board](https://crewsync-1794569647227.atlassian.net/jira/software/projects/KAN/boards/2) for ticket status and the [build plan](SYMBIOSIS%20X%20Feature%20Backlog%20and%20Build%20Plan.html) for dependencies and acceptance checks. The [technical architecture](SYMBIOSIS%20X%20Technical%20Architecture.html) describes the role boundaries and the five planned screens.
 
@@ -17,7 +17,18 @@ python -m pip install -r contracts/requirements-test.txt
 python -m pytest backend/tests/integration/test_contract_examples.py -q
 ```
 
-On Windows PowerShell use `py -3 -m venv .venv` and `.\.venv\Scripts\Activate.ps1`. This setup exercises the shared JSON contract. The backend bootstrap, app health checks and dashboard launch are tracked as separate build tickets.
+On Windows PowerShell use `py -3 -m venv .venv` and `.\.venv\Scripts\Activate.ps1`. This setup exercises the shared JSON contract.
+
+## Run the backend locally
+
+From the repository root, activate the virtual environment and run:
+
+```sh
+python -m pip install -e 'backend[test]'
+python -m uvicorn symbiosis_x.main:app --host 127.0.0.1 --port 8766 --no-proxy-headers
+```
+
+Open [OpenAPI docs](http://127.0.0.1:8766/docs). Startup migrates the local database to revision 3. By default the file is `symbiosis-x.sqlite3` in the working directory. Set `SYMBIOSIS_X_DB_PATH` to use a different file. Use a temporary path for tests. The pilot canvas currently runs from generated replay data. The simulation API routes and health probes have their own tickets.
 
 ## SX-01A handoff
 
@@ -71,4 +82,41 @@ git merge origin/main
 
 Run the ticket checks, push to your member branch, and open a pull request into `main`. Put the Jira key in the commit subject and PR title, for example `KAN-10 Bootstrap the FastAPI package`. Link Jira and GitHub in both directions. Use **Create a merge commit** on GitHub to keep the branch history shared with `main`. Keep your member branch after merge and update it before starting the next ticket.
 
-In the PR, record the test command and result, affected consumers, and any blockers. Move the Jira ticket to In Review when the PR is open and to Done after the change merges and meets its acceptance criteria.
+In the PR, record the test command and result, affected consumers, and any blockers. Before starting work, assign the Jira ticket to yourself and move it to In Progress. Merge the tested change into main, then move the Jira ticket to In Review for a teammate to check. Move it to Done after peer review and any follow-up fixes.
+
+## Run the cabin pilot
+
+Generate a standalone HTML preview from the cabin model and synthetic astronaut roster.
+
+```sh
+python3 scripts/build_cabin_preview.py /tmp/symbiosis-x-cabin.html
+```
+
+Open the generated file. Select any astronaut and compare the Crew replay at 13:00 before and after confirming reduced activity at 06:00. The cabin adds the contributions of all four astronauts. Planning leaves the cabin input unchanged. The Ground fixture shows the earlier delivered snapshot at 13:00. This preview uses synthetic data and runs without the application server.
+
+### Build canvas components
+
+Use the [spacecraft icon sprite](frontend/src/ui/icons/spacecraft.svg) for cabin, scrubber, power and Crew. Keep the SVG paths on the same 24 × 24 grid and inherit `currentColor`. In React or HTML, give icon-only controls accessible names. Treat icons next to text as decorative.
+
+Use violet for selection, blue for telemetry and amber for degraded equipment. Give status a text label as well as a color. Use the catalog's stable asset IDs and keep selection state in the canvas. The [spacecraft catalogs](catalogs/sx01/) define the cabin and its CO₂ source. See the [time-series design rule](docs/decisions/telemetry-and-health-time-series.md) for telemetry, private health history and future agent queries. Pass role-scoped values into components so the same deck and inspector can serve Crew and Ground.
+
+### Seed synthetic observation history
+
+Use a dedicated SQLite file and SQLite 3.37 or later for the typed observation tables.
+
+```sh
+python3 scripts/seed_time_series_demo.py /tmp/symbiosis-x-series.sqlite3
+```
+
+The seed writes one replay with 14 cabin CO₂ samples at 60-second intervals and 12 private synthetic heart-rate samples across four astronauts. Re-running the command keeps the same run. The app applies the schema on startup. History endpoints and health assessment are separate work.
+
+### Open the room-based mission canvas
+
+Generate the canvas from the spacecraft room catalog, then serve it on the same local origin as the run API.
+
+```sh
+python3 scripts/build_mission_canvas.py /tmp/symbiosis-x-mission.html
+SYMBIOSIS_X_MISSION_CANVAS=/tmp/symbiosis-x-mission.html python -m uvicorn symbiosis_x.main:app --host 127.0.0.1 --port 8766 --no-proxy-headers
+```
+
+Open [Mission canvas](http://127.0.0.1:8766/mission). Start the nominal run at 00:00 and advance it once to 01:00. The room catalog describes the ship's planned functions and links existing assets to the same IDs used by telemetry. Command uses the live run API. Switch between Crew and Ground on the same run. Ground waits for the first packet and shows observation time, delivery time and age once it arrives. Replay and planned labels identify the other room capabilities. The canvas enables loopback demo sessions. For API-only testing, set `SYMBIOSIS_X_LOCAL_DEMO=1` and POST to `/api/v1/demo/session` to get the three role tokens. Send the appropriate token in the Bearer authorization header. The local operator can switch viewpoints. This session issuer is for a trusted local demo and grants all three demo roles to that operator. Keep the service bound to loopback without a reverse proxy.

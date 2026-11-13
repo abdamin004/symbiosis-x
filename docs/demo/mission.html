@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mission canvas · SYMBIOSIS X</title>
+<style>
+:root{color-scheme:dark;--ink:#f0f0ff;--muted:#a8a9c4;--light:#b8baff;--dark:#070812;font:16px/1.55 system-ui,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;color:var(--ink);background:
+  radial-gradient(ellipse at 87% 9%,#25204a80,transparent 45%),
+  radial-gradient(ellipse at 16% 88%,#12274d80,transparent 50%),var(--dark)}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;
+  background-image:radial-gradient(circle,#c7c6ff8a 1px,transparent 1.4px),radial-gradient(circle,#a2b8ff88 .8px,transparent 1.2px);
+  background-size:117px 89px,173px 137px;background-position:34px 16px,82px 58px}
+body{isolation:isolate}
+main{width:min(1060px,calc(100% - 48px));margin:0 auto;padding:clamp(2rem,8vh,6rem) 0 4rem}
+h1,h2,p{margin:0}
+h1{font-size:clamp(3.3rem,9vw,7.4rem);font-weight:650;line-height:.94;letter-spacing:-.075em}
+h2{font-size:clamp(1.8rem,5vw,3.2rem);font-weight:550;line-height:1.08;letter-spacing:-.045em}
+.muted{color:var(--muted)}
+.brand{color:var(--light);font-size:.8rem;letter-spacing:.16em;margin-bottom:.7rem}
+header{display:grid;grid-template-columns:1fr auto;gap:1.6rem;align-items:end}
+.clock{font-variant-numeric:tabular-nums;font-size:clamp(2.2rem,5vw,4rem);line-height:1}
+.actions{display:flex;flex-wrap:wrap;align-items:center;gap:.65rem;margin:1.5rem 0}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:transparent}
+button:disabled{opacity:.48;cursor:default}
+button:focus-visible{outline:2px solid var(--light);outline-offset:4px}
+.command{border-radius:999px;padding:.55rem 1rem;background:#252545;color:#f1efff}
+.command.primary{background:#bebaff;color:#14102a;font-weight:650}
+#run-status{font-size:.94rem}
+[hidden]{display:none!important}
+.run-data{padding:1.1rem 0 1.3rem;border-block:1px solid #a3a0ff2b}
+.view-controls{display:flex;align-items:center;gap:.65rem;flex-wrap:wrap}
+.view-controls button{padding:.28rem .55rem;border-radius:7px;color:var(--muted)}
+.view-controls button[aria-pressed=true]{background:#9d93ff22;color:var(--ink)}
+#refresh-view{margin-inline-start:auto}
+#projection-value{margin:.75rem 0 .15rem;color:#c9dfff;font-size:clamp(1.45rem,4vw,2.35rem);font-variant-numeric:tabular-nums}
+#projection-evidence{color:var(--muted);font-size:.93rem}
+#run-key{overflow-wrap:anywhere;font: .83rem ui-monospace,monospace;color:var(--muted);margin-top:.65rem}
+.rooms{margin-top:3rem;display:grid;grid-template-columns:minmax(9rem,1fr) minmax(0,3fr);gap:clamp(1rem,5vw,4rem)}
+nav{display:grid;align-content:start;gap:.15rem}
+.room{border-radius:7px;padding:.48rem .7rem;text-align:left;color:var(--muted)}
+.room:hover,.room[aria-pressed=true]{color:var(--ink);background:#9d93ff22}
+.detail{padding:.3rem 0 0}
+.detail p{margin:.65rem 0;color:var(--muted);max-width:42ch}
+ul{list-style:none;padding:0;margin:1rem 0}
+li{display:flex;justify-content:space-between;gap:1rem;padding:.52rem 0;color:var(--ink)}
+li span:last-child{font-size:.9rem;color:var(--muted)}
+li [data-status=live]{color:#a6dcff}
+li [data-status=replay]{color:#c6baff}
+@media(max-width:600px){main{width:calc(100% - 32px)}header{grid-template-columns:1fr}.rooms{grid-template-columns:1fr;margin-top:2rem}nav{display:flex;flex-wrap:wrap}.room{padding:.35rem .55rem}}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div><p class="brand">SYMBIOSIS X</p><h1>Mission canvas</h1></div>
+    <div><p class="muted">Mission time</p><p class="clock" id="clock">00:00</p></div>
+  </header>
+  <div class="actions">
+    <button id="start" class="command primary" type="button">Start nominal run</button>
+    <button id="advance" class="command" type="button" disabled>Advance to 01:00</button>
+    <p id="run-status" class="muted" role="status">Ready to start a simulated run.</p>
+  </div>
+  <section class="run-data" id="run-data" aria-label="Run viewpoints" hidden>
+    <div class="view-controls" role="group" aria-label="Viewpoint">
+      <button id="crew-view" type="button" aria-pressed="true">Crew</button>
+      <button id="ground-view" type="button" aria-pressed="false">Ground</button>
+      <button id="refresh-view" type="button">Refresh view</button>
+    </div>
+    <div aria-live="polite">
+      <p id="projection-value"></p>
+      <p id="projection-evidence"></p>
+    </div>
+    <p id="run-key"></p>
+  </section>
+  <div class="rooms">
+    <nav id="rooms" aria-label="Spacecraft rooms"></nav>
+    <section class="detail" aria-labelledby="room-name">
+      <h2 id="room-name"></h2>
+      <p id="room-function"></p>
+      <ul id="systems"></ul>
+    </section>
+  </div>
+</main>
+<script type="application/json" id="room-catalog">__ROOM_CATALOG__</script>
+<script>
+const byId = id => document.getElementById(id);
+const rooms = JSON.parse(byId("room-catalog").textContent).rooms;
+const systemStates = {live:"Live pilot", replay:"Replay only", planned:"Planned"};
+const roomButtons = [];
+const runStorageKey = "symbiosis-x:nominal-run";
+let run = null;
+try {
+  const saved = JSON.parse(sessionStorage.getItem(runStorageKey));
+  if (saved?.run_id && Number.isInteger(saved.step)) run = saved;
+} catch {}
+let viewpoint = "crew";
+let readVersion = 0;
+let startId = null;
+let advanceId = null;
+let working = false;
+
+function selectRoom(room) {
+  byId("room-name").textContent = room.name;
+  byId("room-function").textContent = room.function;
+  byId("systems").replaceChildren(...room.systems.map(system => {
+    const row = document.createElement("li");
+    const name = document.createElement("span");
+    const status = document.createElement("span");
+    name.textContent = system.name;
+    status.textContent = systemStates[system.status];
+    status.dataset.status = system.status;
+    if (system.entity_id) row.dataset.entityId = system.entity_id;
+    row.append(name, status);
+    return row;
+  }));
+  roomButtons.forEach(button => button.setAttribute("aria-pressed", button.dataset.roomId === room.room_id));
+}
+
+for (const room of rooms) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "room";
+  button.dataset.roomId = room.room_id;
+  button.textContent = room.name;
+  button.addEventListener("click", () => selectRoom(room));
+  roomButtons.push(button);
+  byId("rooms").append(button);
+}
+selectRoom(rooms[0]);
+
+let demoTokens = null;
+
+async function getDemoTokens() {
+  if (!demoTokens) {
+    const response = await fetch("/api/v1/demo/session", {method:"POST", cache:"no-store"});
+    if (!response.ok) throw new Error("Local demo session unavailable");
+    demoTokens = await response.json();
+  }
+  return demoTokens;
+}
+
+async function requestRun(path, role, payload, retry = true) {
+  const tokens = await getDemoTokens();
+  const headers = {Authorization:"Bearer " + tokens[role]};
+  if (payload) headers["Content-Type"] = "application/json";
+  const response = await fetch(path, {
+    method:payload ? "POST" : "GET", headers,
+    body:payload ? JSON.stringify(payload) : undefined,
+    cache:"no-store",
+  });
+  if (response.status === 401 && retry) {
+    demoTokens = null;
+    return requestRun(path, role, payload, false);
+  }
+  if (!response.ok) {
+    const error = await response.json();
+    const failure = new Error(typeof error.detail === "string" ? error.detail : "Request rejected");
+    failure.status = response.status;
+    throw failure;
+  }
+  return response.json();
+}
+
+const formatTime = seconds => {
+  const sign = seconds < 0 ? "−" : "";
+  const time = Math.abs(seconds);
+  return sign + [Math.floor(time / 60), time % 60].map(value => String(value).padStart(2, "0")).join(":");
+};
+
+async function readView() {
+  if (!run) return;
+  const version = ++readVersion;
+  const activeRun = run.run_id;
+  const role = viewpoint;
+  byId("crew-view").setAttribute("aria-pressed", role === "crew");
+  byId("ground-view").setAttribute("aria-pressed", role === "ground");
+  byId("projection-value").textContent = "Loading view…";
+  byId("projection-evidence").textContent = "";
+  try {
+    const view = await requestRun("/api/v1/runs/" + encodeURIComponent(activeRun) + "/" + role, role);
+    if (version !== readVersion || view.run_id !== activeRun) return;
+    byId("clock").textContent = formatTime(view.mission_s);
+    const packet = role === "ground" ? view.packet : null;
+    const reading = role === "crew" ? view.co2 : packet?.co2;
+    byId("projection-value").textContent = reading
+      ? reading.value.toFixed(2) + " " + reading.unit + " cabin CO₂"
+      : (role === "ground" ? "Awaiting Ground delivery" : "No cabin sample yet");
+    byId("projection-evidence").textContent = packet
+      ? "Observed " + formatTime(packet.delivery.observed_at_s)
+        + " · delivered " + formatTime(packet.delivery.received_at_s)
+        + " · age " + formatTime(packet.delivery.age_s)
+      : (reading ? "Observed " + formatTime(reading.observed_at_s) + " · " + reading.source_id : "");
+    // Synchronize the nominal cursor if another operator advanced this run.
+    if (view.mission_s === 60 && run.step === 0) {
+      run = {...run, mission_s:60, step:1};
+      saveRun();
+      showRun();
+    }
+    updateControls();
+  } catch (error) {
+    if (version !== readVersion) return;
+    if (error.status === 404) {
+      run = null;
+      startId = null;
+      advanceId = null;
+      saveRun();
+      byId("run-data").hidden = true;
+      byId("clock").textContent = "00:00";
+      byId("run-status").textContent = "Run unavailable. Start a new nominal run.";
+      updateControls();
+      return;
+    }
+    byId("projection-value").textContent = "View unavailable";
+    byId("projection-evidence").textContent = error.message + " · Use Refresh view to retry.";
+  }
+}
+
+function saveRun() {
+  try { sessionStorage.setItem(runStorageKey, JSON.stringify(run)); } catch {}
+}
+
+function showRun() {
+  byId("clock").textContent = formatTime(run.mission_s);
+  byId("run-status").textContent = run.step ? "Step saved" : "Nominal run · Seed " + run.seed;
+  byId("run-data").hidden = false;
+  byId("run-key").textContent = "Run " + run.run_id;
+}
+
+function updateControls() {
+  byId("start").disabled = working || (run !== null && run.step < 1);
+  byId("start").textContent = run?.step ? "Start another run" : "Start nominal run";
+  byId("advance").disabled = working || run === null || run.step >= 1;
+}
+
+async function execute(command) {
+  working = true;
+  updateControls();
+  try {
+    run = await command();
+    saveRun();
+    showRun();
+    await readView();
+  } catch (error) {
+    byId("run-status").textContent = "Request failed. Retry to reuse the same operation. " + error.message;
+  } finally {
+    working = false;
+    updateControls();
+  }
+}
+
+byId("start").addEventListener("click", () => {
+  startId ??= crypto.randomUUID();
+  execute(() => requestRun("/api/v1/runs", "facilitator", {
+    start_id:startId, scenario_id:"nominal", scenario_version:"1", seed:4242,
+  }).then(receipt => {
+    startId = null;
+    advanceId = null;
+    return receipt;
+  }));
+});
+byId("advance").addEventListener("click", () => {
+  advanceId ??= crypto.randomUUID();
+  execute(() => requestRun("/api/v1/runs/" + encodeURIComponent(run.run_id) + "/advance", "facilitator", {
+    advance_id:advanceId, expected_step:run.step,
+  }));
+});
+for (const role of ["crew", "ground"]) {
+  byId(role + "-view").addEventListener("click", () => {
+    viewpoint = role;
+    readView();
+  });
+}
+byId("refresh-view").addEventListener("click", readView);
+if (run) {
+  showRun();
+  updateControls();
+  readView();
+}
+</script>
+</body>
+</html>

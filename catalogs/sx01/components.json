@@ -1,0 +1,32 @@
+{
+  "catalog_version": 1,
+  "components": [
+    {
+      "entity_id": "cabin-01",
+      "name": "Crew cabin",
+      "kind": "air_zone",
+      "subsystem": "atmosphere",
+      "volume_m3": 100
+    },
+    {
+      "entity_id": "co2-sensor-01",
+      "name": "Cabin CO₂ sensor",
+      "kind": "sensor",
+      "subsystem": "atmosphere",
+      "serves_zone": "cabin-01"
+    },
+    {
+      "entity_id": "primary-scrubber-01",
+      "name": "Primary scrubber",
+      "kind": "scrubber",
+      "subsystem": "atmosphere",
+      "serves_zone": "cabin-01"
+    },
+    {
+      "entity_id": "power-bus-01",
+      "name": "Power bus",
+      "kind": "electrical_bus",
+      "subsystem": "electrical"
+    }
+  ]
+}
