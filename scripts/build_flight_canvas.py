@@ -6,10 +6,10 @@ from pathlib import Path
 
 if __package__:
     from .build_cabin_preview import ACTIVITY_S, ROOT
-    from .iss_mission_replay import build_replays
+    from .iss_mission_replay import build_replays, crew_history
 else:
     from build_cabin_preview import ACTIVITY_S, ROOT
-    from iss_mission_replay import build_replays
+    from iss_mission_replay import build_replays, crew_history
 
 
 def build(output: Path) -> None:
@@ -19,8 +19,9 @@ def build(output: Path) -> None:
     ground = json.loads((ROOT / "contracts/examples/ground-v102.json").read_text())["delivery"]
     scenario, frames = build_replays(crew)
     data = json.dumps({
+        "metrics": json.loads((ROOT / "catalogs/crew/health-metrics.json").read_text())["metrics"],
         "rooms": rooms, "crew": crew_ids, "activity_s": ACTIVITY_S,
-        "frames": frames, "research": scenario["research"],
+        "frames": frames, "history": crew_history(frames[""], crew_ids), "research": scenario["research"],
     }, ensure_ascii=False).replace("<", "\\u003c")
     template = (ROOT / "docs/demo/flight.html").read_text(encoding="utf-8")
     output.write_text(template.replace("__FLIGHT_DATA__", data), encoding="utf-8")

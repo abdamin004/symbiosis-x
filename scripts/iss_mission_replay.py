@@ -59,3 +59,22 @@ def mission_frame(leg: dict, cabin_frames: list[dict], index: int) -> dict:
             "meal": "Meal and hydration window" if leg["phase"] == "Station rest" else "Scheduled",
         },
     }
+
+
+def crew_history(frames: list[dict], crew_ids: list[str]) -> dict:
+    """Deterministic device fixtures, separate from the atmosphere model."""
+    return {
+        crew_id: [
+            {
+                "time": frame["time"],
+                "heart_rate": 69 + 2 * i + (7 if frame["phase"] == "Station research" else 0)
+                             - (4 if frame["phase"] == "Station rest" and i < 3 else 0),
+                "pitch": 18 if frame["phase"] == "Station research" and i == 1 else 4 + i,
+                "roll": 3 + i,
+                "speed": 0.3 if frame["phase"] == "Station research" else 0.0,
+                "emg": 0.42 if frame["phase"] == "Station research" and i == 1 else 0.18,
+            }
+            for frame in frames
+        ]
+        for i, crew_id in enumerate(crew_ids)
+    }
