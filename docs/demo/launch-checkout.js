@@ -1372,6 +1372,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
       closeCommand();
       resetCrew(config.id+"-timed-demo");
       demo.stop();
+      onDemoCrew("health-story-stop");
     }
     for (const id of ["mission-objectives","orbit-dialog"]) if (find(id).open) find(id).close();
     pauseReplay();
@@ -1459,6 +1460,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
       demoEvaStarted = null;
       resetCrew(missions[0].id+"-timed-demo");
       showView("launch",missions[0],false,true);
+      onDemoCrew("health-story-start");
     },
     run(action) {
       if (Object.hasOwn(demoActions,action)) return demoActions[action]();

@@ -34,7 +34,7 @@ test("the health demo shows the cabin response, private check and scheduled EVA 
   await page.route(url => url.pathname === "/flight", route =>
     route.fulfill({contentType:"text/html",body:flightHtml}));
   await page.route("**/api/**", route => {
-    apiRequests.push(route.request().url());
+    apiRequests.push(new URL(route.request().url()).pathname);
     return route.abort();
   });
 
@@ -240,7 +240,7 @@ test("the health demo shows the cabin response, private check and scheduled EVA 
   await expect(page.locator("#campaign-save")).toHaveText("Launch held · T+0:15");
   expect(await page.evaluate(()=>({...localStorage}))).toEqual(saves);
   expect(await page.evaluate(()=>window.demoStorageWrites)).toEqual([]);
-  expect(apiRequests).toEqual([]);
+  expect(apiRequests).toEqual(["/api/v1/demo/session", "/api/v1/demo/session"]);
   expect(errors).toEqual([]);
 });
 

@@ -7,6 +7,7 @@ from symbiosis_x.crew.measurements import (
     MeasurementConflict, MeasurementNotFound, MeasurementRejected,
     MeasurementReceipt, SaveMeasurementRequest, read_measurement, save_measurement,
 )
+from symbiosis_x.application.health_twin import CrewHealthTwin, read_health_twin
 from symbiosis_x.application.projections import read_crew, read_run
 from symbiosis_x.application.runs import RunConflict, RunNotFound
 from symbiosis_x.application.wearable_rechecks import (
@@ -45,6 +46,16 @@ def crew(run_id: str, request: Request, response: Response, crew_id: str = "SIM-
     try:
         with request.app.state.repository.read() as db:
             return read_crew(db, run_id, crew_id)
+    except (RunNotFound, LookupError) as error:
+        raise HTTPException(404, str(error)) from error
+
+
+@router.get("/{run_id}/crew/health-twin", dependencies=[Depends(require_role("crew"))])
+def crew_health_twin(run_id: str, crew_id: str, request: Request, response: Response) -> CrewHealthTwin:
+    response.headers["Cache-Control"] = "no-store"
+    try:
+        with request.app.state.repository.read() as db:
+            return read_health_twin(db, run_id, crew_id)
     except (RunNotFound, LookupError) as error:
         raise HTTPException(404, str(error)) from error
 

@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "scenario_id": "health-story",
+  "scenario_version": "1",
+  "seed": 4242,
+  "synthetic": true,
+  "provenance": "synthetic_fixture",
+  "training_scope": "simulated_training_only",
+  "visibility": "crew",
+  "clock": "mission",
+  "time_unit": "s",
+  "subject_crew_id": "SIM-01",
+  "reading_template": {
+    "metric": "heart_rate",
+    "unit": "bpm",
+    "source_id": "synthetic.health-story-v1",
+    "quality": "valid"
+  },
+  "reading_context": {
+    "activity": "rest",
+    "provenance": "synthetic_fixture"
+  },
+  "readings": [
+    { "measurement_id": "health-story-v1:baseline", "observed_at_s": 0, "received_at_s": 0, "value": 76 },
+    { "measurement_id": "health-story-v1:resting-2", "observed_at_s": 60, "received_at_s": 60, "value": 88 },
+    { "measurement_id": "health-story-v1:resting-3", "observed_at_s": 360, "received_at_s": 360, "value": 95 }
+  ],
+  "operator_rehearsal": {
+    "at_s": 360,
+    "open_drill": { "drill_id": "drill-chest-pain-v1", "reported_by": "SIM-01" },
+    "acknowledge_locally": { "acknowledged_by": "SIM-02" },
+    "share_with_ground": "explicit_crew_action"
+  }
+}
