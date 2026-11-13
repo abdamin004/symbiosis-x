@@ -13,9 +13,11 @@ test("Crew can read the alert reason", async ({ page }) => {
   await expect(panel.getByTestId("health-evidence-quality")).toHaveText("valid · 3 samples");
   await expect(panel.getByTestId("cabin-context")).toContainText("CO₂:");
   await expect(panel.getByTestId("cabin-context")).toContainText("modeled estimate");
+  await expect(page.getByTestId("radlab-context")).toBeVisible();
 
   await page.goto("/runs/run-001/ground");
   await expect(page.getByTestId("crew-health-panel")).toHaveCount(0);
+  await expect(page.getByTestId("radlab-context")).toHaveCount(0);
 });
 
 test("missing health and cabin readings remain unknown", async ({ page }) => {
