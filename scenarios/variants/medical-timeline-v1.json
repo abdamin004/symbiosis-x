@@ -1,6 +1,11 @@
 {
   "schema_version": 1,
   "source_id": "synthetic.medical-timeline-v1",
+  "genetics_note": {
+    "crew_id": "SIM-01",
+    "inherited_trait": "Fictional family history lists a shared natural hair color.",
+    "expression_observation": "The training record has no gene expression assay result for Mara."
+  },
   "cases": [
     {
       "id": "inflammation",

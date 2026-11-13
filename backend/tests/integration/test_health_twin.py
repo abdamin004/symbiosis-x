@@ -144,9 +144,11 @@ def test_health_story_clear_review_emergency_and_private_ground_delivery(mission
 def test_medical_cases_hide_future_evidence_and_stay_onboard(mission):
     request, run, _ = mission
     initial = twin(request, run)["medical_timeline"]
+    assert initial["genetics_note"]["crew_id"] == "SIM-01"
     assert [case["id"] for case in initial["cases"]] == ["inflammation", "sensitivity", "illness"]
     assert all(not case["events"] for case in initial["cases"])
     assert twin(request, run, "SIM-02")["medical_timeline"]["cases"] == []
+    assert twin(request, run, "SIM-02")["medical_timeline"]["genetics_note"] is None
     for step, now in enumerate((120, 180, 360)):
         assert advance(request, run, step, now).status_code == 200
         by_id = {case["id"]: case for case in twin(request, run)["medical_timeline"]["cases"]}
@@ -155,7 +157,7 @@ def test_medical_cases_hide_future_evidence_and_stay_onboard(mission):
         assert by_id["sensitivity"]["history"][0]["kind"] == "allergy_note"
         assert all(len(case["events"]) == step + 2 for case in by_id.values())
     ground = request("GET", run + "/ground", role="ground")
-    assert all(marker not in ground.text for marker in ("medical_timeline", "allergy_note", "swelling"))
+    assert all(marker not in ground.text for marker in ("medical_timeline", "allergy_note", "swelling", "genetics_note"))
     assert request("GET", run + "/crew/health-twin", role="ground", params={"crew_id": "SIM-01"}).status_code == 403
 
 
