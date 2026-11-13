@@ -33,5 +33,25 @@
       "value": 92,
       "unit": "bpm"
     }
+  },
+  "trend": {
+    "status": "review",
+    "direction": "rising",
+    "reason_code": "COMPARABLE_TREND",
+    "reason": "Heart rate rising from 74 to 98 bpm across 4 comparable synthetic samples. Descriptive synthetic trend for onboard review. Not a diagnosis or medical advice.",
+    "metric": "heart_rate",
+    "unit": "bpm",
+    "sample_count": 4,
+    "minimum_samples": 3,
+    "window_s": 3600,
+    "start_observed_at_s": 600,
+    "end_observed_at_s": 780,
+    "start_value": 74,
+    "end_value": 98,
+    "change": 24,
+    "evidence_ids": ["hr-sim01-0600", "hr-sim01-0660", "hr-sim01-0720", "hr-sim01-0780"],
+    "rules_version": "health-trends-v1",
+    "synthetic": true,
+    "visibility": "onboard_private"
   }
 }

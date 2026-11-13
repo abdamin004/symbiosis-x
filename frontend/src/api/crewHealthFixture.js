@@ -18,4 +18,15 @@ export const CREW_HEALTH_UNKNOWN_FIXTURE = {
     evidence_count: 0,
     threshold: { value: 92, unit: "bpm" },
   },
+  trend: {
+    status: "insufficient_history",
+    direction: "unknown",
+    reason_code: "INSUFFICIENT_COMPARABLE_SAMPLES",
+    reason: "Need 3 comparable valid samples within 3600 seconds; found 2.",
+    metric: "heart_rate",
+    unit: "bpm",
+    sample_count: 2,
+    minimum_samples: 3,
+    window_s: 3600,
+  },
 };
