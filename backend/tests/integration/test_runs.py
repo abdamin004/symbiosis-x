@@ -1,6 +1,8 @@
 """Exercise real run commands against temporary SQLite storage."""
 
 import sqlite3
+from unittest.mock import patch
+import pytest
 from contextlib import closing
 from symbiosis_x.application.runs import reset_run
 from fastapi.testclient import TestClient
@@ -125,3 +127,36 @@ def test_reset_closes_old_run(tmp_path):
         ).fetchall()
 
         assert ("run.closed",) in events
+
+def test_reset_rolls_back_when_seeding_fails(tmp_path):
+    database = tmp_path / "rollback.sqlite3"
+
+    with local_client(database) as client:
+        authenticate(client)
+
+        response = client.post("/api/v1/runs", json=START)
+        assert response.status_code == 200
+        old_run_id = response.json()["run_id"]
+
+        with patch(
+            "symbiosis_x.application.runs.record_nominal_co2",
+            side_effect=RuntimeError("seed failed"),
+        ):
+            with pytest.raises(RuntimeError, match="seed failed"):
+                reset_run(client.app.state.repository, old_run_id)
+
+    with closing(sqlite3.connect(database)) as db:
+        assert db.execute(
+            "SELECT COUNT(*) FROM runs"
+        ).fetchone()[0] == 1
+
+        assert db.execute(
+            "SELECT status FROM runs WHERE run_id = ?",
+            (old_run_id,),
+        ).fetchone() == ("active",)
+
+        assert db.execute(
+            """SELECT COUNT(*) FROM events
+               WHERE run_id = ? AND event_type = 'run.closed'""",
+            (old_run_id,),
+        ).fetchone()[0] == 0
