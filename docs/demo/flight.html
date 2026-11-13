@@ -441,8 +441,10 @@ button[aria-pressed=true]{background:#3d315e}
 #return-scene[data-phase=chutes] #return-chutes{animation:chutes-open .8s ease-out both;transform-origin:310px 128px}
 @keyframes module-drift{from{transform:translate(90px,-28px)}to{transform:translate(0,0)}}
 @keyframes chutes-open{from{transform:scale(.12);opacity:0}to{transform:scale(1);opacity:1}}
-@media(prefers-reduced-motion:reduce){#return-scene .return-piece{animation:none}}
-#return-caption{margin:0;padding:.4rem .65rem;border-radius:8px;background:#0c1a30;text-align:center;font-size:.78rem}
+@media(prefers-reduced-motion:reduce){
+  #return-scene[data-phase=separation] #return-module,#return-scene[data-phase=chutes] #return-chutes{animation:none}
+}
+#return-caption{grid-row:1;margin:0 0 .35rem;padding:.4rem .65rem;border-radius:8px;background:#0c1a30;text-align:center;font-size:.78rem}
 .stage[data-vehicle=entry] #ship,.stage[data-vehicle=landed] #ship{display:none}
 .pawn[data-exterior=true]{z-index:5;box-shadow:0 0 18px #bceaff}
 .pawn[data-exterior=true] .action-marker{outline:1px solid #a6ddff;color:#e6f7ff}
