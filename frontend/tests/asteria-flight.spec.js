@@ -197,7 +197,8 @@ test("Horizon burns into orbit, reaches ISS and returns to Earth in one saved mi
   await expect(page.locator("#launch-status")).toHaveText("Crew recovered on Earth");
   await expect(guide).toHaveAttribute("data-state","complete");
   await expect(guide.locator("#guide-count")).toHaveText("14 / 14 complete");
-  await expect(page.locator("#ship canvas")).toBeVisible();
+  await expect(page.getByRole("figure",{name:"Command pod Earth return"})).toHaveAttribute("data-phase","recovered");
+  await expect(page.locator("#return-sea-backdrop")).toBeVisible();
   await expect(page).toHaveURL(missionUrl);
   await button("Open orbit minimap").click();
   await expect(navigation.locator("#navigation-reserve")).toContainText("9 cold-gas pulses");
