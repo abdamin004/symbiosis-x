@@ -16,7 +16,7 @@ h1,h2,p{margin:0}a{color:var(--blue);text-underline-offset:.2em}
 .stage::after{width:min(65vw,640px);aspect-ratio:1;border-radius:50%;right:-16%;top:48%;background:radial-gradient(circle at 25% 8%,#595989 0,#303451 23%,#111427 54%,#080a16 72%);box-shadow:-7px -10px 45px #736aff35;opacity:.7}
 @keyframes travel{to{transform:translateX(-97px)}}
 .viewport{overflow-x:auto;overscroll-behavior-x:contain;position:relative;margin:0 auto;max-width:1500px;padding-top:clamp(1rem,7vh,5rem)}
-.ship{width:100%;min-width:680px;aspect-ratio:1100/475;position:relative;isolation:isolate}
+.ship{width:111%;margin-inline:-9% -2%;min-width:700px;aspect-ratio:1100/475;position:relative;isolation:isolate}
 #hull{position:absolute;width:100%;height:100%;inset:0;pointer-events:none;z-index:-1}
 button{font:inherit;color:inherit;cursor:pointer;background:#171d38;border:0;border-radius:8px;padding:.4rem .7rem}
 button:hover{background:#292852}button:focus-visible,input:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
@@ -100,7 +100,20 @@ button[aria-pressed=true]{background:#3d315e}
 
 
 .widget-bar h2 .icon{margin-inline-end:.4rem;color:var(--violet)}
-.viewport{padding-top:clamp(2rem,9vh,6rem)}
+.viewport{padding-top:clamp(2.4rem,6vh,4.2rem)}
+#widget-shelf{position:absolute;top:calc(100% + 4.2rem);left:.65rem;right:.65rem;display:flex;gap:.3rem;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:.73rem}
+#widget-shelf button{padding:.25rem .45rem}
+#widget-notice{position:absolute;width:1px;height:1px;clip-path:inset(50%);overflow:hidden}
+#workflow-widget{max-width:calc(100% - 20px)}
+.crew-portrait{padding:.25rem .25rem .3rem;background:#141b37;box-shadow:inset 0 1px #7987b94d}
+.crew-portrait .crew-face{width:34px;height:34px}
+#station-evidence{grid-template-columns:minmax(5.1rem,.8fr) minmax(0,1.8fr)}
+#station-evidence dd{text-align:left}
+#station-evidence dt:first-child{color:var(--violet)}
+#medical-crew .crew-face{width:20px;height:20px;display:inline-block;margin-right:.25rem;vertical-align:middle}
+#profile-tabs .icon{width:.82rem;height:.82rem;margin-right:.28rem;color:var(--violet)}
+@media(max-width:720px){.ship{margin-inline:0;width:100%}}
+@media(max-width:520px){#widget-shelf{top:calc(100% + 6.25rem)}}
 #map-widget{width:min(280px,calc(100% - 20px))}#workflow-widget{width:320px}.route-map{width:100%;display:block}.route-map circle{fill:#b0bdfa}.route-map #ship-position{fill:#e8ccff;stroke:#fbf4ff}
 
 .control-deck a{margin-left:auto;font-size:.85rem}
@@ -135,7 +148,8 @@ __HUD_ICONS__
     <button id="play" type="button" aria-label="Play" title="Play or pause"><svg class="icon" aria-hidden="true"><use id="play-icon" href="#hud-play"/></svg></button>
     <button id="speed-cycle" type="button" aria-label="Cycle speed" title="Cycle 1×, 2×, and 4×">1×</button>
     <button id="step" type="button" aria-label="Skip one mission hour" title="Skip one mission hour"><svg class="icon" aria-hidden="true"><use href="#hud-skip-forward"/></svg></button>
-  </div></div></div>
+  </div></div>
+  <div id="widget-shelf" hidden><span>Parked widgets</span></div><span id="widget-notice" role="status"></span></div>
   <div class="play-area">
   <div class="viewport" tabindex="0" aria-label="Scrollable spacecraft cutaway">
     <div class="ship" id="ship">
@@ -178,6 +192,11 @@ __HUD_ICONS__
       <button id="assign-asset" type="button"></button>
     </div>
     <p id="focus-detail"></p>
+    <div id="station-content" hidden>
+      <div class="choices" id="medical-crew" role="group" aria-label="Medical subject" hidden></div>
+      <dl class="profile-data" id="station-evidence"></dl>
+      <div class="choices" id="station-actions"></div>
+    </div>
     <button type="button" id="activity" hidden></button>
     <div id="crew-profile" hidden>
       <div id="profile-tabs" role="group" aria-label="Astronaut profile">
@@ -241,6 +260,8 @@ __HUD_ICONS__
 <script type="application/json" id="flight-data">__FLIGHT_DATA__</script>
 <script>
 __FLIGHT_WORKFLOW__
+__FLIGHT_WIDGETS__
+__FLIGHT_STATIONS__
 </script>
 <script>
 const element = id => document.getElementById(id);
@@ -311,7 +332,7 @@ function station(duty, member) {
   const task = activeTask(member, time);
   if (task && time >= task.assigned) {
     const asset = equipment.get(task.asset);
-    return [asset.room, time < task.arrival ? "Walking to " + asset.name : asset.task];
+    return [asset.room, time < task.arrival ? "Walking to " + asset.name : task.action];
   }
   if (member === 2 && order?.assigned && time >= order.decided &&
       (order.completed == null || time < order.completed)) {
@@ -328,6 +349,7 @@ const fixtures = [
   {id:"radio",room:"comms-01",x:697,y:307,icon:"radio",name:"Comms console",use:"Operational status reports",task:"Send status report",result:"Status transmitted",crew:3},
   {id:"scrubber",room:"life-support-01",x:683,y:179,icon:"wind",name:"Scrubber rack",use:"Cabin CO₂ removal",task:"Inspect scrubber",result:"Scrubber inspected",crew:2},
   {id:"bus",room:"engineering-01",x:239,y:306,icon:"zap",name:"Power bus",use:"Power distribution",task:"Inspect bus",result:"Bus inspected",crew:2},
+  {id:"bench",room:"engineering-01",x:370,y:304,icon:"flask-conical",name:"Engineering test bench",use:"Synthetic thruster readiness and bus-load experiments",task:"Run thruster dry check",result:"Dry check recorded",crew:2},
   {id:"stores",room:"cargo-01",x:238,y:181,icon:"package",name:"Cargo lockers",use:"Payload stowage",task:"Reconcile inventory",result:"Inventory reconciled",crew:0},
 ];
 const equipment = new Map(fixtures.map(asset => [asset.id, asset]));
@@ -336,7 +358,7 @@ const equipmentButtons = new Map();
 const fixtureFootprints = {
   bed:[430,157,105,39], wc:[596,153,32,35], galley:[552,154,38,32],
   lab:[434,294,60,29], radio:[672,293,60,29], scrubber:[668,164,86,33],
-  bus:[224,291,86,33], stores:[222,166,123,31],
+  bus:[224,291,86,33], bench:[344,287,55,31], stores:[222,166,123,31],
 };
 function placeArea(button, x, y, width, height) {
   place(button,x+width/2,y+height/2);
@@ -505,6 +527,12 @@ function drawFixtures(id,z,frame) {
       module(x,y,24,30);
       for (let vent=0;vent<3;vent++) rectangle(x+5,y+5+vent*6,14,2,vent===0?light:steel);
     }
+    if (id === "engineering-01") {
+      module(347,290,49,24);
+      rectangle(351,295,28,3,light);
+      rectangle(382,296,8,12,"#788bb7");
+      rectangle(351,304,18,3,"#a5b9ff");
+    }
   } else if (id === "cargo-01") {
     for (let i=0;i<4;i++) {
       const x=225+i*31;
@@ -527,12 +555,11 @@ function drawFixtures(id,z,frame) {
   }
 }
 function showInspector() {
-  if (element("inspector-widget").hidden) element("show-inspector").click();
+  inspectorWindow.open(document.activeElement);
 }
 
 const profileMembers = new Map();
 const profileWindows = new Map();
-let activeProfileTrigger = null;
 const checkIns = new Map();
 let assetCrew = 0, selectedSignal = "heart_rate";
 function setChoices(id, selected) {
@@ -637,6 +664,76 @@ function setIcon(node, icon, label) {
   node.replaceChildren(svg, document.createTextNode(label));
 }
 
+const benchModes = {
+  thruster:{task:"Run thruster dry check",result:"Synthetic thruster dry check recorded"},
+  bus:{task:"Run load stress replay",result:"Synthetic load stress replay recorded"},
+};
+const stationActions = element("station-actions");
+let medicalCrew = 1, benchMode = "thruster";
+const stationContext = {key:null};
+function chosenEquipment(asset) {
+  return asset.id === "bench" ? {...asset,...benchModes[benchMode]} : asset;
+}
+function openFixture(asset) {
+  selection = {asset:asset.id};
+  assetCrew = asset.crew;
+  showInspector();
+  render();
+}
+function renderStation(roomId,frame) {
+  const station = element("station-content");
+  const advisor = stationBriefs[roomId];
+  station.hidden = !advisor;
+  if (!advisor) {stationContext.key=null;return;}
+  const medical = roomId === "medical-01";
+  element("medical-crew").hidden = !medical;
+  const sample = data.history[data.crew[medicalCrew]][index];
+  if (medical) setChoices("medical-crew",medicalCrew);
+  const rows = advisor({frame,sample,workflow:flightWorkflow,clock});
+  if (medical) rows.push(["Observed / received", clock(sample.time) + " / " + clock(sample.time)]);
+  if (roomId === "engineering-01") {
+    const run = taskAt("bench",frame.time);
+    if (run) rows.push(["Latest experiment",frame.time<run.finishes ? run.action + " · in progress" : run.result]);
+  }
+  const key = JSON.stringify([roomId,rows]);
+  if (key === stationContext.key) return;
+  stationContext.key = key;
+  const dl = element("station-evidence");
+  dl.replaceChildren(...rows.flatMap(([label,value])=>{
+    const dt = document.createElement("dt"), dd = document.createElement("dd");
+    dt.textContent = label; dd.textContent = value;
+    return [dt,dd];
+  }));
+  if (stationActions.dataset.room === roomId) return;
+  stationActions.dataset.room = roomId;
+  stationActions.replaceChildren();
+  function action(icon,label,handler) {
+    const button = document.createElement("button");
+    button.type = "button";
+    setIcon(button,icon,label);
+    button.addEventListener("click",handler);
+    stationActions.append(button);
+  }
+  function profile(kind, trigger) {
+    profileMembers.set(kind,medicalCrew);
+    profileWindows.get(kind).open(trigger);
+    render();
+  }
+  if (medical) {
+    action("activity","Review vitals",event=>profile("vitals",event.currentTarget));
+    action("clipboard-list","Record crew check-in",event=>profile("needs",event.currentTarget));
+    action("flask-conical","Research workbench",()=>openFixture(equipment.get("lab")));
+  } else if (roomId === "engineering-01") {
+    action("flask-conical","Thruster dry check",()=>{benchMode="thruster";openFixture(equipment.get("bench"));});
+    action("zap","Load stress replay",()=>{benchMode="bus";openFixture(equipment.get("bench"));});
+  } else if (roomId === "life-support-01") {
+    action("wind","Scrubber inspection",()=>openFixture(equipment.get("scrubber")));
+  } else {
+    action("radio","Open relay and orders",event=>ordersWindow.open(event.currentTarget));
+    action("radio","Comms console",()=>openFixture(equipment.get("radio")));
+  }
+}
+
 function inspect(frame) {
   const name = element("focus-name");
   const value = element("reading");
@@ -647,8 +744,9 @@ function inspect(frame) {
   element("asset-controls").hidden = !selection.asset;
   const progress = element("work-progress");
   progress.hidden = true;
+  if (selection.asset || selection.crew !== undefined) renderStation(null,frame);
   if (selection.asset) {
-    const asset = equipment.get(selection.asset);
+    const asset = chosenEquipment(equipment.get(selection.asset));
     const task = taskAt(asset.id, frame.time);
     const active = task && frame.time < task.finishes;
     progress.hidden = !task;
@@ -656,6 +754,7 @@ function inspect(frame) {
     setIcon(name, asset.icon, asset.name);
     let condition = "Available";
     if (asset.id === "bed") condition = frame.habitat.beds ? "Rest period in progress" : "Needs tidying";
+    if (asset.id === "bench") condition = frame.power == null ? "No bus sample · dry run only" : "Dry run · " + frame.power.toFixed(2) + " kW headroom";
     if (asset.id === "radio") condition = "Local simulated status transmission";
     if (asset.id === "wc") condition = frame.habitat.wc;
     if (asset.id === "scrubber") condition = frame.removal == null ? "Flow unmodeled" : frame.removal + " m³/h";
@@ -688,6 +787,7 @@ function inspect(frame) {
     return;
   }
   const room = roomById.get(selection.room);
+  renderStation(room.room_id,frame);
   const readings = {
     "command-01": clock(frame.time) + " · " + frame.phase,
     "habitat-01": "Beds " + frame.habitat.beds + "/4 · WC " + frame.habitat.wc + " · " + frame.habitat.meal,
@@ -697,15 +797,15 @@ function inspect(frame) {
     "comms-01": frame.time >= data.relay_delivery_s ? "Ground packet delivered · Scripted" : "Awaiting Ground packet · Scripted",
     "cargo-01": frame.dock + " · Scripted",
   };
-  setIcon(name, room.room_id === "life-support-01" ? "wind" : "map", room.name);
+  setIcon(name, roomIcons[room.room_id], room.room_id === "engineering-01" ? "Engineering research lab" : room.name);
   value.textContent = readings[room.room_id];
   const occupants = duties.flatMap((duty, i) => station(duty,i)[0] === room.room_id
-    ? [data.crew[i] + " · " + station(duty,i)[1]] : []);
+    ? [characters[i].short + " · " + station(duty,i)[1]] : []);
   const air = room.room_id === "life-support-01"
     ? " " + frame.air_source + " · O₂ " + frame.air.oxygen_pct.toFixed(1)
       + "% · CO₂ " + frame.air.co2_pct.toFixed(3) + "% · balance gases " + frame.air.balance_pct.toFixed(3) + "%. "
     : " ";
-  detail.textContent = room.function + air + (occupants.length ? " On station: " + occupants.join(" / ") : "");
+  detail.textContent = room.function + (stationBriefs[room.room_id] ? " " : air) + (occupants.length ? " On station: " + occupants.join(" / ") : "");
 }
 
 function currentFrame() {
@@ -966,10 +1066,8 @@ for (const asset of fixtures) {
   icon.style.top = (asset.y-y)/h*100 + "%";
   icon.style.transform = "translate(-50%,-50%)";
   button.addEventListener("click", () => {
-    selection = {asset:asset.id};
-    assetCrew = asset.crew;
-    showInspector();
-    render();
+    if (asset.id === "bench") benchMode = "thruster";
+    openFixture(asset);
   });
   equipmentButtons.set(asset.id, button);
   element("ship").append(button);
@@ -978,15 +1076,18 @@ choices("asset-crew", characters.map((persona, i)=>[i,persona.short,persona.name
   value=>{assetCrew = value;});
 element("assign-asset").addEventListener("click", () => {
   if (!selection.asset || element("assign-asset").disabled) return;
-  const asset = equipment.get(selection.asset);
+  const asset = chosenEquipment(equipment.get(selection.asset));
   const queued = Math.floor(missionTime);
   const assigned = nextTick(missionTime), arrival = assigned + TICK_SECONDS;
   const previous = crewPositions.get(pawns.get(assetCrew));
   const origin = {room:previous.room,x:previous.x,y:previous.y};
   // Assigning while scrubbed back branches the local task history.
   while (tasks.length && tasks.at(-1).queued > queued) tasks.pop();
-  tasks.push({asset:asset.id,member:assetCrew,queued,assigned,arrival,origin,
-    finishes:arrival+WORK_SECONDS,result:asset.result});
+  const result = asset.id === "bench"
+    ? engineeringResult(benchMode,checkpoints[checkpoints.findLastIndex(frame=>frame.time<=arrival)])
+    : asset.result;
+  tasks.push({asset:asset.id,action:asset.task,member:assetCrew,queued,assigned,arrival,origin,
+    finishes:arrival+WORK_SECONDS,result});
   render();
 });
 element("timeline").max = endTime;
@@ -1026,9 +1127,8 @@ element("activity").addEventListener("click", () => {
 for (const button of document.querySelectorAll("[data-profile]")) {
   button.addEventListener("click", () => {
     const kind = button.dataset.profile;
-    activeProfileTrigger = button;
     profileMembers.set(kind, selection.crew);
-    profileWindows.get(kind).open();
+    profileWindows.get(kind).open(button);
     render();
   });
 }
@@ -1049,80 +1149,33 @@ window.addEventListener("storage", event => { if (event.key === flightWorkflow.k
 const overlay = element("overlays");
 const controller = document.querySelector(".flight-controls");
 const playArea = document.querySelector(".play-area");
+const shelf = element("widget-shelf");
+const widgets = createFlightWidgets(overlay,shelf,element("widget-notice"));
 const hudSize = new ResizeObserver(() => {
   const portraitsBottom = element("crew-strip").getBoundingClientRect().bottom;
-  const clearance = Math.max(controller.getBoundingClientRect().bottom, portraitsBottom)
+  const clearance = Math.max(controller.getBoundingClientRect().bottom, portraitsBottom, shelf.getBoundingClientRect().bottom)
     - playArea.getBoundingClientRect().top + 8;
   playArea.style.setProperty("--control-clearance", Math.max(0, clearance) + "px");
 });
 hudSize.observe(controller);
 hudSize.observe(element("crew-strip"));
 hudSize.observe(document.querySelector(".hud"));
-let widgetOrder = 3;
-
-function enableWidget(panel, toggle, initialPosition) {
-  const handle = panel.querySelector(".move-widget");
-  const bar = panel.querySelector(".widget-bar");
-  let position = initialPosition();
-  let pointer = null;
-  function move(x, y) {
-    position = {
-      x: Math.max(0, Math.min(x, overlay.clientWidth - panel.offsetWidth)),
-      y: Math.max(0, Math.min(y, overlay.clientHeight - panel.offsetHeight)),
-    };
-    panel.style.left = position.x + "px";
-    panel.style.top = position.y + "px";
-  }
-  function bringForward() { panel.style.zIndex = ++widgetOrder; }
-  panel.addEventListener("pointerdown", bringForward);
-  panel.addEventListener("focusin", bringForward);
-  bar.addEventListener("pointerdown", event => {
-    if (event.button !== 0 || event.target.closest(".widget-close")) return;
-    bar.setPointerCapture(event.pointerId);
-    pointer = {id:event.pointerId,x:event.clientX-position.x,y:event.clientY-position.y};
-  });
-  bar.addEventListener("pointermove", event => {
-    if (pointer?.id === event.pointerId) move(event.clientX-pointer.x,event.clientY-pointer.y);
-  });
-  bar.addEventListener("lostpointercapture", () => { pointer = null; });
-  handle.addEventListener("keydown", event => {
-    const offsets = {ArrowLeft:[-16,0],ArrowRight:[16,0],ArrowUp:[0,-16],ArrowDown:[0,16]};
-    if (!offsets[event.key]) return;
-    event.preventDefault();
-    const [x,y] = offsets[event.key];
-    move(position.x+x,position.y+y);
-  });
-  function setOpen(open) {
-    panel.hidden = !open;
-    toggle?.setAttribute("aria-pressed", open);
-    if (open) { move(position.x,position.y); bringForward(); }
-  }
-  toggle?.addEventListener("click", () => setOpen(panel.hidden));
-  panel.querySelector(".widget-close")?.addEventListener("click", () => {
-    setOpen(false);
-    const target = toggle ?? activeProfileTrigger;
-    if (target && !target.closest("[hidden]")) target.focus();
-  });
-  const resize = new ResizeObserver(() => {
-    if (!panel.hidden) move(position.x, position.y);
-  });
-  resize.observe(overlay);
-  resize.observe(panel);
-  if (!panel.hidden) move(position.x,position.y);
-  return {open: () => setOpen(true), close: () => setOpen(false)};
-}
-enableWidget(element("workflow-widget"), element("show-workflow"), () => ({x:14,y:50}));
-enableWidget(element("map-widget"), element("show-map"), () => ({x:14,y:overlay.clientHeight - 220}));
-enableWidget(element("inspector-widget"), element("show-inspector"), () => ({x:14,y:10}));
-enableWidget(element("crew-widget"), element("show-crew"), () => ({
-  x:overlay.clientWidth - 354,
-  y:overlay.clientWidth < 720 ? 270 : 14,
-}));
+hudSize.observe(shelf);
+const ordersWindow = widgets.register(element("workflow-widget"), element("show-workflow"), () => ({x:14,y:35}));
+widgets.register(element("map-widget"), element("show-map"), () => ({x:14,y:overlay.clientHeight - 270}));
+const inspectorWindow = widgets.register(element("inspector-widget"), element("show-inspector"), () => ({x:overlay.clientWidth - 354,y:overlay.clientHeight - 305}));
+widgets.register(element("crew-widget"), element("show-crew"), () => ({x:overlay.clientWidth - 354,y:14}));
 for (const [offset, kind] of ["duty", "needs", "vitals", "devices"].entries()) {
-  profileWindows.set(kind, enableWidget(element(kind + "-widget"), null, () => ({
-    x: Math.max(14, overlay.clientWidth - 375 - offset * 28), y: 20 + offset * 48,
+  const button = document.querySelector('[data-profile="'+kind+'"]');
+  setIcon(button,{duty:"clipboard-list",needs:"bed-single",vitals:"activity",devices:"zap"}[kind],button.textContent);
+  profileWindows.set(kind,widgets.register(element(kind + "-widget"),null,() => ({
+    x:Math.max(14,overlay.clientWidth - 355),y:10 + offset * 18,
   })));
 }
+choices("medical-crew",characters.map((persona,i)=>[i,persona.short,persona.name]),
+  value=>{medicalCrew=value;});
+for (const [i,button] of [...element("medical-crew").children].entries()) button.prepend(crewFace(i));
+widgets.layout();
 render();
 </script>
 </body>
