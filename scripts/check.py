@@ -46,7 +46,7 @@ SUITES = (
     Suite("backend-integration", (PYTHON, "-m", "pytest", "backend/tests/integration", "-q"),
           ROOT, ROOT / "backend/tests/integration"),
     Suite("frontend-build", (NPM, "run", "build"), ROOT / "frontend", ROOT / "frontend/package.json"),
-    Suite("browser-smoke", (NPX, "playwright", "test", "tests/smoke.spec.js"),
+    Suite("browser-smoke", (NPX, "playwright", "test"),
           ROOT / "frontend", ROOT / "frontend/tests/smoke.spec.js", kind="browser"),
     # Required at release (SX-26A health replay, SX-11A privacy); --release fails until both land.
     Suite("health-replay", (NPX, "playwright", "test", "tests/health-demo.spec.js"),
@@ -70,7 +70,7 @@ def select(args: argparse.Namespace) -> list[Suite]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--browser", action="store_true", help="also run the Playwright smoke test")
+    parser.add_argument("--browser", action="store_true", help="also run the full Playwright browser suite")
     parser.add_argument("--release", action="store_true", help="run every suite and require all of them")
     parser.add_argument("--only", nargs="+", metavar="SUITE", help="run only the named suites")
     parser.add_argument("--list", action="store_true", help="list suites and exit")
