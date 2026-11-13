@@ -43,6 +43,30 @@ class ResetReceipt(RunReceipt):
     reset_from_run_id: Identifier
 
 
+CandidateId = Literal["hold_course", "start_standby", "reduce_activity"]
+
+
+class GroundAdvisoryRequest(Contract):
+    """Ground advice on one candidate, citing a snapshot already delivered to Ground."""
+
+    operation_id: Identifier
+    basis_snapshot_id: Identifier
+    candidate_id: CandidateId
+
+
+class AdvisoryReceipt(Contract):
+    """Queued advice keeps its basis and is due onboard after the relay delay."""
+
+    operation_id: Identifier
+    run_id: Identifier
+    status: Literal["queued"]
+    candidate_id: CandidateId
+    basis_snapshot_id: Identifier
+    basis_decision_rev: NonnegativeInt
+    issued_at_s: NonnegativeInt
+    deliver_at_s: NonnegativeInt
+
+
 class RejectedCandidate(Contract):
     status: Literal["rejected"]
 

@@ -8,13 +8,23 @@ at the time it was scheduled. The Ground projection reads delivered records
 only; Relay never reads or writes plant state.
 """
 
-from sqlite3 import Connection
+from hashlib import sha256
+from sqlite3 import Connection, Row
 
+from symbiosis_x.contracts.commands import AdvisoryReceipt, GroundAdvisoryRequest
 from symbiosis_x.contracts.projections import GroundPacket
+
+# One-way link delay in the golden scenario: v102 observed 01:00 reaches Ground at 06:00,
+# and advice issued at 08:00 reaches Crew at 13:00.
+RELAY_DELAY_S = 300
 
 
 class SnapshotConflict(Exception):
     """A snapshot or its delivery already exists with different content."""
+
+
+class AdvisoryRejected(Exception):
+    """Advice cannot be queued; the message is a public reason code."""
 
 
 def message_id_for(snapshot_id: str) -> str:
@@ -88,3 +98,67 @@ def deliver_due(db: Connection, run_id: str, mission_s: int) -> list[str]:
             (run_id, message_id),
         )
     return due
+
+
+def queue_ground_advisory(db: Connection, run: Row, request: GroundAdvisoryRequest) -> AdvisoryReceipt:
+    """Queue Ground advice for Crew on a basis Ground has already received.
+
+    Runs inside the caller's write transaction. A retried operation returns
+    its stored receipt even after the run closes; reusing an operation ID for
+    different advice raises OPERATION_ID_REUSED. The message is not delivered
+    here: SX-07D classifies it when it reaches Crew.
+    """
+    run_id, mission_s = run["run_id"], run["mission_s"]
+    digest = sha256(request.model_dump_json().encode()).hexdigest()
+    prior = db.execute(
+        """SELECT request_digest, receipt_json FROM operations
+           WHERE run_id = ? AND operation_scope = 'ground_advisory' AND operation_id = ?""",
+        (run_id, request.operation_id),
+    ).fetchone()
+    if prior is not None:
+        if prior["request_digest"] != digest:
+            raise AdvisoryRejected("OPERATION_ID_REUSED")
+        return AdvisoryReceipt.model_validate_json(prior["receipt_json"])
+    if run["status"] != "active":
+        raise AdvisoryRejected("RUN_CLOSED")
+
+    # Only a snapshot whose Ground delivery has happened can be cited. Unknown and
+    # not-yet-delivered snapshots share one reason so Ground cannot probe the queue.
+    basis = db.execute(
+        """SELECT s.decision_rev FROM snapshots s
+           JOIN messages m ON m.run_id = s.run_id AND m.ground_snapshot_id = s.snapshot_id
+           WHERE s.run_id = ? AND s.snapshot_id = ? AND s.audience = 'ground'
+             AND m.direction = 'to_ground' AND m.delivered_at_s IS NOT NULL AND m.delivered_at_s <= ?
+           LIMIT 1""",
+        (run_id, request.basis_snapshot_id, mission_s),
+    ).fetchone()
+    if basis is None:
+        raise AdvisoryRejected("BASIS_NOT_DELIVERED")
+
+    receipt = AdvisoryReceipt(
+        operation_id=request.operation_id, run_id=run_id, status="queued",
+        candidate_id=request.candidate_id, basis_snapshot_id=request.basis_snapshot_id,
+        basis_decision_rev=basis["decision_rev"], issued_at_s=mission_s,
+        deliver_at_s=mission_s + RELAY_DELAY_S,
+    )
+    payload = receipt.model_dump_json()
+    db.execute(
+        """INSERT INTO messages (run_id, message_id, direction, issued_at_s, deliver_at_s,
+                                  ground_snapshot_id, payload_json)
+           VALUES (?, ?, 'to_crew', ?, ?, ?, ?)""",
+        (run_id, f"advisory:{request.operation_id}", receipt.issued_at_s, receipt.deliver_at_s,
+         receipt.basis_snapshot_id, payload),
+    )
+    db.execute(
+        """INSERT INTO events
+           (run_id, event_seq, event_id, event_type, mission_s, visibility, payload_json)
+           SELECT ?, COALESCE(MAX(event_seq), 0) + 1, ?, 'ground.advisory_issued', ?, 'operational', ?
+           FROM events WHERE run_id = ?""",
+        (run_id, f"advisory:{request.operation_id}", mission_s, payload, run_id),
+    )
+    db.execute(
+        """INSERT INTO operations (run_id, operation_scope, operation_id, request_digest, receipt_json)
+           VALUES (?, 'ground_advisory', ?, ?, ?)""",
+        (run_id, request.operation_id, digest, payload),
+    )
+    return receipt
