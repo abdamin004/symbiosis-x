@@ -8,6 +8,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from starlette.concurrency import run_in_threadpool
 
+from symbiosis_x.api.runs import router as runs_router
 from symbiosis_x.storage.repository import Repository
 from symbiosis_x.storage.sqlite import migrate
 
@@ -30,6 +31,7 @@ def create_app(*, database_path: str | Path | None = None) -> FastAPI:
 
     application = FastAPI(title=API_TITLE, version=API_VERSION, lifespan=lifespan)
     application.state.database_path = path
+    application.include_router(runs_router)
     return application
 
 
