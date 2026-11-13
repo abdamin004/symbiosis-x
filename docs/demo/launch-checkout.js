@@ -547,7 +547,10 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
         [state.hatchAt,"Hatch authorized"],[state.transferAt,"Cargo receipt accepted"],
         [state.archivedAt,"Research archived"],[state.departedAt,"Departure committed"]]),
     } : {};
-    onCanvas(inOrbit ? canvasState(flight) : null,procedureEvents);
+    onCanvas(inOrbit ? canvasState(flight) : null,procedureEvents,{
+      mode:launch ? (demo.active ? config.id+"-timed-demo" : config.id) : view,
+      time:launch ? state.time : null,
+    });
   }
 
   function advance() {
@@ -1300,6 +1303,8 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     "assign-checks":()=>{ for (const row of rows.values()) row.assign.click(); return true; },
     "crew-baseline":()=>onDemoCrew("crew-baseline"),
     "crew-check":()=>onDemoCrew("crew-check"),
+    "start-demo-eva":()=>onDemoCrew("start-demo-eva"),
+    "verify-demo-eva":()=>onDemoCrew("verify-demo-eva"),
     "close-twin":()=>onDemoCrew("close-twin"),
     "show-docking":()=>{ openCommand(find("demo-pause")); return true; },
     "hide-docking":()=>{ closeCommand(); return true; },

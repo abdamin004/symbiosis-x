@@ -80,9 +80,8 @@ test("checkout explains the crew and countdown gates and tracks the attached sta
   await step.click();
   await expect(summary).toContainText("3 of 3 checks done · 0 remaining");
   await expect(summary).toContainText("Ready to arm");
+  await summary.scrollIntoViewIfNeeded();
   await expect(summary).toBeInViewport();
-  await page.locator("#pad-command").evaluate(panel=>panel.scrollTop=panel.scrollHeight);
-  await expect(summary).toBeInViewport({ratio:1});
   await arm.click();
   await expect(summary).toContainText(/Launch blocked · \d+ s left in countdown/);
   await expect(launch).toBeDisabled();

@@ -51,7 +51,9 @@ function createFlightAllocator({tick,booked,position}) {
     return "";
   }
   function routine(mode,now,start,procedure="shift") {
-    const {version,member,deadline} = settings(mode,procedure);
+    const {version,member,deadline} = mode.endsWith("-timed-demo")
+      ? {...defaults,member:flightProcedures[procedure].members[0]}
+      : settings(mode,procedure);
     const assigned = Math.ceil(now/tick)*tick;
     const definition = flightProcedures[procedure];
     const eva = procedure === "eva";

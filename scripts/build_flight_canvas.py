@@ -6,12 +6,14 @@ from pathlib import Path
 
 if __package__:
     from .flight_airlock_rehearsal import build_airlock_rehearsal
+    from .flight_health_rehearsal import build_health_rehearsal
     from .build_cabin_preview import ACTIVITY_S, ROOT
     from .iss_mission_replay import build_replays, crew_history
     from .launch_envelope import launch_envelope, rendezvous_envelope
     from .flight_orbit import navigation_reference
 else:
     from flight_airlock_rehearsal import build_airlock_rehearsal
+    from flight_health_rehearsal import build_health_rehearsal
     from build_cabin_preview import ACTIVITY_S, ROOT
     from iss_mission_replay import build_replays, crew_history
     from launch_envelope import launch_envelope, rendezvous_envelope
@@ -31,15 +33,23 @@ def build(output: Path) -> None:
             mission["rendezvous"] = rendezvous_envelope(mission)
         missions.append(mission)
     scenario, frames = build_replays(crew)
+    ground = json.loads((ROOT / "contracts/examples/ground-v102.json").read_text())
     data = json.dumps({
         "metrics": json.loads((ROOT / "catalogs/crew/health-metrics.json").read_text())["metrics"],
         "rooms": rooms, "crew": crew_ids, "activity_s": ACTIVITY_S, "missions": missions,
         "airlock": build_airlock_rehearsal(),
+        "health_drill": build_health_rehearsal(ROOT / "scenarios/sx01-golden-v1.json"),
+        "replay_ground": {
+            "snapshot_id": ground["snapshot_id"], "decision_rev": ground["decision_rev"],
+            "delivery": ground["delivery"], "co2": ground["equipment"]["co2"],
+            "power_headroom": ground["equipment"]["power_headroom"],
+        },
         "replay_version": scenario["version"],
         "frames": frames, "history": crew_history(frames[""], crew_ids), "research": scenario["research"],
     }, ensure_ascii=False).replace("<", "\\u003c")
     template = (ROOT / "docs/demo/flight.html").read_text(encoding="utf-8")
     workflow = (ROOT / "docs/demo/flight-workflow.js").read_text(encoding="utf-8")
+    flight_ground = (ROOT / "docs/demo/flight-ground.js").read_text(encoding="utf-8")
     widgets = (ROOT / "docs/demo/flight-widgets.js").read_text(encoding="utf-8")
     stations = (ROOT / "docs/demo/flight-stations.js").read_text(encoding="utf-8")
     launch_scene = (ROOT / "docs/demo/launch-scene.js").read_text(encoding="utf-8")
@@ -54,7 +64,8 @@ def build(output: Path) -> None:
     icons = (ROOT / "frontend/src/ui/icons/lucide/flight.svg").read_text(encoding="utf-8")
     output.write_text(
         template.replace("__FLIGHT_DATA__", data)
-        .replace("__FLIGHT_WORKFLOW__", workflow).replace("__FLIGHT_WIDGETS__", widgets)
+        .replace("__FLIGHT_WORKFLOW__", workflow).replace("__FLIGHT_GROUND__", flight_ground)
+        .replace("__FLIGHT_WIDGETS__", widgets)
         .replace("__FLIGHT_STATIONS__", stations).replace("__LAUNCH_SCENE__", launch_scene)
         .replace("__FLIGHT_MISSIONS__", missions_ui)
         .replace("__FLIGHT_DEMO__", timed_demo).replace("__LAUNCH_CHECKOUT__", checkout).replace("__HUD_ICONS__", icons)

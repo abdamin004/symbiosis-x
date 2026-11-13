@@ -73,6 +73,11 @@ button[aria-pressed=true]{background:#3d315e}
 .crew-portrait small{font:600 .6rem ui-monospace,monospace;color:var(--ink)}
 .crew-portrait[data-working=true]{box-shadow:inset 0 -2px #ffcb9c}
 .crew-portrait[aria-pressed=true]{box-shadow:inset 0 -2px var(--suit)}
+.crew-mood{display:block;width:90%;height:5px;overflow:hidden;background:#28334e;border-radius:4px}
+.crew-mood i{display:block;height:100%;width:var(--mood-fill,100%);background:var(--mood-color,#7de0b8)}
+.crew-portrait[data-mood="Under pressure"]{--mood-color:#ffd08c}
+.crew-portrait[data-mood="Strained"]{--mood-color:#ff949e}
+.crew-portrait .crew-mood-label{font-size:.54rem;line-height:1;color:var(--mood-color,#9eeac9)}
 .overview-time{display:flex;align-items:center;justify-content:space-between;gap:.35rem}
 #timeline{width:100%;accent-color:var(--violet)}
 #map-widget #reset{background:#682c42;color:#ffe1e9;padding:.2rem .45rem}
@@ -326,7 +331,7 @@ button[aria-pressed=true]{background:#3d315e}
 .launch-stage-copy::before{content:"";position:absolute;top:.62rem;left:0;width:.45rem;border-top:1px solid var(--stage-color)}
 .launch-stage-status{display:block;color:var(--stage-color);font-size:.68rem}
 .launch-stage small,#launch-jobs small{display:block;color:#d7e2fa;font-size:.72rem}
-#launch-checkout-progress{position:sticky;top:0;z-index:1;margin:0 0 .55rem;padding:.5rem .6rem;
+#launch-checkout-progress{position:relative;margin:0 0 .55rem;padding:.5rem .6rem;
   border:1px solid #587892;border-radius:6px;background:#15283a}
 #launch-checkout-progress progress{display:block;width:100%;height:.4rem;margin:.3rem 0;accent-color:#9cebd0}
 #launch-checkout-progress p{margin:.18rem 0;font-size:.75rem}
@@ -421,6 +426,7 @@ button[aria-pressed=true]{background:#3d315e}
 #demo-banner button{font-size:.68rem;white-space:nowrap;padding:.25rem .36rem}
 #demo-time{font:650 .7rem ui-monospace,monospace;color:var(--blue)}
 #demo-status{flex-basis:100%;font-size:.75rem;font-weight:680;color:#e5edff}
+#demo-evidence{flex-basis:100%;font-size:.7rem;color:var(--blue)}
 #demo-status[data-stopped]{color:#ffcb95}
 .launch-field[data-view=launch] .pad-checkout{padding-bottom:calc(clamp(116px,16vw,168px)*.6 + 2.8rem)}
 .launch-field[data-view=launch] .pad-checkout .launch-board{max-height:calc(100svh - var(--launch-clearance,100px) - clamp(116px,16vw,168px)*.6 - 3rem)}
@@ -694,7 +700,6 @@ ul.tutorial-startup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));g
   #launch-stack-board #launch-systems{padding:.3rem 0 .55rem}
   #launch-stack-board #startup-status{margin:.4rem 0 .55rem}
   #launch-stack-board #startup-status li{padding-block:.2rem}
-  #pad-command:has(#launch-checkout-progress:not([hidden])){scroll-padding-top:7.5rem}
 }
 @media(max-width:850px){
   .launch-field[data-view=launch] .pad-checkout #pad-command{margin-top:0;max-height:none}
@@ -707,9 +712,15 @@ ul.tutorial-startup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));g
   .mission-guide{width:min(13.4rem,calc(100vw - 1.1rem));padding:.45rem .55rem}
   .mission-guide:has(#demo-banner:not([hidden])) :is(#guide-detail,.guide-actions){display:none}
   .mission-guide:has(#demo-banner:not([hidden])) .guide-body{grid-template-columns:2rem minmax(0,1fr)}
-  .stage[data-timed-demo] #personnel-widget{max-height:33dvh}
+  .stage[data-timed-demo] #personnel-widget{max-height:39dvh}
+  .stage[data-timed-demo] #personnel-widget .wrist-readout{margin-block:.1rem}
+  .stage[data-timed-demo] #personnel-widget .personnel-hero{display:none}
   .stage[data-timed-demo] #personnel-widget :is(.personnel-actions,.anatomy-tabs,.device-links,#body-regions,.twin-camera){display:none}
-  .stage[data-timed-demo] #personnel-widget .body-layout{grid-template-columns:75px minmax(0,1fr)}
+  .stage[data-timed-demo] #personnel-widget .body-layout{grid-template-columns:64px minmax(0,1fr)}
+  .stage[data-timed-demo] #personnel-widget .personnel-hero{grid-template-columns:38px minmax(0,1fr);padding:.15rem 0 .35rem}
+  .stage[data-timed-demo] #personnel-widget .region-card{padding:.3rem .4rem}
+  .stage[data-timed-demo] #personnel-widget .region-card h3{display:none}
+  .stage[data-timed-demo] #twin-layer-label{margin-bottom:.2rem}
   .guide-head{margin-bottom:.26rem}.guide-track{margin-bottom:.3rem}
   .guide-body{grid-template-columns:2.65rem minmax(0,1fr);gap:.33rem}
   .guide-actions{margin-top:.32rem}.guide-actions button{padding:.2rem .35rem}
@@ -762,6 +773,14 @@ ul.tutorial-startup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));g
 #map-widget .map-systems{grid-template-columns:repeat(auto-fit,minmax(3rem,1fr))}
 #map-widget[data-view=launch] :is([data-map-view=deck],[data-map-view=systems]){display:none}
 #map-widget[data-view=launch] .map-views:not(:has([data-map-view]:not([data-map-view=route],[data-map-view=deck],[data-map-view=systems]))){display:none}
+#map-ground{padding:.35rem .25rem;font-size:.75rem;overflow-wrap:anywhere;max-height:28dvh;overflow:auto}
+#map-ground p,#map-ground dl{margin:.3rem 0}
+#map-ground dl{display:grid;grid-template-columns:auto 1fr;gap:.12rem .5rem}
+#map-ground dt,#map-ground [data-ground=source]{color:var(--muted)}
+#map-ground dd{margin:0;color:var(--blue)}
+#map-ground form select{max-width:100%;color:inherit;background:#1b2744;border:1px solid #526585;padding:.24rem;border-radius:4px}
+#map-ground form button{margin:.3rem 0 0}
+#map-ground [data-state=stale],#map-ground [data-state=pending],#map-ground [role=alert]{color:#ffd49d}
 #map-widget[data-view=replay] #phase{margin-bottom:.25rem}
 #orbit-map-widget{right:max(.55rem,env(safe-area-inset-right));width:min(12.75rem,calc((100vw - 15.5rem)/2));padding:.4rem .48rem}
 #orbit-map-widget button{display:grid;gap:.18rem;width:100%;min-height:44px;text-align:left;padding:.22rem .3rem;background:transparent}
@@ -912,12 +931,15 @@ __HUD_ICONS__
       <button id="assign-routine" type="button">Release inspection</button>
     </div>
     <div class="order-card">
-      <strong>Ground · Fault inspection</strong>
-      <p id="workflow-state"></p>
-    <p id="monitor-state"></p>
-    <button id="assign-order" type="button" hidden>Commander · Assign Ivo</button>
-    <button id="hold-order" type="button" hidden>Commander · Hold</button>
-    <button id="complete-order" type="button" hidden>Ivo · Send inspection report</button>
+      <strong id="ground-order-heading">Ground · Fault inspection</strong>
+      <p id="flight-crew-receipt" role="status" hidden></p>
+      <div id="replay-ground-order">
+        <p id="workflow-state"></p>
+        <p id="monitor-state"></p>
+        <button id="assign-order" type="button" hidden>Commander · Assign Ivo</button>
+        <button id="hold-order" type="button" hidden>Commander · Hold</button>
+        <button id="complete-order" type="button" hidden>Ivo · Send inspection report</button>
+      </div>
     </div>
   </section>
   <section class="panel" id="inspector-widget" hidden aria-labelledby="focus-name">
@@ -1058,6 +1080,7 @@ __HUD_ICONS__
     <button type="button" data-map-view="route" aria-pressed="true">Plan</button>
     <button type="button" data-map-view="deck" aria-pressed="false">Deck</button>
     <button type="button" data-map-view="systems" aria-pressed="false">Systems</button>
+    <button type="button" data-map-view="ground" aria-controls="map-ground" aria-pressed="false">Ground</button>
   </div>
   <div class="minimap-screen">
     <div id="map-route">
@@ -1077,6 +1100,31 @@ __HUD_ICONS__
       <div><small>Power reserve</small><strong id="map-power"></strong></div>
       <div><small>Onboard jobs</small><strong id="map-jobs"></strong></div>
     </div>
+    <section id="map-ground" aria-label="Ground relay" hidden>
+      <p data-ground="source"></p>
+      <p>Mission clock <strong data-ground="clock"></strong></p>
+      <p data-ground="link"></p>
+      <dl data-ground="telemetry" hidden>
+        <dt>Basis</dt><dd data-ground="basis"></dd>
+        <dt>Cabin CO₂</dt><dd data-ground="co2"></dd>
+        <dt>Power reserve</dt><dd data-ground="power"></dd>
+        <dt>Observed</dt><dd data-ground="observed"></dd>
+        <dt>Received</dt><dd data-ground="received"></dd>
+        <dt>Sample age</dt><dd data-ground="age"></dd>
+      </dl>
+      <p>Case · <span data-ground="case"></span></p>
+      <p data-ground="advice" role="status"></p>
+      <form>
+        <label for="map-ground-candidate" data-ground="candidate-label">Candidate</label>
+        <select id="map-ground-candidate" name="candidate">
+          <option value="hold_course">Hold course</option>
+          <option value="start_standby">Start standby scrubber</option>
+          <option value="reduce_activity">Reduce crew activity</option>
+        </select>
+        <button type="submit">Queue advice</button>
+      </form>
+      <p data-ground="send-error" role="alert"></p>
+    </section>
   </div>
   <p id="map-current"><span id="map-current-icon"></span><span id="map-current-copy">
     <strong id="map-current-objective"></strong><small id="map-current-state"></small>
@@ -1321,7 +1369,9 @@ __HUD_ICONS__
   </div>
   <div id="demo-banner" role="group" aria-label="Timed mission demo" hidden>
     <output id="demo-time" aria-label="Demo elapsed time" aria-live="off"></output>
+    <small>Offline synthetic playback · no clinical diagnosis</small>
     <span id="demo-status" role="status"></span>
+    <output id="demo-evidence" aria-live="off" hidden></output>
     <button type="button" id="demo-pause">Pause demo</button>
     <button type="button" id="demo-exit">Exit demo</button>
   </div>
@@ -1372,7 +1422,7 @@ __HUD_ICONS__
         <div><strong>ISS Research Replay</strong><p>Scripted checkpoints · self-paced</p></div>
         <button id="open-flight-replay" type="button">Open replay</button>
       </div>
-      <button id="start-timed-demo" type="button">Run 3-minute mission demo</button>
+      <button id="start-timed-demo" type="button">Run astronaut health demo</button>
       <p id="campaign-notice" role="status"></p>
     </section>
     <div class="pad-checkout" id="pad-controls" hidden>
@@ -1493,6 +1543,7 @@ __HUD_ICONS__
 <script type="application/json" id="flight-data">__FLIGHT_DATA__</script>
 <script>
 __FLIGHT_WORKFLOW__
+__FLIGHT_GROUND__
 __FLIGHT_WIDGETS__
 __FLIGHT_STATIONS__
 __LAUNCH_SCENE__
@@ -1652,6 +1703,11 @@ function crewRoutine(member) {
   if (ownJob) return ownJob;
   const visit = crewSession?.crew.find(person=>person.active?.checkup === member)?.active;
   return visit && {...visit,previous:visit.patientPrevious,action:"Attend daily crew checkup"};
+}
+function crewWellbeing(member,frame) {
+  const person = crewSession?.crew[member];
+  return person && crewRoutines.wellbeing(person,frame.time,member,
+    frame.healthDrill?.flow_m3_h === 4);
 }
 function updateCrewRoutines(frame) {
   const mode = crewMode();
@@ -2336,7 +2392,9 @@ function renderProfiles(frame) {
       ];
     } else if (kind === "needs") {
       const person = crewSession.crew[member];
-      rows = [...crewRoutines.meters(person,frame.time),["Current activity",task],["Needs queue",person.blocked || "Clear"],
+      const mood = crewWellbeing(member,frame);
+      rows = [["Simulated mood",mood.state+" · "+mood.value+"%"],["Main influence",mood.driver],
+        ...crewRoutines.meters(person,frame.time),["Current activity",task],["Needs queue",person.blocked || "Clear"],
         ["Crew checkup",person.checkup ? "Last T+" + clock(person.checkup.time) : "Every 24 mission hours"],
         ["Private mood",reports.mood || "No report"],["Symptoms",reports.symptoms || "No report"]];
     } else if (timed && ["devices","vitals"].includes(kind)) {
@@ -2582,7 +2640,17 @@ function inspect(frame) {
 function currentFrame() {
   const key = data.crew.filter(id => reducedActivity().has(id)).join(",");
   const source = data.frames[key][index];
-  return {...source,...connectedFlight?.frame,time:Math.floor(missionTime)};
+  const time = Math.floor(missionTime);
+  const frame = {...source,...connectedFlight?.frame,time};
+  if (!connectedFlight?.timedDemo || frame.phase !== "Orbit" || time < connectedFlight.crewStarted) return frame;
+
+  const drill = flightDemoCabin(data.health_drill,time,connectedFlight.crewStarted);
+  const co2 = drill.co2.value;
+  const co2Pct = co2 / 10000;
+  return {...frame,co2,removal:drill.flow_m3_h,air_source:drill.source,
+    air:{...frame.air,co2_pct:co2Pct,balance_pct:100-frame.air.oxygen_pct-co2Pct},
+    healthDrill:drill,
+  };
 }
 
 let lastRenderedSecond = -1;
@@ -2698,6 +2766,12 @@ function releaseInspection(procedure="shift") {
 }
 function render() {
   const frame = currentFrame();
+  const evidence = element("demo-evidence");
+  evidence.hidden = !frame.healthDrill;
+  evidence.textContent = frame.healthDrill ? frame.healthDrill.co2.value.toFixed(2) +
+    " ppm cabin CO₂ · T+" + clock(frame.healthDrill.co2.observed_at_s) + " · scrubber " +
+    frame.healthDrill.flow_m3_h + " m³/h · " + frame.healthDrill.source : "";
+  updateGround(frame);
   updateProcedureQueue(frame);
   updateCrewRoutines(frame);
   const antenna = element("eva-antenna");
@@ -2834,8 +2908,14 @@ function render() {
     portrait.setAttribute("aria-pressed", selection.crew === i);
     portrait.dataset.working = Boolean(work || routine || crewCheck || flightWork);
     portrait.querySelector(".crew-activity").textContent = state;
-    portrait.title = characters[i].name + " · " + duty.role + " · " + task;
-    portrait.setAttribute("aria-label", "Inspect " + characters[i].name + " " + duty.role + " · " + task);
+    const mood = crewWellbeing(i,frame);
+    portrait.dataset.mood = mood.state;
+    portrait.style.setProperty("--mood-fill",mood.value+"%");
+    portrait.querySelector(".crew-mood-label").textContent = mood.state;
+    portrait.title = characters[i].name+" · "+task+" · Simulated mood "+mood.value+"%: "+mood.driver+
+      " · "+mood.need+" "+mood.reserve+"%";
+    portrait.setAttribute("aria-label","Inspect "+characters[i].name+" "+duty.role+" · "+task+
+      " · Simulated mood: "+mood.state);
   });
   for (const [id,button] of equipmentButtons) {
     const task = taskAt(id, frame.time);
@@ -3060,7 +3140,9 @@ function selectOverviewTab(button) {
     view.setAttribute("aria-pressed",String(view===button));
     panel.hidden = view!==button;
   }
-  paintFlight(currentFrame());
+  const frame = currentFrame();
+  updateGround(frame);
+  paintFlight(frame);
 }
 function openDigitalTwin(member, trigger) {
   selection = {crew:member};
@@ -3131,6 +3213,13 @@ duties.forEach((duty,i) => {
   const activityLabel = document.createElement("small");
   activityLabel.className = "crew-activity";
   portrait.append(activityLabel);
+  const moodBar = document.createElement("span");
+  moodBar.className = "crew-mood";
+  moodBar.setAttribute("aria-hidden","true");
+  moodBar.append(document.createElement("i"));
+  const moodLabel = document.createElement("small");
+  moodLabel.className = "crew-mood-label";
+  portrait.append(moodBar,moodLabel);
   portrait.setAttribute("aria-controls","personnel-widget");
   portrait.addEventListener("click",()=>openDigitalTwin(i,portrait));
   portraits.set(i,portrait);
@@ -3418,7 +3507,8 @@ const padTransport = element("pad-transport");
 const layoutFixedControls = new ResizeObserver(() => {
   const launchClearance = launchHud.getBoundingClientRect().bottom;
   element("launch-field").style.setProperty("--launch-clearance", launchClearance+"px");
-  element("launch-field").style.setProperty("--pad-guide-offset", missionGuide.offsetHeight+"px");
+  const guideEdge = missionGuide.getBoundingClientRect().bottom;
+  element("launch-field").style.setProperty("--pad-guide-offset", Math.max(0,guideEdge-launchClearance)+"px");
   const cornerHeight = Math.max(missionOverview.offsetHeight,orbitWidget.offsetHeight);
   element("launch-field").style.setProperty("--corner-clearance", (cornerHeight+16)+"px");
   if (!missionGuide.hidden) {
@@ -3443,7 +3533,26 @@ hudSize.observe(element("crew-strip"));
 hudSize.observe(document.querySelector(".hud"));
 hudSize.observe(shelf);
 hudSize.observe(element("mission-resources"));
+let groundFlightContext;
+const groundPanel = bindFlightGround({
+  panel:element("map-ground"), crewReceipt:element("flight-crew-receipt"),
+  clock, workflow:flightWorkflow, replayPacket:data.replay_ground, redraw:render,
+});
+function updateGround(frame) {
+  const mode = groundFlightContext?.mode ?? "menu";
+  const relayRunId = mode === "replay" ? flightHealthRun : null;
+  element("ground-order-heading").textContent = relayRunId ? "Ground · Advisory receipt" : "Ground · Fault inspection";
+  element("replay-ground-order").hidden = Boolean(relayRunId);
+  groundPanel.update({
+    mode, relayRunId, frame:groundFlightContext?.time == null ? frame : {...frame,time:groundFlightContext.time},
+    groundVisible:!element("map-ground").closest("[hidden]"),
+    crewVisible:!element("workflow-widget").closest("[hidden]"),
+  });
+}
 const ordersWindow = widgets.register(element("workflow-widget"), element("show-workflow"), () => ({x:14,y:35}));
+const groundVisibility = new MutationObserver(() => updateGround(currentFrame()));
+groundVisibility.observe(element("workflow-widget"), {attributes:true, attributeFilter:["hidden"]});
+groundVisibility.observe(element("map-widget"), {attributes:true, attributeFilter:["hidden"]});
 const inspectorWindow = widgets.register(element("inspector-widget"), element("show-inspector"), () => ({x:overlay.clientWidth - 354,y:overlay.clientHeight - 305}));
 widgets.register(element("crew-widget"), element("show-crew"), () => ({x:overlay.clientWidth - 354,y:14}));
 for (const [offset, kind] of ["personnel", "duty", "needs", "vitals", "devices"].entries()) {
@@ -3484,6 +3593,20 @@ const launchMission = bindLaunchCheckout(data.missions,data.replay_version,{
       for (const panel of profileWindows.values()) { panel.close(); panel.resetPosition(); }
       return true;
     }
+    if (action === "start-demo-eva") {
+      const job = allocator.routine(crewMode(),missionTime,missionTime,"eva");
+      tasks.push(job);
+      element("stage").setAttribute("data-demo-crew","");
+      openDigitalTwin(job.member,portraits.get(job.member));
+      return true;
+    }
+    if (action === "verify-demo-eva") {
+      const job = routineJob(currentFrame(),"eva");
+      if (!job || missionTime < job.finishes) return false;
+      job.verifiedAt = missionTime;
+      render();
+      return true;
+    }
     const member = data.crew.indexOf(flightDemoCrew);
     if (action === "crew-check") return requestPeerCheck(member,"wrist");
     element("stage").setAttribute("data-demo-crew","");
@@ -3514,7 +3637,8 @@ const launchMission = bindLaunchCheckout(data.missions,data.replay_version,{
     const last = tasks.findLast(job=>job.mode===mode && job.procedure==="eva" && job.queued<=time);
     return Boolean(last && last.verifiedAt == null);
   },
-  onCanvas(flight,procedureEvents) {
+  onCanvas(flight,procedureEvents,groundContext) {
+    groundFlightContext = groundContext;
     launchProcessEvents = procedureEvents;
     if (!connectedFlight && flight) {
       replayTime = missionTime;
