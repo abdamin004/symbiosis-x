@@ -37,7 +37,7 @@ test("local response remains available during blackout", async ({ page }) => {
   await page.getByRole("button", { name: "Raise local drill alert" }).click();
   const activeCase = page.getByTestId("emergency-case");
   await expect(activeCase).toContainText("Ground link not required");
-  await expect(activeCase).toContainText("heart-rate data");
+  await expect(activeCase).toContainText("Heart-rate data");
   await expect(activeCase).toContainText("unavailable");
   await expect(activeCase).toContainText("TRAINING PLACEHOLDER");
   expect(openRequest.responsiveness).toBe("unknown");
