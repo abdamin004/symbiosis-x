@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "source": {
+    "name": "NASA OSDR RadLab",
+    "portal_url": "https://visualization.osdr.nasa.gov/radlab/gui/overview",
+    "api_guide_url": "https://visualization.osdr.nasa.gov/radlab/gui/data-api/",
+    "export_url": "https://visualization.osdr.nasa.gov/radlab/api/?spacecraft=ISS&instrument_id=DosTel1&timestamp%3E=2022-04-01T00%3A00%3A00&timestamp%3C2022-04-01T00%3A20%3A00&absorbed_dose_rate&format=csv"
+  },
+  "series_type": "space-radiation-instrument-context",
+  "spacecraft": "ISS",
+  "instrument": "DosTel1",
+  "instrument_id": "DosTel1",
+  "quantity": "absorbed_dose_rate",
+  "unit": "µGy/hour",
+  "time_basis": "UTC; source timestamps without an offset were interpreted as UTC",
+  "coverage_utc": {
+    "start": "2022-04-01T00:00:00Z",
+    "end": "2022-04-01T00:18:54Z"
+  },
+  "row_count": 15,
+  "missing_value_count": 0,
+  "points": [
+    {
+      "timestamp_utc": "2022-04-01T00:00:00Z",
+      "value": 1.99686266666667
+    },
+    {
+      "timestamp_utc": "2022-04-01T00:00:10Z",
+      "value": 1.99712
+    },
+    {
+      "timestamp_utc": "2022-04-01T00:03:30Z",
+      "value": 2.21904
+    },
+    {
+      "timestamp_utc": "2022-04-01T00:05:00Z",
+      "value": 1.87163492307692
+    },
+    {
+      "timestamp_utc": "2022-04-01T00:05:10Z",
+      "value": 1.697158
+    },
+    {
+      "timestamp_utc": "2022-04-01T00:07:02Z",
+      "value": 1.719644
+    },
+    {
+      "timestamp_utc": "2022-04-01T00:08:42Z",
+      "value": 2.049896
+    },
+    {
+      "timestamp_utc": "2022-04-01T00:10:00Z",
+      "value": 2.18748766666667
+    },
+    {
+      "timestamp_utc": "2022-04-01T00:10:22Z",
+      "value": 2.046109
+    },
+    {
+      "timestamp_utc": "2022-04-01T00:12:02Z",
+      "value": 2.466458
+    },
+    {
+      "timestamp_utc": "2022-04-01T00:13:42Z",
+      "value": 3.286138
+    },
+    {
+      "timestamp_utc": "2022-04-01T00:15:00Z",
+      "value": 4.11190379487179
+    },
+    {
+      "timestamp_utc": "2022-04-01T00:15:22Z",
+      "value": 4.757282
+    },
+    {
+      "timestamp_utc": "2022-04-01T00:17:14Z",
+      "value": 4.214846
+    },
+    {
+      "timestamp_utc": "2022-04-01T00:18:54Z",
+      "value": 5.823839
+    }
+  ],
+  "interpretation": "Instrument telemetry for mission context only; not an individual astronaut's personal dose and not a health alert threshold."
+}
