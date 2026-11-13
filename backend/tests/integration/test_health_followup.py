@@ -100,15 +100,16 @@ def test_reminder_uses_personal_schedule(tmp_path):
         assert (reminders["blood_pressure"]["status"], reminders["blood_pressure"]["deferred_by_emergency"]) == (
             "acknowledged", False)
 
-        # Once the responder acknowledges the emergency, routine reminders resume.
+        # A local acknowledgment records the responder without resolving the emergency.
         emergency_ack = client.post(
             f"{url}/crew/emergencies/{case['case_id']}/acknowledgment",
             headers=role("crew"), json={"acknowledged_by": "SIM-02"},
         )
         assert emergency_ack.status_code == 200, emergency_ack.text
         view = followup()
-        assert view["precedence"] == "routine" and view["emergency"] is None
-        assert all(not reminder["deferred_by_emergency"] for reminder in view["reminders"])
+        assert view["precedence"] == "emergency" and view["emergency"]["case_id"] == case["case_id"]
+        assert by_metric(view)["heart_rate"]["deferred_by_emergency"] is True
+        assert by_metric(view)["blood_pressure"]["deferred_by_emergency"] is False
 
         # Reminders are Crew-private: Ground's projection carries none of them.
         ground = client.get(f"{url}/ground", headers=role("ground")).text

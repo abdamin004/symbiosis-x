@@ -82,8 +82,7 @@ def _acknowledgments(db: Connection, run_id: str) -> dict[str, dict]:
 def _emergency(db: Connection, run_id: str, crew_id: str) -> dict | None:
     row = db.execute(
         """SELECT case_id, kind, opened_at_s FROM emergency_cases
-           WHERE run_id = ? AND subject_crew_id = ? AND acknowledged_at_s IS NULL
-           ORDER BY opened_at_s, case_id LIMIT 1""",
+           WHERE run_id = ? AND subject_crew_id = ? ORDER BY opened_at_s, case_id LIMIT 1""",
         (run_id, crew_id),
     ).fetchone()
     return dict(row) if row else None
