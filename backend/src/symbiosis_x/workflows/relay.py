@@ -11,7 +11,7 @@ only; Relay never reads or writes plant state.
 from hashlib import sha256
 from sqlite3 import Connection, Row
 
-from symbiosis_x.contracts.commands import AdvisoryReceipt, GroundAdvisoryRequest
+from symbiosis_x.contracts.commands import AdvisoryDisposition, AdvisoryReceipt, GroundAdvisoryRequest
 from symbiosis_x.contracts.projections import GroundPacket
 
 # One-way link delay in the golden scenario: v102 observed 01:00 reaches Ground at 06:00,
@@ -100,7 +100,9 @@ def deliver_due(db: Connection, run_id: str, mission_s: int) -> list[str]:
     return due
 
 
-def queue_ground_advisory(db: Connection, run: Row, request: GroundAdvisoryRequest) -> AdvisoryReceipt:
+def queue_ground_advisory(
+    db: Connection, run: Row, request: GroundAdvisoryRequest, *, expires_after_s: int | None = None,
+) -> AdvisoryReceipt:
     """Queue Ground advice for Crew on a basis Ground has already received.
 
     Runs inside the caller's write transaction. A retried operation returns
@@ -142,12 +144,14 @@ def queue_ground_advisory(db: Connection, run: Row, request: GroundAdvisoryReque
         deliver_at_s=mission_s + RELAY_DELAY_S,
     )
     payload = receipt.model_dump_json()
+    # Expiry is a scenario or policy input, not something Ground chooses.
+    expires_at_s = None if expires_after_s is None else mission_s + expires_after_s
     db.execute(
         """INSERT INTO messages (run_id, message_id, direction, issued_at_s, deliver_at_s,
-                                  ground_snapshot_id, payload_json)
-           VALUES (?, ?, 'to_crew', ?, ?, ?, ?)""",
+                                  expires_at_s, ground_snapshot_id, payload_json)
+           VALUES (?, ?, 'to_crew', ?, ?, ?, ?, ?)""",
         (run_id, f"advisory:{request.operation_id}", receipt.issued_at_s, receipt.deliver_at_s,
-         receipt.basis_snapshot_id, payload),
+         expires_at_s, receipt.basis_snapshot_id, payload),
     )
     db.execute(
         """INSERT INTO events
@@ -162,3 +166,53 @@ def queue_ground_advisory(db: Connection, run: Row, request: GroundAdvisoryReque
         (run_id, request.operation_id, digest, payload),
     )
     return receipt
+
+
+def receive_due_advisories(db: Connection, run_id: str, mission_s: int) -> list[AdvisoryDisposition]:
+    """Receive Ground advice due onboard by mission_s and journal how each was classified.
+
+    Advice arrives at its own due time. It is held when it expired before
+    arrival or when its basis revision is older than the run's current
+    decision revision; otherwise it may enter Crew review. Intake only records
+    a disposition: it never applies a command or changes plant state, and Crew
+    authorization is a separate request through the commit gate.
+    """
+    current_rev = db.execute("SELECT decision_rev FROM runs WHERE run_id = ?", (run_id,)).fetchone()[0]
+    due = db.execute(
+        """SELECT message_id, deliver_at_s, expires_at_s, payload_json FROM messages
+           WHERE run_id = ? AND direction = 'to_crew'
+             AND delivered_at_s IS NULL AND deliver_at_s <= ?
+           ORDER BY deliver_at_s, message_id""",
+        (run_id, mission_s),
+    ).fetchall()
+    dispositions = []
+    for message in due:
+        advice = AdvisoryReceipt.model_validate_json(message["payload_json"])
+        arrived_at_s = message["deliver_at_s"]
+        if message["expires_at_s"] is not None and message["expires_at_s"] < arrived_at_s:
+            outcome, reason = "held", "ADVICE_EXPIRED"
+        elif advice.basis_decision_rev < current_rev:
+            outcome, reason = "held", "STALE_BASIS"
+        else:
+            outcome, reason = "crew_review", None
+        disposition = AdvisoryDisposition(
+            operation_id=advice.operation_id, disposition=outcome, reason_code=reason,
+            candidate_id=advice.candidate_id, basis_snapshot_id=advice.basis_snapshot_id,
+            basis_decision_rev=advice.basis_decision_rev, current_decision_rev=current_rev,
+            received_at_s=arrived_at_s, applied=False,
+        )
+        db.execute(
+            """UPDATE messages SET delivered_at_s = deliver_at_s
+               WHERE run_id = ? AND message_id = ? AND delivered_at_s IS NULL""",
+            (run_id, message["message_id"]),
+        )
+        db.execute(
+            """INSERT INTO events
+               (run_id, event_seq, event_id, event_type, mission_s, visibility, payload_json)
+               SELECT ?, COALESCE(MAX(event_seq), 0) + 1, ?, 'crew.advisory_received', ?, 'operational', ?
+               FROM events WHERE run_id = ?""",
+            (run_id, f"received:{message['message_id']}", arrived_at_s,
+             disposition.model_dump_json(), run_id),
+        )
+        dispositions.append(disposition)
+    return dispositions
