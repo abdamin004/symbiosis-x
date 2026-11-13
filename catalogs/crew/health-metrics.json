@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "synthetic_data_only": true,
+  "common_fields": {
+    "observed_at_s": "nonnegative mission time in seconds",
+    "source_id": "non-empty identifier for where the reading came from",
+    "quality": "quality label supplied with the reading"
+  },
+  "metrics": [
+    {
+      "id": "heart_rate",
+      "label": "Heart rate",
+      "value_shape": "scalar",
+      "unit": "bpm"
+    },
+    {
+      "id": "blood_pressure",
+      "label": "Blood pressure",
+      "value_shape": "paired_values",
+      "unit": "mmHg",
+      "required_values": ["systolic", "diastolic"]
+    },
+    {
+      "id": "glucose",
+      "label": "Blood glucose",
+      "value_shape": "scalar_with_context",
+      "unit": "mg/dL",
+      "required_context": ["method", "meal_context"]
+    },
+    {
+      "id": "temperature",
+      "label": "Body temperature",
+      "value_shape": "scalar_with_context",
+      "unit": "°C",
+      "required_context": ["method", "site"]
+    },
+    {
+      "id": "sleep",
+      "label": "Sleep",
+      "value_shape": "duration_or_interval",
+      "accepted_forms": [
+        ["duration_min"],
+        ["start_mission_s", "end_mission_s"]
+      ]
+    },
+    {
+      "id": "mood",
+      "label": "Mood self-report",
+      "value_shape": "self_report_score",
+      "unit": "score",
+      "scale": {
+        "id": "mood-1-to-5-v1",
+        "minimum": 1,
+        "maximum": 5,
+        "note": "A project-defined self-report scale; not a clinical assessment."
+      }
+    },
+    {
+      "id": "symptoms",
+      "label": "Symptoms",
+      "value_shape": "structured_list",
+      "required_fields": ["symptoms"],
+      "optional_fields": ["private_text"]
+    }
+  ]
+}
