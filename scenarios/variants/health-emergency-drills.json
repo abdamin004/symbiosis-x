@@ -1,0 +1,49 @@
+{
+  "scenario_id": "health-emergency-drills",
+  "scenario_version": "1",
+  "synthetic": true,
+  "provenance": "synthetic_fixture",
+  "training_scope": "simulated_training_only",
+  "description": "SX-25A: two scripted onboard emergency drills for fictional crew. Each trigger opens one local case with an owner and timestamp. Escalation never waits for vital readings or the Ground relay, so the case opens during a communication blackout.",
+  "time_unit": "s",
+  "clock": "mission",
+  "link_status_during_drill": "blackout",
+  "escalation": {
+    "level": "local_alert",
+    "depends_on_vitals": false,
+    "depends_on_relay": false
+  },
+  "drills": [
+    {
+      "drill_id": "drill-chest-pain-v1",
+      "kind": "chest_pain",
+      "title": "Chest pain drill",
+      "subject_crew_id": "SIM-01",
+      "reported_by": "SIM-01",
+      "report_kind": "direct_symptom_report",
+      "symptom_report": "Fictional drill script: SIM-01 reports chest pain.",
+      "responder_crew_id": "SIM-02",
+      "procedure": {
+        "kind": "training_placeholder",
+        "ref": "training-placeholder-chest-pain-v1",
+        "label": "TRAINING PLACEHOLDER: not an approved medical procedure. Follow the mission's approved onboard medical procedure."
+      }
+    },
+    {
+      "drill_id": "drill-collapse-v1",
+      "kind": "collapse",
+      "title": "Collapse drill",
+      "subject_crew_id": "SIM-03",
+      "reported_by": "SIM-04",
+      "report_kind": "bystander_report",
+      "bystander_report": "Fictional drill script: SIM-04 finds SIM-03 collapsed.",
+      "default_responsiveness": "unknown",
+      "responder_crew_id": "SIM-04",
+      "procedure": {
+        "kind": "training_placeholder",
+        "ref": "training-placeholder-collapse-v1",
+        "label": "TRAINING PLACEHOLDER: not an approved medical procedure. Follow the mission's approved onboard medical procedure."
+      }
+    }
+  ]
+}
