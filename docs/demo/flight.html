@@ -907,6 +907,16 @@ ul.tutorial-startup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));g
 @media(max-width:375px){
   .plan-milestones li{font-size:.52rem}
 }
+
+@media(max-width:520px){
+  #personnel-widget.profile-window{
+    top:8px!important;left:8px!important;right:8px!important;bottom:auto!important;
+    width:auto!important;max-height:calc(100dvh - 118px);
+  }
+  #personnel-widget #twin-layer .body-layout{display:flex;flex-direction:column;gap:.35rem}
+  #personnel-widget #twin-layer .region-card{order:-1;padding:.4rem .5rem}
+  #personnel-widget #twin-layer .body-map{width:128px;max-width:128px;aspect-ratio:2/3}
+}
 </style>
 </head>
 <body>
