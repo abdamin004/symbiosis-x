@@ -5,6 +5,7 @@ import CrewHealthPanel from "../crew/CrewHealthPanel.jsx";
 import CheckInForm from "../crew/CheckInForm.jsx";
 import RadiationContext from "../crew/RadiationContext.jsx";
 import GroundHealthStatus from "../ground/GroundHealthStatus.jsx";
+import GroundSnapshot, { packetFromGroundFixture } from "../ground/GroundSnapshot.jsx";
 import ServiceStatus from "./ServiceStatus.jsx";
 import LiveMissionConsole from "./LiveMissionConsole.jsx";
 
@@ -105,7 +106,9 @@ export default function MissionConsole({ role }) {
         </>
       )}
 
-      {snapshot.delivery && <DeliveryPanel delivery={snapshot.delivery} />}
+      {role === "ground" && (
+        <GroundSnapshot packet={packetFromGroundFixture(snapshot)} missionS={snapshot.mission_s} />
+      )}
 
       {role === "ground" && <GroundHealthStatus cases={snapshot.health_cases ?? []} />}
     </main>
@@ -134,27 +137,5 @@ function Reading({ label, quantity, note }) {
         {note ? `${note} · ` : ""}observed {formatMissionTime(quantity.observed_at_s)}
       </p>
     </li>
-  );
-}
-
-function DeliveryPanel({ delivery }) {
-  return (
-    <section aria-labelledby="delivery-heading" className="mt-6 rounded-lg border border-degraded/60 bg-white p-4">
-      <h2 id="delivery-heading" className="text-lg font-semibold">
-        Delivered snapshot
-      </h2>
-      <dl className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-4">
-        <dt className="text-slate-500">Observed</dt>
-        <dd>{formatMissionTime(delivery.observed_at_s)}</dd>
-        <dt className="text-slate-500">Received</dt>
-        <dd>{formatMissionTime(delivery.received_at_s)}</dd>
-        <dt className="text-slate-500">Age</dt>
-        <dd>{formatMissionTime(delivery.age_s)}</dd>
-        <dt className="text-slate-500">Link</dt>
-        <dd data-testid="relay-link-status">
-          {delivery.link_status === "delayed" ? "Delayed" : delivery.link_status}
-        </dd>
-      </dl>
-    </section>
   );
 }
