@@ -206,7 +206,12 @@ button[aria-pressed=true]{background:#3d315e}
 .checkout-job-status{align-self:center;color:var(--blue)}
 .checkout-controls{align-items:center}
 #launch-time{color:var(--blue);font:700 .9rem ui-monospace,monospace;margin-right:.2rem}
-#launch-go{background:#4a3d7c}
+#launch-go,#launch-insert{background:#4a3d7c}
+#launch-abort{background:#633548}
+.launch-readouts{display:grid;gap:.3rem;margin:.65rem 0}
+.launch-readouts div{display:grid;grid-template-columns:110px 1fr;gap:.4rem;padding:.32rem .5rem;background:#202e50;border-radius:5px}
+.launch-readouts dt{color:var(--muted);font-size:.75rem}
+.launch-readouts dd{color:var(--blue);font-size:.8rem;margin:0}
 @media(max-width:540px){.mission-options,.launch-board{grid-template-columns:1fr}.launch-stack-area{min-height:240px}}
 </style>
 </head>
@@ -380,8 +385,8 @@ __HUD_ICONS__
   <div class="mission-options">
     <article><h3>ISS Research Replay</h3><p>Outbound capsule · ISS laboratory · return capsule</p>
       <form method="dialog"><button>Return to Flight replay</button></form></article>
-    <article><h3>Launch Checkout</h3><p>Prepare Asteria and clear first-stage ignition.</p>
-      <button id="open-checkout" type="button">Open Launch Checkout</button></article>
+    <article><h3>Asteria Launch</h3><p>Prepare the crew and fly from the pad to stable orbit.</p>
+      <button id="open-checkout" type="button">Open Asteria Launch</button></article>
   </div>
 </dialog>
 <dialog id="launch-checkout" class="mission-dialog" aria-labelledby="launch-title">
@@ -394,12 +399,20 @@ __HUD_ICONS__
     <div>
       <h3>Crew checklist</h3>
       <ul id="launch-jobs"></ul>
-      <p id="launch-status" role="status"></p>
+      <p id="launch-checklist"></p>
+      <dl class="launch-readouts">
+        <div><dt>Flight phase</dt><dd id="launch-status" role="status"></dd></div>
+        <div><dt>Next action</dt><dd id="launch-next"></dd></div>
+        <div><dt>Insertion reserve</dt><dd id="launch-reserve"></dd></div>
+      </dl>
       <div class="choices checkout-controls">
         <output id="launch-time" aria-label="Checkout time"></output>
         <button id="launch-step" type="button">Advance 15 s</button>
         <button id="launch-hold" type="button" aria-pressed="false">Hold launch</button>
         <button id="launch-go" type="button">Commit ignition</button>
+        <button id="launch-separate" type="button" hidden>Separate booster</button>
+        <button id="launch-insert" type="button" hidden>Commit orbital insertion</button>
+        <button id="launch-abort" type="button" hidden>Abort ascent</button>
         <button id="launch-reset" type="button">Reset checkout</button>
       </div>
     </div>
