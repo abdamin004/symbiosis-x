@@ -1,6 +1,6 @@
 # SYMBIOSIS X
 
-SYMBIOSIS X is a software-only prototype for astronaut self-assessment in a simulated mission. The health demo follows one fictional astronaut through a measurement, an explained review alert, an onboard emergency drill and a delayed Ground receipt. The cabin twin provides mission context and a separate stale-advice replay.
+SYMBIOSIS X is a software-only prototype for astronaut self-assessment in a simulated mission. The ship carries four fictional astronauts (SIM-01 through SIM-04). The health demo follows SIM-01 through a measurement, an explained review alert, an onboard emergency drill and a delayed Ground receipt. The cabin twin provides mission context and a separate stale-advice replay.
 
 Use the [Jira board](https://crewsync-1794569647227.atlassian.net/jira/software/projects/KAN/boards/2) for ticket status and the [build plan](SYMBIOSIS%20X%20Feature%20Backlog%20and%20Build%20Plan.html) for dependencies and acceptance checks. The [technical architecture](SYMBIOSIS%20X%20Technical%20Architecture.html) describes the role boundaries and the five planned screens.
 
@@ -81,4 +81,4 @@ Generate a standalone HTML preview from the cabin model and synthetic astronaut 
 python3 scripts/build_cabin_preview.py /tmp/symbiosis-x-cabin.html
 ```
 
-Open the generated file. Compare the Crew replay at 13:00 before and after confirming reduced activity at 06:00. Planning leaves the cabin input unchanged. The Ground fixture shows the earlier delivered snapshot at 13:00. This preview uses synthetic data and runs without the application server.
+Open the generated file. Select any astronaut and compare the Crew replay at 13:00 before and after confirming reduced activity at 06:00. The cabin adds the contributions of all four astronauts. Planning leaves the cabin input unchanged. The Ground fixture shows the earlier delivered snapshot at 13:00. This preview uses synthetic data and runs without the application server.

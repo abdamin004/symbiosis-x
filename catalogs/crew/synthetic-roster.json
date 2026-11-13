@@ -8,8 +8,38 @@
       "zone_id": "cabin-01",
       "initial_mode": "baseline",
       "co2_generation_m3_h": {
-        "baseline": 0.04,
-        "reduced_activity": 0.02
+        "baseline": 0.01,
+        "reduced_activity": 0.005
+      }
+    },
+    {
+      "crew_id": "SIM-02",
+      "display_name": "SIM-02 (fictional)",
+      "zone_id": "cabin-01",
+      "initial_mode": "baseline",
+      "co2_generation_m3_h": {
+        "baseline": 0.01,
+        "reduced_activity": 0.005
+      }
+    },
+    {
+      "crew_id": "SIM-03",
+      "display_name": "SIM-03 (fictional)",
+      "zone_id": "cabin-01",
+      "initial_mode": "baseline",
+      "co2_generation_m3_h": {
+        "baseline": 0.01,
+        "reduced_activity": 0.005
+      }
+    },
+    {
+      "crew_id": "SIM-04",
+      "display_name": "SIM-04 (fictional)",
+      "zone_id": "cabin-01",
+      "initial_mode": "baseline",
+      "co2_generation_m3_h": {
+        "baseline": 0.01,
+        "reduced_activity": 0.005
       }
     }
   ]

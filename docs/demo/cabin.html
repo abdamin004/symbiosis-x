@@ -34,8 +34,9 @@ dl{margin:0}dt{color:var(--muted)}dd{margin:0 0 .8rem;font-size:1.38rem;font-var
 </div>
 <div class="controls" id="timeline" role="group" aria-label="Crew checkpoints"></div>
 <section class="panel" id="activity" aria-labelledby="activity-title" style="margin-bottom:1rem">
-<h2 id="activity-title"></h2>
-<p id="activity-help">Plan reduced activity at 06:00, then confirm it to change the subsequent cabin readings.</p>
+<h2 id="activity-title">Astronaut activity</h2>
+<p>Choose an astronaut, then plan and confirm reduced activity at 06:00.</p>
+<div id="roster" class="controls" role="group" aria-label="Astronaut roster"></div>
 <div class="controls">
 <button type="button" id="plan">Plan reduced activity</button>
 <button type="button" id="confirm">Confirm activity</button>
@@ -73,21 +74,30 @@ const describe = {
   scrubber: "The scripted degradation reduces effective flow from 20 to 4 m³/h at 01:00.",
   power: "The scenario drops headroom at 10:00. The power bus here shows authored scenario values.",
 };
-let view = "crew", selected = "cabin", checkpoint = 0, activity = "baseline";
-const activityStart = data.reduced.findIndex(frame => frame.time === data.activity_s);
-byId("activity-title").textContent = "Astronaut activity · " + data.crew_id;
+let view = "crew", selected = "cabin", checkpoint = 0, astronaut = data.crew_ids[0];
+const baseline = data.replays[""];
+const activityStart = baseline.findIndex(frame => frame.time === data.activity_s);
+const activities = new Map();
+const rosterButtons = data.crew_ids.map(id => {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = id;
+  button.addEventListener("click", () => { astronaut = id; render(); });
+  byId("roster").append(button);
+  return button;
+});
 
 byId("plan").addEventListener("click", () => {
-  activity = "planned";
+  activities.set(astronaut, "planned");
   checkpoint = activityStart;
   render();
 });
 byId("confirm").addEventListener("click", () => {
-  activity = "confirmed";
+  activities.set(astronaut, "confirmed");
   render();
 });
 byId("reset").addEventListener("click", () => {
-  activity = "baseline";
+  activities.clear();
   checkpoint = 0;
   render();
 });
@@ -95,20 +105,28 @@ const clock = seconds => [Math.floor(seconds / 60), seconds % 60].map(value => S
 function render() {
   const ground = view === "ground";
   const packet = data.ground;
+  const confirmed = data.crew_ids.filter(id => activities.get(id) === "confirmed");
+  const replay = data.replays[confirmed.join(",")];
+  const activity = activities.get(astronaut) ?? "baseline";
+  rosterButtons.forEach((button, index) => {
+    button.setAttribute("aria-pressed", data.crew_ids[index] === astronaut);
+  });
   const frame = ground ? {
     time: packet.mission_s, label: "Delivered " + packet.snapshot_id,
     co2: packet.equipment.co2.value,
     removal: packet.equipment.scrubber_removal.value,
     power: packet.equipment.power_headroom.value,
-  } : (activity === "confirmed" ? data.reduced : data.crew)[checkpoint];
+  } : replay[checkpoint];
   byId("activity").hidden = ground;
   byId("plan").disabled = activity !== "baseline";
   byId("confirm").disabled = activity !== "planned";
-  byId("activity-status").textContent = {
-    baseline: "Baseline activity · " + data.crew[0].generation.toFixed(2) + " m³/h CO₂ generation",
+  const activityStatus = {
+    baseline: "Baseline activity",
     planned: "Planned at 06:00 · Cabin input unchanged",
-    confirmed: "Confirmed at 06:00 · " + data.reduced[activityStart].generation.toFixed(2) + " m³/h CO₂ generation from that point",
-  }[activity];
+    confirmed: "Confirmed at 06:00",
+  };
+  byId("activity-status").textContent = astronaut + " · " + activityStatus[activity]
+    + " · Cabin total " + replay[checkpoint].generation.toFixed(3) + " m³/h";
   const values = {cabin: frame.co2.toFixed(2) + " ppm", scrubber: frame.removal.toFixed(1) + " m³/h", power: frame.power.toFixed(2) + " kW"};
   byId("phase").textContent = frame.label;
   byId("provenance").textContent = ground
@@ -145,7 +163,7 @@ function render() {
     ctx.fillText(values[id], x + width/2, 178);
   }
 }
-data.crew.forEach((frame, index) => {
+baseline.forEach((frame, index) => {
   const button = document.createElement("button");
   button.type = "button"; button.textContent = clock(frame.time) + " " + frame.label;
   button.addEventListener("click", () => { checkpoint = index; render(); });
