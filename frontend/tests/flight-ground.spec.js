@@ -240,11 +240,14 @@ test("a saved Horizon direction holds departure until its verified report reache
   await assign.click();
   await expect(orders).toContainText("Ivo Reyes · Queued at the scrubber rack");
   await expect(page.locator("#crew-strip .crew-portrait").nth(2)).toHaveAttribute("data-working","true");
-  await advance(1);
+  const readiness = await page.evaluate(()=>
+    JSON.parse(localStorage.getItem("sx:launch-checkout:v1")));
+  const work = readiness.groundDirection.work;
+  await advance(Math.ceil((work.assigned-readiness.time)/15));
   await expect(orders).toContainText("Ivo Reyes · Travelling at the scrubber rack");
-  await advance(1);
+  await advance((work.arrival-work.assigned)/15);
   await expect(orders).toContainText("Ivo Reyes · Inspecting at the scrubber rack");
-  await advance(2);
+  await advance((work.finishes-work.arrival)/15);
   await button("Ivo · Send readiness report").click();
   await expect(ground).toContainText("Awaiting report delivery");
   await expect(page.locator("#launch-status")).toHaveText("ISS transfer held · Ground readiness");

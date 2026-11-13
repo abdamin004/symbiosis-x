@@ -148,7 +148,9 @@ test("Horizon burns into orbit, reaches ISS and returns to Earth in one saved mi
   await advance(3);
   await button("Orders").click();
   await button("Assign Ivo to readiness check").click();
-  await advance(3);
+  const readiness = await page.evaluate(()=>
+    JSON.parse(localStorage.getItem("sx:launch-checkout:v1")));
+  await advance(Math.ceil((readiness.groundDirection.work.finishes-readiness.time)/15));
   await button("Ivo · Send readiness report").click();
   await advance(2);
   await expect(ground).toContainText("Ground received readiness verified");
