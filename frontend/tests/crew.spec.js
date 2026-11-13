@@ -1,5 +1,33 @@
 import { expect, test } from "@playwright/test";
 
+test("Crew can read the alert reason", async ({ page }) => {
+  await page.goto("/runs/run-001/crew");
+
+  const panel = page.getByTestId("crew-health-panel");
+  await expect(panel.getByRole("heading", { name: "Crew health context" })).toBeVisible();
+  await expect(panel.getByTestId("health-alert-status")).toHaveText("Review alert");
+  await expect(panel.getByTestId("health-alert-reason")).toContainText(
+    "Three consecutive resting readings (95, 97, 98 bpm)",
+  );
+  await expect(panel.getByTestId("health-alert-reason")).toContainText("72 bpm personal baseline");
+  await expect(panel.getByTestId("health-evidence-quality")).toHaveText("valid · 3 samples");
+  await expect(panel.getByTestId("cabin-context")).toContainText("CO₂:");
+  await expect(panel.getByTestId("cabin-context")).toContainText("modeled estimate");
+
+  await page.goto("/runs/run-001/ground");
+  await expect(page.getByTestId("crew-health-panel")).toHaveCount(0);
+});
+
+test("missing health and cabin readings remain unknown", async ({ page }) => {
+  await page.goto("/tests/fixtures/crew-health.html");
+
+  const panel = page.getByTestId("crew-health-panel");
+  await expect(panel.getByTestId("health-alert-status")).toHaveText("Unknown");
+  await expect(panel.getByTestId("health-observation")).toContainText("Unknown");
+  await expect(panel.getByTestId("health-alert-reason")).toContainText("latest reading at 840 s is missing");
+  await expect(panel.getByTestId("cabin-context")).toContainText("CO₂ is unknown");
+});
+
 test("archive chart shows source and missing gaps", async ({ page }) => {
   await page.goto("/tests/fixtures/radiation-context.html");
 
