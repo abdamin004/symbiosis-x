@@ -24,7 +24,7 @@ TRACE_EVENTS = {
 
 def read_run(db: Connection, run_id: str) -> Row:
     run = db.execute(
-        """SELECT run_id, scenario_id, scenario_version, mission_s, decision_rev
+        """SELECT run_id, scenario_id, scenario_version, mission_s, decision_rev, status
            FROM runs WHERE run_id = ?""",
         (run_id,),
     ).fetchone()
@@ -130,7 +130,8 @@ def read_ground(db: Connection, run_id: str) -> CurrentGroundView:
     onboard_until_s = snapshot["observed_at_s"] if snapshot is not None else -1
     return CurrentGroundView(
         run_id=run["run_id"], scenario_id=run["scenario_id"],
-        scenario_version=run["scenario_version"], mission_s=run["mission_s"], packet=packet,
+        scenario_version=run["scenario_version"], mission_s=run["mission_s"], status=run["status"],
+        packet=packet,
         trace=read_trace(db, run_id, run["mission_s"], onboard_until_s=onboard_until_s),
         health_cases=ground_case_statuses(db, run_id, run["mission_s"]),
     )

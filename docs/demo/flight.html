@@ -248,6 +248,12 @@ button[aria-pressed=true]{background:#3d315e}
 .mission-dialog h3{margin:.1rem 0 .4rem}
 .mission-dialog p{color:var(--muted);font-size:.87rem;margin:.35rem 0}
 .dialog-top{display:flex;align-items:start;justify-content:space-between;gap:1rem;margin-bottom:1rem}
+.end-mission{border-color:#ff9c8a66}
+.end-mission-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:.6rem;margin-top:1.1rem}
+.end-mission-go{background:#ffc18f;color:#231d1d;font-weight:760}
+.end-mission-facts{display:grid;grid-template-columns:auto 1fr;gap:.35rem 1.2rem;margin:.8rem 0 0;font-size:.9rem}
+.end-mission-facts dt{color:var(--muted)}
+.end-mission-facts dd{margin:0}
 [hidden]{display:none!important}
 .launch-page{min-height:100dvh;background:#101b29;color:#f5f2eb}
 .launch-ribbon{position:relative;z-index:2;justify-content:space-between;background:#111b27;border-bottom:1px solid #bfc2bc30}
@@ -370,6 +376,10 @@ button[aria-pressed=true]{background:#3d315e}
 #launch-jobs .checkout-job-status{font-size:.72rem}
 #orbit-track{width:100%;background:#0b1427;border-radius:7px}
 #orbit-status{color:var(--blue)}
+#navigation-mini{position:fixed;z-index:8;right:.65rem;bottom:.65rem;width:clamp(116px,16vw,168px);padding:.35rem;background:#101932df;box-shadow:0 4px 16px #0006;text-align:left}
+#navigation-mini canvas,#navigation-track{display:block;width:100%;border-radius:6px}
+#navigation-mini small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.68rem;color:#c7d7ed}
+#orbit-dialog{width:min(680px,calc(100% - 1.5rem))}
 .hud,.launch-hud{position:fixed;inset:0 0 auto;z-index:10;pointer-events:none;background:linear-gradient(180deg,#080c1bde,transparent);box-shadow:none}
 .hud button,.hud a,.launch-hud button,.launch-hud a{pointer-events:auto}
 .ribbon{gap:.35rem .65rem;text-shadow:0 1px 8px #090b19}
@@ -406,6 +416,10 @@ button[aria-pressed=true]{background:#3d315e}
 .profile-data meter,.duty-progress{width:100%;height:.55rem;accent-color:#a3e8c8}
 .profile-data dd:has(meter){min-width:5.5rem}
 .profile-data dd meter{display:block}
+#docking-view{margin:.35rem 0 .55rem}
+#docking-view canvas{display:block;width:100%;border-radius:6px}
+#docking-caption{font-size:.74rem;color:#bfe1ed}
+#station-research-board progress{width:100%;height:.5rem;accent-color:#a3e8c8}
 @media(max-width:800px){.mission-resources{top:calc(100% + 4.2rem)}#widget-shelf{top:calc(100% + 7.6rem)}}
 @media(max-width:660px){
   .launch-field{height:auto}
@@ -428,6 +442,7 @@ __HUD_ICONS__
     <button type="button" id="show-command" hidden>Flight command</button>
     <button type="button" id="show-missions"><svg class="icon" aria-hidden="true"><use href="#hud-map"/></svg>Game menu</button>
     <button type="button" id="show-objectives"><svg class="icon" aria-hidden="true"><use href="#hud-clipboard-list"/></svg>Mission objectives</button>
+    <button type="button" id="end-mission" class="end-mission"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg>End mission</button>
     <a href="/mission">Mission control</a>
   </div>
   <div class="mission-resources" id="mission-resources" role="group" aria-label="Mission resources">
@@ -459,6 +474,10 @@ __HUD_ICONS__
       <h2 id="mission-command-title">Flight command</h2>
       <button class="widget-close" type="button" aria-label="Close flight command"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button>
     </div>
+    <figure id="docking-view" hidden>
+      <canvas id="docking-scene" width="760" height="320" role="img" aria-label="Exterior view of Asteria and the International Space Station"></canvas>
+      <figcaption id="docking-caption"></figcaption>
+    </figure>
   </section>
   <section class="panel" id="workflow-widget" hidden aria-labelledby="workflow-title">
     <div class="widget-bar"><button class="move-widget widget-title" type="button" aria-label="Move orders with drag or arrow keys"><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button><h2 id="workflow-title">Onboard orders</h2><button class="widget-close" type="button" aria-label="Close orders"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button></div>
@@ -658,10 +677,51 @@ __HUD_ICONS__
     <li>After insertion, use Flight command to approach, capture, verify the hatch, and return.</li>
   </ol>
 </dialog>
+<dialog id="end-mission-dialog" class="mission-dialog" aria-labelledby="end-mission-title">
+  <div class="dialog-top"><h2 id="end-mission-title">End this mission?</h2></div>
+  <div id="end-mission-confirm">
+    <p>The flight stops here. You can replay it from the start or go back to the game menu.</p>
+    <div class="end-mission-actions">
+      <button id="end-mission-cancel" type="button">Keep flying</button>
+      <button id="end-mission-go" class="end-mission-go" type="button">End mission</button>
+    </div>
+  </div>
+  <div id="end-mission-summary" hidden>
+    <p>Simulated mission summary. Values are the replay state when the mission ended.</p>
+    <dl id="end-mission-facts" class="end-mission-facts"></dl>
+    <div class="end-mission-actions">
+      <button id="end-mission-restart" type="button"><svg class="icon" aria-hidden="true"><use href="#hud-rotate-ccw"/></svg>Replay from start</button>
+      <button id="end-mission-menu" class="end-mission-go" type="button">Back to game menu</button>
+    </div>
+  </div>
+</dialog>
 <dialog id="orbit-dialog" class="mission-dialog" aria-labelledby="orbit-title">
   <div class="dialog-top"><h2 id="orbit-title">Orbit map</h2><form method="dialog"><button>Close</button></form></div>
-  <div id="orbit-dialog-content"></div>
+  <canvas id="navigation-track" width="560" height="300" role="img" aria-label="Earth, spacecraft trajectory and station orbit"></canvas>
+  <p><span style="color:#fff0bf">▲ Asteria</span> · <span style="color:#a6bcff">● ISS reference</span></p>
+  <p id="navigation-basis"></p>
+  <dl class="launch-readouts">
+    <div><dt>Apoapsis</dt><dd id="navigation-ap"></dd></div>
+    <div><dt>Periapsis</dt><dd id="navigation-pe"></dd></div>
+    <div><dt>Altitude</dt><dd id="navigation-altitude"></dd></div>
+    <div><dt>Speed</dt><dd id="navigation-speed"></dd></div>
+    <div><dt>Period</dt><dd id="navigation-period"></dd></div>
+    <div><dt>Next decision</dt><dd id="navigation-target"></dd></div>
+    <div><dt>Relative navigation</dt><dd id="navigation-approach"></dd></div>
+    <div><dt>Navigation watch</dt><dd id="navigation-owner"></dd></div>
+    <div><dt>Propulsion</dt><dd id="navigation-stage"></dd></div>
+    <div><dt>Attitude</dt><dd id="navigation-attitude"></dd></div>
+    <div><dt>RCS reserve</dt><dd id="navigation-reserve"></dd></div>
+  </dl>
+  <div class="choices" aria-label="Commander attitude control">
+    <button type="button" data-attitude="-15">Rotate −15°</button>
+    <button type="button" data-attitude="15">Rotate +15°</button>
+  </div>
 </dialog>
+<button id="navigation-mini" type="button" aria-label="Open orbit minimap" hidden>
+  <canvas id="navigation-thumb" width="240" height="144" aria-hidden="true"></canvas>
+  <small id="navigation-caption"></small>
+</button>
 <section id="launch-page" class="launch-page" aria-label="SYMBIOSIS X flight game" hidden>
   <div class="launch-hud">
   <nav class="ribbon launch-ribbon" aria-label="Flight navigation">
@@ -745,6 +805,16 @@ __HUD_ICONS__
           <button id="launch-transfer" type="button" hidden>Hand off research kit</button>
         </div>
       </div>
+      <section id="station-research-board" aria-labelledby="station-research-title" hidden>
+        <h3 id="station-research-title">ISS research objectives</h3>
+        <ol>
+          <li>Transfer the research kit</li>
+          <li>Collect wristband and back-pod samples with Sana</li>
+          <li>Verify and archive the paired sample</li>
+        </ol>
+        <progress id="station-research-progress" max="100" value="0" aria-label="Station research progress"></progress>
+        <p id="station-research-status"></p>
+      </section>
       <div class="choices checkout-controls">
         <output id="launch-time" aria-label="Mission elapsed time"></output>
         <button id="launch-step" type="button">Advance 15 s</button>
@@ -757,6 +827,7 @@ __HUD_ICONS__
         <button id="launch-capture" type="button" hidden>Capture station</button>
         <button id="launch-retreat" type="button" hidden>Retreat to orbit</button>
         <button id="launch-research" type="button" hidden>Assign Sana to station research</button>
+        <button id="launch-archive" type="button" hidden>Verify and archive research</button>
         <button id="launch-depart" type="button" hidden>Seal hatch and board return capsule</button>
         <button id="launch-deorbit" type="button" hidden>Commit deorbit</button>
         <button id="launch-land" type="button" hidden>Confirm landing</button>
@@ -776,6 +847,8 @@ __FLIGHT_STATIONS__
 __LAUNCH_SCENE__
 __LAUNCH_CHECKOUT__
 __FLIGHT_CREW__
+__DOCKING_SCENE__
+__FLIGHT_NAVIGATION__
 </script>
 <script>
 const element = id => document.getElementById(id);
@@ -852,6 +925,7 @@ function station(duty, member) {
   const groundWork = member === 2 && groundInspection(currentFrame());
   if (groundWork && time >= groundWork.assigned) return ["life-support-01",
     time < groundWork.arrival ? "Walking to the scrubber rack" : "Inspect life support for the Commander"];
+  if (member === 1 && connectedFlight?.stationWork) return ["medical-01","Collect paired motion samples at ISS"];
   const waiting = peerChecks.find(check => check.mode === crewMode() && check.member === member && check.requested <= time && time < check.due);
   if (waiting) return [waiting.room,"Available for crew observation"];
   const job = crewRoutine(member);
@@ -1750,12 +1824,13 @@ function render() {
     const [roomId, task] = station(duty,i);
     const button = pawns.get(i);
     const crewCheck = peerWork(i,frame.time);
+    const research = i === 1 && connectedFlight?.stationWork;
     const work = activeTask(i, frame.time) || (i === 2 && groundInspection(frame));
     const asset = work && frame.time >= work.assigned ? equipment.get(work.asset) : null;
     const travelling = asset && frame.time < work.arrival;
     const sharedWork = !asset && ["Docked","Station research","Recovery"].includes(frame.phase);
     const routine = crewRoutine(i);
-    const statusIcon = crewCheck ? "users" : (work ? equipment.get(work.asset).icon : routine ? equipment.get(routine.asset).icon
+    const statusIcon = crewCheck ? "users" : research ? "flask-conical" : (work ? equipment.get(work.asset).icon : routine ? equipment.get(routine.asset).icon
       : sharedWork ? "users" : roomIcons[roomId]);
     const marker = button.querySelector(".action-marker");
     const badge = portraits.get(i).querySelector(".crew-status");
@@ -1763,7 +1838,7 @@ function render() {
       setIcon(marker.querySelector("i"),statusIcon,""); setIcon(badge,statusIcon,"");
       badge.dataset.icon = statusIcon;
     }
-    marker.hidden = !work && !routine && !crewCheck;
+    marker.hidden = !work && !routine && !crewCheck && !research;
     marker.style.color = travelling || sharedWork ? "#bed6ff" : "";
     button.setAttribute("aria-label", characters[i].name + " " + duty.role + " · " + task);
     button.title = "Open digital twin · " + task;
@@ -1832,7 +1907,8 @@ function crewMotion(member, frame) {
     return {origin:task.origin,destination:stationPoint(room,member,asset),
       start:task.assigned,end:task.arrival,activity:frame.time >= task.arrival ? "work" : "move"};
   }
-  const job = crewRoutine(member);
+  const job = member === 1 && connectedFlight?.stationWork
+    ? {asset:"lab",previous:"stores",...connectedFlight.stationWork} : crewRoutine(member);
   if (job) {
     const asset = equipment.get(job.asset);
     const previous = equipment.get(job.previous);
@@ -1872,7 +1948,7 @@ function paintFlight(frame, sceneTime = missionTime) {
     button.style.setProperty("--stride",pose.toFixed(2));
     button.style.setProperty("--facing",facing);
     const job = peerWork(member,frame.time) || activeTask(member,frame.time) ||
-      (member === 2 && inspection) || crewRoutine(member);
+      (member === 2 && inspection) || (member === 1 && connectedFlight?.stationWork) || crewRoutine(member);
     if (job) {
       const start = job.assigned ?? job.requested;
       const end = job.finishes ?? job.due;
@@ -2263,6 +2339,7 @@ const launchMission = bindLaunchCheckout(data.launch,{
         const elapsed = Math.min(TICK_SECONDS, (now-canvasTickStarted)*.004*(connectedFlight?.speed ?? 1));
         if (!reducedMotion.matches && now-lastPaintAt >= 32) {
           paintFlight(currentFrame(),missionTime+elapsed);
+          launchMission.paintNavigation(missionTime+elapsed);
           lastPaintAt = now;
         }
         canvasAnimation = requestAnimationFrame(animate);
@@ -2277,6 +2354,58 @@ const launchMission = bindLaunchCheckout(data.launch,{
     checkIns.clear();
     reduced.clear();
   },
+});
+// End mission: stop the flight, then summarize where it ended and offer a fresh start.
+const endDialog = element("end-mission-dialog");
+let missionEnded = false;
+function showEndStep(ended) {
+  missionEnded = ended;
+  element("end-mission-title").textContent = ended ? "Mission ended" : "End this mission?";
+  element("end-mission-confirm").hidden = ended;
+  element("end-mission-summary").hidden = !ended;
+}
+element("end-mission").addEventListener("click", () => {
+  showEndStep(false);
+  endDialog.showModal();
+  element("end-mission-cancel").focus();
+});
+element("end-mission-cancel").addEventListener("click", () => endDialog.close());
+element("end-mission-go").addEventListener("click", () => {
+  stop();
+  if (connectedPlaying) launchMission.togglePlayback();
+  render();
+  const frame = currentFrame();
+  const facts = [
+    ["Mission time", clock(frame.time)],
+    ["Phase", frame.phase + " · " + frame.vehicle],
+    ["Location", frame.site],
+    ["Cabin CO₂", frame.co2.toFixed(0) + " ppm"],
+    ["Power headroom", frame.power == null ? "Unmodeled" : frame.power.toFixed(2) + " kW"],
+    ["Crew aboard", String(data.crew.length)],
+  ];
+  element("end-mission-facts").replaceChildren(...facts.flatMap(([label, value]) => {
+    const term = document.createElement("dt");
+    const detail = document.createElement("dd");
+    term.textContent = label;
+    detail.textContent = value;
+    return [term, detail];
+  }));
+  showEndStep(true);
+  element("end-mission-restart").focus();
+});
+// An ended mission needs a choice: Escape does not drop back into the stopped flight.
+endDialog.addEventListener("cancel", event => { if (missionEnded) event.preventDefault(); });
+function leaveEndedMission() {
+  endDialog.close();
+  showEndStep(false);
+  if (connectedFlight) launchMission.reset();
+  setMissionTime(0);
+  render();
+}
+element("end-mission-restart").addEventListener("click", leaveEndedMission);
+element("end-mission-menu").addEventListener("click", () => {
+  leaveEndedMission();
+  element("show-missions").click();
 });
 widgets.layout();
 render();

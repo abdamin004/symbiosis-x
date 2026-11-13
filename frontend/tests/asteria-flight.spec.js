@@ -59,6 +59,7 @@ test("Asteria hands off to the crew canvas and returns to Earth in one saved mis
   await advance(1);
   const missionUrl = page.url();
   await liftoff.click();
+  await expect(button("Open orbit minimap")).toBeVisible();
   await expect(transport.getByRole("button", { name:"Pause", exact:true })).toBeVisible();
   await transport.getByRole("button", { name:"Pause", exact:true }).click();
   await transport.getByRole("button", { name:"Play", exact:true }).click();
@@ -68,7 +69,12 @@ test("Asteria hands off to the crew canvas and returns to Earth in one saved mis
   await expect(flightPlayback.getByRole("button", { name:"Cycle speed" })).toHaveText("4×");
   await expect(flightPlayback.getByRole("button", { name:"Advance one mission tick" })).toBeVisible();
   await button("Orbit map").click();
-  await expect(page.getByRole("dialog", { name:"Orbit map" })).toContainText("175 km");
+  const navigation = page.getByRole("dialog", { name:"Orbit map" });
+  await expect(navigation).toContainText("175 km");
+  await expect(navigation.locator("#navigation-speed")).toHaveText(/km\/s/);
+  await button("Rotate +15°").click();
+  await expect(navigation.locator("#navigation-attitude")).toContainText("15°");
+  await expect(navigation.locator("#navigation-reserve")).toContainText("11 cold-gas pulses");
   await button("Close").click();
   await expect(page).toHaveURL(missionUrl);
 
@@ -91,9 +97,14 @@ test("Asteria hands off to the crew canvas and returns to Earth in one saved mis
 
   const command = page.getByRole("region", { name: "Flight command" });
   await command.getByRole("button", { name: "Commit phasing", exact: true }).click();
+  await expect(page.locator("#docking-view")).toBeVisible();
+  await button("Hold approach").click();
+  await expect(page.locator("#docking-caption")).toContainText("Approach held");
+  await button("Resume approach").click();
   await expect(button("Capture station")).toBeDisabled();
   await advance(3);
   await button("Capture station").click();
+  await expect(page.locator("#docking-caption")).toContainText("Docking contact");
   const authorize = button("Authorize hatch opening");
   await expect(authorize).toBeDisabled();
   await button("Check seal").click();
@@ -107,7 +118,11 @@ test("Asteria hands off to the crew canvas and returns to Earth in one saved mis
   await button("Hand off research kit").click();
   await button("Assign Sana to station research").click();
   await advance(2);
+  await expect(button("Seal hatch and board return capsule")).toBeHidden();
+  await button("Verify and archive research").click();
+  await expect(page.locator("#station-research-status")).toContainText("Paired sample archived");
   await button("Seal hatch and board return capsule").click();
+  await expect(page.locator("#docking-caption")).toContainText("Undocking");
   await button("Commit deorbit").click();
   await advance(4);
   await button("Confirm landing").click();
@@ -119,6 +134,8 @@ test("Asteria hands off to the crew canvas and returns to Earth in one saved mis
   await expect(page.locator("#launch-status")).toHaveText("Crew recovered on Earth");
   await expect(page.locator("#ship canvas")).toBeVisible();
   await expect(page).toHaveURL(missionUrl);
+  await button("Open orbit minimap").click();
+  await expect(navigation.locator("#navigation-reserve")).toContainText("11 cold-gas pulses");
 });
 
 test("ISS replay portraits and pawns open crew anatomy with evidence for the selected region", async ({ page }) => {

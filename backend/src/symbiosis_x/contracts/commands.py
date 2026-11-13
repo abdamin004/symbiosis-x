@@ -54,6 +54,17 @@ class ResetReceipt(RunReceipt):
     reset_from_run_id: Identifier
 
 
+class EndRunRequest(Contract):
+    end_id: Identifier
+
+
+class EndReceipt(RunReceipt):
+    """The run is closed for good: it stays readable and every later write gets RUN_CLOSED."""
+
+    end_id: Identifier
+    status: Literal["closed"]
+
+
 CandidateId = Literal["hold_course", "start_standby", "reduce_activity"]
 
 

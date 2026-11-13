@@ -61,6 +61,19 @@ export function advanceRun(runId, command) {
 export function resetRun(runId, command) {
   return jsonRequest("/runs/" + encodeURIComponent(runId) + "/reset", "facilitator", { method: "POST", body: JSON.stringify(command) });
 }
+export function endRun(runId, command) {
+  return jsonRequest("/runs/" + encodeURIComponent(runId) + "/end", "facilitator", { method: "POST", body: JSON.stringify(command) });
+}
+export function evaluatePlan(runId) {
+  // A POST only because evaluation takes no client input; the server changes nothing.
+  return jsonRequest("/runs/" + encodeURIComponent(runId) + "/plans/evaluate", "crew", { method: "POST" });
+}
+export function commitAction(runId, command) {
+  return jsonRequest("/runs/" + encodeURIComponent(runId) + "/actions", "crew", { method: "POST", body: JSON.stringify(command) });
+}
+export function readActionReceipt(runId, operationId) {
+  return jsonRequest("/runs/" + encodeURIComponent(runId) + "/actions/" + encodeURIComponent(operationId), "crew");
+}
 export function readRunView(runId, role) {
   return jsonRequest("/runs/" + encodeURIComponent(runId) + "/" + role, role);
 }

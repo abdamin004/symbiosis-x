@@ -61,7 +61,7 @@ export default function RunLauncher({ run: fixtureRun }) {
       )}
 
       <p className="mt-6 text-sm text-slate-500">
-        Only the facilitator can start, advance or reset a run. Crew and Ground links open role-scoped views,
+        Only the facilitator can start, advance, reset or end a run. Crew and Ground links open role-scoped views,
         and the server decides what each role may read.
       </p>
     </main>
