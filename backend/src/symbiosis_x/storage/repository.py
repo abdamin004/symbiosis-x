@@ -1,1 +1,0 @@
-"""Persistence repository · P4."""
