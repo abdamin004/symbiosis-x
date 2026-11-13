@@ -7,81 +7,86 @@
 <style>
 :root{color-scheme:dark;--bg:#060810;--ink:#eef0ff;--muted:#aeb8d3;--blue:#9bdcff;--violet:#bdabff;--edge:#9d9fff33;font:16px/1.45 system-ui,sans-serif}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink)}
-main{max-width:1500px;margin:auto;padding:clamp(.9rem,3vw,2.5rem)}
+main{min-height:100dvh;position:relative}
 h1,h2,p{margin:0}a{color:var(--blue);text-underline-offset:.2em}
-header{display:flex;align-items:end;justify-content:space-between;gap:.8rem;flex-wrap:wrap;padding-bottom:1rem}
-.brand{color:var(--violet);font:650 .72rem ui-monospace,monospace;letter-spacing:.18em;margin-bottom:.4rem}
-h1{font-size:clamp(1.9rem,4vw,3.3rem);font-weight:630;letter-spacing:-.045em;line-height:1}
-.phase{color:var(--muted);font-size:.86rem;margin-top:.55rem}
-header a{font-size:.85rem}
-.stage{position:relative;isolation:isolate;overflow:clip;border:1px solid var(--edge);border-radius:18px;background:radial-gradient(ellipse at 64% 45%,#251944 0%,#0a0e20 53%,#05070f 82%)}
+.stage{position:relative;isolation:isolate;min-height:100dvh;background:radial-gradient(ellipse at 64% 45%,#251944 0%,#0a0e20 53%,#05070f 82%);overflow:clip}
 .stage::before,.stage::after{content:"";position:absolute;pointer-events:none;z-index:-1}
 .stage::before{inset:-70px;background-image:radial-gradient(circle,#e5e2ffb8 1px,transparent 1.5px),radial-gradient(circle,#b9d7fba8 .8px,transparent 1.2px);background-size:97px 83px,149px 127px;background-position:11px 21px,63px 55px;opacity:.7}
 .stage[data-playing=true]::before{animation:travel 9s linear infinite}
 .stage::after{width:min(65vw,640px);aspect-ratio:1;border-radius:50%;right:-16%;top:48%;background:radial-gradient(circle at 25% 8%,#595989 0,#303451 23%,#111427 54%,#080a16 72%);box-shadow:-7px -10px 45px #736aff35;opacity:.7}
 @keyframes travel{to{transform:translateX(-97px)}}
-.viewport{overflow-x:auto;overscroll-behavior-x:contain;position:relative}
+.viewport{overflow-x:auto;overscroll-behavior-x:contain;position:relative;margin:0 auto;max-width:1500px;padding-top:clamp(1rem,7vh,5rem)}
 .ship{width:100%;min-width:680px;aspect-ratio:1100/475;position:relative;isolation:isolate}
 #hull{position:absolute;width:100%;height:100%;inset:0;pointer-events:none;z-index:-1}
-button{font:inherit;color:inherit;cursor:pointer;background:#171d38;border:1px solid #767cb254;border-radius:8px;padding:.4rem .7rem}
+button{font:inherit;color:inherit;cursor:pointer;background:#171d38;border:0;border-radius:8px;padding:.4rem .7rem}
 button:hover{background:#292852}button:focus-visible,input:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
 button:disabled{opacity:.46;cursor:default}
-button[aria-pressed=true]{border-color:var(--violet);background:#3d315e}
+button[aria-pressed=true]{background:#3d315e}
 .zone,.pawn{position:absolute;transform:translate(-50%,-50%)}
-.zone{background:#0c1023aa;border-color:transparent;font-size:clamp(.68rem,1.15vw,.88rem);padding:.12rem .38rem;white-space:nowrap;color:#e1e6ff}
-.zone[data-alert=true]{color:#ffd198;border-color:#ffb56d80}
+.zone{background:transparent;text-shadow:0 1px 8px #070711;font-size:clamp(.68rem,1.15vw,.88rem);padding:.12rem .38rem;white-space:nowrap;color:#e1e6ff}
+.zone[data-alert=true]{color:#ffd198;text-shadow:0 0 12px #ffa45f}
 .pawn{--suit:#a9c7ff;width:38px;height:38px;padding:0;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--suit),transparent 45%);border-radius:50%;background:#141a31;transition:left .95s ease,top .95s ease;z-index:2}
 .pawn::before{content:"";width:12px;height:15px;border:2px solid var(--suit);border-radius:6px 6px 4px 4px;box-shadow:0 0 9px color-mix(in srgb,var(--suit),transparent 54%)}
 .pawn::after{content:"";position:absolute;width:7px;height:3px;top:13px;border-radius:2px;background:var(--suit)}
 .pawn[aria-pressed=true]{outline:2px solid var(--suit);outline-offset:3px}
 .pawn span{position:absolute;top:100%;font:600 .62rem ui-monospace,monospace;color:#fff;background:#111629;padding:.13rem .25rem;border-radius:3px;white-space:nowrap}
-.control-deck{position:relative;display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;padding:.85rem 1rem;background:#070b17e8;border-top:1px solid var(--edge)}
+.control-deck{position:relative;display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;padding:.65rem 1rem;background:#070b17e8}
 .control-deck input{flex:1;min-width:8rem;accent-color:var(--violet)}
 #play{background:#bcafff;color:#15102a;font-weight:700}#play:hover{background:#dbd2ff}
 .clock{font:700 .9rem ui-monospace,monospace;color:var(--blue)}
-.readout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:1rem;margin-top:1rem}
-.panel{background:#0e1325;border:1px solid var(--edge);border-radius:12px;padding:1rem}
+.overlays{position:absolute;inset:0;pointer-events:none}
+.panel{position:absolute;width:min(340px,calc(100% - 20px));max-height:min(60vh,520px);overflow:auto;pointer-events:auto;background:#090e22e8;border-radius:12px;padding:.8rem 1rem;box-shadow:0 12px 38px #0007}
 .panel h2{font-size:1.08rem}.panel p{color:var(--muted);margin:.35rem 0;font-size:.9rem}.panel .reading{color:var(--blue);font-weight:650}
+.widget-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem}
+.move-widget{cursor:grab;touch-action:none;background:transparent;color:var(--muted);padding:.15rem .35rem;font-size:.8rem}
+.move-widget:active{cursor:grabbing}
 .roster{display:flex;flex-wrap:wrap;gap:.45rem;margin:.65rem 0}
 .roster button{font-size:.8rem}
+.flight-controls{position:relative;z-index:100;margin:0 auto;max-width:1500px;padding:0 .8rem}
+.control-deck a{margin-left:auto;font-size:.85rem}
+#phase{flex:1 0 100%;color:var(--muted);font-size:.86rem}
+#timeline{flex:1 1 9rem}
 [hidden]{display:none!important}
-@media(max-width:720px){.readout{grid-template-columns:1fr}.stage::after{width:70vw}.control-deck input{flex-basis:100%}}
+@media(max-width:720px){.stage::after{width:70vw}.control-deck input{flex-basis:100%}}
 @media(prefers-reduced-motion:reduce){.pawn{transition:none}.stage[data-playing=true]::before{animation:none}}
 </style>
 </head>
 <body>
 <main>
-<header>
-  <div><p class="brand">SYMBIOSIS X</p><h1>Flight</h1><p class="phase" id="phase"></p></div>
-  <a href="/mission">Mission control</a>
-</header>
 <section class="stage" id="stage" aria-label="Spacecraft in flight">
   <div class="viewport" tabindex="0" aria-label="Scrollable spacecraft cutaway">
     <div class="ship" id="ship">
       <canvas id="hull" width="1100" height="475" aria-hidden="true"></canvas>
     </div>
   </div>
-  <div class="control-deck">
+  <div class="flight-controls"><div class="control-deck">
+    <p id="phase"></p>
     <button id="play" type="button">Fly mission</button>
     <button id="step" type="button">Step</button>
     <button id="reset" type="button">Reset</button>
+    <label>Speed <select id="speed"><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
     <input id="timeline" type="range" min="0" value="0" aria-label="Mission checkpoint">
     <output class="clock" id="clock" for="timeline"></output>
-  </div>
-</section>
-<div class="readout">
-  <section class="panel" aria-labelledby="focus-name">
+    <button type="button" id="show-inspector" aria-pressed="true">Inspector</button>
+    <button type="button" id="show-crew" aria-pressed="true">Crew</button>
+    <a href="/mission">Mission control</a>
+  </div></div>
+<div class="overlays" id="overlays">
+  <section class="panel" id="inspector-widget" aria-labelledby="focus-name">
+    <div class="widget-bar"><button class="move-widget" type="button" aria-label="Move inspector with drag or arrow keys">⠿ Move</button></div>
     <h2 id="focus-name"></h2>
     <p class="reading" id="reading"></p>
     <p id="focus-detail"></p>
     <button type="button" id="activity" hidden></button>
   </section>
-  <section class="panel" aria-labelledby="crew-heading">
+  <section class="panel" id="crew-widget" aria-labelledby="crew-heading">
+    <div class="widget-bar"><button class="move-widget" type="button" aria-label="Move crew with drag or arrow keys">⠿ Move</button></div>
     <h2 id="crew-heading">Crew on board</h2>
     <div class="roster" id="roster"></div>
     <p>Simulation replay. Crew duties are scripted and cabin readings use the Python model.</p>
   </section>
 </div>
+</section>
 </main>
 <script type="application/json" id="flight-data">__FLIGHT_DATA__</script>
 <script>
@@ -168,12 +173,10 @@ function drawShip(frame) {
   for (const [id, z] of Object.entries(zones)) {
     const warning = (id === "life-support-01" && frame.removal < 20)
       || (id === "engineering-01" && frame.power < .40);
-    ctx.beginPath();
-    ctx.roundRect(z.x,z.y,z.w,z.h,12);
-    ctx.fillStyle = z.color;
-    ctx.fill();
-    ctx.strokeStyle = selection.room === id ? "#c8b7ff" : (warning ? "#dc9668" : "#6c7ea68c");
-    ctx.stroke();
+    const glow = ctx.createRadialGradient(z.x+z.w/2,z.y+z.h/2,4,z.x+z.w/2,z.y+z.h/2,z.w*.7);
+    glow.addColorStop(0,warning ? "#98615180" : z.color);
+    glow.addColorStop(1,"#171b3400");
+    rectangle(z.x-8,z.y-8,z.w+16,z.h+16,glow);
     rectangle(z.x+12,z.y+10,24,3,warning ? "#ffc486" : "#9bbffc");
     for (let x=z.x+16;x<z.x+z.w-17;x+=19) rectangle(x,z.y+z.h-12,13,3,"#8093ca70");
     roomButtons.get(id).dataset.alert = warning;
@@ -294,9 +297,14 @@ element("play").addEventListener("click", () => {
   if (timer !== null) stop();
   else {
     if (index === last) index = 0;
-    timer = setInterval(advance,2400);
+    timer = setInterval(advance,2400 / Number(element("speed").value));
   }
   render();
+});
+element("speed").addEventListener("change", () => {
+  if (timer === null) return;
+  stop();
+  timer = setInterval(advance,2400 / Number(element("speed").value));
 });
 element("step").addEventListener("click", () => { stop(); advance(); });
 element("reset").addEventListener("click", () => { stop(); index = 0; reduced.clear(); render(); });
@@ -306,6 +314,53 @@ element("activity").addEventListener("click", () => {
   else reduced.add(id);
   render();
 });
+const overlay = element("overlays");
+let widgetOrder = 3;
+
+function enableWidget(panel, toggle, initialPosition) {
+  const handle = panel.querySelector(".move-widget");
+  let position = initialPosition();
+  let pointer = null;
+  function move(x, y) {
+    position = {
+      x: Math.max(0, Math.min(x, overlay.clientWidth - panel.offsetWidth)),
+      y: Math.max(0, Math.min(y, overlay.clientHeight - panel.offsetHeight)),
+    };
+    panel.style.left = position.x + "px";
+    panel.style.top = position.y + "px";
+  }
+  function bringForward() { panel.style.zIndex = ++widgetOrder; }
+  panel.addEventListener("pointerdown", bringForward);
+  panel.addEventListener("focusin", bringForward);
+  handle.addEventListener("pointerdown", event => {
+    if (event.button !== 0) return;
+    handle.setPointerCapture(event.pointerId);
+    pointer = {id:event.pointerId,x:event.clientX-position.x,y:event.clientY-position.y};
+  });
+  handle.addEventListener("pointermove", event => {
+    if (pointer?.id === event.pointerId) move(event.clientX-pointer.x,event.clientY-pointer.y);
+  });
+  handle.addEventListener("lostpointercapture", () => { pointer = null; });
+  handle.addEventListener("keydown", event => {
+    const offsets = {ArrowLeft:[-16,0],ArrowRight:[16,0],ArrowUp:[0,-16],ArrowDown:[0,16]};
+    if (!offsets[event.key]) return;
+    event.preventDefault();
+    const [x,y] = offsets[event.key];
+    move(position.x+x,position.y+y);
+  });
+  toggle.addEventListener("click", () => {
+    panel.hidden = !panel.hidden;
+    toggle.setAttribute("aria-pressed", !panel.hidden);
+    if (!panel.hidden) { move(position.x,position.y); bringForward(); }
+  });
+  window.addEventListener("resize", () => move(position.x,position.y));
+  move(position.x,position.y);
+}
+enableWidget(element("inspector-widget"), element("show-inspector"), () => ({x:14,y:14}));
+enableWidget(element("crew-widget"), element("show-crew"), () => ({
+  x:overlay.clientWidth - element("crew-widget").offsetWidth - 14,
+  y:overlay.clientWidth < 720 ? 450 : 14,
+}));
 render();
 </script>
 </body>
