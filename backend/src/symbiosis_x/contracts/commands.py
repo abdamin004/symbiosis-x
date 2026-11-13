@@ -158,6 +158,19 @@ class ActionRequest(Contract):
 
 
 class ActionReceipt(Contract):
+    """Frozen SX-01A rejection contract used by the published fixture."""
+
+    operation_id: Identifier
+    status: Literal["rejected"]
+    reason_code: Literal["STALE_DECISION_REV"]
+    basis_decision_rev: NonnegativeInt
+    current_decision_rev: NonnegativeInt
+    applied: Literal[False]
+
+
+class CrewActionReceipt(Contract):
+    """SX-22D response contract; does not mutate the frozen kickoff example."""
+
     operation_id: Identifier
     candidate_id: CandidateId
     status: Literal["accepted", "rejected"]
