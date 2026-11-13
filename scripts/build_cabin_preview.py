@@ -3,7 +3,7 @@
 import argparse
 import json
 import sys
-from dataclasses import replace
+from itertools import combinations
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -26,9 +26,11 @@ CHECKPOINTS = (
 )
 
 
-def replay(member: dict, event: CrewActivity) -> list[dict]:
-    state = CrewActivityState(member["crew_id"], member["zone_id"], member["initial_mode"])
-    rates = member["co2_generation_m3_h"]
+def replay(crew: list[dict], confirmed_ids: set[str]) -> list[dict]:
+    states = {
+        member["crew_id"]: CrewActivityState(member["crew_id"], member["zone_id"], member["initial_mode"])
+        for member in crew
+    }
     frames = []
     co2_ppm = 2000.0
     for time, label, removal, power in CHECKPOINTS:
@@ -41,14 +43,22 @@ def replay(member: dict, event: CrewActivity) -> list[dict]:
                 generation_m3_h=previous["generation"],
                 removal_m3_h=previous["removal"],
             )
-        if time == event.mission_s:
-            state = apply_activity(state, event)
+        if time == ACTIVITY_S:
+            for crew_id, state in states.items():
+                activity = CrewActivity(
+                    f"demo-activity-{crew_id}", crew_id, state.zone_id, time,
+                    "reduced_activity", "confirmed" if crew_id in confirmed_ids else "planned",
+                )
+                states[crew_id] = apply_activity(state, activity)
+        generation = sum(
+            generation_m3_h(states[member["crew_id"]], member["co2_generation_m3_h"])
+            for member in crew
+        )
         frames.append({
             "time": time, "label": label, "co2": co2_ppm, "removal": removal,
-            "power": power, "generation": generation_m3_h(state, rates),
+            "power": power, "generation": generation,
         })
     return frames
-
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -56,17 +66,18 @@ def main() -> None:
     args = parser.parse_args()
 
     roster = json.loads((ROOT / "catalogs/crew/synthetic-roster.json").read_text())
-    member = roster["crew"][0]
-    planned = CrewActivity(
-        "demo-activity-01", member["crew_id"], member["zone_id"], ACTIVITY_S,
-        "reduced_activity", "planned",
-    )
+    crew = roster["crew"]
+    crew_ids = [member["crew_id"] for member in crew]
     ground = json.loads((ROOT / "contracts/examples/ground-v102.json").read_text())
+    replays = {
+        ",".join(selected): replay(crew, set(selected))
+        for size in range(len(crew_ids) + 1)
+        for selected in combinations(crew_ids, size)
+    }
     data = {
-        "crew": replay(member, planned),
-        "reduced": replay(member, replace(planned, status="confirmed")),
+        "crew_ids": crew_ids,
+        "replays": replays,
         "ground": ground,
-        "crew_id": member["crew_id"],
         "activity_s": ACTIVITY_S,
     }
     template = (ROOT / "docs/demo/cabin.html").read_text(encoding="utf-8")
