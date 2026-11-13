@@ -1,0 +1,69 @@
+const API_ROOT = "/api/v1";
+
+let demoTokensPromise;
+
+async function jsonRequest(path, role, options = {}) {
+  const tokens = await getDemoTokens();
+  const response = await fetch(API_ROOT + path, {
+    ...options,
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + tokens[role],
+      ...options.headers,
+    },
+    cache: "no-store",
+  });
+  const body = await response.json().catch(() => null);
+  if (!response.ok) {
+    const error = new Error(body?.detail ?? "REQUEST_FAILED");
+    error.status = response.status;
+    error.code = body?.detail ?? "REQUEST_FAILED";
+    throw error;
+  }
+  return body;
+}
+
+export function getDemoTokens() {
+  if (!demoTokensPromise) {
+    demoTokensPromise = fetch(API_ROOT + "/demo/session", {
+      method: "POST",
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+    }).then(async (response) => {
+      const body = await response.json().catch(() => null);
+      if (!response.ok) {
+        const error = new Error(body?.detail ?? "DEMO_SESSION_UNAVAILABLE");
+        error.status = response.status;
+        error.code = body?.detail ?? "DEMO_SESSION_UNAVAILABLE";
+        throw error;
+      }
+      return body;
+    }).catch((error) => {
+      demoTokensPromise = null;
+      throw error;
+    });
+  }
+  return demoTokensPromise;
+}
+
+export function createOperationId(prefix) {
+  if (globalThis.crypto?.randomUUID) return prefix + "-" + globalThis.crypto.randomUUID();
+  return prefix + "-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2);
+}
+
+export function startRun(command) {
+  return jsonRequest("/runs", "facilitator", { method: "POST", body: JSON.stringify(command) });
+}
+export function advanceRun(runId, command) {
+  return jsonRequest("/runs/" + encodeURIComponent(runId) + "/advance", "facilitator", { method: "POST", body: JSON.stringify(command) });
+}
+export function resetRun(runId, command) {
+  return jsonRequest("/runs/" + encodeURIComponent(runId) + "/reset", "facilitator", { method: "POST", body: JSON.stringify(command) });
+}
+export function readRunView(runId, role) {
+  return jsonRequest("/runs/" + encodeURIComponent(runId) + "/" + role, role);
+}
+export function createPrivateCheckIn(runId, command) {
+  return jsonRequest("/runs/" + encodeURIComponent(runId) + "/crew/check-ins", "crew", { method: "POST", body: JSON.stringify(command) });
+}
