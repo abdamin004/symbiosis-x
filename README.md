@@ -109,3 +109,14 @@ python3 scripts/seed_time_series_demo.py /tmp/symbiosis-x-series.sqlite3
 ```
 
 The seed writes one replay with 14 cabin CO₂ samples at 60-second intervals and 12 private synthetic heart-rate samples across four astronauts. Re-running the command keeps the same run. The app applies the schema on startup. History endpoints and health assessment are separate work.
+
+### Open the room-based mission canvas
+
+Generate the canvas from the spacecraft room catalog, then serve it on the same local origin as the run API.
+
+```sh
+python3 scripts/build_mission_canvas.py /tmp/symbiosis-x-mission.html
+SYMBIOSIS_X_MISSION_CANVAS=/tmp/symbiosis-x-mission.html python -m uvicorn symbiosis_x.main:app --host 127.0.0.1 --port 8766
+```
+
+Open [Mission canvas](http://127.0.0.1:8766/mission). Start the nominal run at 00:00 and advance it once to 01:00. The room catalog describes the ship's planned functions and links existing assets to the same IDs used by telemetry. Command uses the live run API. Replay and planned labels identify the other room capabilities. Keep the demo server on loopback until KAN-29 adds the shared role boundary.

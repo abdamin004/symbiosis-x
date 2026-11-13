@@ -1,0 +1,12 @@
+{
+  "catalog_version": 1,
+  "rooms": [
+    {"room_id":"command-01","name":"Command","function":"Start a run and advance the mission clock.","systems":[{"name":"Mission clock","status":"live"},{"name":"Navigation and waypoint ETA","status":"planned"}]},
+    {"room_id":"habitat-01","name":"Habitat","function":"House the four-person crew and track confirmed activity in the shared cabin.","systems":[{"name":"Shared air zone","entity_id":"cabin-01","status":"replay"},{"name":"Crew activity","status":"replay"}]},
+    {"room_id":"life-support-01","name":"Life support","function":"Monitor cabin atmosphere and remove carbon dioxide.","systems":[{"name":"Cabin CO₂ sensor","entity_id":"co2-sensor-01","status":"replay"},{"name":"Primary scrubber","entity_id":"primary-scrubber-01","status":"replay"},{"name":"Standby readiness","status":"planned"}]},
+    {"room_id":"engineering-01","name":"Engineering","function":"Track electrical headroom and power available to ship systems.","systems":[{"name":"Power bus","entity_id":"power-bus-01","status":"replay"},{"name":"Standby power check","status":"planned"}]},
+    {"room_id":"medical-01","name":"Medical","function":"Support private measurements and onboard emergency drills.","systems":[{"name":"Crew health","status":"planned"},{"name":"Emergency assist","status":"planned"}]},
+    {"room_id":"comms-01","name":"Communications","function":"Deliver operational snapshots and acknowledgments to Ground.","systems":[{"name":"Ground relay","status":"planned"}]},
+    {"room_id":"cargo-01","name":"Cargo & docking","function":"Track hatch readiness and payload custody for transfers.","systems":[{"name":"Hatch readiness","status":"planned"},{"name":"Payload manifest","status":"planned"}]}
+  ]
+}
