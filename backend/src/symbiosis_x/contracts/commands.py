@@ -67,6 +67,26 @@ class AdvisoryReceipt(Contract):
     deliver_at_s: NonnegativeInt
 
 
+class AdvisoryDisposition(Contract):
+    """How onboard intake classified Ground advice when it arrived. It never applies anything."""
+
+    operation_id: Identifier
+    disposition: Literal["held", "crew_review"]
+    reason_code: Literal["STALE_BASIS", "ADVICE_EXPIRED"] | None
+    candidate_id: CandidateId
+    basis_snapshot_id: Identifier
+    basis_decision_rev: NonnegativeInt
+    current_decision_rev: NonnegativeInt
+    received_at_s: NonnegativeInt
+    applied: Literal[False]
+
+    @model_validator(mode="after")
+    def held_has_reason(self):
+        if (self.disposition == "held") != (self.reason_code is not None):
+            raise ValueError("held advice carries a reason; advice for Crew review does not")
+        return self
+
+
 class RejectedCandidate(Contract):
     status: Literal["rejected"]
 
