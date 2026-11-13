@@ -34,7 +34,7 @@ button[aria-pressed=true]{background:#3d315e}
 .control-deck input{flex:1;min-width:8rem;accent-color:var(--violet)}
 #play{background:#bcafff;color:#15102a;font-weight:700}#play:hover{background:#dbd2ff}
 .clock{font:700 .9rem ui-monospace,monospace;color:var(--blue)}
-.overlays{position:absolute;inset:0;pointer-events:none}
+.overlays{position:absolute;inset:0;pointer-events:none;overflow:clip;z-index:4}
 .panel{position:absolute;width:min(340px,calc(100% - 20px));max-height:min(60vh,520px);overflow:auto;pointer-events:auto;background:#090e22e8;border-radius:12px;padding:.8rem 1rem;box-shadow:0 12px 38px #0007}
 .panel h2{font-size:1.08rem}.panel p{color:var(--muted);margin:.35rem 0;font-size:.9rem}.panel .reading{color:var(--blue);font-weight:650}
 .widget-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem}
@@ -42,12 +42,27 @@ button[aria-pressed=true]{background:#3d315e}
 .move-widget:active{cursor:grabbing}
 .roster{display:flex;flex-wrap:wrap;gap:.45rem;margin:.65rem 0}
 .roster button{font-size:.8rem}
-.ribbon{position:relative;z-index:100;display:flex;gap:.6rem 1.25rem;align-items:center;flex-wrap:wrap;padding:.65rem 1rem;background:#070b18e8;font-size:.82rem}
+.hud{position:relative;z-index:10;background:linear-gradient(100deg,#111632,#080b18);box-shadow:0 12px 45px #0006}
+.ribbon{display:flex;align-items:center;gap:.45rem 1.05rem;flex-wrap:wrap;padding:.55rem 1rem;font-size:.8rem}
+.ribbon .resource,.ribbon button{display:inline-flex;align-items:center;gap:.35rem}
+.ribbon a{margin-left:auto}
+.icon{width:1rem;height:1rem;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.16em}
+.ribbon .resource{color:var(--violet)}
+.widget-bar h2{margin:0;font-size:1rem;flex:1;pointer-events:none}
+.widget-bar .move-widget{padding:.12rem .22rem}
+.widget-bar{gap:.28rem}
+.widget-title{display:flex;align-items:center;gap:.35rem;text-align:left;color:var(--ink)}
+.widget-close{padding:.17rem .4rem;background:transparent;color:var(--muted)}
+.speed-buttons{display:flex;gap:.2rem}
+.play-area{position:relative;min-height:max(520px,calc(100dvh - 145px))}
+.profile-window{max-height:min(58vh,480px)}
+.asset-target{position:absolute;transform:translate(-50%,-50%);display:grid;place-items:center;padding:2px;color:#c8d8ff;background:#10182fc9;border-radius:4px}
+.asset-target .icon{width:.85rem;height:.85rem}
 .ribbon output{color:var(--blue)}
-.flight-controls{position:absolute;top:3.4rem;right:.65rem;z-index:100;width:min(410px,calc(100% - 1.3rem))}
-.viewport{padding-top:clamp(10rem,24vh,14rem)}
+.flight-controls{width:min(680px,100%);margin-left:auto}
+.viewport{padding-top:clamp(2rem,9vh,6rem)}
 #map-widget{width:280px}#workflow-widget{width:320px}.route-map{width:100%;display:block}.route-map circle{fill:#b0bdfa}.route-map #ship-position{fill:#e8ccff;stroke:#fbf4ff}
-@media(max-width:720px){.flight-controls{top:5.5rem}.viewport{padding-top:15rem}}
+
 .control-deck a{margin-left:auto;font-size:.85rem}
 #phase{flex:1 0 100%;color:var(--muted);font-size:.86rem}
 #timeline{flex:1 1 9rem}
@@ -64,34 +79,40 @@ button[aria-pressed=true]{background:#3d315e}
 </style>
 </head>
 <body>
+__HUD_ICONS__
 <main>
 <section class="stage" id="stage" aria-label="Spacecraft in flight">
-  <div class="ribbon" aria-label="Mission resources">
-    <output id="resource-phase"></output><output id="resource-air"></output><output id="resource-power"></output><output id="resource-crew"></output>
-    <button type="button" id="show-inspector" aria-pressed="false">Inspector</button>
-    <button type="button" id="show-crew" aria-pressed="false">Crew</button>
-    <button type="button" id="show-workflow" aria-pressed="false">Orders</button>
-    <button type="button" id="show-map" aria-pressed="true">Route map</button>
+  <div class="hud"><div class="ribbon" aria-label="Mission resources">
+    <span class="resource"><svg class="icon" aria-hidden="true"><use href="#hud-map"/></svg><output id="resource-phase"></output></span><span class="resource"><svg class="icon" aria-hidden="true"><use href="#hud-wind"/></svg><output id="resource-air"></output></span><span class="resource"><svg class="icon" aria-hidden="true"><use href="#hud-zap"/></svg><output id="resource-power"></output></span><span class="resource"><svg class="icon" aria-hidden="true"><use href="#hud-users"/></svg><output id="resource-crew"></output></span>
+    <button type="button" id="show-inspector" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#hud-activity"/></svg>Inspector</button>
+    <button type="button" id="show-crew" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#hud-users"/></svg>Crew</button>
+    <button type="button" id="show-workflow" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#hud-clipboard-list"/></svg>Orders</button>
+    <button type="button" id="show-map" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="#hud-map"/></svg>Route map</button>
     <a href="/mission">Mission control</a>
-  </div>
-  <div class="viewport" tabindex="0" aria-label="Scrollable spacecraft cutaway">
-    <div class="ship" id="ship">
-      <canvas id="hull" width="1100" height="475" aria-hidden="true"></canvas>
-    </div>
   </div>
   <div class="flight-controls"><div class="control-deck">
     <p id="phase"></p>
     <button id="play" type="button">Fly mission</button>
     <button id="step" type="button">Skip to next event</button>
     <button id="reset" type="button">Reset</button>
-    <label>Speed <select id="speed"><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option><option value="one-hour">Mission in 1 hour</option></select></label>
+    <div class="speed-buttons" role="group" aria-label="Playback speed">
+      <button type="button" data-rate="1" aria-pressed="true">1×</button>
+      <button type="button" data-rate="2" aria-pressed="false">2×</button>
+      <button type="button" data-rate="4" aria-pressed="false">4×</button>
+      <button type="button" data-rate="one-hour" aria-pressed="false">1-hour mission</button>
+    </div>
     <input id="timeline" type="range" min="0" value="0" aria-label="Mission time">
     <output class="clock" id="clock" for="timeline"></output>
-  </div></div>
+  </div></div></div>
+  <div class="play-area">
+  <div class="viewport" tabindex="0" aria-label="Scrollable spacecraft cutaway">
+    <div class="ship" id="ship">
+      <canvas id="hull" width="1100" height="475" aria-hidden="true"></canvas>
+    </div>
+  </div>
 <div class="overlays" id="overlays">
   <section class="panel" id="workflow-widget" hidden aria-labelledby="workflow-title">
-    <div class="widget-bar"><button class="move-widget" type="button" aria-label="Move orders with drag or arrow keys">⠿ Move</button></div>
-    <h2 id="workflow-title">Onboard orders</h2>
+    <div class="widget-bar"><button class="move-widget widget-title" type="button" aria-label="Move orders with drag or arrow keys"><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button><h2 id="workflow-title">Onboard orders</h2><button class="widget-close" type="button" aria-label="Close orders"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button></div>
     <p id="workflow-state"></p>
     <p id="monitor-state"></p>
     <button id="assign-order" type="button" hidden>Commander · Assign inspection</button>
@@ -99,7 +120,7 @@ button[aria-pressed=true]{background:#3d315e}
     <button id="complete-order" type="button" hidden>SIM-03 · Report inspection</button>
   </section>
   <section class="panel" id="map-widget" aria-label="Route minimap">
-    <div class="widget-bar"><button class="move-widget" type="button" aria-label="Move route map with drag or arrow keys">⠿ Move</button></div>
+    <div class="widget-bar"><button class="move-widget widget-title" type="button" aria-label="Move route map with drag or arrow keys"><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button><h2>Route map</h2><button class="widget-close" type="button" aria-label="Close route map"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button></div>
     <svg class="route-map" viewBox="0 0 260 58" aria-hidden="true">
       <path d="M18 35 Q75 -4 130 17 Q190 -4 242 35" stroke="#8385bd" fill="none"/>
       <circle cx="18" cy="35" r="4"/><circle cx="130" cy="17" r="4"/><circle cx="242" cy="35" r="4"/>
@@ -109,8 +130,7 @@ button[aria-pressed=true]{background:#3d315e}
     <p id="map-location"></p>
   </section>
   <section class="panel" id="inspector-widget" hidden aria-labelledby="focus-name">
-    <div class="widget-bar"><button class="move-widget" type="button" aria-label="Move inspector with drag or arrow keys">⠿ Move</button></div>
-    <h2 id="focus-name"></h2>
+    <div class="widget-bar"><button class="move-widget widget-title" type="button" aria-label="Move inspector with drag or arrow keys"><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button><h2 id="focus-name"></h2><button class="widget-close" type="button" aria-label="Close inspector"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button></div>
     <p class="reading" id="reading"></p>
     <p id="focus-detail"></p>
     <button type="button" id="activity" hidden></button>
@@ -121,13 +141,24 @@ button[aria-pressed=true]{background:#3d315e}
         <button type="button" data-profile="vitals">Vitals</button>
         <button type="button" data-profile="devices">Devices</button>
       </div>
-      <dl class="profile-data" id="profile-data"></dl>
-      <label id="series-control" hidden>Signal <select id="series">
-        <option value="heart_rate">Heart rate</option><option value="pitch">Trunk pitch</option>
-        <option value="roll">Trunk roll</option><option value="speed">Ship-relative speed</option><option value="emg">Synthetic EMG</option>
-      </select></label>
-      <canvas width="320" height="100" id="vitals-chart" role="img" hidden></canvas>
-      <div id="wellbeing" hidden>
+    </div>
+  </section>
+  <section class="panel profile-window" id="duty-widget" hidden aria-labelledby="duty-title">
+    <div class="widget-bar">
+      <button class="move-widget widget-title" type="button" aria-label="Move Duty widget"><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button>
+      <h2 id="duty-title">Duty</h2>
+      <button class="widget-close" type="button" aria-label="Close Duty widget"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button>
+    </div>
+    <dl class="profile-data" id="duty-data"></dl>
+  </section>
+  <section class="panel profile-window" id="needs-widget" hidden aria-labelledby="needs-title">
+    <div class="widget-bar">
+      <button class="move-widget widget-title" type="button" aria-label="Move Needs widget"><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button>
+      <h2 id="needs-title">Needs</h2>
+      <button class="widget-close" type="button" aria-label="Close Needs widget"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button>
+    </div>
+    <dl class="profile-data" id="needs-data"></dl>
+      <div id="wellbeing">
         <label>Private simulated mood <select id="mood">
           <option value="">No report</option><option>Settled</option><option>Focused</option><option>Overloaded</option>
         </select></label>
@@ -135,14 +166,34 @@ button[aria-pressed=true]{background:#3d315e}
           <option value="">No report</option><option>None reported</option><option>Discomfort reported</option>
         </select></label>
       </div>
+  </section>
+  <section class="panel profile-window" id="vitals-widget" hidden aria-labelledby="vitals-title">
+    <div class="widget-bar">
+      <button class="move-widget widget-title" type="button" aria-label="Move Vitals widget"><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button>
+      <h2 id="vitals-title">Vitals</h2>
+      <button class="widget-close" type="button" aria-label="Close Vitals widget"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button>
     </div>
+    <dl class="profile-data" id="vitals-data"></dl>
+      <label id="series-control">Signal <select id="series">
+        <option value="heart_rate">Heart rate</option><option value="pitch">Trunk pitch</option>
+        <option value="roll">Trunk roll</option><option value="speed">Ship-relative speed</option><option value="emg">Synthetic EMG</option>
+      </select></label>
+      <canvas width="320" height="100" id="vitals-chart" role="img"></canvas>
+  </section>
+  <section class="panel profile-window" id="devices-widget" hidden aria-labelledby="devices-title">
+    <div class="widget-bar">
+      <button class="move-widget widget-title" type="button" aria-label="Move Devices widget"><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button>
+      <h2 id="devices-title">Devices</h2>
+      <button class="widget-close" type="button" aria-label="Close Devices widget"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button>
+    </div>
+    <dl class="profile-data" id="devices-data"></dl>
   </section>
   <section class="panel" id="crew-widget" hidden aria-labelledby="crew-heading">
-    <div class="widget-bar"><button class="move-widget" type="button" aria-label="Move crew with drag or arrow keys">⠿ Move</button></div>
-    <h2 id="crew-heading">Crew on board</h2>
+    <div class="widget-bar"><button class="move-widget widget-title" type="button" aria-label="Move crew with drag or arrow keys"><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button><h2 id="crew-heading">Crew on board</h2><button class="widget-close" type="button" aria-label="Close crew"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button></div>
     <div class="roster" id="roster"></div>
     <p>Simulation replay. Crew duties are scripted and cabin readings use the Python model.</p>
   </section>
+</div>
 </div>
 </section>
 </main>
@@ -216,6 +267,14 @@ let missionTime = 0;
 let lastWallTime = 0;
 let index = 0;
 let timer = null;
+let speed = "1";
+for (const button of document.querySelectorAll("[data-rate]")) {
+  button.addEventListener("click", () => {
+    speed = button.dataset.rate;
+    document.querySelectorAll("[data-rate]").forEach(item =>
+      item.setAttribute("aria-pressed", item === button));
+  });
+}
 let selection = {room:"command-01"};
 
 function place(button, x, y) {
@@ -308,7 +367,9 @@ function showInspector() {
   if (element("inspector-widget").hidden) element("show-inspector").click();
 }
 
-let profileTab = "duty";
+const profileMembers = new Map();
+const profileWindows = new Map();
+let activeProfileTrigger = null;
 const checkIns = new Map();
 const signals = {
   heart_rate:["Heart rate","bpm","Simulated optical watch"],
@@ -344,41 +405,40 @@ function drawHistory(series, field, time) {
     + latest.map(row => clock(row.time) + " " + row[field] + " " + signals[field][1]).join(", "));
 }
 
-function renderProfile(id, frame) {
-  const row = data.history[id][index];
-  const entryKey = id + ":" + row.time;
-  const reports = checkIns.get(entryKey) ?? {};
-  const reporting = profileTab === "needs";
-  element("wellbeing").hidden = !reporting;
-  element("mood").value = reports.mood ?? "";
-  element("symptoms").value = reports.symptoms ?? "";
-  element("series-control").hidden = profileTab !== "vitals";
-  element("vitals-chart").hidden = profileTab !== "vitals";
-  document.querySelectorAll("[data-profile]").forEach(button => {
-    button.setAttribute("aria-pressed", button.dataset.profile === profileTab);
-  });
-  let rows;
-  if (profileTab === "needs") {
-    rows = [["Rest",frame.habitat.beds ? "Protected rest window" : "Next on station"],["Meal and hydration",frame.habitat.meal],["WC",frame.habitat.wc],["Wellbeing reports","Private · current checkpoint"]];
-  } else if (profileTab === "devices") {
-    rows = Object.entries(signals).map(([key,[label,unit,source]]) => [
-      label + " · " + source, row[key] + " " + unit,
-    ]);
-  } else if (profileTab === "vitals") {
-    const field = element("series").value;
-    drawHistory(data.history[id],field,frame.time);
-    rows = [[signals[field][0] + " · " + signals[field][2],row[field] + " " + signals[field][1]],
-      ["Observed / received",clock(row.time) + " / " + clock(row.time)],
-      ...data.metrics.map(metric => [metric.label,metric.id === "heart_rate"
-        ? row.heart_rate + " bpm" : reports[metric.id] || healthSources[metric.id]])];
-  } else {
-    rows = [["Vehicle",frame.vehicle],["Phase",frame.phase],["Experiment",data.research]];
+function renderProfiles(frame) {
+  for (const [kind, member] of profileMembers) {
+    if (element(kind + "-widget").hidden) continue;
+    const id = data.crew[member];
+    const row = data.history[id][index];
+    const reports = checkIns.get(id + ":" + row.time) ?? {};
+    const [zone, task] = station(duties[member], member);
+    element(kind + "-title").textContent = id + " · " + kind[0].toUpperCase() + kind.slice(1);
+    let rows;
+    if (kind === "needs") {
+      element("mood").value = reports.mood ?? "";
+      element("symptoms").value = reports.symptoms ?? "";
+      rows = [["Rest",frame.habitat.beds ? "Protected rest window" : "Scheduled"],["Meal and hydration",frame.habitat.meal],["WC",frame.habitat.wc]];
+    } else if (kind === "devices") {
+      rows = Object.entries(signals).map(([key,[label,unit,source]]) => [
+        label + " · " + source, row[key] + " " + unit,
+      ]);
+    } else if (kind === "vitals") {
+      const field = element("series").value;
+      drawHistory(data.history[id],field,frame.time);
+      rows = [[signals[field][0] + " · " + signals[field][2],row[field] + " " + signals[field][1]],
+        ["Observed / received",clock(row.time) + " / " + clock(row.time)],
+        ...data.metrics.map(metric => [metric.label,metric.id === "heart_rate"
+          ? row.heart_rate + " bpm" : reports[metric.id] || healthSources[metric.id]])];
+    } else {
+      rows = [["Role",duties[member].role],["Station",roomById.get(zone).name],["Task",task],
+        ["Vehicle",frame.vehicle],["Phase",frame.phase],["Experiment",data.research]];
+    }
+    element(kind + "-data").replaceChildren(...rows.flatMap(([label,value]) => {
+      const dt = document.createElement("dt"), dd = document.createElement("dd");
+      dt.textContent = label; dd.textContent = value;
+      return [dt,dd];
+    }));
   }
-  element("profile-data").replaceChildren(...rows.flatMap(([label,value]) => {
-    const dt = document.createElement("dt"), dd = document.createElement("dd");
-    dt.textContent = label; dd.textContent = value;
-    return [dt,dd];
-  }));
 }
 
 function inspect(frame) {
@@ -398,7 +458,6 @@ function inspect(frame) {
       ? (frame.time < data.activity_s ? "Reduced activity confirmed for 06:00." : "Reduced activity is contributing to the cabin model.")
       : "Baseline activity. Confirm a reduction to see its effect on cabin CO₂ after 06:00.";
     action.textContent = reduced.has(id) ? "Restore baseline activity" : "Confirm reduced activity";
-    renderProfile(id, frame);
     return;
   }
   const room = roomById.get(selection.room);
@@ -469,6 +528,7 @@ function render() {
   });
   drawShip(frame);
   inspect(frame);
+  renderProfiles(frame);
 }
 
 function stop() {
@@ -482,8 +542,7 @@ function setMissionTime(seconds) {
 }
 
 function tick(now) {
-  const selected = element("speed").value;
-  const rate = selected === "one-hour" ? endTime / 3600 : Number(selected);
+  const rate = speed === "one-hour" ? endTime / 3600 : 4 * Number(speed);
   setMissionTime(missionTime + (now - lastWallTime) / 1000 * rate);
   lastWallTime = now;
   if (missionTime >= endTime) stop();
@@ -552,12 +611,18 @@ element("activity").addEventListener("click", () => {
   render();
 });
 for (const button of document.querySelectorAll("[data-profile]")) {
-  button.addEventListener("click", () => { profileTab = button.dataset.profile; render(); });
+  button.addEventListener("click", () => {
+    const kind = button.dataset.profile;
+    activeProfileTrigger = button;
+    profileMembers.set(kind, selection.crew);
+    profileWindows.get(kind).open();
+    render();
+  });
 }
 element("series").addEventListener("change", render);
 for (const field of ["mood", "symptoms"]) {
   element(field).addEventListener("change", () => {
-    const key = data.crew[selection.crew] + ":" + checkpoints[index].time;
+    const key = data.crew[profileMembers.get("needs")] + ":" + checkpoints[index].time;
     checkIns.set(key,{...checkIns.get(key),[field]:element(field).value});
     render();
   });
@@ -571,6 +636,7 @@ let widgetOrder = 3;
 
 function enableWidget(panel, toggle, initialPosition) {
   const handle = panel.querySelector(".move-widget");
+  const bar = panel.querySelector(".widget-bar");
   let position = initialPosition();
   let pointer = null;
   function move(x, y) {
@@ -584,15 +650,15 @@ function enableWidget(panel, toggle, initialPosition) {
   function bringForward() { panel.style.zIndex = ++widgetOrder; }
   panel.addEventListener("pointerdown", bringForward);
   panel.addEventListener("focusin", bringForward);
-  handle.addEventListener("pointerdown", event => {
-    if (event.button !== 0) return;
-    handle.setPointerCapture(event.pointerId);
+  bar.addEventListener("pointerdown", event => {
+    if (event.button !== 0 || event.target.closest(".widget-close")) return;
+    bar.setPointerCapture(event.pointerId);
     pointer = {id:event.pointerId,x:event.clientX-position.x,y:event.clientY-position.y};
   });
-  handle.addEventListener("pointermove", event => {
+  bar.addEventListener("pointermove", event => {
     if (pointer?.id === event.pointerId) move(event.clientX-pointer.x,event.clientY-pointer.y);
   });
-  handle.addEventListener("lostpointercapture", () => { pointer = null; });
+  bar.addEventListener("lostpointercapture", () => { pointer = null; });
   handle.addEventListener("keydown", event => {
     const offsets = {ArrowLeft:[-16,0],ArrowRight:[16,0],ArrowUp:[0,-16],ArrowDown:[0,16]};
     if (!offsets[event.key]) return;
@@ -600,21 +666,37 @@ function enableWidget(panel, toggle, initialPosition) {
     const [x,y] = offsets[event.key];
     move(position.x+x,position.y+y);
   });
-  toggle.addEventListener("click", () => {
-    panel.hidden = !panel.hidden;
-    toggle.setAttribute("aria-pressed", !panel.hidden);
-    if (!panel.hidden) { move(position.x,position.y); bringForward(); }
+  function setOpen(open) {
+    panel.hidden = !open;
+    toggle?.setAttribute("aria-pressed", open);
+    if (open) { move(position.x,position.y); bringForward(); }
+  }
+  toggle?.addEventListener("click", () => setOpen(panel.hidden));
+  panel.querySelector(".widget-close")?.addEventListener("click", () => {
+    setOpen(false);
+    const target = toggle ?? activeProfileTrigger;
+    if (target && !target.closest("[hidden]")) target.focus();
   });
-  window.addEventListener("resize", () => move(position.x,position.y));
-  move(position.x,position.y);
+  const resize = new ResizeObserver(() => {
+    if (!panel.hidden) move(position.x, position.y);
+  });
+  resize.observe(overlay);
+  resize.observe(panel);
+  if (!panel.hidden) move(position.x,position.y);
+  return {open: () => setOpen(true), close: () => setOpen(false)};
 }
-enableWidget(element("workflow-widget"), element("show-workflow"), () => ({x:14,y:100}));
+enableWidget(element("workflow-widget"), element("show-workflow"), () => ({x:14,y:50}));
 enableWidget(element("map-widget"), element("show-map"), () => ({x:14,y:overlay.clientHeight - 165}));
-enableWidget(element("inspector-widget"), element("show-inspector"), () => ({x:14,y:80}));
+enableWidget(element("inspector-widget"), element("show-inspector"), () => ({x:14,y:10}));
 enableWidget(element("crew-widget"), element("show-crew"), () => ({
-  x:overlay.clientWidth - element("crew-widget").offsetWidth - 14,
-  y:overlay.clientWidth < 720 ? 450 : 14,
+  x:overlay.clientWidth - 354,
+  y:overlay.clientWidth < 720 ? 270 : 14,
 }));
+for (const [offset, kind] of ["duty", "needs", "vitals", "devices"].entries()) {
+  profileWindows.set(kind, enableWidget(element(kind + "-widget"), null, () => ({
+    x: Math.max(14, overlay.clientWidth - 375 - offset * 28), y: 20 + offset * 48,
+  })));
+}
 render();
 </script>
 </body>
