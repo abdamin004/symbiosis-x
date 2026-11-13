@@ -138,6 +138,19 @@ test("Horizon burns into orbit, reaches ISS and returns to Earth in one saved mi
   await button("Close orders").click();
   await twin.getByRole("button", { name:"Close Digital twin widget" }).click();
 
+  const groundTab = page.getByRole("button",{name:"Ground",exact:true});
+  await groundTab.click();
+  const ground = page.getByRole("region",{name:"Ground relay"});
+  await ground.getByRole("button",{name:"Simulate Ground direction"}).click();
+  await advance(3);
+  await button("Orders").click();
+  await button("Assign Ivo to readiness check").click();
+  await advance(3);
+  await button("Ivo · Send readiness report").click();
+  await advance(2);
+  await expect(ground).toContainText("Ground received readiness verified");
+  await button("Close orders").click();
+
   const command = page.getByRole("region", { name: "Flight command" });
   await guide.getByRole("button",{name:"Go to control"}).click();
   await expect(button("Coast to ISS departure window")).toBeFocused();

@@ -30,7 +30,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
   placeCheckoutProgress();
   const fresh = mission => ({time:0,jobs:{},hold:false,startupAt:null,armed:null,ignition:null,separation:null,insertion:null,aborted:false,phasing:null,capture:null,retreat:null,approachHeld:false,sealAt:null,pressureAt:null,hatchAt:null,transferAt:null,researchAt:null,
     archivedAt:null,departedAt:null,deorbitAt:null,landedAt:null,recoveredAt:null,systemsCheckAt:null,
-    transferArrival:null,matchedAt:null,
+    transferArrival:null,matchedAt:null, groundRequired:Boolean(mission.rendezvous), groundDirection:null,
     attitude:0,pitch:0,rcs:mission.navigation.rcsPulses});
   let ascent, rendezvous, docking, returnPlan, navigation;
   let view = "menu";
@@ -83,7 +83,8 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     config = mission;
     find("navigation-ship-key").textContent = "▲ " + mission.ship;
     find("navigation-station-key").hidden = !mission.rendezvous;
-    state = timed ? fresh(mission) : {...fresh(mission),...saves.read(mission)};
+    const saved = timed ? null : saves.read(mission);
+    state = saved ? {...fresh(mission),groundRequired:false,...saved} : fresh(mission);
     // Older ISS runs could depart before the research archive step existed.
     if (state.departedAt !== null && state.archivedAt === null) state.archivedAt = state.departedAt;
     ascent = mission.ascent;
@@ -302,6 +303,11 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
       }
       if (canPhase && state.time < departure) return {phase:"Parking orbit · waiting for ISS window",
         next:"Coast to the departure point · "+missionStamp(departure),reserve,orbit:true,advance:true,warpTo:departure};
+      if (!demo.active && state.groundRequired && !campaignGround.cleared(state.groundDirection,state.time)) {
+        const relay = campaignGround.status(state.groundDirection,state.time);
+        return {phase:"ISS transfer held · Ground readiness",next:"Open Ground or Orders to clear the readiness direction",
+          reserve,orbit:true,groundHold:true,canWaitForCrew:["pending","assigned","report pending"].includes(relay)};
+      }
       return {phase:"Stable orbit · ISS window open",next:canPhase ? "Commit ISS transfer burn" : "Approach held · reserve below minimum",
         reserve,orbit:true,phaseBurn:canPhase};
     }
@@ -556,6 +562,10 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     onCanvas(inOrbit ? canvasState(flight) : null,procedureEvents,{
       mode:launch ? (demo.active ? config.id+"-timed-demo" : config.id) : view,
       time:launch ? state.time : null,
+      campaign:launch && !demo.active && rendezvous && state.insertion !== null ? {
+        order:state.groundDirection, required:state.groundRequired && state.phasing === null,
+        issueAllowed:state.phasing === null,
+      } : null,
     });
   }
 
@@ -731,6 +741,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     if (flight.insert) return "launch-insert";
     if (flight.warpTo !== undefined) return "launch-coast";
     if (flight.phaseBurn) return "launch-phasing";
+    if (flight.groundHold) return "show-workflow";
     if (flight.matchBurn) return "launch-match";
     if (flight.sample?.expired && state.capture === null) return "launch-retreat";
     if (state.approachHeld) return "launch-approach-hold";
@@ -791,6 +802,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
       };
       return maneuver[activeBurn.kind];
     }
+    if (flight.groundHold) return ["coast","Ground readiness holds ISS transfer","Open Orders to review the direction or Ground to request one."];
     if (control === "launch-coast") return state.phasing === null
       ? ["coast","Coast to the departure point","Let the ship drift in orbit until it lines up for the trip to the station."]
       : ["coast","Coast to the top of the orbit","Let the ship drift to the station’s altitude before matching speed."];
@@ -1546,8 +1558,27 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     });
   }
 
+  function updateGroundDirection(action, {reason,origin} = {}) {
+    if (demo.active || view !== "launch" || !rendezvous || state.insertion === null || state.phasing !== null) return;
+    const current = state.groundDirection;
+    const status = campaignGround.status(current,state.time);
+    let order;
+    if (action === "issue" && ["missing","held","expired","verified"].includes(status)) {
+      order = campaignGround.issue(current,state.time,state.insertion+config.navigation.departureS);
+    } else if (action === "report") {
+      order = campaignGround.report(current,state.time);
+    } else {
+      order = campaignGround.receiveDecision(current,state.time,action,reason,origin);
+    }
+    if (!order) return;
+    state.groundRequired = true;
+    state.groundDirection = order;
+    persist();
+    renderView(false);
+  }
+
   return {advance:()=>{if (!demo.active) advance();},advanceToCheckpoint,togglePlayback,cycleSpeed,refreshCrewWork:()=>renderView(false),
-    paintNavigation:time=>navigation.showAt(time)};
+    paintNavigation:time=>navigation.showAt(time),updateGroundDirection};
 }
 
 function missionStamp(seconds) {

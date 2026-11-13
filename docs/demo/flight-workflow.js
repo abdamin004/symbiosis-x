@@ -102,3 +102,62 @@ const flightWorkflow = (() => {
   return {key, read, send, canSend, canDecide, decide, canComplete, complete, status, job, routine, routineDue, timebox,
     reset: () => localStorage.removeItem(key)};
 })();
+
+// Browser-local training relay. Its operational record lives inside the selected Flight save.
+const campaignGround = (() => {
+  const uplink = 45;
+  const downlink = 30;
+  const holdReasons = ["Readiness evidence incomplete", "Crew or station unavailable", "Operational conditions require review"];
+  const issuer = "Simulated Ground · Flight Director";
+
+  function issue(current, time, departure) {
+    const expires = Math.max(departure + 300, time + uplink + 90);
+    return {
+      issuer, basis: "ISS departure readiness · checkpoint T+" + clock(departure),
+      sent: time, arrives: time + uplink, expires,
+      sequence: (current?.sequence ?? 0) + 1,
+    };
+  }
+
+  function job(order, time) {
+    if (order?.decision !== "assigned" || order.report || time < order.arrives || time >= order.expires) return null;
+    const {work} = order;
+    return {...work, state:time < work.assigned ? "Queued" : time < work.arrival ? "Travelling"
+      : time < work.finishes ? "Inspecting" : "Ready to report"};
+  }
+
+  function status(order, time) {
+    if (!order) return "missing";
+    if (time < order.arrives) return "pending";
+    if (order.report && time >= order.report.delivers) return order.report.result;
+    if (time >= order.expires) return "expired";
+    return order.report ? "report pending" : order.decision ?? "received";
+  }
+
+  function receiveDecision(order, time, decision, reason, origin) {
+    if (!["received","acknowledged"].includes(status(order,time))) return null;
+    const acknowledged = order.acknowledged ?? time;
+    if (decision === "hold" && holdReasons.includes(reason)) {
+      return {...order, acknowledged, decision:"held", reason,
+        report:{result:"held",sent:time,delivers:time + downlink}};
+    }
+    if (decision === "assign" && origin) {
+      const work = flightWorkflow.timebox(time);
+      if (work.finishes + downlink > order.expires) return null;
+      return {...order, acknowledged, decision:"assigned", work:{...work,origin}};
+    }
+    if (decision === "acknowledge") return {...order, acknowledged, decision:"acknowledged"};
+    return null;
+  }
+
+  function report(order, time) {
+    if (job(order,time)?.state !== "Ready to report" || time + downlink > order.expires) return null;
+    return {...order, report:{result:"verified",sent:time,delivers:time + downlink}};
+  }
+
+  function cleared(order, time) {
+    return status(order,time) === "verified" && time <= order.expires;
+  }
+
+  return {issuer, downlink, holdReasons, issue, status, job, receiveDecision, report, cleared};
+})();

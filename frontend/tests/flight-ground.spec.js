@@ -64,7 +64,7 @@ test("offline ISS replay keeps Ground telemetry delayed and uses the existing in
   expect(requests).toEqual([]);
 });
 
-test("an untethered campaign keeps its clock and shows the relay unavailable", async ({ page }) => {
+test("an older untethered campaign keeps its clock and offers simulated Ground without using a replay run", async ({ page }) => {
   const requests = [];
   await page.route("**/api/**", route => { requests.push(route.request().url()); return route.abort(); });
   await page.route(url => url.pathname === "/flight", route =>
@@ -75,7 +75,7 @@ test("an untethered campaign keeps its clock and shows the relay unavailable", a
   const ground = page.getByRole("region", {name:"Ground relay"});
   await groundTab(page).click();
   await expect(groundField(ground, "clock")).toHaveText("T+02:15");
-  await expect(groundField(ground, "link")).toHaveText("Relay unavailable for this run");
+  await expect(groundField(ground, "link")).toHaveText("Simulated campaign relay");
   await expect(groundField(ground, "telemetry")).toBeHidden();
   await expect(ground.getByRole("button", {name:"Queue advice"})).toBeHidden();
   expect(await page.evaluate(() => localStorage.getItem("sx:launch-checkout:v1"))).toBe(saved);
@@ -180,4 +180,81 @@ test("Flight shows Ground pending at 13:00 while the same-run Crew receipt is he
   } finally {
     child.kill();
   }
+});
+
+test("a saved Horizon direction holds departure until its verified report reaches Ground", async ({ page }) => {
+  await page.route(url => url.pathname === "/flight", route =>
+    route.fulfill({contentType:"text/html",body:flightHtml}));
+  await page.addInitScript(() => {
+    if (sessionStorage.getItem("ground-test-seeded")) return;
+    sessionStorage.setItem("ground-test-seeded","yes");
+    localStorage.setItem("sx:launch-checkout:v1",JSON.stringify({
+      time:135,jobs:{},ignition:60,separation:105,insertion:135,groundRequired:true,
+    }));
+    localStorage.setItem("sx:orbital-systems-checkout:v1",JSON.stringify({
+      time:135,jobs:{},ignition:60,separation:105,insertion:135,
+    }));
+  });
+  await page.emulateMedia({reducedMotion:"reduce"});
+  await page.goto("/flight?view=launch");
+  const button = name => page.getByRole("button",{name,exact:true});
+  const ground = page.getByRole("region",{name:"Ground relay"});
+  const orders = page.getByRole("region",{name:"Onboard orders"});
+  const issue = ground.getByRole("button",{name:"Simulate Ground direction"});
+  const tick = page.getByRole("group",{name:"Flight playback"}).getByRole("button",{name:"Advance one mission tick"});
+  const advance = async count => {
+    for (let i=0;i<count;i++) await tick.click();
+  };
+
+  await groundTab(page).click();
+  await expect(ground).toContainText("ISS transfer requires a readiness report");
+  await button("Flight command").click();
+  await button("Coast to ISS departure window").click();
+  const transfer = button("Commit ISS transfer burn");
+  await expect(transfer).toBeDisabled();
+  await expect(page.locator("#launch-status")).toHaveText("ISS transfer held · Ground readiness");
+  await button("Close flight command").click();
+
+  await issue.click();
+  await expect(ground).toContainText(/Simulated Ground · Flight Director.*Sent T\+.*Uplink due T\+/);
+  await button("Orders").click();
+  await expect(orders).toContainText("No direction delivered yet.");
+  await advance(3);
+  await expect(orders).toContainText(/Received onboard T\+.*Fresh.*Deadline/);
+  await button("Acknowledge direction").click();
+  await expect(orders).toContainText("Acknowledged T+");
+  await orders.getByLabel("Reason for holding").selectOption("Readiness evidence incomplete");
+  await button("Hold direction").click();
+  await expect(ground).toContainText("Awaiting report delivery");
+  await expect(ground).not.toContainText("Readiness evidence incomplete");
+  await advance(2);
+  await expect(ground).toContainText(/Ground received a hold.*Readiness evidence incomplete/);
+  await expect(page.locator("#launch-status")).toHaveText("ISS transfer held · Ground readiness");
+
+  await issue.click();
+  await advance(3);
+  await button("Assign Ivo to readiness check").click();
+  await expect(orders).toContainText("Ivo Reyes · Queued at the scrubber rack");
+  await expect(page.locator("#crew-strip .crew-portrait").nth(2)).toHaveAttribute("data-working","true");
+  await advance(1);
+  await expect(orders).toContainText("Ivo Reyes · Travelling at the scrubber rack");
+  await advance(1);
+  await expect(orders).toContainText("Ivo Reyes · Inspecting at the scrubber rack");
+  await advance(2);
+  await button("Ivo · Send readiness report").click();
+  await expect(ground).toContainText("Awaiting report delivery");
+  await expect(page.locator("#launch-status")).toHaveText("ISS transfer held · Ground readiness");
+  await advance(2);
+  await expect(ground).toContainText("Ground received readiness verified");
+  await expect(page.locator("#launch-status")).toHaveText("Stable orbit · ISS window open");
+
+  await page.goto("/flight?view=launch&mission=orbital-systems-checkout");
+  await groundTab(page).click();
+  await expect(ground).not.toContainText(/ISS departure readiness|Ground received/);
+  await expect(issue).toBeHidden();
+  await page.goto("/flight?view=launch");
+  await groundTab(page).click();
+  await expect(ground).toContainText("Ground received readiness verified");
+  await button("Flight command").click();
+  await expect(transfer).toBeEnabled();
 });
