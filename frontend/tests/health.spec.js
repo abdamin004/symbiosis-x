@@ -57,8 +57,11 @@ test("crew sees the reason for a saved reading", async ({ page }) => {
   // The deck and RadLab sit in the supporting panel, after Crew Health.
   const supporting = page.getByTestId("supporting-context");
   await supporting.locator("> summary").click();
-  await expect(supporting.getByRole("link", { name: "Open the cabin deck" })).toHaveAttribute("href", "/mission");
-  await expect(supporting.getByTestId("supporting-deck")).toContainText(`does not show run ${RUN_ID}`);
+  await expect(supporting.getByRole("link", { name: "Open ship systems" })).toHaveAttribute("href", "/mission");
+  // Mission control has room cards and a replay, not a drawn deck map; the card must not claim one.
+  await expect(supporting.getByTestId("supporting-ship-systems")).toContainText("ship systems by room and plays the cabin replay");
+  await expect(supporting.getByTestId("supporting-ship-systems")).toContainText("A drawn deck map is not available yet");
+  await expect(supporting.getByTestId("supporting-ship-systems")).toContainText(`does not show run ${RUN_ID}`);
   await expect(supporting.getByTestId("radlab-context")).toBeVisible();
   const followsCabin = await supporting.evaluate((panel) =>
     !!(document.querySelector('[data-testid="live-cabin-context"]').compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING));
