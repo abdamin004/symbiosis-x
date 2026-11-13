@@ -143,6 +143,8 @@ test("Horizon burns into orbit, reaches ISS and returns to Earth in one saved mi
   await command.getByRole("button", { name: "Commit ISS transfer burn", exact: true }).click();
   await expect(page.locator("#maneuver-target")).toContainText("71.3 m/s");
   await expect(page.locator("#maneuver-track")).toBeVisible();
+  await expect(page.locator("#flight-guidance")).toHaveAttribute("data-mode","burn");
+  await expect(page.getByRole("button",{name:"3 min before checkpoint"})).toHaveAccessibleDescription(/current maneuver/);
   await expect(page.locator("#docking-view")).toBeHidden();
   await expect(button("Coast to transfer apoapsis")).toBeEnabled({timeout:12_000});
   await page.reload();
@@ -264,6 +266,12 @@ test("the exterior workflow recalls on link loss and verifies a later repair onc
   await expect(process.locator("#process-summary")).toContainText("v2 · Mara");
   await button("Close").click();
   await expect(page.locator("#guide-next")).toContainText("Wait for the spacewalker");
+  const checkpoint = button("3 min before checkpoint");
+  await expect(checkpoint).toHaveAccessibleDescription(/Wait for the spacewalker/);
+  const clock = page.locator("#hud-clock");
+  const heldAt = await clock.innerText();
+  await checkpoint.press("Enter");
+  await expect(clock).toHaveText(heldAt);
   await step(3);
   const suited = page.locator("#ship .pawn[data-suited=true]");
   await expect(suited).toHaveCount(1);
@@ -281,6 +289,7 @@ test("the exterior workflow recalls on link loss and verifies a later repair onc
   await step(2);
   await expect(suited).toHaveCount(0);
   await expect(page.locator("#guide-next")).toContainText("verify safe return in Workflows");
+  await expect(checkpoint).toHaveAccessibleDescription(/verify safe return in Workflows/);
   await openExterior();
   await expect(button("Verify safe return")).toBeHidden();
   await expect(button("Assign spacewalk")).toBeDisabled();
@@ -295,6 +304,12 @@ test("the exterior workflow recalls on link loss and verifies a later repair onc
   await button("Close").click();
   await expect(page.locator("#eva-antenna")).toHaveText("Antenna · link verified");
   await expect(page.locator("#guide-next")).toContainText("Coast to the departure point");
+  await expect(checkpoint).toBeEnabled();
+  await openExterior();
+  await process.getByLabel("Repeat after completion").selectOption("300");
+  await button("Save procedure").click();
+  await button("Close").click();
+  await expect(checkpoint).toHaveAccessibleDescription(/Exterior inspection is due/);
 });
 
 test("ISS replay portraits and pawns open crew anatomy with evidence for the selected region", async ({ page }) => {
@@ -429,4 +444,98 @@ test("Flight resumes independent campaigns and preserves the legacy Asteria save
   await reopenedButton("Save and exit").click();
   await reopened.getByRole("radio", { name:"ISS Research and Return" }).check();
   await expect(reopened.locator("#campaign-save")).toHaveText("Launch held · T+0:15");
+});
+
+test("Flight Command shows guidance and stops three minutes before each coast checkpoint", async ({ page }) => {
+  await page.setViewportSize({width:390,height:844});
+  await page.emulateMedia({reducedMotion:"reduce"});
+  await page.route(url=>url.pathname==="/flight",route=>route.fulfill({contentType:"text/html",body:flightHtml}));
+  await page.addInitScript(()=>{
+    const key = "sx:launch-checkout:v1";
+    if (!localStorage.getItem(key)) {
+      localStorage.setItem(key,JSON.stringify({time:135,jobs:{},ignition:60,separation:105,insertion:135}));
+    }
+  });
+  await page.goto("/flight?view=launch");
+
+  const transport = page.getByRole("group",{name:"Flight playback"});
+  const checkpoint = transport.getByRole("button",{name:"3 min before checkpoint"});
+  const tick = transport.getByRole("button",{name:"Advance one mission tick"});
+  const resources = page.getByRole("group",{name:"Mission resources"});
+  const guide = page.getByRole("complementary",{name:"Mission guide"});
+  const clock = page.locator("#hud-clock");
+  const command = page.getByRole("region",{name:"Flight command"});
+  const guidance = command.getByRole("region",{name:"Flight guidance"});
+  const savedTime = ()=>page.evaluate(()=>JSON.parse(localStorage.getItem("sx:launch-checkout:v1")).time);
+
+  await expect(resources).toContainText("CO₂");
+  await expect(resources).toContainText("Headroom");
+  await expect(resources.locator("#command-phase")).toContainText("waiting for ISS window");
+  await expect(resources.locator("#command-next")).toContainText("Coast to the departure point");
+  await expect(resources.locator("#command-reserve")).toHaveText("29 game units");
+  const playbackBox = await transport.boundingBox();
+  const resourceBox = await resources.boundingBox();
+  const guideBox = await guide.boundingBox();
+  expect(resourceBox.y).toBeGreaterThanOrEqual(playbackBox.y+playbackBox.height);
+  expect(resourceBox.x+resourceBox.width).toBeLessThan(guideBox.x);
+  expect(playbackBox.x+playbackBox.width).toBeLessThanOrEqual(390);
+
+  await guide.getByRole("button",{name:"Go to control"}).click();
+  await expect(guidance).toHaveAttribute("data-mode","coast");
+  await expect(guidance.getByRole("img",{name:"Horizon · coast guidance"})).toBeVisible();
+
+  const timings = await page.locator("#flight-data").evaluate(script=>{
+    const {navigation} = JSON.parse(script.textContent).missions[0];
+    return navigation;
+  });
+  const departure = 135+timings.departureS;
+  await checkpoint.focus();
+  await expect(checkpoint).toBeFocused();
+  await checkpoint.press("Enter");
+  await expect.poll(savedTime).toBe(departure-180);
+  const stopped = await clock.innerText();
+  await expect(checkpoint).toBeDisabled();
+  await expect(checkpoint).toHaveAccessibleDescription(/Within 3 mission minutes/);
+  await checkpoint.press("Enter");
+  await expect(clock).toHaveText(stopped);
+  await tick.click();
+  await expect.poll(savedTime).toBe(departure-165);
+
+  await command.getByRole("button",{name:"Coast to ISS departure window"}).click();
+  await expect.poll(savedTime).toBe(departure);
+  await expect(guidance).toHaveAttribute("data-mode","burn");
+  await expect(guidance).toContainText("71.3 m/s");
+  await expect(checkpoint).toHaveAccessibleDescription(/Commit ISS transfer burn/);
+  await checkpoint.press("Enter");
+  await expect.poll(savedTime).toBe(departure);
+
+  await command.getByRole("button",{name:"Commit ISS transfer burn"}).click();
+  await expect(guidance).toHaveAttribute("data-mode","coast");
+  const apoapsis = departure+timings.transferS;
+  await checkpoint.press("Enter");
+  await expect.poll(savedTime).toBe(apoapsis-180);
+  await expect(command.getByRole("button",{name:"Match station orbit"})).toBeHidden();
+  await command.getByRole("button",{name:"Coast to transfer apoapsis"}).click();
+  await expect(guidance).toHaveAttribute("data-mode","burn");
+  await expect(checkpoint).toHaveAccessibleDescription(/Match the station’s orbit/);
+  await command.getByRole("button",{name:"Match station orbit"}).click();
+  await expect(guidance).toHaveAttribute("data-mode","docking");
+  await expect(guidance.getByRole("img",{name:/ship and the International Space Station/})).toBeVisible();
+  await expect(checkpoint).toHaveAccessibleDescription(/Within 3 mission minutes/);
+});
+
+test("Orbit guidance shows Kestrel during systems checkout", async ({ page }) => {
+  await page.route(url=>url.pathname==="/flight",route=>route.fulfill({contentType:"text/html",body:flightHtml}));
+  await page.addInitScript(()=>localStorage.setItem("sx:orbital-systems-checkout:v1",JSON.stringify({
+    time:105,jobs:{},ignition:60,separation:90,insertion:105,
+  })));
+  await page.goto("/flight?view=launch&mission=orbital-systems-checkout");
+  await page.getByRole("complementary",{name:"Mission guide"}).getByRole("button",{name:"Go to control"}).click();
+  const guidance = page.getByRole("region",{name:"Flight guidance"});
+  await expect(guidance).toHaveAttribute("data-mode","orbit");
+  await expect(guidance.getByRole("img",{name:"Kestrel · orbit guidance"})).toBeVisible();
+  const checkpoint = page.getByRole("button",{name:"3 min before checkpoint"});
+  await expect(checkpoint).toHaveAccessibleDescription(/Assign Ivo/);
+  await page.getByRole("button",{name:"Assign Ivo to orbital systems check"}).click();
+  await expect(checkpoint).toHaveAccessibleDescription(/Within 3 mission minutes/);
 });
