@@ -104,6 +104,9 @@ button[aria-pressed=true]{background:#3d315e}
 #widget-shelf{position:absolute;top:calc(100% + 4.2rem);left:.65rem;right:.65rem;display:flex;gap:.3rem;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:.73rem}
 #widget-shelf button{padding:.25rem .45rem}
 #widget-notice{position:absolute;width:1px;height:1px;clip-path:inset(50%);overflow:hidden}
+.order-card{padding:.5rem;margin:.4rem 0;background:#2632517d;border-radius:7px}
+.order-card strong{font-size:.8rem;color:var(--blue)}
+.order-card button{font-size:.74rem;margin:.2rem .2rem 0 0}
 #workflow-widget{max-width:calc(100% - 20px)}
 .crew-portrait{padding:.25rem .25rem .3rem;background:#141b37;box-shadow:inset 0 1px #7987b94d}
 .crew-portrait .crew-face{width:34px;height:34px}
@@ -209,11 +212,19 @@ __HUD_ICONS__
 <div class="overlays" id="overlays">
   <section class="panel" id="workflow-widget" hidden aria-labelledby="workflow-title">
     <div class="widget-bar"><button class="move-widget widget-title" type="button" aria-label="Move orders with drag or arrow keys"><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button><h2 id="workflow-title">Onboard orders</h2><button class="widget-close" type="button" aria-label="Close orders"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button></div>
-    <p id="workflow-state"></p>
+    <div class="order-card">
+      <strong>Routine · Scrubber check</strong>
+      <p id="routine-state"></p>
+      <button id="assign-routine" type="button">Assign Ivo to routine check</button>
+    </div>
+    <div class="order-card">
+      <strong>Ground · Fault inspection</strong>
+      <p id="workflow-state"></p>
     <p id="monitor-state"></p>
-    <button id="assign-order" type="button" hidden>Commander · Assign inspection</button>
+    <button id="assign-order" type="button" hidden>Commander · Assign Ivo</button>
     <button id="hold-order" type="button" hidden>Commander · Hold</button>
-    <button id="complete-order" type="button" hidden>SIM-03 · Report inspection</button>
+    <button id="complete-order" type="button" hidden>Ivo · Send inspection report</button>
+    </div>
   </section>
   <section class="panel" id="map-widget" aria-label="Mission overview">
     <div class="widget-bar"><button class="move-widget widget-title" type="button" aria-label="Move minimap with drag or arrow keys" disabled><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button><h2>Mission overview</h2><button id="lock-map" type="button" aria-pressed="true" aria-label="Lock minimap position" title="Unlock minimap position" data-widget-lock><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg> <span>Lock</span></button></div>
@@ -409,17 +420,15 @@ const stationDuties = [
   [["comms-01","Report approach"],["comms-01","Acknowledge capture"],["comms-01","Track the experiment handoff"],["habitat-01","Use the WC and log hydration"],["comms-01","Report departure"],["comms-01","Confirm recovery"]],
 ];
 function station(duty, member) {
-  const order = flightWorkflow.read();
   const time = Math.floor(missionTime);
   const task = activeTask(member, time);
   if (task && time >= task.assigned) {
     const asset = equipment.get(task.asset);
     return [asset.room, time < task.arrival ? "Walking to " + asset.name : task.action];
   }
-  if (member === 2 && order?.assigned && time >= order.decided &&
-      (order.completed == null || time < order.completed)) {
-    return ["life-support-01", "Inspect life support at the Commander's request"];
-  }
+  const groundWork = member === 2 && groundInspection(currentFrame());
+  if (groundWork && time >= groundWork.assigned) return ["life-support-01",
+    time < groundWork.arrival ? "Walking to the scrubber rack" : "Inspect life support for the Commander"];
   return duty.stations[index] ?? stationDuties[member][index - duty.stations.length];
 }
 
@@ -449,6 +458,13 @@ function placeArea(button, x, y, width, height) {
 }
 function taskAt(asset, time) {
   return tasks.findLast(task => task.asset === asset && task.queued <= time);
+}
+
+function groundInspection(frame) {
+  const job = flightWorkflow.job(frame);
+  if (!["Queued","Travelling","Inspecting","Ready to report"].includes(job?.state)) return null;
+  const origin = job.work.origin ?? stationPoint("engineering-01",2);
+  return {...job.work,origin,asset:"scrubber",member:2};
 }
 
 function activeTask(member, time) {
@@ -603,7 +619,7 @@ function drawShip(frame) {
     drawFixtures(id,z,frame);
     for (const fixture of fixtures) {
       if (fixture.room !== id) continue;
-      const work = taskAt(fixture.id,frame.time);
+      const work = taskAt(fixture.id,frame.time) || (fixture.id === "scrubber" && groundInspection(frame));
       if (!work || frame.time < work.arrival || frame.time >= work.finishes) continue;
       ctx.save();
       ctx.globalAlpha = reducedMotion.matches ? .8 : .55 + .35 * Math.sin(missionTime * 1.3);
@@ -911,7 +927,10 @@ function inspect(frame) {
     if (asset.id === "bench") condition = frame.power == null ? "No bus sample · dry run only" : "Dry run · " + frame.power.toFixed(2) + " kW headroom";
     if (asset.id === "radio") condition = "Local simulated status transmission";
     if (asset.id === "wc") condition = frame.habitat.wc;
-    if (asset.id === "scrubber") condition = frame.removal == null ? "Flow unmodeled" : frame.removal + " m³/h";
+    if (asset.id === "scrubber") {
+      condition = frame.removal == null ? "Flow unmodeled" : frame.removal + " m³/h";
+      if (groundInspection(frame)) condition += " · Reserved for Ground inspection";
+    }
     if (asset.id === "bus") condition = frame.power == null ? "Headroom unmodeled" : frame.power.toFixed(2) + " kW headroom";
     value.textContent = active ? characters[task.member].short + " · " + (frame.time < task.assigned
       ? "Queued until " + clock(task.assigned) : frame.time < task.arrival ? "Walking to station"
@@ -923,7 +942,7 @@ function inspect(frame) {
     const crew = assetCrew;
     setChoices("asset-crew",crew);
     const memberBusy = activeTask(crew, frame.time) ||
-      (crew === 2 && (flightWorkflow.canComplete(frame)));
+      (crew === 2 && groundInspection(frame)) || (asset.id === "scrubber" && groundInspection(frame));
     assign.disabled = Boolean(active || memberBusy || frame.habitat.beds && ["bed","wc"].includes(asset.id)
       || nextTick(missionTime) + TICK_SECONDS + WORK_SECONDS > endTime);
     return;
@@ -975,7 +994,20 @@ function render() {
   element("workflow-state").textContent = flightWorkflow.status(frame, clock);
   element("monitor-state").textContent = frame.removal != null && frame.removal < 20
     ? "Monitor · Primary scrubber degraded. Inspection records evidence." : "";
+  const routine = tasks.find(task=>task.routine && task.queued<=frame.time);
+  const scrubber = taskAt("scrubber",frame.time);
+  const rackBusy = Boolean(scrubber && frame.time < scrubber.finishes);
+  const ivoBusy = Boolean(activeTask(2,frame.time));
+  const windowEnds = flightWorkflow.timebox(frame.time).finishes;
+  const routineStatus = flightWorkflow.routine(frame,routine);
+  element("routine-state").textContent = routineStatus === "Complete"
+    ? routineStatus + " at " + clock(routine.finishes) + " · recorded at scrubber rack"
+    : routineStatus + " · due 06:00";
+  const assignRoutine = element("assign-routine");
+  assignRoutine.hidden = Boolean(routine) || frame.time >= flightWorkflow.routineDue;
+  assignRoutine.disabled = rackBusy || ivoBusy || Boolean(groundInspection(frame)) || windowEnds > flightWorkflow.routineDue;
   element("assign-order").hidden = !flightWorkflow.canDecide(frame);
+  element("assign-order").disabled = ivoBusy || rackBusy || windowEnds >= (flightWorkflow.read()?.expires ?? 0);
   element("hold-order").hidden = !flightWorkflow.canDecide(frame);
   element("complete-order").hidden = !flightWorkflow.canComplete(frame);
   element("clock").textContent = clock(frame.time);
@@ -990,7 +1022,8 @@ function render() {
   element("ship-position").setAttribute("cy",my);
   element("map-air").textContent = frame.co2.toFixed(0) + " ppm";
   element("map-power").textContent = frame.power == null ? "Unavailable" : frame.power.toFixed(2) + " kW";
-  element("map-jobs").textContent = tasks.filter(task=>task.queued<=frame.time && task.finishes>frame.time).length;
+  element("map-jobs").textContent = tasks.filter(task=>task.queued<=frame.time && task.finishes>frame.time).length
+    + Number(Boolean(groundInspection(frame)));
   element("map-location").textContent = frame.site + " · " + clock(frame.time);
   element("timeline").value = Math.floor(missionTime);
   element("timeline").setAttribute("aria-valuetext", clock(frame.time) + " " + frame.label);
@@ -1009,7 +1042,7 @@ function render() {
   duties.forEach((duty, i) => {
     const [roomId, task] = station(duty,i);
     const button = pawns.get(i);
-    const work = activeTask(i, frame.time);
+    const work = activeTask(i, frame.time) || (i === 2 && groundInspection(frame));
     const asset = work && frame.time >= work.assigned ? equipment.get(work.asset) : null;
     const travelling = asset && frame.time < work.arrival;
     const sharedWork = !asset && ["Docked","Station research","Recovery"].includes(frame.phase);
@@ -1080,7 +1113,7 @@ function pointAlong(points,progress) {
 function crewMotion(member, frame) {
   const duty = duties[member];
   const [room] = station(duty,member);
-  const task = activeTask(member,frame.time);
+  const task = activeTask(member,frame.time) || (member === 2 && groundInspection(frame));
   if (task && frame.time >= task.assigned) {
     const asset = equipment.get(task.asset);
     return {origin:task.origin,destination:stationPoint(room,member,asset),
@@ -1130,9 +1163,10 @@ function paintFlight(frame) {
 function drawSelectedRoute(frame) {
   const work = selection.crew !== undefined ? activeTask(selection.crew,frame.time)
     : selection.asset ? taskAt(selection.asset,frame.time) : null;
-  if (!work || frame.time >= work.arrival) return;
-  const asset = equipment.get(work.asset);
-  const points = pathBetween(work.origin,stationPoint(asset.room,work.member,asset));
+  const visibleWork = work || ((selection.crew===2 || selection.asset==="scrubber") && groundInspection(frame));
+  if (!visibleWork || frame.time >= visibleWork.arrival) return;
+  const asset = equipment.get(visibleWork.asset);
+  const points = pathBetween(visibleWork.origin,stationPoint(asset.room,visibleWork.member,asset));
   ctx.save();
   ctx.strokeStyle = "#c5bbffd9"; ctx.lineWidth = 2; ctx.setLineDash([4,5]);
   ctx.beginPath();
@@ -1361,7 +1395,23 @@ for (const [field,values] of Object.entries({
     checkIns.set(key,{...checkIns.get(key),[field]:value});
   });
 }
-element("assign-order").addEventListener("click", () => { flightWorkflow.decide(currentFrame(),true); render(); });
+element("assign-routine").addEventListener("click", () => {
+  if (element("assign-routine").disabled || element("assign-routine").hidden) return;
+  const frame = currentFrame();
+  const [room] = station(duties[2],2);
+  const origin = stationPoint(room,2);
+  const work = flightWorkflow.timebox(frame.time);
+  while (tasks.length && tasks.at(-1).queued > frame.time) tasks.pop();
+  tasks.push({...work,origin,queued:frame.time,asset:"scrubber",member:2,routine:true,
+    action:"Inspect the scrubber on the routine watch",result:"Routine scrubber check recorded"});
+  render();
+});
+element("assign-order").addEventListener("click", () => {
+  if (element("assign-order").disabled || element("assign-order").hidden) return;
+  const [room] = station(duties[2],2);
+  flightWorkflow.decide(currentFrame(),true,stationPoint(room,2));
+  render();
+});
 element("hold-order").addEventListener("click", () => { flightWorkflow.decide(currentFrame(),false); render(); });
 element("complete-order").addEventListener("click", () => { flightWorkflow.complete(currentFrame()); render(); });
 window.addEventListener("storage", event => { if (event.key === flightWorkflow.key) render(); });
