@@ -564,6 +564,20 @@ button[aria-pressed=true]{background:#3d315e}
 #mission-command-widget #maneuver-track{max-height:128px;object-fit:contain;background:#090f20}
 #mission-command-widget #docking-scene{max-height:128px;object-fit:contain;background:#090f20}
 .stage[data-asteria=true] #mission-command-widget{max-height:min(44vh,385px)}
+.stage[data-demo-crew] #personnel-widget{
+  width:min(296px,calc(100% - 20px));max-height:min(390px,48dvh);
+  background:linear-gradient(150deg,#192744f5,#10172ce8);
+}
+.stage[data-demo-crew] #personnel-widget :is(.personnel-actions,.anatomy-tabs,.device-links,#body-regions,.twin-camera){display:none}
+.stage[data-demo-crew] #personnel-widget .personnel-hero{grid-template-columns:42px minmax(0,1fr);padding:.2rem 0 .45rem}
+.stage[data-demo-crew] #personnel-art .crew-face{width:34px;height:34px}
+.stage[data-demo-crew] #personnel-widget .body-layout{grid-template-columns:68px minmax(0,1fr)}
+.stage[data-demo-crew] #personnel-widget .region-card{padding:.35rem .45rem}
+.stage[data-demo-crew] #personnel-widget .wrist-readout{margin:.25rem 0}
+@media(min-width:1000px){
+  .stage[data-demo-crew] .viewport{margin-left:318px;margin-right:14px;overflow:visible}
+  .stage[data-demo-crew] #ship{width:100%;min-width:0;margin-inline:0}
+}
 .stage[data-asteria=true] .control-deck{border:1px solid #9cacf13d}
 .stage[data-asteria=true] #widget-shelf{top:var(--resource-bottom,calc(100% + 10rem))}
 #flight-instrument #navigation-caption{display:none}
@@ -3113,7 +3127,8 @@ for (const [offset, kind] of ["personnel", "duty", "needs", "vitals", "devices"]
   const button = document.querySelector('[data-profile="'+kind+'"]');
   setIcon(button,profileIcons[kind],button.textContent);
   profileWindows.set(kind,widgets.register(element(kind + "-widget"),null,() => ({
-    x:Math.max(14,overlay.clientWidth - (kind === "personnel" ? 500 : 355)),y:10 + offset * 18,
+    x:kind === "personnel" && element("stage").hasAttribute("data-demo-crew") ? 14
+      : Math.max(14,overlay.clientWidth - (kind === "personnel" ? 500 : 355)),y:10 + offset * 18,
   }),{compactPriority:kind === "personnel"}));
 }
 choices("medical-crew",characters.map((persona,i)=>[i,persona.short,persona.name]),
@@ -3142,17 +3157,21 @@ const launchMission = bindLaunchCheckout(data.missions,data.replay_version,{
   closeCommand:()=>commandPanel.close(),
   onDemoCrew(action) {
     if (action === "close-twin") {
-      for (const panel of profileWindows.values()) panel.close();
+      element("stage").removeAttribute("data-demo-crew");
+      for (const panel of profileWindows.values()) { panel.close(); panel.resetPosition(); }
       return true;
     }
     const member = data.crew.indexOf(flightDemoCrew);
     if (action === "crew-check") return requestPeerCheck(member,"wrist");
+    element("stage").setAttribute("data-demo-crew","");
     selection = {crew:member};
     twinView = "body";
     activeLayer = "sensors";
     selectedRegion = "wrist";
     profileMembers.set("personnel",member);
-    profileWindows.get("personnel").open(portraits.get(member));
+    const profile = profileWindows.get("personnel");
+    profile.resetPosition();
+    profile.open(portraits.get(member));
     render();
     return true;
   },

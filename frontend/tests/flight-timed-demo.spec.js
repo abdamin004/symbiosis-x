@@ -81,6 +81,8 @@ test("the three-minute demo shows Crew evidence and returns without touching pla
   await expect(twin.locator("#personnel-name")).toHaveText("Sana Kepler");
   await expect(twin.locator("#region-source")).toHaveText("Synthetic demo · optical wristband");
   await expect(twin.locator("#region-reading")).toHaveText(/68 bpm.*observed T\+02:10.*received T\+02:15.*accepted/);
+  const [twinBounds, shipBounds] = await Promise.all([twin.boundingBox(),page.locator("#ship").boundingBox()]);
+  expect(twinBounds.x+twinBounds.width).toBeLessThan(shipBounds.x);
   await expect(twin.getByRole("link",{name:"Open private health record"})).toBeHidden();
   await advance(7);
   await expect(beat).toHaveText("Wearable quality · motion artifact");

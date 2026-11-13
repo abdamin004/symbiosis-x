@@ -103,6 +103,9 @@ function createFlightWidgets(overlay, shelf, notice, fixedControls = []) {
       layout();
       notice.textContent = entry.panel.hidden ? recall.textContent + " is parked. Recall it from Parked widgets." : "";
     }
+    function resetPosition() {
+      entry.position = null;
+    }
     function close() {
       entry.wanted = false;
       entry.panel.hidden = true;
@@ -142,7 +145,7 @@ function createFlightWidgets(overlay, shelf, notice, fixedControls = []) {
       event.preventDefault();
       move(entry.position.x+offset[0],entry.position.y+offset[1]);
     });
-    return {open,close};
+    return {open,close,resetPosition};
   }
 
   return {register,layout,schedule};
