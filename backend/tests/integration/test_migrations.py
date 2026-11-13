@@ -149,3 +149,23 @@ def test_invalid_legacy_data_does_not_partially_upgrade(tmp_path):
         assert reopened.execute("PRAGMA user_version").fetchone() == (1,)
         assert reopened.execute("SELECT mission_s FROM runs").fetchone() == ("invalid",)
         assert reopened.execute("SELECT count(*) FROM sqlite_schema WHERE type = 'trigger'").fetchone() == (0,)
+
+
+
+def test_migration_parser_supports_multiple_statements_and_comments():
+    from symbiosis_x.storage.sqlite import _statements
+
+    script = (
+        "CREATE TABLE log (message TEXT); CREATE TABLE source (message TEXT);\n"
+        "CREATE TRIGGER copy_log AFTER INSERT ON source BEGIN "
+        "INSERT INTO log VALUES ('one;two'); INSERT INTO log VALUES (NEW.message); END;\n"
+        "INSERT INTO source VALUES ('three'); /* End of migration; */"
+    )
+    with closing(sqlite3.connect(":memory:")) as connection:
+        for statement in _statements(script):
+            connection.execute(statement)
+        assert connection.execute("SELECT message FROM log ORDER BY rowid").fetchall() == [
+            ("one;two",), ("three",),
+        ]
+    with pytest.raises(ValueError, match="Incomplete"):
+        list(_statements("CREATE TABLE missing (value TEXT)"))
