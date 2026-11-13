@@ -7,9 +7,11 @@ from pathlib import Path
 if __package__:
     from .build_cabin_preview import ACTIVITY_S, ROOT
     from .iss_mission_replay import build_replays, crew_history
+    from .launch_envelope import launch_envelope
 else:
     from build_cabin_preview import ACTIVITY_S, ROOT
     from iss_mission_replay import build_replays, crew_history
+    from launch_envelope import launch_envelope
 
 
 def build(output: Path) -> None:
@@ -17,6 +19,7 @@ def build(output: Path) -> None:
     crew_ids = [member["crew_id"] for member in crew]
     rooms = json.loads((ROOT / "catalogs/sx01/rooms.json").read_text())["rooms"]
     launch = json.loads((ROOT / "scenarios/variants/launch-checkout-v1.json").read_text())
+    launch["ascent"] = launch_envelope(launch)
     scenario, frames = build_replays(crew)
     data = json.dumps({
         "metrics": json.loads((ROOT / "catalogs/crew/health-metrics.json").read_text())["metrics"],
