@@ -28,7 +28,7 @@ python -m pip install -e 'backend[test]'
 python -m uvicorn symbiosis_x.main:app --host 127.0.0.1 --port 8766
 ```
 
-Open [OpenAPI docs](http://127.0.0.1:8766/docs). Startup migrates the local database to revision 2. By default the file is `symbiosis-x.sqlite3` in the working directory. Set `SYMBIOSIS_X_DB_PATH` to use a different file. Use a temporary path for tests. The pilot canvas currently runs from generated replay data. The simulation API routes and health probes have their own tickets.
+Open [OpenAPI docs](http://127.0.0.1:8766/docs). Startup migrates the local database to revision 3. By default the file is `symbiosis-x.sqlite3` in the working directory. Set `SYMBIOSIS_X_DB_PATH` to use a different file. Use a temporary path for tests. The pilot canvas currently runs from generated replay data. The simulation API routes and health probes have their own tickets.
 
 ## SX-01A handoff
 
@@ -99,3 +99,13 @@ Open the generated file. Select any astronaut and compare the Crew replay at 13:
 Use the [spacecraft icon sprite](frontend/src/ui/icons/spacecraft.svg) for cabin, scrubber, power and Crew. Keep the SVG paths on the same 24 × 24 grid and inherit `currentColor`. In React or HTML, give icon-only controls accessible names. Treat icons next to text as decorative.
 
 Use violet for selection, blue for telemetry and amber for degraded equipment. Give status a text label as well as a color. Use the catalog's stable asset IDs and keep selection state in the canvas. The [spacecraft catalogs](catalogs/sx01/) define the cabin and its CO₂ source. See the [time-series design rule](docs/decisions/telemetry-and-health-time-series.md) for telemetry, private health history and future agent queries. Pass role-scoped values into components so the same deck and inspector can serve Crew and Ground.
+
+### Seed synthetic observation history
+
+Use a dedicated SQLite file and SQLite 3.37 or later for the typed observation tables.
+
+```sh
+python3 scripts/seed_time_series_demo.py /tmp/symbiosis-x-series.sqlite3
+```
+
+The seed writes one replay with 14 cabin CO₂ samples at 60-second intervals and 12 private synthetic heart-rate samples across four astronauts. Re-running the command keeps the same run. The app applies the schema on startup. History endpoints and health assessment are separate work.

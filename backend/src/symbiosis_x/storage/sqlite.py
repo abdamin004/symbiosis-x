@@ -10,6 +10,7 @@ from pathlib import Path
 MIGRATIONS = (
     "001_initial.sql",
     "002_integer_integrity.sql",
+    "003_observation_series.sql",
 )
 SCHEMA_REVISION = len(MIGRATIONS)
 

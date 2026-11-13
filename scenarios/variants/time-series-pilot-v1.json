@@ -1,0 +1,27 @@
+{
+  "scenario_id": "time-series-pilot",
+  "scenario_version": "1",
+  "seed": 4242,
+  "synthetic": true,
+  "cabin": {
+    "initial_co2_ppm": 2000,
+    "generation_m3_h": 0.04,
+    "fault_at_s": 60,
+    "nominal_removal_m3_h": 20,
+    "degraded_removal_m3_h": 4,
+    "end_s": 780
+  },
+  "health": {
+    "metric": "heart_rate",
+    "unit": "bpm",
+    "source_id": "sim.crew.heart_rate",
+    "context": {"activity": "resting", "provenance": "synthetic_fixture"},
+    "observation_times_s": [0, 360, 780],
+    "values_by_crew": {
+      "SIM-01": [72, 74, 76],
+      "SIM-02": [67, 68, 68],
+      "SIM-03": [70, 71, 72],
+      "SIM-04": [65, 65, 66]
+    }
+  }
+}
