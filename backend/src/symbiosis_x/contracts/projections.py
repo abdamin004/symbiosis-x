@@ -151,6 +151,8 @@ class CurrentCrewView(RunView):
     health_assessment: dict | None = None
     # Crew-private reminders (SX-24C); never part of a Ground packet.
     health_followup: dict | None = None
+    # Crew-private comparable trend of the latest scalar metric (SX-23E evaluator).
+    health_trend: dict | None = None
     trace: list[TraceRecord] = []
 
 
