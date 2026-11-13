@@ -20,14 +20,19 @@ def build(output: Path) -> None:
     crew = json.loads((ROOT / "catalogs/crew/synthetic-roster.json").read_text())["crew"]
     crew_ids = [member["crew_id"] for member in crew]
     rooms = json.loads((ROOT / "catalogs/sx01/rooms.json").read_text())["rooms"]
-    launch = json.loads((ROOT / "scenarios/variants/launch-checkout-v1.json").read_text())
-    launch["ascent"] = launch_envelope(launch)
-    launch["rendezvous"] = rendezvous_envelope(launch)
-    launch["navigation"] = navigation_reference(launch["ascent"])
+    missions = []
+    for preset in ("launch-checkout-v1", "orbital-systems-checkout-v1"):
+        mission = json.loads((ROOT / f"scenarios/variants/{preset}.json").read_text())
+        mission["ascent"] = launch_envelope(mission)
+        mission["navigation"] = navigation_reference(mission["ascent"])
+        if "rendezvous" in mission:
+            mission["rendezvous"] = rendezvous_envelope(mission)
+        missions.append(mission)
     scenario, frames = build_replays(crew)
     data = json.dumps({
         "metrics": json.loads((ROOT / "catalogs/crew/health-metrics.json").read_text())["metrics"],
-        "rooms": rooms, "crew": crew_ids, "activity_s": ACTIVITY_S, "launch": launch,
+        "rooms": rooms, "crew": crew_ids, "activity_s": ACTIVITY_S, "missions": missions,
+        "replay_version": scenario["version"],
         "frames": frames, "history": crew_history(frames[""], crew_ids), "research": scenario["research"],
     }, ensure_ascii=False).replace("<", "\\u003c")
     template = (ROOT / "docs/demo/flight.html").read_text(encoding="utf-8")
@@ -35,6 +40,7 @@ def build(output: Path) -> None:
     widgets = (ROOT / "docs/demo/flight-widgets.js").read_text(encoding="utf-8")
     stations = (ROOT / "docs/demo/flight-stations.js").read_text(encoding="utf-8")
     launch_scene = (ROOT / "docs/demo/launch-scene.js").read_text(encoding="utf-8")
+    missions_ui = (ROOT / "docs/demo/flight-missions.js").read_text(encoding="utf-8")
     checkout = (ROOT / "docs/demo/launch-checkout.js").read_text(encoding="utf-8")
     anatomy = (ROOT / "docs/demo/flight-anatomy.html").read_text(encoding="utf-8")
     crew_routines = (ROOT / "docs/demo/flight-crew.js").read_text(encoding="utf-8")
@@ -46,6 +52,7 @@ def build(output: Path) -> None:
         template.replace("__FLIGHT_DATA__", data)
         .replace("__FLIGHT_WORKFLOW__", workflow).replace("__FLIGHT_WIDGETS__", widgets)
         .replace("__FLIGHT_STATIONS__", stations).replace("__LAUNCH_SCENE__", launch_scene)
+        .replace("__FLIGHT_MISSIONS__", missions_ui)
         .replace("__LAUNCH_CHECKOUT__", checkout).replace("__HUD_ICONS__", icons)
         .replace("__FLIGHT_ANATOMY__", anatomy).replace("__FLIGHT_CREW__", crew_routines)
         .replace("__DOCKING_SCENE__", docking_scene).replace("__FLIGHT_NAVIGATION__", navigation)

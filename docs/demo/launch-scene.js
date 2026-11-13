@@ -2,7 +2,7 @@
 function createLaunchScene(canvas) {
   const ctx = canvas.getContext("2d");
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
-  let phase = "pad", separated = false, elapsed = 0, burning = false, ignition = null, transition = null, frame;
+  let phase = "pad", ship = "Asteria", lightStack = false, separated = false, elapsed = 0, burning = false, ignition = null, transition = null, frame;
   let separation = null;
   let checkout = null;
   let previous = {rise:0, drift:0, tilt:0, camera:0, space:0};
@@ -213,7 +213,7 @@ function createLaunchScene(canvas) {
     line("#e0e5e6",1,[[-18,-201],[-18,-137]]);
     ctx.font="700 7px system-ui";
     ctx.fillStyle="#253d4d";
-    ctx.fillText("ASTERIA",-16,-179);
+    ctx.fillText(ship.toUpperCase(),-16,-179);
     if(separated) {
       path("#414d58",[[-10,-132],[10,-132],[14,-121],[-14,-121]]);
       if (pose.booster > 0 && pose.booster < .52) {
@@ -301,8 +301,8 @@ function createLaunchScene(canvas) {
       if(daylight.light<1) rect("rgba(4,12,35,"+(1-daylight.light)*.35+")",0,ground+pose.camera-60,w,h-ground+60);
       ctx.restore();
     }
-    rocket(shipX,ground,s,pose,reduced.matches?0:now,thrust);
-    if (checkout && phase === "pad") drawCheckout(shipX,ground,s);
+    rocket(shipX,ground,lightStack ? s*.77 : s,pose,reduced.matches?0:now,thrust);
+    if (checkout && phase === "pad") drawCheckout(shipX,ground,lightStack ? s*.77 : s);
     if(ignition!==null && phase==="ascent" && !reduced.matches) {
       const age=(now-ignition)/1000;
       if(age<4) {
@@ -325,6 +325,8 @@ function createLaunchScene(canvas) {
     const lift=phase==="pad" && next.phase==="ascent" && next.elapsed===0;
     const staging=!separated && next.separated;
     phase=next.phase;
+    ship=next.ship;
+    lightStack=next.lightStack;
     separated=next.separated;
     elapsed=next.elapsed;
     burning=next.burning;
