@@ -30,6 +30,7 @@ export default function LiveMissionConsole({ role, runId }) {
         <h1 className="mt-2 text-2xl font-semibold">{role === "crew" ? "Crew console" : "Ground console"}</h1>
         <p className="mt-2 text-sm">Run <strong data-testid="console-run-id">{view.run_id}</strong> · Mission time {time(view.mission_s)} · {view.scenario_id} v{view.scenario_version}</p>
       </header>
+      {view.status === "closed" && <p role="status" data-testid="console-run-ended" className="mt-4 rounded bg-slate-100 p-3 text-sm text-slate-700">Mission ended at {time(view.mission_s)}. This view is read only.</p>}
       {role === "crew" ? <>
         <section className="mt-6 rounded-lg border border-slate-200 bg-white p-4">
           <h2 className="font-semibold">Private Crew health profile</h2>

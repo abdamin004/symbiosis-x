@@ -15,9 +15,11 @@ export default defineConfig({
   server: {
     // Allow the shared contract examples outside the frontend folder.
     fs: { allow: [repoRoot] },
+    // Keep the browser's Host header: the backend's demo session only accepts a request
+    // whose Origin matches the host it was sent to. The shorthand form rewrites Host.
     proxy: {
-      "/api": apiTarget,
-      "/health": apiTarget,
+      "/api": { target: apiTarget, changeOrigin: false },
+      "/health": { target: apiTarget, changeOrigin: false },
     },
   },
 });

@@ -61,6 +61,9 @@ export function advanceRun(runId, command) {
 export function resetRun(runId, command) {
   return jsonRequest("/runs/" + encodeURIComponent(runId) + "/reset", "facilitator", { method: "POST", body: JSON.stringify(command) });
 }
+export function endRun(runId, command) {
+  return jsonRequest("/runs/" + encodeURIComponent(runId) + "/end", "facilitator", { method: "POST", body: JSON.stringify(command) });
+}
 export function readRunView(runId, role) {
   return jsonRequest("/runs/" + encodeURIComponent(runId) + "/" + role, role);
 }
