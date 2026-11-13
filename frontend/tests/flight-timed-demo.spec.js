@@ -162,7 +162,8 @@ test("the health demo shows the cabin response, private check and scheduled EVA 
   await expect(beat).toHaveText("Scrubber repair · Ivo restores airflow");
   await expect(page.locator("#demo-scenario")).toContainText("02 / 03");
   await expect(twin.locator("#crew-exposure")).toBeHidden();
-  await expect(sana).toHaveAttribute("data-mood","Settled");
+  await expect(sana).toHaveAttribute("data-mood","Strained");
+  await expect(sana).toHaveAttribute("title",/60 s clear to recover/);
   await expect(cabin).toHaveText(/2006.66 ppm.*T\+03:30.*20 m³\/h/);
   await expect(page.locator("#routine-state")).toContainText("Complete");
   await advance(11);
@@ -179,6 +180,7 @@ test("the health demo shows the cabin response, private check and scheduled EVA 
   await expect(ground).not.toContainText(/Ivo|oxygen|battery|tether/);
   await advance(14);
   await expect(beat).toHaveText("Spacewalk · Ivo exits to service the antenna");
+  await expect(sana).not.toHaveAccessibleName(/Relief requested/);
   await expect(page.locator("#demo-scenario")).toContainText("03 / 03");
   await expect(twin.locator("#personnel-name")).toHaveText("Ivo Reyes");
   await expect(twin.locator("#region-source")).toHaveText("Simulated suit telemetry");

@@ -14,10 +14,11 @@ from test_runs import local_client
 
 GOLDEN_START = {"start_id": "privacy", "scenario_id": "sx01-golden", "scenario_version": "1", "seed": 4242}
 CHECKIN_NOTE = "PRIVATE-MARKER-sx11a-checkin-text"
+MOOD_ID = "private-marker-mood-01"
 CHECKIN_ID = "private-marker-checkin-01"
 MEASUREMENT_ID = "private-marker-measurement-01"
 MEASUREMENT_SOURCE = "synthetic.watch.private-marker-sx11a"
-MARKERS = (CHECKIN_NOTE, CHECKIN_ID, MEASUREMENT_ID, MEASUREMENT_SOURCE, "SIM-01", "SIM-02",
+MARKERS = (CHECKIN_NOTE, CHECKIN_ID, MOOD_ID, "mood_score", MEASUREMENT_ID, MEASUREMENT_SOURCE, "SIM-01", "SIM-02",
            "heart_rate", "bpm", "case-drill-chest-pain-v1", "drill-chest-pain-v1", "chest")
 
 
@@ -37,6 +38,12 @@ def test_private_marker_absent_from_shared_outputs(tmp_path):
         checkin = client.post(f"{runs}/crew/check-ins", headers=as_role("crew"), json={
             "check_in_id": CHECKIN_ID, "crew_id": "SIM-01", "note": CHECKIN_NOTE, "synthetic": True})
         assert checkin.status_code == 201, checkin.text
+        mood = client.post(f"{runs}/crew/check-ins", headers=as_role("crew"), json={
+            "check_in_id": MOOD_ID, "crew_id": "SIM-02", "note": "", "mood_score": 4, "synthetic": True})
+        assert mood.status_code == 201, mood.text
+        assert client.get(f"{runs}/crew/check-ins", headers=as_role("crew")).json() == [
+            {"crew_id": "SIM-02", "mission_s": 0, "mood_score": 4}
+        ]
         measurement = client.post(f"{runs}/crew/measurements", headers=as_role("crew"), json={
             "measurement_id": MEASUREMENT_ID, "crew_id": "SIM-01", "synthetic": True,
             "measurement": {"metric": "heart_rate", "value": 95, "unit": "bpm", "quality": "valid",
@@ -72,9 +79,11 @@ def test_private_marker_absent_from_shared_outputs(tmp_path):
         assert crew.status_code == 200
         # Ground cannot read them, and its refusals do not echo them.
         refusals = [client.get(f"{runs}/crew/check-ins/{CHECKIN_ID}", headers=as_role("ground")),
+                    client.get(f"{runs}/crew/check-ins", headers=as_role("ground")),
+                    client.get(f"{runs}/crew/wearables?crew_id=SIM-02", headers=as_role("ground")),
                     client.get(f"{runs}/crew/measurements/{MEASUREMENT_ID}", headers=as_role("ground")),
                     client.get(f"{runs}/crew/emergencies/{case['case_id']}", headers=as_role("ground"))]
-        assert [r.status_code for r in refusals] == [403, 403, 403]
+        assert [r.status_code for r in refusals] == [403, 403, 403, 403, 403]
 
         diagnostics = [("readiness", client.get("/health/ready").text),
                        ("liveness", client.get("/health/live").text)]
@@ -83,7 +92,7 @@ def test_private_marker_absent_from_shared_outputs(tmp_path):
     with closing(sqlite3.connect(database)) as db:
         private_ids = [row[0] for row in db.execute(
             "SELECT event_id FROM events WHERE run_id = ? AND visibility = 'crew'", (run_id,))]
-        assert len(private_ids) >= 3  # check-in, measurement and emergency case are journaled privately
+        assert {CHECKIN_ID, MOOD_ID, MEASUREMENT_ID} <= set(private_ids)
         relay = " ".join(row[0] for row in db.execute(
             """SELECT payload_json FROM messages WHERE run_id = ?
                UNION ALL SELECT payload_json FROM snapshots WHERE run_id = ?""", (run_id, run_id)))

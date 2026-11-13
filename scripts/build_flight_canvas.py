@@ -4,22 +4,24 @@ import argparse
 import json
 from pathlib import Path
 
-from symbiosis_x.simulation.spacecraft.provisions import flight_rules
-
 if __package__:
+    from .build_cabin_preview import ACTIVITY_S, ROOT
     from .flight_airlock_rehearsal import build_airlock_rehearsal
     from .flight_health_rehearsal import build_health_rehearsal
-    from .build_cabin_preview import ACTIVITY_S, ROOT
     from .iss_mission_replay import build_replays, crew_history
-    from .launch_envelope import launch_envelope, propulsion_envelope, rendezvous_envelope
+    from .launch_envelope import TICK_SECONDS, launch_envelope, propulsion_envelope, rendezvous_envelope
     from .flight_orbit import navigation_reference
 else:
+    from build_cabin_preview import ACTIVITY_S, ROOT
     from flight_airlock_rehearsal import build_airlock_rehearsal
     from flight_health_rehearsal import build_health_rehearsal
-    from build_cabin_preview import ACTIVITY_S, ROOT
     from iss_mission_replay import build_replays, crew_history
-    from launch_envelope import launch_envelope, propulsion_envelope, rendezvous_envelope
+    from launch_envelope import TICK_SECONDS, launch_envelope, propulsion_envelope, rendezvous_envelope
     from flight_orbit import navigation_reference
+
+
+from symbiosis_x.simulation.spacecraft.provisions import flight_rules
+from symbiosis_x.workflows.eva import build_eva_rehearsal
 
 
 def build(output: Path) -> None:
@@ -37,11 +39,13 @@ def build(output: Path) -> None:
         missions.append(mission)
     scenario, frames = build_replays(crew)
     ground = json.loads((ROOT / "contracts/examples/ground-v102.json").read_text())
+    eva = json.loads((ROOT / "scenarios/variants/eva-antenna-service-v1.json").read_text())
     data = json.dumps({
         "provisions": flight_rules(),
         "metrics": json.loads((ROOT / "catalogs/crew/health-metrics.json").read_text())["metrics"],
         "rooms": rooms, "crew": crew_ids, "activity_s": ACTIVITY_S, "missions": missions,
         "airlock": build_airlock_rehearsal(),
+        "eva": build_eva_rehearsal(eva, TICK_SECONDS),
         "health_drill": build_health_rehearsal(ROOT / "scenarios/sx01-golden-v1.json"),
         "replay_ground": {
             "snapshot_id": ground["snapshot_id"], "decision_rev": ground["decision_rev"],

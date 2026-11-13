@@ -1,0 +1,11 @@
+{
+  "nominal": {
+    "repair_verified_at_s": 105,
+    "antenna_before_db": 2,
+    "antenna_after_db": 8
+  },
+  "recall": {
+    "safe_return_at_s": 63,
+    "antenna_after_db": 2
+  }
+}
