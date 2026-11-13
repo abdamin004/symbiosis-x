@@ -17,7 +17,7 @@ require_facilitator = require_role("facilitator")
 @router.post("", response_model=RunReceipt, dependencies=[Depends(require_facilitator)])
 def start(command: StartRunRequest, request: Request) -> RunReceipt:
     try:
-        return start_run(request.app.state.repository, command)
+        return start_run(request.app.state.repository, command, request.app.state.golden_manifest_path)
     except RunNotFound as error:
         raise HTTPException(404, str(error)) from error
     except RunConflict as error:
