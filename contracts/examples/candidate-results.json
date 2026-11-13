@@ -1,0 +1,27 @@
+{
+  "status": "NO_FEASIBLE_PLAN",
+  "basis_snapshot_id": "crew-v103",
+  "expected_decision_rev": 103,
+  "policy_version": "demo-1",
+  "horizon_s": 21600,
+  "candidates": [
+    {
+      "candidate_id": "hold_course",
+      "status": "rejected",
+      "reason_code": "CO2_PEAK_LIMIT",
+      "peak_co2_ppm": 3757.12
+    },
+    {
+      "candidate_id": "start_standby",
+      "status": "rejected",
+      "reason_code": "POWER_LIMIT",
+      "required_kw": 0.40,
+      "available_kw": 0.20
+    },
+    {
+      "candidate_id": "reduce_activity",
+      "status": "rejected",
+      "reason_code": "ACTIVITY_RESTRICTED"
+    }
+  ]
+}
