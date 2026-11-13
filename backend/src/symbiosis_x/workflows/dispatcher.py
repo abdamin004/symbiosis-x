@@ -140,7 +140,7 @@ def _beat(db: Connection, run_id: str, mission_s: int, *, variant: dict | None =
             event_type="fault.power_drop", mission_s=600,
             payload={
                 "component_id": "power-bus-01",
-                "power_headroom_kw": GOLDEN_HEADROOM_DEGRADED_KW,
+                "power_headroom_kw": (variant["power_headroom_kw"]["degraded"] if variant else GOLDEN_HEADROOM_DEGRADED_KW),
                 "feeder_connected": True,
             },
         )
