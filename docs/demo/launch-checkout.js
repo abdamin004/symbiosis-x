@@ -1,5 +1,5 @@
 // Local Commander training exercise. The live golden run has its own clock and command gate.
-function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPlayback,resetCrew,crew,openCommand,closeCommand,onDemoCrew,exteriorBusy,nextExteriorHold,antennaUnverified}) {
+function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPlayback,resetCrew,crew,openCommand,closeCommand,onDemoCrew,onDemoFrame,exteriorBusy,nextExteriorHold,antennaUnverified}) {
   const saves = createFlightSaves();
   let config;
   const find = id => document.getElementById(id);
@@ -227,15 +227,38 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     if (!["skip","complete"].includes(tutorial.returnValue)) return;
     try { localStorage.setItem(lessonKey,"seen"); } catch {}
   });
-  const voiceButton = find("pad-audio");
-  voiceButton.hidden = !("speechSynthesis" in window);
-  voiceButton.addEventListener("click",()=>{
+  const audioButtons = [find("pad-audio"),find("flight-audio")];
+  const Audio = window.AudioContext || window.webkitAudioContext;
+  let audio;
+  function unlockAudio() {
+    if (!voiceEnabled || !Audio) return;
+    audio ??= new Audio();
+    audio.resume().catch(()=>{});
+  }
+  function sound(from,to,duration,volume=.075,delay=0) {
+    if (!voiceEnabled || audio?.state !== "running") return;
+    const time = audio.currentTime+delay, oscillator = audio.createOscillator(), gain = audio.createGain();
+    oscillator.type = from < 180 ? "triangle" : "sine";
+    oscillator.frequency.setValueAtTime(from,time);
+    oscillator.frequency.exponentialRampToValueAtTime(to,time+duration);
+    gain.gain.setValueAtTime(.001,time);
+    gain.gain.exponentialRampToValueAtTime(volume,time+.035);
+    gain.gain.exponentialRampToValueAtTime(.001,time+duration);
+    oscillator.connect(gain).connect(audio.destination);
+    oscillator.start(time);
+    oscillator.stop(time+duration);
+  }
+  for (const button of audioButtons) button.addEventListener("click",()=>{
     voiceEnabled = !voiceEnabled;
-    voiceButton.setAttribute("aria-pressed",String(voiceEnabled));
-    if (!voiceEnabled) speechSynthesis.cancel();
+    for (const control of audioButtons) control.setAttribute("aria-pressed",String(voiceEnabled));
+    if (voiceEnabled) unlockAudio();
+    else {
+      window.speechSynthesis?.cancel();
+      audio?.suspend().catch(()=>{});
+    }
   });
   function announceHelmets() {
-    if (!voiceEnabled || voiceButton.hidden) return;
+    if (!voiceEnabled || !("speechSynthesis" in window)) return;
     const cue = new SpeechSynthesisUtterance("Helmets on. Hold on for launch.");
     cue.rate = .92;
     cue.lang = "en-US";
@@ -540,6 +563,8 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     const launch = view === "launch";
     const menu = view === "menu";
     const inOrbit = launch && state.insertion !== null && !state.aborted && activeBurn?.kind !== "insertion";
+    audioButtons[0].hidden = !(Audio || "speechSynthesis" in window);
+    audioButtons[1].hidden = !inOrbit || !(Audio || "speechSynthesis" in window);
     const controlsHome = find(inOrbit ? "mission-command-widget" : "pad-command");
     const controls = find("launch-controls");
     if (controls.parentElement !== controlsHome) controlsHome.append(controls);
@@ -731,7 +756,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     if (!ascentPlaying || ascentTimer !== null || view !== "launch") return;
     const liftoff = state.time === state.ignition;
     const coasting = state.separation !== null && state.insertion === null;
-    const delay = coasting && !reducedMotion.matches ? 1800 : (liftoff && !reducedMotion.matches ? 2700 : 880)/speed;
+    const delay = coasting && !reducedMotion.matches ? 1800 : liftoff && !reducedMotion.matches ? 2700 : 880/speed;
     ascentTimer = setTimeout(()=>{
       ascentTimer = null;
       if (!flightState().advance) { stopPlayback(); render(); return; }
@@ -1339,6 +1364,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
   function showView(next, mission, navigate = false, timed = false) {
     if (!timed && demo.active) {
       onDemoCrew("close-twin");
+      onDemoCrew("reset-panels");
       closeCommand();
       resetCrew(config.id+"-timed-demo");
       demo.stop();
@@ -1381,6 +1407,12 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     "start-demo-eva":()=>onDemoCrew("start-demo-eva"),
     "verify-demo-eva":()=>onDemoCrew("verify-demo-eva"),
     "close-twin":()=>onDemoCrew("close-twin"),
+    "show-deck":()=>onDemoCrew("show-deck"),
+    "show-systems":()=>onDemoCrew("show-systems"),
+    "show-ground":()=>onDemoCrew("show-ground"),
+    "show-orders":()=>onDemoCrew("show-orders"),
+    "show-workflows":()=>onDemoCrew("show-workflows"),
+    "reset-panels":()=>onDemoCrew("reset-panels"),
     "show-docking":()=>{ openCommand(find("demo-pause")); return true; },
     "hide-docking":()=>{ closeCommand(); return true; },
   };
@@ -1400,6 +1432,11 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
       return true;
     },
     busy:()=>Boolean(activeBurn || ascentPlaying),
+    soundCue(seconds) {
+      const cues = {36:[520,310,.24],74:[290,470,.2],94:[320,410,.16],220:[155,47,.48,.10],223:[400,640,.36]};
+      if (cues[seconds]) sound(...cues[seconds]);
+    },
+    paintScene:onDemoFrame,
     next:()=>flightState().next,
     suspend() {
       clearTimeout(ascentTimer);
@@ -1418,7 +1455,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
       animateAscent();
     },
   });
-  find("start-timed-demo").addEventListener("click",demo.start);
+  find("start-timed-demo").addEventListener("click",()=>{unlockAudio();demo.start();});
   find("demo-exit").addEventListener("click",exit);
   document.addEventListener("click",event=>{
     if (demo.active && event.isTrusted && event.target.closest(
@@ -1477,6 +1514,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
   find("launch-arm").addEventListener("click",()=>{
     if (state.hold || !systemsReady() || !ready() || state.armed !== null || state.ignition !== null) return;
     state.armed = state.time;
+    unlockAudio();
     announceHelmets();
     persist();
     render();
@@ -1496,6 +1534,9 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     if (find("launch-go").disabled || state.ignition !== null) return;
     stopPlayback();
     state.ignition = state.time;
+    unlockAudio();
+    sound(65,104,1.25,.14);
+    sound(440,147,.17,.055,.57);
     ascentPlaying = true;
     persist();
     renderView();
@@ -1504,6 +1545,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
   find("launch-separate").addEventListener("click",()=>{
     if (!flightState().separate) return;
     state.separation = state.time;
+    sound(212,83,.36);
     ascentPlaying = true;
     persist();
     renderView();
@@ -1566,6 +1608,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     if (!flightState().capture) return;
     stopPlayback();
     state.capture = state.time;
+    sound(250,132,.3);
     persist();
     renderView();
   });

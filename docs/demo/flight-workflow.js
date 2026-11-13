@@ -107,11 +107,16 @@ const flightWorkflow = (() => {
 const campaignGround = (() => {
   const uplink = 45;
   const downlink = 30;
+  const workTick = 15;
+  const timebox = time => {
+    const assigned = (Math.floor(time / workTick) + 1) * workTick;
+    return {assigned,arrival:assigned+workTick,finishes:assigned+3*workTick};
+  };
   const holdReasons = ["Readiness evidence incomplete", "Crew or station unavailable", "Operational conditions require review"];
   const issuer = "Simulated Ground · Flight Director";
 
   function issue(current, time, departure) {
-    const expires = Math.max(departure + 300, time + uplink + 90);
+    const expires = Math.max(departure + 600, time + uplink + 600);
     return {
       issuer, basis: "ISS departure readiness · checkpoint T+" + clock(departure),
       sent: time, arrives: time + uplink, expires,
@@ -142,7 +147,7 @@ const campaignGround = (() => {
         report:{result:"held",sent:time,delivers:time + downlink}};
     }
     if (decision === "assign" && origin) {
-      const work = flightWorkflow.timebox(time);
+      const work = timebox(time);
       if (work.finishes + downlink > order.expires) return null;
       return {...order, acknowledged, decision:"assigned", work:{...work,origin}};
     }
@@ -159,7 +164,7 @@ const campaignGround = (() => {
     return status(order,time) === "verified" && time <= order.expires;
   }
 
-  return {issuer, downlink, holdReasons, issue, status, job, receiveDecision, report, cleared};
+  return {issuer, downlink, holdReasons, issue, status, job, timebox, receiveDecision, report, cleared};
 })();
 function bindExerciseInspector({find, runId, clock, session}) {
   const panel = find("exercise-preview");

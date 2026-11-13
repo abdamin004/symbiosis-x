@@ -54,6 +54,12 @@ function createFlightWidgets(overlay, shelf, notice, fixedControls = []) {
       const hadFocus = entry.panel.contains(document.activeElement);
       entry.panel.hidden = false;
       entry.panel.style.maxHeight = "";
+      if (getComputedStyle(entry.panel).position === "fixed") {
+        const bounds = overlay.getBoundingClientRect();
+        const panel = entry.panel.getBoundingClientRect();
+        occupied.push({x:panel.left-bounds.left,y:panel.top-bounds.top,w:panel.width,h:panel.height});
+        continue;
+      }
       const preferred = entry.position ?? entry.preferred();
       let placed = place(entry,preferred,occupied);
       if (!placed && entry.compactPriority) {

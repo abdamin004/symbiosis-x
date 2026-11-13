@@ -85,6 +85,11 @@ test("the health demo shows the cabin response, private check and scheduled EVA 
   await expect(twin).toBeVisible();
   await expect(twin.locator("#personnel-name")).toHaveText("Sana Kepler");
   await expect(twin.locator("#region-source")).toHaveText("Synthetic demo · optical wristband");
+  const audioToggle = page.locator("#flight-audio");
+  await expect(audioToggle).toBeVisible();
+  await audioToggle.dispatchEvent("click");
+  await expect(audioToggle).toHaveAttribute("aria-pressed","false");
+  await expect(page.locator("#pad-audio")).toHaveAttribute("aria-pressed","false");
   await expect(twin.locator("#region-reading")).toHaveText(/68 bpm.*observed T\+02:10.*received T\+02:15.*accepted/);
   const [twinBounds, shipBounds, guideBounds, readingBounds] = await Promise.all([
     twin.boundingBox(), page.locator("#ship").boundingBox(), page.locator("#mission-guide").boundingBox(),
@@ -94,7 +99,9 @@ test("the health demo shows the cabin response, private check and scheduled EVA 
   expect(shipBounds.x+shipBounds.width).toBeLessThan(guideBounds.x);
   expect(readingBounds.y+readingBounds.height).toBeLessThan(twinBounds.y+twinBounds.height);
   await expect(twin.getByRole("link",{name:"Open private health record"})).toBeHidden();
-  await advance(7);
+  await advance(4);
+  await expect(page.locator("#map-deck")).toBeVisible();
+  await advance(3);
   await expect(beat).toHaveText("Suspected CO₂ exposure · check on Sana");
   await expect(twin.locator("#crew-exposure")).toBeVisible();
   await expect(page.locator("#demo-scenario")).toContainText("01 / 03");
@@ -141,7 +148,10 @@ test("the health demo shows the cabin response, private check and scheduled EVA 
   await advance(11);
   await expect(beat).toHaveText("Crew confirms CO₂ is falling · recovery report in transit");
   await expect(cabin).toHaveText(/2006.65 ppm.*T\+04:00.*20 m³\/h/);
-  await advance(15);
+  await advance(3);
+  await expect(page.locator("#map-ground")).toBeVisible();
+  await expect(page.locator("#workflow-widget")).toBeVisible();
+  await advance(12);
   await expect(beat).toHaveText("Spacewalk · Ivo exits to service the antenna");
   await expect(page.locator("#demo-scenario")).toContainText("03 / 03");
   await expect(twin.locator("#personnel-name")).toHaveText("Ivo Reyes");
@@ -159,7 +169,9 @@ test("the health demo shows the cabin response, private check and scheduled EVA 
   await advance(8);
   await expect(beat).toHaveText("Mara verifies Ivo’s safe return");
   await expect(twin).toBeHidden();
-  await advance(10);
+  await advance(2);
+  await expect(page.locator("#process-dialog")).toBeVisible();
+  await advance(8);
   await expect(page.locator("#orbital-burn-scene")).toBeVisible();
   await advance(24);
   const exterior = page.getByRole("img",{name:"Exterior view of the ship and the International Space Station"});
