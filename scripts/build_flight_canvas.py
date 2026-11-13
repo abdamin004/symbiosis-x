@@ -34,13 +34,14 @@ def build(output: Path) -> None:
     launch_scene = (ROOT / "docs/demo/launch-scene.js").read_text(encoding="utf-8")
     checkout = (ROOT / "docs/demo/launch-checkout.js").read_text(encoding="utf-8")
     anatomy = (ROOT / "docs/demo/flight-anatomy.html").read_text(encoding="utf-8")
+    crew_routines = (ROOT / "docs/demo/flight-crew.js").read_text(encoding="utf-8")
     icons = (ROOT / "frontend/src/ui/icons/lucide/flight.svg").read_text(encoding="utf-8")
     output.write_text(
         template.replace("__FLIGHT_DATA__", data)
         .replace("__FLIGHT_WORKFLOW__", workflow).replace("__FLIGHT_WIDGETS__", widgets)
         .replace("__FLIGHT_STATIONS__", stations).replace("__LAUNCH_SCENE__", launch_scene)
         .replace("__LAUNCH_CHECKOUT__", checkout).replace("__HUD_ICONS__", icons)
-        .replace("__FLIGHT_ANATOMY__", anatomy),
+        .replace("__FLIGHT_ANATOMY__", anatomy).replace("__FLIGHT_CREW__", crew_routines),
         encoding="utf-8",
     )
 

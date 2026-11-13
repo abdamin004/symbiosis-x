@@ -376,14 +376,56 @@ button[aria-pressed=true]{background:#3d315e}
 #launch-jobs .checkout-job-status{font-size:.72rem}
 #orbit-track{width:100%;background:#0b1427;border-radius:7px}
 #orbit-status{color:var(--blue)}
+.hud,.launch-hud{position:fixed;inset:0 0 auto;z-index:10;pointer-events:none;background:linear-gradient(180deg,#080c1bde,transparent);box-shadow:none}
+.hud button,.hud a,.launch-hud button,.launch-hud a{pointer-events:auto}
+.ribbon{gap:.35rem .65rem;text-shadow:0 1px 8px #090b19}
+.ribbon button{background:#121b3590}
+.ribbon button:hover{background:#2c3457}
+.launch-ribbon{background:transparent;border:0}
+.launch-field{height:100svh}
+.launch-board{margin-top:calc(var(--launch-clearance,110px) + .5rem);max-height:calc(100svh - var(--launch-clearance,110px) - 1.5rem)}
+.pad-transport{justify-content:flex-end;margin-right:.75rem;padding:.15rem .25rem;background:none;text-shadow:0 1px 6px #080d17}
+#pad-light{margin-left:0}
+.pad-transport button{background:#111a32a8}
+.viewport{padding-top:max(var(--control-clearance,110px),6vh)}
+.play-area{min-height:100dvh}
+.device-links{display:flex;flex-wrap:wrap;gap:.3rem;margin:.35rem 0}
+.device-links button{font-size:.74rem;background:#193444}
+.twin-camera,.twin-peer{margin:.55rem 0;padding:.45rem .55rem;background:#131f37;border-radius:6px}
+.twin-camera strong,.twin-peer strong{display:block;font-size:.78rem;color:var(--blue)}
+.twin-camera output,.twin-peer output{display:block;font-size:.75rem;color:var(--muted)}
+.twin-peer button{margin:.35rem 0;font-size:.76rem}
+.deck-camera{position:absolute;z-index:2;padding:.16rem .24rem;background:#111c30a6;color:#a0dedf;transform:translate(-50%,-50%)}
+.deck-camera[data-tracking=true]{color:#d2fff3;box-shadow:0 0 12px #8cf5c156}
+.deck-camera .icon{display:block;width:.8rem;height:.8rem}
+.mission-resources{position:absolute;top:calc(100% + .35rem);left:.65rem;display:grid;grid-template-columns:repeat(2,max-content);gap:.15rem .65rem;padding:.38rem .52rem;background:#0e172bc7;border-radius:7px;font:600 .7rem ui-monospace,monospace;color:#dbe6ff}
+.mission-resources span{display:flex;gap:.25rem;align-items:center}
+.mission-resources .icon{width:.78rem;height:.78rem;color:var(--violet)}
+.pawn .action-marker{display:flex;align-items:center;gap:3px;left:92%;top:-.1rem;white-space:nowrap}
+.pawn .action-marker meter{width:29px;height:5px;accent-color:#b8e9cc}
+.pawn .action-marker meter::-webkit-meter-bar{background:#34425f;border:none}
+.pawn .action-marker meter::-webkit-meter-optimum-value{background:#a3e8c8}
+.wrist-readout{display:flex;align-items:center;gap:.65rem;margin:.4rem 0;padding:.42rem .55rem;border-radius:7px;background:#151f35}
+.wrist-readout svg{width:31px;height:37px;flex:none}
+.wrist-readout strong{display:block;color:#ffafbc;font:700 1.05rem ui-monospace,monospace}
+.wrist-readout small{display:block;color:var(--muted);font-size:.68rem}
+.profile-data meter,.duty-progress{width:100%;height:.55rem;accent-color:#a3e8c8}
+.profile-data dd:has(meter){min-width:5.5rem}
+.profile-data dd meter{display:block}
+@media(max-width:800px){.mission-resources{top:calc(100% + 4.2rem)}#widget-shelf{top:calc(100% + 7.6rem)}}
+@media(max-width:660px){
+  .launch-field{height:auto}
+  .launch-visual{position:sticky;top:0;height:min(43svh,430px)}
+  .launch-board{max-height:none;margin-top:.7rem}
+}
 </style>
 </head>
 <body>
 __HUD_ICONS__
 <main>
 <section class="stage" id="stage" aria-label="Spacecraft in flight" hidden>
-  <div class="hud"><div class="ribbon" aria-label="Mission resources">
-    <span class="resource"><svg class="icon" aria-hidden="true"><use href="#hud-map"/></svg><output id="resource-phase"></output></span><span class="resource"><svg class="icon" aria-hidden="true"><use href="#hud-wind"/></svg><output id="resource-air"></output></span><span class="resource"><svg class="icon" aria-hidden="true"><use href="#hud-zap"/></svg><output id="resource-power"></output></span><span class="resource"><svg class="icon" aria-hidden="true"><use href="#hud-users"/></svg><output id="resource-crew"></output></span>
+  <div class="hud"><div class="ribbon" aria-label="Flight navigation">
+    <span class="resource"><svg class="icon" aria-hidden="true"><use href="#hud-map"/></svg><output id="resource-phase"></output></span>
     <button type="button" id="show-inspector" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#hud-activity"/></svg>Inspector</button>
     <button type="button" id="show-crew" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#hud-users"/></svg>Crew</button>
     <button type="button" id="show-workflow" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#hud-clipboard-list"/></svg>Orders</button>
@@ -395,11 +437,19 @@ __HUD_ICONS__
     <button type="button" id="end-mission" class="end-mission"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg>End mission</button>
     <a href="/mission">Mission control</a>
   </div>
+  <div class="mission-resources" id="mission-resources" role="group" aria-label="Mission resources">
+    <span><svg class="icon" aria-hidden="true"><use href="#hud-wind"/></svg><output id="resource-air"></output></span>
+    <span><svg class="icon" aria-hidden="true"><use href="#hud-zap"/></svg><output id="resource-power"></output></span>
+    <span><svg class="icon" aria-hidden="true"><use href="#hud-users"/></svg><output id="resource-crew"></output></span>
+    <span><svg class="icon" aria-hidden="true"><use href="#hud-package"/></svg><output id="resource-meals"></output></span>
+    <span><svg class="icon" aria-hidden="true"><use href="#hud-droplets"/></svg><output id="resource-water"></output></span>
+  </div>
   <nav class="crew-strip" id="crew-strip" aria-label="Astronaut portraits"></nav>
   <div class="flight-controls"><div class="control-deck" role="group" aria-label="Flight playback">
     <button id="play" type="button" aria-label="Play" title="Play or pause"><svg class="icon" aria-hidden="true"><use id="play-icon" href="#hud-play"/></svg></button>
     <button id="speed-cycle" type="button" aria-label="Cycle speed" title="Cycle 1×, 2×, and 4×">1×</button>
     <button id="step" type="button" aria-label="Skip one mission hour" title="Skip one mission hour"><svg class="icon" aria-hidden="true"><use href="#hud-skip-forward"/></svg></button>
+    <output class="clock" id="hud-clock" aria-label="Flight clock"></output>
   </div></div>
   <div id="widget-shelf" hidden><span>Parked widgets</span></div><span id="widget-notice" role="status"></span></div>
   <div class="play-area">
@@ -419,6 +469,11 @@ __HUD_ICONS__
   </section>
   <section class="panel" id="workflow-widget" hidden aria-labelledby="workflow-title">
     <div class="widget-bar"><button class="move-widget widget-title" type="button" aria-label="Move orders with drag or arrow keys"><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button><h2 id="workflow-title">Onboard orders</h2><button class="widget-close" type="button" aria-label="Close orders"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button></div>
+    <div class="order-card" id="peer-order" hidden>
+      <strong id="peer-order-target"></strong>
+      <p id="peer-order-status"></p>
+      <button id="request-peer-check" type="button">Request crewmate check</button>
+    </div>
     <div class="order-card">
       <strong>Routine · Scrubber check</strong>
       <p id="routine-state"></p>
@@ -528,7 +583,24 @@ __HUD_ICONS__
             <strong id="region-reading"></strong><p id="region-detail"></p><small id="region-time"></small>
           </div>
         </div>
+        <div class="device-links" aria-label="Crew wearable shortcuts">
+          <button id="inspect-wristband" type="button">Wristband · left wrist</button>
+          <button id="inspect-back-pod" type="button">Back pod · upper back</button>
+        </div>
+        <div class="wrist-readout" id="wrist-readout" hidden>
+          <svg viewBox="0 0 32 40" aria-hidden="true">
+            <rect x="9" width="14" height="40" rx="5" fill="#727da5"/>
+            <rect x="3" y="7" width="26" height="26" rx="8" fill="#101826" stroke="#b6bdd5"/>
+            <path d="M7 21h4l3-6 3 10 3-4h5" fill="none" stroke="#ffafbc" stroke-width="1.5"/>
+          </svg>
+          <div><strong id="wrist-bpm"></strong><small id="wrist-sample"></small></div>
+        </div>
         <div class="choices" id="body-regions" role="group" aria-label="Select body region"></div>
+        <div class="twin-camera"><strong>Onboard camera tracking · simulated</strong><output id="crew-camera"></output><output id="crew-cabin"></output></div>
+        <div class="twin-peer" id="peer-check">
+          <strong>Crew observation</strong>
+          <output id="peer-check-status" aria-live="polite"></output>
+        </div>
       </div>
     </div>
     <div class="profile-cards" id="personnel-data" hidden></div>
@@ -540,6 +612,7 @@ __HUD_ICONS__
       <button class="widget-close" type="button" aria-label="Close Duty widget"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button>
     </div>
     <dl class="profile-data" id="duty-data"></dl>
+    <meter class="duty-progress" id="duty-progress" min="0" max="1" aria-label="Current duty progress"></meter>
   </section>
   <section class="panel profile-window" id="needs-widget" hidden aria-labelledby="needs-title">
     <div class="widget-bar">
@@ -548,12 +621,6 @@ __HUD_ICONS__
       <button class="widget-close" type="button" aria-label="Close Needs widget"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button>
     </div>
     <dl class="profile-data" id="needs-data"></dl>
-      <div id="wellbeing">
-        <span class="choice-label" id="mood-label">Private simulated mood</span>
-        <div class="choices" id="mood" role="group" aria-labelledby="mood-label"></div>
-        <span class="choice-label" id="symptoms-label">Private symptom check-in</span>
-        <div class="choices" id="symptoms" role="group" aria-labelledby="symptoms-label"></div>
-      </div>
   </section>
   <section class="panel profile-window" id="vitals-widget" hidden aria-labelledby="vitals-title">
     <div class="widget-bar">
@@ -621,6 +688,7 @@ __HUD_ICONS__
   <div id="orbit-dialog-content"></div>
 </dialog>
 <section id="launch-page" class="launch-page" aria-label="SYMBIOSIS X flight game" hidden>
+  <div class="launch-hud">
   <nav class="ribbon launch-ribbon" aria-label="Flight navigation">
     <strong>SYMBIOSIS X</strong>
     <div class="launch-nav-actions">
@@ -633,8 +701,10 @@ __HUD_ICONS__
   <div id="pad-transport" class="pad-transport" role="group" aria-label="Launch time controls" hidden>
     <button id="pad-play" type="button"><svg class="icon" aria-hidden="true"><use id="pad-play-icon" href="#hud-play"/></svg><span id="pad-play-label">Play</span></button>
     <button id="pad-speed" type="button" aria-label="Cycle launch speed">1×</button>
+    <button id="pad-step" type="button" aria-label="Advance one launch tick" title="Advance one launch tick"><svg class="icon" aria-hidden="true"><use href="#hud-skip-forward"/></svg></button>
     <output id="pad-clock" aria-label="Launch clock">0:00</output>
     <span id="pad-light"></span>
+  </div>
   </div>
   <div class="launch-field" id="launch-field" data-view="menu">
     <div class="launch-visual"><canvas class="launch-scene" id="launch-scene" role="img" aria-label="Asteria on a concrete launchpad in front of a mountain range"></canvas></div>
@@ -730,6 +800,7 @@ __FLIGHT_WIDGETS__
 __FLIGHT_STATIONS__
 __LAUNCH_SCENE__
 __LAUNCH_CHECKOUT__
+__FLIGHT_CREW__
 </script>
 <script>
 const element = id => document.getElementById(id);
@@ -796,6 +867,8 @@ const stationDuties = [
 ];
 function station(duty, member) {
   const time = Math.floor(missionTime);
+  const check = peerWork(member,time);
+  if (check) return [check.room, time < check.arrival ? "Heading to a crew check" : "Checking in with " + characters[check.member].short];
   const task = activeTask(member, time);
   if (task && time >= task.assigned) {
     const asset = equipment.get(task.asset);
@@ -804,6 +877,10 @@ function station(duty, member) {
   const groundWork = member === 2 && groundInspection(currentFrame());
   if (groundWork && time >= groundWork.assigned) return ["life-support-01",
     time < groundWork.arrival ? "Walking to the scrubber rack" : "Inspect life support for the Commander"];
+  const waiting = peerChecks.find(check => check.mode === crewMode() && check.member === member && check.requested <= time && time < check.due);
+  if (waiting) return [waiting.room,"Available for crew observation"];
+  const job = crewRoutine(member);
+  if (job) return [equipment.get(job.asset).room, time < job.arrival ? "Heading to " + equipment.get(job.asset).name : job.action];
   return duty.stations[index] ?? stationDuties[member][index - duty.stations.length];
 }
 
@@ -820,6 +897,31 @@ const fixtures = [
 ];
 const equipment = new Map(fixtures.map(asset => [asset.id, asset]));
 const tasks = [];
+let crewSession;
+const crewRoutines = createCrewRoutines({
+  count:duties.length,tick:TICK_SECONDS,
+  occupied(member,asset,time) {
+    const frame = {...checkpoints[checkpoints.findLastIndex(point=>point.time<=time)],time};
+    const order = connectedFlight ? null : groundInspection(frame);
+    const manual = tasks.some(job => job.mode === crewMode() && job.queued <= time && time < job.finishes &&
+      (job.member === member || asset && job.asset === asset));
+    return manual || Boolean(order && (member === 2 || asset === "scrubber")) ||
+      peerChecks.some(check => check.mode === crewMode() && (check.observer === member || check.member === member) &&
+        check.requested <= time && time < check.due);
+  },
+});
+function crewRoutine(member) {
+  const ownJob = crewSession?.crew[member]?.active;
+  if (ownJob) return ownJob;
+  const visit = crewSession?.crew.find(person=>person.active?.checkup === member)?.active;
+  return visit && {...visit,previous:visit.patientPrevious,action:"Attend daily crew checkup"};
+}
+function updateCrewRoutines(frame) {
+  const mode = crewMode();
+  const revision = JSON.stringify([tasks,peerChecks.map(({mode,observer,requested,due})=>[mode,observer,requested,due]),
+    mode === "replay" ? flightWorkflow.read() : null]);
+  crewSession = crewRoutines.update(mode,connectedFlight?.crewStarted ?? 0,frame.time,revision);
+}
 const equipmentButtons = new Map();
 const fixtureFootprints = {
   bed:[430,157,105,39], wc:[596,153,32,35], galley:[552,154,38,32],
@@ -832,7 +934,7 @@ function placeArea(button, x, y, width, height) {
   button.style.height = height / 475 * 100 + "%";
 }
 function taskAt(asset, time) {
-  return tasks.findLast(task => task.asset === asset && task.queued <= time);
+  return tasks.findLast(task => task.mode === crewMode() && task.asset === asset && task.queued <= time);
 }
 
 function groundInspection(frame) {
@@ -843,7 +945,7 @@ function groundInspection(frame) {
 }
 
 function activeTask(member, time) {
-  return tasks.find(task => task.member === member && task.queued <= time && time < task.finishes);
+  return tasks.find(task => task.mode === crewMode() && task.member === member && task.queued <= time && time < task.finishes);
 }
 
 const roomById = new Map(data.rooms.map(room => [room.room_id, room]));
@@ -867,6 +969,7 @@ let timer = null;
 let speed = 1;
 let compressed = false;
 element("speed-cycle").addEventListener("click", () => {
+  if (connectedFlight) { launchMission.cycleSpeed(); return; }
   speed = speed === 4 ? 1 : speed * 2;
   compressed = false;
   render();
@@ -1090,6 +1193,21 @@ const anatomyFigure = element("body-map").querySelector(".anatomy-figure");
 const suitFigure = element("body-map").querySelector("[data-anatomy-suit]");
 const suitId = suitFigure.querySelector("[data-twin-suit-id]");
 const bodyButtons = [];
+const peerChecks = [];
+const cameraRooms = Object.keys(zones).filter(room => room !== "habitat-01" && room !== "medical-01");
+const deckCameras = new Map();
+const cameraMotion = {move:"Moving",rest:"Resting",work:"At work",idle:"At station"};
+const crewMode = () => connectedFlight ? "asteria" : "replay";
+function peerWork(member,time) {
+  return peerChecks.find(check => check.mode === crewMode() && check.observer === member &&
+    check.requested <= time && time < check.due);
+}
+function availableObserver(member, time) {
+  const order = [characters[member].link, ...duties.keys()];
+  const groundJob = flightWorkflow.job(currentFrame());
+  return order.find(observer => observer !== member && !activeTask(observer,time) && !peerWork(observer,time) &&
+    !(observer === 2 && (groundInspection(currentFrame()) || groundJob?.state === "Offered")));
+}
 const anatomyLabels = {
   anatomy:"Body regions · simulated crew",
   skeleton:"Skeleton · anatomy illustration",
@@ -1133,6 +1251,28 @@ function setupBodyMap() {
     twinView = button.dataset.twinView;
     render();
   });
+  for (const [id,region] of [["inspect-wristband","wrist"],["inspect-back-pod","torso"]]) {
+    element(id).addEventListener("click",()=>{
+      activeLayer = "sensors";
+      selectedRegion = region;
+      render();
+    });
+  }
+  element("request-peer-check").addEventListener("click",()=>{
+    if (element("request-peer-check").disabled) return;
+    const member = profileMembers.get("personnel");
+    const requested = Math.floor(missionTime);
+    const observer = availableObserver(member,requested);
+    const room = crewPositions.get(pawns.get(member)).room;
+    const arrival = nextTick(requested) + TICK_SECONDS;
+    for (let i = peerChecks.length-1; i >= 0; i--) {
+      if (peerChecks[i].mode === crewMode() && peerChecks[i].requested > requested) peerChecks.splice(i,1);
+    }
+    peerChecks.push({mode:crewMode(),member,observer,region:selectedRegion,requested,arrival,
+      due:arrival + TICK_SECONDS,origin:crewPositions.get(pawns.get(observer)),room});
+    if (connectedFlight) launchMission.refreshCrewWork();
+    render();
+  });
 }
 function renderAnatomyLayer() {
   const suit = activeLayer === "suit";
@@ -1156,7 +1296,7 @@ function renderAnatomyLayer() {
   element("twin-layer-label").textContent = anatomyLabels[activeLayer];
 }
 function regionTelemetry(sample) {
-  const unobserved = ["No measurement", "Unobserved", "No sensor sample is available for this region.", false];
+  const unobserved = ["No measurement", "Unobserved", "No onboard sensor measures this region directly.", false];
   if (activeLayer === "suit") return ["Equipment illustration", "Suit status unavailable", "This replay carries no suit sensor readings.", false];
   if (activeLayer === "skeleton") return ["Anatomical reference", "Unobserved", "The replay carries no bone or joint assessment.", false];
   if (activeLayer === "muscles") {
@@ -1165,15 +1305,18 @@ function regionTelemetry(sample) {
   }
   if (activeLayer === "cardiorespiratory") {
     if (selectedRegion !== "torso" && selectedRegion !== "wrist") return unobserved;
-    return ["Simulated optical watch", sample.heart_rate + " bpm", "Heart rate is sampled at the left wrist. Breathing rate and blood oxygen are unavailable in this replay.", true];
+    return ["Simulated optical wristband", sample.heart_rate + " bpm", "Heart rate is sampled at the left wrist. Breathing rate and blood oxygen are unavailable.", true];
   }
+  if (activeLayer === "sensors" && selectedRegion === "torso") return ["Simulated back pod",
+    sample.pitch + "° pitch · " + sample.roll + "° roll",
+    sample.emg + " mV RMS synthetic EMG · " + sample.speed + " m/s motion estimate.", true];
   if (selectedRegion === "torso") return ["Simulated back-pod IMU", sample.pitch + "° pitch · " + sample.roll + "° roll",
     "Trunk orientation from the back pod.", true];
-  if (selectedRegion === "wrist") return ["Simulated optical watch", sample.heart_rate + " bpm",
+  if (selectedRegion === "wrist") return ["Simulated optical wristband", sample.heart_rate + " bpm",
     "Whole-person heart rate sampled at the left wrist.", true];
   return unobserved;
 }
-function updateBodyMap(sample, member) {
+function updateBodyMap(sample, member, frame) {
   const map = element("body-map");
   const state = activeLayer + ":" + selectedRegion;
   if (map.dataset.view !== state) {
@@ -1187,7 +1330,62 @@ function updateBodyMap(sample, member) {
   element("region-source").textContent = source;
   element("region-reading").textContent = reading;
   element("region-detail").textContent = detail;
-  element("region-time").textContent = observed ? "Observed T+" + clock(sample.time) + " · replay" : "";
+  element("region-time").textContent = observed ? "Observed T+" + clock(sample.time) +
+    (connectedFlight ? " · synthetic phase reference" : " · synthetic replay sample") : "";
+  element("wrist-readout").hidden = activeLayer !== "sensors" || selectedRegion !== "wrist";
+  element("wrist-bpm").textContent = sample.heart_rate + " bpm";
+  element("wrist-sample").textContent = (connectedFlight ? "Synthetic phase reference" : "Latest simulated sample") +
+    " · T+" + clock(sample.time);
+  const tracked = trackingRoom(member);
+  const camera = tracked ? roomById.get(tracked).name + " · " + cameraMotion[paintedPositions.get(member).activity] +
+    " · T+" + clock(frame.time) : "Outside camera coverage · no observation";
+  element("crew-camera").textContent = camera;
+  element("crew-cabin").textContent = "Cabin CO₂ " + frame.co2.toFixed(0) + " ppm · spacecraft twin";
+  const check = peerChecks.findLast(check=>check.mode === crewMode() && check.member === member &&
+    check.region === selectedRegion && check.requested <= frame.time);
+  const pending = check && frame.time < check.due;
+  const request = element("request-peer-check");
+  element("peer-check").hidden = observed && !check;
+  const observer = pending ? check.observer : availableObserver(member,frame.time);
+  const timeAvailable = connectedFlight ? connectedFlight.advance || connectedFlight.canWaitForCrew
+    : nextTick(frame.time) + 2 * TICK_SECONDS <= endTime;
+  request.disabled = Boolean(pending || observer === undefined || !timeAvailable);
+  request.hidden = Boolean(check || observed);
+  let status = timeAvailable ? observer === undefined ? "No crewmate is free for this check."
+    : characters[observer].short + " can make a visual check and ask about symptoms." : "Checks are unavailable during this phase.";
+  if (check) {
+    const name = characters[check.observer].short;
+    const outcome = check.completed
+      ? "recorded a visual check and asked about symptoms. No visible concerns recorded."
+      : "could not complete the check because the astronaut changed stations.";
+    status = pending ? name + (frame.time < check.arrival ? " is heading to " + roomById.get(check.room).name
+      : " is checking in with " + characters[member].short) + " · due T+" + clock(check.due)
+      : name + " " + outcome + " · T+" + clock(check.due);
+    request.hidden = pending || observed || outcome.startsWith("recorded");
+  }
+  const report = element("peer-check-status");
+  const dailyCheck = crewSession.crew[member].checkup;
+  if (!check && dailyCheck) status = characters[dailyCheck.observer].short +
+    " recorded a routine checkup · T+" + clock(dailyCheck.time) + " · no visible concerns recorded";
+  if (report.textContent !== status) report.textContent = status;
+  element("peer-order").hidden = observed && !check;
+  element("peer-order-target").textContent = characters[member].short + " · " + bodyRegions[selectedRegion].label;
+  element("peer-order-status").textContent = status;
+  if (check?.completed && !observed && ["anatomy","sensors"].includes(activeLayer)) {
+    element("region-source").textContent = "Simulated crewmate observation";
+    element("region-reading").textContent = "Normal · visual check";
+    element("region-detail").textContent = "No visible concern recorded. Internal condition remains unknown.";
+    element("region-time").textContent = "Observed T+" + clock(check.due);
+  }
+}
+
+function trackingRoom(member) {
+  const position = paintedPositions.get(member);
+  if (!position) return undefined;
+  return cameraRooms.find(room => {
+    const {x,y,w,h} = zones[room];
+    return position.x >= x && position.x < x+w && position.y >= y && position.y < y+h;
+  });
 }
 const profileWindows = new Map();
 const checkIns = new Map();
@@ -1267,7 +1465,7 @@ function renderProfiles(frame) {
       element("personnel-data").hidden = twinView === "body";
       for (const button of document.querySelectorAll("[data-twin-view]"))
         button.setAttribute("aria-pressed",String(button.dataset.twinView===twinView));
-      if (twinView === "body") updateBodyMap(row,member);
+      if (twinView === "body") updateBodyMap(row,member,frame);
       rows = twinView === "social" ? [
         ["Crew relationship",characters[persona.link].name + " · " + persona.bond,"users"],
         ["Shared mission beat",crewBeat(frame,member),"radio"],
@@ -1279,9 +1477,10 @@ function renderProfiles(frame) {
         ["Private check-in",reports.mood || "Mood not reported","activity"],
       ];
     } else if (kind === "needs") {
-      setChoices("mood", reports.mood ?? "");
-      setChoices("symptoms", reports.symptoms ?? "");
-      rows = [["Rest",frame.habitat.beds ? "Protected rest window" : "Scheduled"],["Meal and hydration",frame.habitat.meal],["WC",frame.habitat.wc]];
+      const person = crewSession.crew[member];
+      rows = [...crewRoutines.meters(person,frame.time),["Current activity",task],["Needs queue",person.blocked || "Clear"],
+        ["Crew checkup",person.checkup ? "Last T+" + clock(person.checkup.time) : "Every 24 mission hours"],
+        ["Private mood",reports.mood || "No report"],["Symptoms",reports.symptoms || "No report"]];
     } else if (kind === "devices") {
       rows = Object.entries(signals).map(([key,[label,unit,source]]) => [
         label + " · " + source, row[key] + " " + unit,
@@ -1296,7 +1495,11 @@ function renderProfiles(frame) {
           ? row.heart_rate + " bpm" : reports[metric.id] || healthSources[metric.id]])];
     } else {
       const persona = characters[member];
+      const job = crewRoutine(member);
+      element("duty-progress").value = pawns.get(member).querySelector("meter").value;
       rows = [["Role",duties[member].role],["Station",roomById.get(zone).name],["Task",task],
+        ["Priority",peerWork(member,frame.time) ? "Crew observation" : activeTask(member,frame.time) || member === 2 && groundInspection(frame)
+          ? "Commander order" : job?.need ? "Personal need" : job ? "Role routine" : "On standby"],
         ["Background",persona.bio],["Traits",persona.traits],["Specialties",persona.strength],
         ["Crew relationship",characters[persona.link].name + " · " + persona.bond],
         ["Shared beat · scripted",crewBeat(frame,member)],["Vehicle",frame.vehicle],["Phase",frame.phase]];
@@ -1319,6 +1522,13 @@ function renderProfiles(frame) {
     container.replaceChildren(...rows.flatMap(([label,value]) => {
       const dt = document.createElement("dt"), dd = document.createElement("dd");
       dt.textContent = label; dd.textContent = value;
+      if (kind === "needs" && /^\d+%$/.test(value)) {
+        const meter = document.createElement("meter");
+        meter.max = 100;
+        meter.value = Number.parseInt(value,10);
+        meter.setAttribute("aria-label",label);
+        dd.append(meter);
+      }
       return [dt,dd];
     }));
   }
@@ -1441,7 +1651,7 @@ function inspect(frame) {
     assign.textContent = asset.task;
     const crew = assetCrew;
     setChoices("asset-crew",crew);
-    const memberBusy = activeTask(crew, frame.time) ||
+    const memberBusy = activeTask(crew, frame.time) || peerWork(crew,frame.time) ||
       (crew === 2 && groundInspection(frame)) || (asset.id === "scrubber" && groundInspection(frame));
     assign.disabled = Boolean(active || memberBusy || frame.habitat.beds && ["bed","wc"].includes(asset.id)
       || nextTick(missionTime) + TICK_SECONDS + WORK_SECONDS > endTime);
@@ -1491,11 +1701,17 @@ let lastRenderedSecond = -1;
 
 function render() {
   const frame = currentFrame();
+  updateCrewRoutines(frame);
+  for (const check of peerChecks) {
+    if (check.mode === crewMode() && frame.time >= check.due && check.completed === undefined) {
+      check.completed = crewPositions.get(pawns.get(check.member))?.room === check.room;
+    }
+  }
   lastRenderedSecond = frame.time;
   element("workflow-state").textContent = flightWorkflow.status(frame, clock);
   element("monitor-state").textContent = frame.removal != null && frame.removal < 20
     ? "Monitor · Primary scrubber degraded. Inspection records evidence." : "";
-  const routine = tasks.find(task=>task.routine && task.queued<=frame.time);
+  const routine = tasks.find(task=>task.mode === crewMode() && task.routine && task.queued<=frame.time);
   const scrubber = taskAt("scrubber",frame.time);
   const rackBusy = Boolean(scrubber && frame.time < scrubber.finishes);
   const ivoBusy = Boolean(activeTask(2,frame.time));
@@ -1512,11 +1728,10 @@ function render() {
   element("hold-order").hidden = !flightWorkflow.canDecide(frame);
   element("complete-order").hidden = !flightWorkflow.canComplete(frame);
   element("clock").textContent = clock(frame.time);
+  element("hud-clock").textContent = "T+" + clock(frame.time);
   element("phase").textContent = frame.phase + " · " + frame.label;
   element("timeline").hidden = Boolean(connectedFlight);
   element("one-hour").hidden = Boolean(connectedFlight);
-  element("step").hidden = Boolean(connectedFlight);
-  element("speed-cycle").hidden = Boolean(connectedFlight);
   element("next-event").textContent = connectedFlight ? "Advance 15 s" : "Next event";
   element("stage").dataset.asteria = Boolean(connectedFlight);
   element("stage").dataset.vehicle = connectedFlight?.visual ?? "";
@@ -1525,6 +1740,8 @@ function render() {
   element("resource-air").textContent = "CO₂ " + frame.co2.toFixed(0) + " ppm";
   element("resource-power").textContent = frame.power == null ? "Power unmodeled" : "Headroom " + frame.power.toFixed(2) + " kW";
   element("resource-crew").textContent = "Crew " + data.crew.length;
+  element("resource-meals").textContent = crewSession.supplies.meals + " meals";
+  element("resource-water").textContent = crewSession.supplies.water.toFixed(2) + " L water";
   const routePoints = [[18,35],[33,27],[47,23],[62,20],[80,18],[102,16],[130,17],[188,18],[242,35]];
   const [mx,my] = routePoints[frame.route];
   element("ship-position").setAttribute("cx",mx);
@@ -1541,11 +1758,15 @@ function render() {
   element("play").disabled = Boolean(connectedFlight && !connectedFlight.advance);
   element("play").setAttribute("aria-label", playing ? "Pause" : "Play");
   element("play-icon").setAttribute("href", playing ? "#hud-pause" : "#hud-play");
-  element("step").disabled = missionTime >= endTime;
+  const skipLabel = connectedFlight ? "Advance one mission tick" : "Skip one mission hour";
+  element("step").setAttribute("aria-label",skipLabel);
+  element("step").title = skipLabel;
+  element("step").disabled = connectedFlight ? !connectedFlight.advance : missionTime >= endTime;
   element("next-event").disabled = connectedFlight ? !connectedFlight.advance : missionTime >= endTime;
-  element("speed-cycle").textContent = compressed ? "1 h" : speed + "×";
-  element("speed-cycle").title = compressed ? "One-hour pacing active. Click for normal speeds."
-    : (4 * speed) + " mission seconds per real second. Click to change speed.";
+  const displayedSpeed = connectedFlight?.speed ?? speed;
+  element("speed-cycle").textContent = !connectedFlight && compressed ? "1 h" : displayedSpeed + "×";
+  element("speed-cycle").title = !connectedFlight && compressed ? "One-hour pacing active. Click for normal speeds."
+    : (4 * displayedSpeed) + " mission seconds per real second. Click to change speed.";
   element("one-hour").setAttribute("aria-pressed", compressed);
   for (const [roomId, button] of roomButtons) {
     button.setAttribute("aria-pressed", selection.room === roomId);
@@ -1553,27 +1774,30 @@ function render() {
   duties.forEach((duty, i) => {
     const [roomId, task] = station(duty,i);
     const button = pawns.get(i);
+    const crewCheck = peerWork(i,frame.time);
     const work = activeTask(i, frame.time) || (i === 2 && groundInspection(frame));
     const asset = work && frame.time >= work.assigned ? equipment.get(work.asset) : null;
     const travelling = asset && frame.time < work.arrival;
     const sharedWork = !asset && ["Docked","Station research","Recovery"].includes(frame.phase);
-    const statusIcon = travelling ? "map" : asset?.icon ?? (sharedWork ? "users" : roomIcons[roomId]);
+    const routine = crewRoutine(i);
+    const statusIcon = crewCheck ? "users" : (work ? equipment.get(work.asset).icon : routine ? equipment.get(routine.asset).icon
+      : sharedWork ? "users" : roomIcons[roomId]);
     const marker = button.querySelector(".action-marker");
     const badge = portraits.get(i).querySelector(".crew-status");
     if (badge.dataset.icon !== statusIcon) {
-      setIcon(marker,statusIcon,""); setIcon(badge,statusIcon,"");
+      setIcon(marker.querySelector("i"),statusIcon,""); setIcon(badge,statusIcon,"");
       badge.dataset.icon = statusIcon;
     }
-    marker.hidden = !asset && !sharedWork;
+    marker.hidden = !work && !routine && !crewCheck;
     marker.style.color = travelling || sharedWork ? "#bed6ff" : "";
     button.setAttribute("aria-label", characters[i].name + " " + duty.role + " · " + task);
     button.title = "Open digital twin · " + task;
-    button.dataset.working = Boolean(work);
+    button.dataset.working = Boolean(work || routine || crewCheck);
     button.setAttribute("aria-pressed", selection.crew === i);
     roster.get(i).setAttribute("aria-pressed", selection.crew === i);
     const portrait = portraits.get(i);
     portrait.setAttribute("aria-pressed", selection.crew === i);
-    portrait.dataset.working = Boolean(work);
+    portrait.dataset.working = Boolean(work || routine || crewCheck);
     portrait.title = characters[i].name + " · " + duty.role + " · " + task;
     portrait.setAttribute("aria-label", "Inspect " + characters[i].name + " " + duty.role + " · " + task);
   });
@@ -1624,11 +1848,23 @@ function pointAlong(points,progress) {
 function crewMotion(member, frame) {
   const duty = duties[member];
   const [room] = station(duty,member);
+  const check = peerWork(member,frame.time);
+  if (check) return {origin:check.origin,destination:stationPoint(room,member),
+    start:check.arrival - TICK_SECONDS,end:check.arrival,activity:frame.time < check.arrival ? "move" : "work"};
   const task = activeTask(member,frame.time) || (member === 2 && groundInspection(frame));
   if (task && frame.time >= task.assigned) {
     const asset = equipment.get(task.asset);
     return {origin:task.origin,destination:stationPoint(room,member,asset),
       start:task.assigned,end:task.arrival,activity:frame.time >= task.arrival ? "work" : "move"};
+  }
+  const job = crewRoutine(member);
+  if (job) {
+    const asset = equipment.get(job.asset);
+    const previous = equipment.get(job.previous);
+    const initialRoom = (duty.stations[0])[0];
+    return {origin:stationPoint(previous?.room ?? initialRoom,member,previous),
+      destination:stationPoint(room,member,asset),start:job.assigned,end:job.arrival,
+      activity:frame.time < job.arrival ? "move" : job.need?.id === "rest" ? "rest" : "work"};
   }
   const priorRoom = index > 0 ? (duty.stations[index-1] ?? stationDuties[member][index-1-duty.stations.length])[0] : room;
   const motion = {origin:stationPoint(priorRoom,member),destination:stationPoint(room,member),
@@ -1647,25 +1883,35 @@ function doorClearance(x,y) {
 }
 
 function paintFlight(frame, sceneTime = missionTime) {
+  const inspection = groundInspection(frame);
   for (const [member,button] of pawns) {
     const motion = crewMotion(member,frame);
     const route = pathBetween(motion.origin,motion.destination);
-    const progress = motion.activity !== "move" ? 1 : reducedMotion.matches ? 0
+    const progress = motion.activity !== "move" ? 1
       : Math.min(1,Math.max(0,(sceneTime-motion.start)/(motion.end-motion.start)));
     const [x,y] = pointAlong(route,progress);
     const facing = pointAlong(route,Math.min(1,progress+.02))[0] < x ? -1 : 1;
     const pose = reducedMotion.matches ? 0 : Math.sin(sceneTime*(motion.activity==="move" ? 2.5 : 1.3));
-    place(button,x,y);
+    place(button,...(motion.activity === "move" && reducedMotion.matches ? route[0] : [x,y]));
     button.dataset.pose = motion.activity;
     button.style.setProperty("--stride",pose.toFixed(2));
     button.style.setProperty("--facing",facing);
-    crewPositions.set(button,{room:motion.destination.room,x,y});
+    const job = peerWork(member,frame.time) || activeTask(member,frame.time) ||
+      (member === 2 && inspection) || crewRoutine(member);
+    if (job) {
+      const start = job.assigned ?? job.requested;
+      const end = job.finishes ?? job.due;
+      button.querySelector("meter").value = Math.min(1,Math.max(0,(sceneTime-start)/(end-start)));
+    } else button.querySelector("meter").value = 0;
+    crewPositions.set(button,{room:progress < .5 ? motion.origin.room : motion.destination.room,x,y});
     paintedPositions.set(member,{x,y,activity:motion.activity});
     if (!element("map-deck").hidden) {
       miniCrew.get(member).setAttribute("cx",x);
       miniCrew.get(member).setAttribute("cy",y);
     }
   }
+  const occupiedCameras = new Set(duties.map((_,member)=>trackingRoom(member)));
+  for (const [room,camera] of deckCameras) camera.dataset.tracking = occupiedCameras.has(room);
   element("stage").style.setProperty("--star-offset",reducedMotion.matches ? "0px" : -(sceneTime%388)/4+"px");
   drawShip(frame);
   drawSelectedRoute(frame);
@@ -1793,6 +2039,10 @@ duties.forEach((duty,i) => {
   const activity = document.createElement("span");
   activity.className = "action-marker";
   activity.setAttribute("aria-hidden","true");
+  const activityIcon = document.createElement("i");
+  const activityProgress = document.createElement("meter");
+  activityProgress.max = 1;
+  activity.append(activityIcon,activityProgress);
   pawn.append(crewSprite(i), marker, activity);
   const member = document.createElement("button");
   member.type = "button";
@@ -1843,6 +2093,21 @@ for (const asset of fixtures) {
   equipmentButtons.set(asset.id, button);
   element("ship").append(button);
 }
+for (const room of cameraRooms) {
+  const camera = document.createElement("button");
+  camera.type = "button";
+  camera.className = "deck-camera";
+  camera.setAttribute("aria-label",roomById.get(room).name + " camera");
+  setIcon(camera,"video","");
+  const {x,y,w} = zones[room];
+  place(camera,x+w-16,y+13);
+  camera.addEventListener("click",()=>{
+    const member = duties.findIndex((_,i)=>trackingRoom(i) === room);
+    if (member >= 0) openDigitalTwin(member,camera);
+  });
+  deckCameras.set(room,camera);
+  element("ship").append(camera);
+}
 choices("asset-crew", characters.map((persona, i)=>[i,persona.short,persona.name + " · " + duties[i].role]),
   value=>{assetCrew = value;});
 element("assign-asset").addEventListener("click", () => {
@@ -1853,11 +2118,11 @@ element("assign-asset").addEventListener("click", () => {
   const previous = crewPositions.get(pawns.get(assetCrew));
   const origin = {room:previous.room,x:previous.x,y:previous.y};
   // Assigning while scrubbed back branches the local task history.
-  while (tasks.length && tasks.at(-1).queued > queued) tasks.pop();
+  discardFutureTasks(queued);
   const result = asset.id === "bench"
     ? engineeringResult(benchMode,checkpoints[checkpoints.findLastIndex(frame=>frame.time<=arrival)])
     : asset.result;
-  tasks.push({asset:asset.id,action:asset.task,member:assetCrew,queued,assigned,arrival,origin,
+  tasks.push({mode:crewMode(),asset:asset.id,action:asset.task,member:assetCrew,queued,assigned,arrival,origin,
     finishes:arrival+WORK_SECONDS,result});
   render();
 });
@@ -1878,6 +2143,7 @@ element("play").addEventListener("click", () => {
   render();
 });
 element("step").addEventListener("click", () => {
+  if (connectedFlight) { launchMission.advance(); return; }
   stop();
   setMissionTime(missionTime + 3600);
   render();
@@ -1890,7 +2156,8 @@ element("next-event").addEventListener("click", () => {
 });
 element("reset").addEventListener("click", () => {
   if (connectedFlight) { launchMission.reset(); return; }
-  stop(); setMissionTime(0); speed = 1; compressed = false; reduced.clear(); checkIns.clear(); tasks.length = 0; flightWorkflow.reset(); render();
+  for (let i = peerChecks.length-1; i >= 0; i--) if (peerChecks[i].mode === "replay") peerChecks.splice(i,1);
+  stop(); setMissionTime(0); speed = 1; compressed = false; reduced.clear(); checkIns.clear(); discardFutureTasks(-1); flightWorkflow.reset(); render();
 });
 element("activity").addEventListener("click", () => {
   const id = data.crew[selection.crew];
@@ -1912,13 +2179,11 @@ for (const button of document.querySelectorAll("[data-profile]")) {
 }
 choices("series", Object.entries(signals).map(([key,[name]])=>[key,key==="emg"?"Synthetic EMG":name]),
   value=>{selectedSignal = value;});
-for (const [field,values] of Object.entries({
-  mood:["Settled","Focused","Overloaded"],symptoms:["None reported","Discomfort reported"],
-})) {
-  choices(field,[["","No report"],...values.map(value=>[value,value])],value=>{
-    const key = data.crew[profileMembers.get("needs")] + ":" + checkpoints[index].time;
-    checkIns.set(key,{...checkIns.get(key),[field]:value});
-  });
+function discardFutureTasks(time) {
+  const mode = crewMode();
+  for (let i = tasks.length-1; i >= 0; i--) {
+    if (tasks[i].mode === mode && tasks[i].queued > time) tasks.splice(i,1);
+  }
 }
 element("assign-routine").addEventListener("click", () => {
   if (element("assign-routine").disabled || element("assign-routine").hidden) return;
@@ -1926,8 +2191,8 @@ element("assign-routine").addEventListener("click", () => {
   const [room] = station(duties[2],2);
   const origin = stationPoint(room,2);
   const work = flightWorkflow.timebox(frame.time);
-  while (tasks.length && tasks.at(-1).queued > frame.time) tasks.pop();
-  tasks.push({...work,origin,queued:frame.time,asset:"scrubber",member:2,routine:true,
+  discardFutureTasks(frame.time);
+  tasks.push({...work,mode:crewMode(),origin,queued:frame.time,asset:"scrubber",member:2,routine:true,
     action:"Inspect the scrubber on the routine watch",result:"Routine scrubber check recorded"});
   render();
 });
@@ -1945,16 +2210,22 @@ const controller = document.querySelector(".flight-controls");
 const playArea = document.querySelector(".play-area");
 const shelf = element("widget-shelf");
 const widgets = createFlightWidgets(overlay,shelf,element("widget-notice"));
+const launchHud = document.querySelector(".launch-hud");
+new ResizeObserver(() => {
+  element("launch-field").style.setProperty("--launch-clearance", launchHud.offsetHeight + "px");
+}).observe(launchHud);
 const hudSize = new ResizeObserver(() => {
   const portraitsBottom = element("crew-strip").getBoundingClientRect().bottom;
-  const clearance = Math.max(controller.getBoundingClientRect().bottom, portraitsBottom, shelf.getBoundingClientRect().bottom)
-    - playArea.getBoundingClientRect().top + 8;
+  const clearance = Math.max(controller.getBoundingClientRect().bottom, portraitsBottom,shelf.getBoundingClientRect().bottom,
+    element("mission-resources").getBoundingClientRect().bottom)
+    + 8;
   playArea.style.setProperty("--control-clearance", Math.max(0, clearance) + "px");
 });
 hudSize.observe(controller);
 hudSize.observe(element("crew-strip"));
 hudSize.observe(document.querySelector(".hud"));
 hudSize.observe(shelf);
+hudSize.observe(element("mission-resources"));
 const ordersWindow = widgets.register(element("workflow-widget"), element("show-workflow"), () => ({x:14,y:35}));
 widgets.register(element("map-widget"),null,() => ({x:14,y:overlay.clientHeight}),{
   persistent:true,lock:element("lock-map"),
@@ -2014,7 +2285,7 @@ const launchMission = bindLaunchCheckout(data.launch,{
     if (playing) {
       canvasTickStarted = performance.now();
       function animate(now) {
-        const elapsed = Math.min(TICK_SECONDS, (now-canvasTickStarted)*.004);
+        const elapsed = Math.min(TICK_SECONDS, (now-canvasTickStarted)*.004*(connectedFlight?.speed ?? 1));
         if (!reducedMotion.matches && now-lastPaintAt >= 32) {
           paintFlight(currentFrame(),missionTime+elapsed);
           lastPaintAt = now;
@@ -2026,7 +2297,8 @@ const launchMission = bindLaunchCheckout(data.launch,{
     render();
   },
   resetCrew() {
-    tasks.length = 0;
+    for (let i = peerChecks.length-1; i >= 0; i--) if (peerChecks[i].mode === "asteria") peerChecks.splice(i,1);
+    for (let i = tasks.length-1; i >= 0; i--) if (tasks[i].mode === "asteria") tasks.splice(i,1);
     checkIns.clear();
     reduced.clear();
   },

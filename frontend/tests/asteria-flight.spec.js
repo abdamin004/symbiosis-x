@@ -59,12 +59,35 @@ test("Asteria hands off to the crew canvas and returns to Earth in one saved mis
   await advance(1);
   const missionUrl = page.url();
   await liftoff.click();
+  await expect(transport.getByRole("button", { name:"Pause", exact:true })).toBeVisible();
+  await transport.getByRole("button", { name:"Pause", exact:true }).click();
+  await transport.getByRole("button", { name:"Play", exact:true }).click();
   await expect(page.locator("#ship canvas")).toBeVisible({ timeout: 15_000 });
   await expect(page.locator("#ship .pawn:visible")).toHaveCount(4);
+  const flightPlayback = page.getByRole("group", { name:"Flight playback" });
+  await expect(flightPlayback.getByRole("button", { name:"Cycle speed" })).toHaveText("4×");
+  await expect(flightPlayback.getByRole("button", { name:"Advance one mission tick" })).toBeVisible();
   await button("Orbit map").click();
   await expect(page.getByRole("dialog", { name:"Orbit map" })).toContainText("175 km");
   await button("Close").click();
   await expect(page).toHaveURL(missionUrl);
+
+  await page.locator("#crew-strip .crew-portrait").first().click();
+  const twin = page.locator("#personnel-widget");
+  await twin.getByRole("button", { name:"Head on body map" }).click();
+  await expect(twin.locator("#crew-camera")).toContainText(/Moving|At station/);
+  await expect(page.getByRole("group",{name:"Mission resources"})).toContainText("40 meals");
+  await expect(page.locator("#ship .pawn .action-marker meter:visible").first()).toBeVisible();
+  await page.getByRole("button", { name:"Orders", exact:true }).click();
+  await button("Request crewmate check").click();
+  await expect(twin.locator("#peer-check-status")).toContainText("due T+");
+  const tick = flightPlayback.getByRole("button", { name:"Advance one mission tick" });
+  await tick.click();
+  await tick.click();
+  await expect(twin.locator("#peer-check-status")).toContainText("recorded a visual check");
+  await expect(twin.locator("#region-reading")).toHaveText("Normal · visual check");
+  await button("Close orders").click();
+  await twin.getByRole("button", { name:"Close Digital twin widget" }).click();
 
   const command = page.getByRole("region", { name: "Flight command" });
   await command.getByRole("button", { name: "Commit phasing", exact: true }).click();
@@ -112,11 +135,14 @@ test("ISS replay portraits and pawns open crew anatomy with evidence for the sel
   await expect(twin.getByRole("tab", { name: "Skeleton" })).toBeFocused();
   await expect(twin.locator("#region-reading")).toHaveText("Unobserved");
 
-  await twin.getByRole("tab", { name: "Sensors" }).click();
-  await twin.getByRole("button", { name: "Left wrist on body map" }).click();
-  await expect(twin.locator("#region-source")).toHaveText("Simulated optical watch");
+  await twin.getByRole("button", { name: "Wristband · left wrist" }).click();
+  await expect(twin.locator("#wrist-bpm")).toHaveText(/\d+ bpm/);
+  await expect(twin.locator("#region-source")).toHaveText("Simulated optical wristband");
   await expect(twin.locator("#region-reading")).toHaveText(/\d+ bpm/);
   await expect(twin.locator("#region-time")).toHaveText(/Observed T\+/);
+  await twin.getByRole("button", { name: "Back pod · upper back" }).click();
+  await expect(twin.locator("#region-source")).toHaveText("Simulated back pod");
+  await expect(twin.locator("#region-detail")).toContainText("synthetic EMG");
   await twin.getByRole("tab", { name: "Suit", exact: true }).click();
   await expect(twin.locator("[data-anatomy-suit]")).toBeVisible();
   await expect(twin.locator("#region-reading")).toHaveText("Suit status unavailable");
@@ -127,4 +153,9 @@ test("ISS replay portraits and pawns open crew anatomy with evidence for the sel
   await expect(twin).toBeVisible();
   await expect(twin.locator("#personnel-name")).not.toHaveText(firstMember);
   await expect(twin.getByRole("tab", { name: "Anatomy", exact: true })).toHaveAttribute("aria-selected", "true");
+  const resources = page.getByRole("group", {name:"Mission resources"});
+  await expect(resources).toContainText("40 meals");
+  await page.getByRole("button", {name:"Skip one mission hour"}).click();
+  await page.getByRole("button", {name:"Skip one mission hour"}).click();
+  await expect(resources).not.toContainText("40 meals");
 });

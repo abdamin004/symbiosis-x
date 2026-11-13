@@ -52,6 +52,7 @@
   <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
   <circle cx="9" cy="7" r="4" />
 </symbol>
+<symbol id="hud-video" viewBox="0 0 24 24"><path d="m16 13 5.223 3.482A.5.5 0 0 0 22 16.066V7.934a.5.5 0 0 0-.777-.416L16 11"/><rect x="2" y="6" width="14" height="12" rx="2"/></symbol>
 <symbol id="hud-wind" viewBox="0 0 24 24"><path d="M12.8 19.6A2 2 0 1 0 14 16H2" />
   <path d="M17.5 8a2.5 2.5 0 1 1 2 4H2" />
   <path d="M9.8 4.4A2 2 0 1 1 11 8H2" />

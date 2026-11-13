@@ -11,6 +11,9 @@ test("Crew can read the alert reason", async ({ page }) => {
   );
   await expect(panel.getByTestId("health-alert-reason")).toContainText("72 bpm personal baseline");
   await expect(panel.getByTestId("health-evidence-quality")).toHaveText("valid · 3 samples");
+  await expect(panel.getByTestId("health-trend-status")).toHaveText("Rising trend · review with Crew");
+  await expect(panel.getByTestId("health-trend-support")).toContainText("4 comparable samples");
+  await expect(panel.getByTestId("health-trend-support")).toContainText("T+10:00 – T+13:00");
   await expect(panel.getByTestId("cabin-context")).toContainText("CO₂:");
   await expect(panel.getByTestId("cabin-context")).toContainText("modeled estimate");
   await expect(page.getByTestId("radlab-context")).toBeVisible();
@@ -28,6 +31,8 @@ test("missing health and cabin readings remain unknown", async ({ page }) => {
   await expect(panel.getByTestId("health-observation")).toContainText("Unknown");
   await expect(panel.getByTestId("health-alert-reason")).toContainText("latest reading at 840 s is missing");
   await expect(panel.getByTestId("cabin-context")).toContainText("CO₂ is unknown");
+  await expect(panel.getByTestId("health-trend-status")).toHaveText("Insufficient history");
+  await expect(panel.getByTestId("health-trend-support")).toContainText("2 of 3 required comparable samples");
 });
 
 test("archive chart shows source and missing gaps", async ({ page }) => {

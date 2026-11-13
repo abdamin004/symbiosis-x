@@ -1,3 +1,5 @@
+import HealthTrend from "./HealthTrend.jsx";
+
 function missionTime(seconds) {
   const minutes = String(Math.floor(seconds / 60)).padStart(2, "0");
   const remainder = String(seconds % 60).padStart(2, "0");
@@ -109,6 +111,8 @@ export default function CrewHealthPanel({ health, cabin }) {
           Environmental context is shown separately and does not establish a cause for the health status.
         </p>
       </section>
+
+      <HealthTrend trend={health?.trend} />
 
       <p className="mt-3 text-xs text-slate-500">
         Fictional crew data and demo assessment; not a diagnosis or medical advice.
