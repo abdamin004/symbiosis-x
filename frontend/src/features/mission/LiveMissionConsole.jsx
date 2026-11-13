@@ -7,6 +7,7 @@ import CheckInForm from "../crew/CheckInForm.jsx";
 import { CrewHealthDashboard } from "../crew/CrewHealthPanel.jsx";
 import RadiationContext from "../crew/RadiationContext.jsx";
 import { HEALTH_METRICS } from "../../api/healthCatalog.js";
+import GroundSnapshot from "../ground/GroundSnapshot.jsx";
 import AgentStatusStrip from "../workflow/AgentStatusStrip.jsx";
 import TraceTimeline from "../workflow/TraceTimeline.jsx";
 
@@ -66,17 +67,7 @@ export default function LiveMissionConsole({ role, runId }) {
           <summary className="cursor-pointer font-semibold">Supporting context: archived radiation data</summary>
           <RadiationContext />
         </details>
-      </> : <section className="mt-6 rounded-lg border border-slate-200 bg-white p-4">
-        <h2 className="font-semibold">Latest delivered snapshot</h2>
-        {view.packet ? <dl className="mt-2 grid grid-cols-2 gap-2 text-sm">
-          <dt>Snapshot</dt><dd>{view.packet.snapshot_id}</dd>
-          <dt>CO₂</dt><dd>{view.packet.co2.value} {view.packet.co2.unit}</dd>
-          <dt>Observed</dt><dd>{time(view.packet.delivery.observed_at_s)}</dd>
-          <dt>Received</dt><dd>{time(view.packet.delivery.received_at_s)}</dd>
-          <dt>Age</dt><dd>{time(view.packet.delivery.age_s)}</dd>
-          <dt>Link</dt><dd>{view.packet.delivery.link_status}</dd>
-        </dl> : <p className="mt-2 text-sm text-slate-600">No Ground packet has been delivered yet.</p>}
-      </section>}
+      </> : <GroundSnapshot packet={view.packet} missionS={view.mission_s} />}
       <AgentStatusStrip trace={view.trace ?? []} />
       <TraceTimeline trace={view.trace ?? []} />
     </main>
