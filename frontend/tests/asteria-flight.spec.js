@@ -241,7 +241,7 @@ test("Flight resumes independent campaigns and preserves the legacy Asteria save
     JSON.stringify({time:15, jobs:{engine:{due:45}},startupAt:0,hold:true})));
   await page.reload();
   const button = name => page.getByRole("button", { name, exact: true });
-  await expect(page.getByRole("heading", { name:"Choose a mission" })).toBeVisible();
+  await expect(page.getByRole("heading", { name:"SYMBIOSIS X", exact:true })).toBeVisible();
   await expect(page.locator("#campaign-save")).toHaveText("Launch held · T+0:15");
   await button("Resume").click();
   await expect(page.locator("#launch-status")).toHaveText("Launch held");
