@@ -700,3 +700,54 @@ test("a low upper-stage reserve holds the ISS burn and preserves the independent
   await expect(page.locator("#return-propellant")).toHaveText("8.8 kg fuel / 13.2 kg oxidizer");
   expect(await page.evaluate(()=>JSON.parse(localStorage.getItem("sx:launch-checkout:v1")).phasing)).toBeUndefined();
 });
+
+test("saved vehicle provisions quarantine treated water and accept the station receipt once", async ({ page }) => {
+  await page.route(url=>url.pathname === "/flight",route=>route.fulfill({contentType:"text/html",body:flightHtml}));
+  await page.addInitScript(()=>{
+    if (sessionStorage.getItem("provisions-test")) return;
+    sessionStorage.setItem("provisions-test","yes");
+    localStorage.setItem("sx:launch-checkout:v1",JSON.stringify({
+      time:525,jobs:{},ignition:60,separation:105,insertion:135,phasing:150,matchedAt:180,
+      capture:210,hatchAt:225,
+    }));
+  });
+  await page.emulateMedia({reducedMotion:"reduce"});
+  await page.goto("/flight?view=launch");
+  const button = name => page.getByRole("button",{name,exact:true});
+  await button("Provisions").click();
+  const ledger = page.getByRole("dialog",{name:"Vehicle provisions"});
+  const value = label => ledger.locator("dt").filter({hasText:new RegExp("^"+label+"$")}).locator("xpath=following-sibling::dd[1]");
+  const step = page.getByRole("group",{name:"Flight playback"}).getByRole("button",{name:"Advance one mission tick"});
+  await expect(ledger).toContainText("Horizon · synthetic inventory");
+  await expect(value("Potable")).toHaveText(/2[0-3]\./);
+  await button("Conserve water").click();
+  await expect(ledger).toContainText("defer hygiene");
+  await button("Treat wastewater").click();
+  const held = await value("Awaiting quality verification").textContent();
+  expect(held, await ledger.locator("#provisions-receipt").textContent()).not.toBe("0.000 L");
+  await button("Verify treated water").click();
+  await expect(ledger).toContainText("Quality verification pending");
+  await expect(value("Awaiting quality verification")).toHaveText(held);
+  await expect(button("Accept station water receipt")).toBeDisabled();
+  await button("Close provisions").click();
+  await button("Flight command").click();
+  await button("Hand off research kit").click();
+  await button("Assign Sana to station research").click();
+  await button("Close flight command").click();
+  await button("Provisions").click();
+  await button("Accept station water receipt").click();
+  await expect(ledger).toContainText("Station water credited to the return capsule");
+  await expect(button("Accept station water receipt")).toBeDisabled();
+  await button("Close provisions").click();
+  await step.click();
+  await button("Provisions").click();
+  await button("Verify treated water").click();
+  await expect(value("Awaiting quality verification")).toHaveText("0.000 L");
+  await button("Accept station water receipt").click();
+  await expect(ledger).toContainText("Station receipt already used");
+  await button("Close provisions").click();
+  await page.reload();
+  await button("Provisions").click();
+  await expect(ledger).toContainText("defer hygiene");
+  await expect(value("Awaiting quality verification")).toHaveText("0.000 L");
+});

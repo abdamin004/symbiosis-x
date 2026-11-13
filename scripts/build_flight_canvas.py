@@ -4,6 +4,8 @@ import argparse
 import json
 from pathlib import Path
 
+from symbiosis_x.simulation.spacecraft.provisions import flight_rules
+
 if __package__:
     from .flight_airlock_rehearsal import build_airlock_rehearsal
     from .flight_health_rehearsal import build_health_rehearsal
@@ -36,6 +38,7 @@ def build(output: Path) -> None:
     scenario, frames = build_replays(crew)
     ground = json.loads((ROOT / "contracts/examples/ground-v102.json").read_text())
     data = json.dumps({
+        "provisions": flight_rules(),
         "metrics": json.loads((ROOT / "catalogs/crew/health-metrics.json").read_text())["metrics"],
         "rooms": rooms, "crew": crew_ids, "activity_s": ACTIVITY_S, "missions": missions,
         "airlock": build_airlock_rehearsal(),

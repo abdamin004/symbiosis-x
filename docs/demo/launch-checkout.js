@@ -30,7 +30,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
   placeCheckoutProgress();
   const fresh = mission => ({time:0,jobs:{},hold:false,startupAt:null,armed:null,ignition:null,separation:null,insertion:null,aborted:false,phasing:null,capture:null,retreat:null,approachHeld:false,sealAt:null,pressureAt:null,hatchAt:null,transferAt:null,researchAt:null,
     archivedAt:null,departedAt:null,deorbitAt:null,landedAt:null,recoveredAt:null,systemsCheckAt:null,
-    transferArrival:null,matchedAt:null, groundRequired:Boolean(mission.rendezvous), groundDirection:null,
+    transferArrival:null,matchedAt:null, groundRequired:Boolean(mission.rendezvous), groundDirection:null, provisionCommands:[],
     attitude:0,pitch:0,rcs:mission.navigation.rcsPulses});
   let ascent, rendezvous, docking, returnPlan, navigation, propulsion;
   let view = "menu";
@@ -519,6 +519,10 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
       checkpoint:demo.active ? null : checkpointApproach(flight),
       steering:state.capture === null && state.deorbitAt === null, yaw:state.attitude,pitch:state.pitch,
       playbackLimit:flight.warpTo,
+      provisions:demo.active ? null : {
+        vehicle:rendezvous ? "asteria" : "kestrel", departure:state.departedAt,
+        transferAt:state.transferAt, commands:state.provisionCommands,
+      },
       evaEligible:exteriorEligible(flight),frame:{
       phase:phases[frameIndex] ?? "Orbit",
       label:flight.phase,site,dock,
@@ -1654,6 +1658,16 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     });
   }
 
+  function orderProvision(action) {
+    if (demo.active || view !== "launch" || state.insertion === null || state.recoveredAt !== null) return;
+    if (state.provisionCommands.some(order=>order.time === state.time && order.action === action)) return;
+    state.provisionCommands = [...state.provisionCommands,{
+      id:"provision-"+state.provisionCommands.length, action, time:state.time,
+    }];
+    persist();
+    renderView(false);
+  }
+
   function updateGroundDirection(action, {reason,origin} = {}) {
     if (demo.active || view !== "launch" || !rendezvous || state.insertion === null || state.phasing !== null) return;
     const current = state.groundDirection;
@@ -1674,7 +1688,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
   }
 
   return {advance:()=>{if (!demo.active) advance();},advanceToCheckpoint,togglePlayback,cycleSpeed,refreshCrewWork:()=>renderView(false),
-    paintNavigation:time=>navigation.showAt(time),updateGroundDirection};
+    paintNavigation:time=>navigation.showAt(time),updateGroundDirection,orderProvision,stopForProvisions:stopPlayback};
 }
 
 function missionStamp(seconds) {
