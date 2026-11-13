@@ -439,6 +439,12 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     const stationWork = missionWork();
     return {missionId:demo.active ? config.id+"-timed-demo" : config.id,timedDemo:demo.active,missionTitle:config.title,time:state.time,phaseStarted,crewStarted:state.insertion,
       frameIndex,visual,advance:!demo.active && canAdvance(),playable:!demo.active && canPlay(),speed,stationWork,
+      recovery:state.deorbitAt === null ? null : {
+        phase:state.recoveredAt !== null ? "recovered" : state.landedAt !== null ? "splashdown"
+          : state.time-state.deorbitAt >= returnPlan.entry_s ? "chutes"
+          : state.time-state.deorbitAt < tick ? "separation" : "entry",
+        start:state.deorbitAt, entry:returnPlan.entry_s, descent:returnPlan.descent_s,
+      },
       command:{phase:flight.phase,next:flight.next,reserve:reserveReadout(flight)},
       checkpoint:demo.active ? null : checkpointApproach(flight),
       steering:state.capture === null && state.deorbitAt === null, yaw:state.attitude,pitch:state.pitch,
