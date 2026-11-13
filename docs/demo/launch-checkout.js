@@ -1404,11 +1404,42 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     showView("menu",config,true);
   }
 
+  let demoCrewClock = false;
+  let demoEvaStarted = null;
+  const demoMode = ()=>config.id+"-timed-demo";
+
+  function demoCoastHeld() {
+    return demo.active && state.phasing === null && antennaUnverified(demoMode(),state.time);
+  }
+
+  function demoTickDelay() {
+    const flight = flightState();
+    // Hold at command gates. Ascent and the authored orbital maneuvers have
+    // their own playback, including the explicit skips to orbital waypoints.
+    if (activeBurn || ascentPlaying || state.hold || !flight.advance) return 0;
+    if (flight.pad) return 1250;
+    if (state.insertion === null) return 0;
+    if (state.phasing === null) {
+      if (!demoCrewClock) return 0;
+      return demoEvaStarted === null ? 4500 : 3000;
+    }
+    if (state.deorbitAt !== null) return 2500;
+    return 4000;
+  }
+
   const demoActions = {
     "assign-checks":()=>{ for (const row of rows.values()) row.assign.click(); return true; },
-    "crew-baseline":()=>onDemoCrew("crew-baseline"),
+    "crew-baseline":()=>{
+      demoCrewClock = true;
+      return onDemoCrew("crew-baseline");
+    },
     "crew-check":()=>onDemoCrew("crew-check"),
-    "start-demo-eva":()=>onDemoCrew("start-demo-eva"),
+    "start-demo-scrubber":()=>onDemoCrew("start-demo-scrubber"),
+    "start-demo-eva":()=>{
+      if (!onDemoCrew("start-demo-eva")) return false;
+      demoEvaStarted = state.time;
+      return true;
+    },
     "verify-demo-eva":()=>onDemoCrew("verify-demo-eva"),
     "close-twin":()=>onDemoCrew("close-twin"),
     "show-deck":()=>onDemoCrew("show-deck"),
@@ -1424,20 +1455,29 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     banner:find("demo-banner"),clock:find("demo-time"),status:find("demo-status"),pause:find("demo-pause"),
   },{
     begin() {
+      demoCrewClock = false;
+      demoEvaStarted = null;
       resetCrew(missions[0].id+"-timed-demo");
       showView("launch",missions[0],false,true);
     },
     run(action) {
-      if (action === 1) return advance();
       if (Object.hasOwn(demoActions,action)) return demoActions[action]();
       const control = find(action);
       if (!control || control.hidden || control.disabled) return false;
+      if (action === "launch-coast" && demoCoastHeld()) return false;
       control.click();
       return true;
     },
     busy:()=>Boolean(activeBurn || ascentPlaying),
+    ready(milestone) {
+      const [phase, elapsed] = Object.entries(milestone)[0];
+      const start = {orbit:state.insertion,eva:demoEvaStarted,entry:state.deorbitAt}[phase];
+      return start !== null && state.time >= start+elapsed;
+    },
+    tickDelay:demoTickDelay,
+    advance,
     soundCue(seconds) {
-      const cues = {36:[520,310,.24],74:[290,470,.2],94:[320,410,.16],220:[155,47,.48,.10],223:[400,640,.36]};
+      const cues = {33:[520,310,.24],54:[290,470,.2],90:[320,410,.16],220:[155,47,.48,.10],223:[400,640,.36]};
       if (cues[seconds]) sound(...cues[seconds]);
     },
     paintScene:onDemoFrame,
@@ -1587,7 +1627,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
   });
   find("launch-coast").addEventListener("click", () => {
     const destination = flightState().warpTo;
-    if (activeBurn || destination === undefined) return;
+    if (activeBurn || destination === undefined || demoCoastHeld()) return;
     stopPlayback();
     showManeuver("coast",destination);
     persist();

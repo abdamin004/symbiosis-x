@@ -164,11 +164,6 @@ button[aria-pressed=true]{background:#3d315e}
 @media(max-width:720px){.ship{margin-inline:0;width:100%}}
 .minimap-screen{background:radial-gradient(ellipse at 50% 0,#22294f,#0c1329 75%);border-radius:9px;min-height:84px;display:grid;align-items:center;padding:.25rem}
 .map-views button{flex:1}
-#deck-map{width:100%;height:79px;display:block}
-.map-systems{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.35rem}
-.map-systems div{padding:.35rem .25rem;background:#1d2646;border-radius:5px}
-.map-systems small{display:block;font-size:.65rem;color:var(--muted)}
-.map-systems strong{font:600 .75rem ui-monospace,monospace;color:var(--blue)}
 .panel{background:linear-gradient(150deg,#141c36f5,#090e22f7 72%);box-shadow:0 12px 34px #0008,inset 0 1px #788ac04d}
 .widget-bar{padding-bottom:.36rem;border-bottom:1px solid #828fc12c}
 .profile-data{grid-template-columns:minmax(0,1fr) minmax(0,1.08fr)}
@@ -222,11 +217,6 @@ button[aria-pressed=true]{background:#3d315e}
 @media(max-width:720px){.ship{margin-inline:0;width:100%}}
 .minimap-screen{background:radial-gradient(ellipse at 50% 0,#22294f,#0c1329 75%);border-radius:9px;min-height:84px;display:grid;align-items:center;padding:.25rem}
 .map-views button{flex:1}
-#deck-map{width:100%;height:79px;display:block}
-.map-systems{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.35rem}
-.map-systems div{padding:.35rem .25rem;background:#1d2646;border-radius:5px}
-.map-systems small{display:block;font-size:.65rem;color:var(--muted)}
-.map-systems strong{font:600 .75rem ui-monospace,monospace;color:var(--blue)}
 .panel{background:linear-gradient(150deg,#141c36f5,#090e22f7 72%);box-shadow:0 12px 34px #0008,inset 0 1px #788ac04d}
 .widget-bar{padding-bottom:.36rem;border-bottom:1px solid #828fc12c}
 .profile-data{grid-template-columns:minmax(0,1fr) minmax(0,1.08fr)}
@@ -829,18 +819,59 @@ ul.tutorial-startup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));g
 #map-widget .map-views{margin:.28rem 0}
 #map-widget .map-views button{flex:0 1 auto;min-height:1.5rem;padding:.12rem .32rem}
 #map-widget .minimap-screen{min-height:0;background:none;padding:0}
-#map-widget #deck-map{height:clamp(2.6rem,9dvh,4.6rem)}
-#map-widget .map-systems{grid-template-columns:repeat(auto-fit,minmax(3rem,1fr))}
+#map-deck,#map-systems{max-height:min(35dvh,20rem);overflow:auto;overscroll-behavior:contain;
+  scrollbar-width:thin;border-block:1px solid #8aa6d232;padding:.3rem .22rem .3rem 0}
+#map-deck:focus-visible,#map-systems:focus-visible{outline:2px solid var(--blue);outline-offset:-2px}
+#deck-map{width:100%;height:auto;display:block}
+#deck-map text{font-family:system-ui,sans-serif;text-anchor:middle;pointer-events:none}
+.deck-rooms-mobile{display:none;padding:0;margin:.25rem 0;list-style:none}
+.deck-crew{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.25rem;list-style:none;padding:0;margin:.32rem 0 0}
+.deck-crew li,.system-card{min-width:0;background:#23304c;border-radius:5px;padding:.3rem .4rem}
+.deck-crew strong,.deck-crew small,.system-card small{display:block;line-height:1.25}
+.deck-crew strong,.system-card dt{font-size:.74rem}
+.deck-crew small,.system-card small,.systems-source{font-size:.69rem;color:var(--muted)}
+.deck-crew .deck-room{color:#c3d9f7;margin-bottom:.1rem}
+.deck-crew meter{width:100%;height:.45rem;accent-color:#a3e8c8}
+.systems-source{line-height:1.28;margin-bottom:.28rem}
+.systems-readings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.25rem;margin:0}
+.system-card dd{margin:0;display:grid;gap:.16rem}
+.system-card output{font:650 .84rem ui-monospace,monospace;color:var(--blue)}
+.system-card svg{width:100%;height:1.15rem;display:block;color:#a1dcce}
+.system-card[data-status=attention] output,.system-card[data-status=attention] svg{color:#ffca95}
+.system-card svg path{fill:none;stroke:currentColor;stroke-width:1.5;vector-effect:non-scaling-stroke}
+@media(max-width:680px){
+  #map-deck,#map-systems{max-height:24dvh}
+  main:has(.stage[data-demo-crew]) :is(#map-deck,#map-systems){max-height:4.6rem}
+  .deck-crew,.systems-readings{grid-template-columns:1fr}
+  .deck-room-label{display:none}
+  .deck-rooms-mobile{display:grid;gap:.12rem;grid-template-columns:repeat(2,minmax(0,1fr));color:#dbe5fc;font-size:.63rem;line-height:1.2}
+}
 #map-widget[data-view=launch] :is([data-map-view=deck],[data-map-view=systems]){display:none}
 #map-widget[data-view=launch] .map-views:not(:has([data-map-view]:not([data-map-view=route],[data-map-view=deck],[data-map-view=systems]))){display:none}
-#map-ground{padding:.35rem .25rem;font-size:.75rem;overflow-wrap:anywhere;max-height:28dvh;overflow:auto}
-#map-ground p,#map-ground dl{margin:.3rem 0}
-#map-ground dl{display:grid;grid-template-columns:auto 1fr;gap:.12rem .5rem}
-#map-ground dt,#map-ground [data-ground=source]{color:var(--muted)}
-#map-ground dd{margin:0;color:var(--blue)}
+#map-ground{display:grid;gap:.48rem;padding:.3rem 0;font-size:.74rem;line-height:1.35;overflow-wrap:anywhere}
+#map-ground :is(p,dl,dd,h3,ol){margin:0}
+#map-ground h3{font-size:.72rem;font-weight:700;color:var(--ink)}
+#map-ground .ground-header{display:flex;align-items:baseline;flex-wrap:wrap;gap:.22rem .5rem}
+#map-ground [data-ground=clock],#map-ground .ground-time{font:600 .72rem ui-monospace,monospace;color:var(--blue)}
+#map-ground [data-ground=source],#map-ground dt,#map-ground .ground-detail{color:var(--muted);font-size:.68rem}
+#map-ground .ground-status{width:fit-content;max-width:100%;padding:.12rem .38rem;border:1px solid #8ca2c25e;border-radius:.28rem}
+#map-ground[data-state=received] [data-ground=link]{color:#a4e3d3}
+#map-ground[data-state=unavailable] [data-ground=link],
+#map-ground :is([data-state=stale],[data-state=expired],[data-state=held],[data-state=pending],[role=alert]){color:#ffd49d}
+#map-ground .ground-packet{min-width:0;padding:.4rem .48rem;background:#0b172bbd;border:1px solid #7790b64f;border-radius:7px}
+#map-ground .ground-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(5.5rem,100%),1fr));gap:.24rem .5rem;margin:.28rem 0}
+#map-ground .ground-metrics dd{color:var(--blue);font:650 .8rem ui-monospace,monospace}
+#map-ground .ground-packet-meta{display:grid;grid-template-columns:max-content 1fr;gap:.12rem .42rem}
+#map-ground .ground-case{margin-top:.26rem}
+#map-ground .ground-timeline{list-style:none;margin-top:.22rem;padding:0 0 0 .46rem;border-left:1px solid #789aca66}
+#map-ground .ground-timeline li{padding:.21rem 0 .28rem}
+#map-ground .ground-timeline li + li{border-top:1px solid #789aca2b}
+#map-ground .ground-event{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:.08rem .35rem}
+#map-ground .ground-event .ground-time{white-space:nowrap}
+#map-ground .ground-detail{display:block}
+#map-ground form{display:flex;align-items:center;flex-wrap:wrap;gap:.2rem .4rem}
 #map-ground form select{max-width:100%;color:inherit;background:#1b2744;border:1px solid #526585;padding:.24rem;border-radius:4px}
-#map-ground form button{margin:.3rem 0 0}
-#map-ground [data-state=stale],#map-ground [data-state=pending],#map-ground [role=alert]{color:#ffd49d}
+#map-ground :is(button,select){min-height:28px}
 #map-widget[data-view=replay] #phase{margin-bottom:.25rem}
 #orbit-map-widget{right:max(.55rem,env(safe-area-inset-right));width:min(12.75rem,calc((100vw - 15.5rem)/2));padding:.4rem .48rem}
 #orbit-map-widget button{display:grid;gap:.18rem;width:100%;min-height:44px;text-align:left;padding:.22rem .3rem;background:transparent}
@@ -1216,8 +1247,8 @@ __HUD_ICONS__
   </div>
   <div class="choices map-views" role="group" aria-label="Mission overview view">
     <button type="button" data-map-view="route" aria-pressed="true">Plan</button>
-    <button type="button" data-map-view="deck" aria-pressed="false">Deck</button>
-    <button type="button" data-map-view="systems" aria-pressed="false">Systems</button>
+    <button type="button" data-map-view="deck" aria-controls="map-deck" aria-pressed="false">Deck</button>
+    <button type="button" data-map-view="systems" aria-controls="map-systems" aria-pressed="false">Systems</button>
     <button type="button" data-map-view="ground" aria-controls="map-ground" aria-pressed="false">Ground</button>
   </div>
   <div class="minimap-screen">
@@ -1232,25 +1263,36 @@ __HUD_ICONS__
         </svg>
       </div>
     </div>
-    <div id="map-deck" hidden><svg id="deck-map" viewBox="170 106 782 270" role="img" aria-label="Ship rooms and crew positions"></svg></div>
-    <div id="map-systems" class="map-systems" hidden>
-      <div><small>Cabin CO₂</small><strong id="map-air"></strong></div>
-      <div><small>Power reserve</small><strong id="map-power"></strong></div>
-      <div><small>Onboard jobs</small><strong id="map-jobs"></strong></div>
-    </div>
+    <section id="map-deck" aria-label="Deck and crew jobs" tabindex="0" hidden>
+      <svg id="deck-map" viewBox="194 110 740 257" role="img" aria-label="Ship rooms and crew positions"></svg>
+      <ul id="map-deck-rooms" class="deck-rooms-mobile" aria-label="Ship rooms"></ul>
+      <ul id="map-deck-crew" class="deck-crew" aria-label="Crew positions and jobs"></ul>
+    </section>
+    <section id="map-systems" aria-label="Ship systems" tabindex="0" hidden>
+      <p id="map-systems-source" class="systems-source"></p>
+      <dl id="map-systems-readings" class="systems-readings"></dl>
+    </section>
     <section id="map-ground" aria-label="Ground relay" hidden>
-      <p data-ground="source"></p>
-      <p>Mission clock <strong data-ground="clock"></strong></p>
-      <p data-ground="link"></p>
-      <dl data-ground="telemetry" hidden>
-        <dt>Basis</dt><dd data-ground="basis"></dd>
-        <dt>Cabin CO₂</dt><dd data-ground="co2"></dd>
-        <dt>Power reserve</dt><dd data-ground="power"></dd>
-        <dt>Observed</dt><dd data-ground="observed"></dd>
-        <dt>Received</dt><dd data-ground="received"></dd>
-        <dt>Sample age</dt><dd data-ground="age"></dd>
-      </dl>
-      <p>Case · <span data-ground="case"></span></p>
+      <div class="ground-header">
+        <span>Mission clock <strong data-ground="clock"></strong></span>
+        <span class="ground-status" data-ground="link"></span>
+      </div>
+      <p class="ground-detail"><span data-ground="live-source" hidden>Synthetic run · Ground projection · </span><span data-ground="source"></span></p>
+      <section class="ground-packet" data-ground="telemetry" aria-label="Delivered telemetry" hidden>
+        <h3>Last delivered packet</h3>
+        <dl class="ground-metrics">
+          <div><dt>Cabin CO₂</dt><dd data-ground="co2"></dd></div>
+          <div data-ground="power-row"><dt>Power reserve</dt><dd data-ground="power"></dd></div>
+        </dl>
+        <dl class="ground-packet-meta">
+          <dt>Observed</dt><dd data-ground="observed"></dd>
+          <dt>Received</dt><dd data-ground="received"></dd>
+          <dt>Sample age</dt><dd data-ground="age"></dd>
+          <dt>Basis</dt><dd data-ground="basis"></dd>
+        </dl>
+        <p class="ground-case" data-ground="case-inline">Case · <span data-ground="case"></span></p>
+      </section>
+      <p data-ground="case-outside" hidden></p>
       <p data-ground="advice" role="status"></p>
       <form>
         <label for="map-ground-candidate" data-ground="candidate-label">Candidate</label>
@@ -1266,6 +1308,11 @@ __HUD_ICONS__
         <p id="campaign-ground-status" role="status"></p>
         <button id="campaign-ground-issue" type="button">Simulate Ground direction</button>
       </div>
+      <section aria-labelledby="ground-timeline-heading">
+        <h3 id="ground-timeline-heading">Relay timeline</h3>
+        <p class="ground-detail" data-ground="timeline-empty">No relay events yet.</p>
+        <ol class="ground-timeline" data-ground="timeline" hidden></ol>
+      </section>
     </section>
   </div>
   <p id="map-current"><span id="map-current-icon"></span><span id="map-current-copy">
@@ -3114,10 +3161,7 @@ function render() {
   const [mx,my] = routePoints[frame.route];
   element("ship-position").setAttribute("cx",mx);
   element("ship-position").setAttribute("cy",my);
-  element("map-air").textContent = frame.co2.toFixed(0) + " ppm";
-  element("map-power").textContent = frame.power == null ? "Unavailable" : frame.power.toFixed(2) + " kW";
-  element("map-jobs").textContent = tasks.filter(task=>task.mode === crewMode() && task.queued<=frame.time && task.finishes>frame.time).length
-    + Number(Boolean(groundInspection(frame)));
+  renderSystemOverview(frame);
   element("map-location").textContent = frame.site + " · " + clock(frame.time);
   element("timeline").value = Math.floor(missionTime);
   element("timeline").setAttribute("aria-valuetext", clock(frame.time) + " " + frame.label);
@@ -3310,6 +3354,8 @@ function paintFlight(frame, sceneTime = missionTime) {
   }
   const inspection = groundInspection(frame);
   const eva = activeEva(frame.time);
+  const deckVisible = !element("map-deck").hidden;
+  if (deckVisible) element("deck-map").setAttribute("viewBox",eva ? "194 15 740 352" : "194 110 740 257");
   const tether = element("eva-tether");
   tether.toggleAttribute("hidden",true);
   for (const [member,button] of pawns) {
@@ -3351,10 +3397,7 @@ function paintFlight(frame, sceneTime = missionTime) {
     } else button.querySelector("meter").value = 0;
     crewPositions.set(button,{room:progress < .5 ? motion.origin.room : motion.destination.room,x,y});
     paintedPositions.set(member,{x,y,activity:motion.activity});
-    if (!element("map-deck").hidden) {
-      miniCrew.get(member).setAttribute("cx",x);
-      miniCrew.get(member).setAttribute("cy",y);
-    }
+    if (deckVisible) paintDeckOccupant(member,outside,button.querySelector("meter").value,Boolean(job));
   }
   const occupiedCameras = new Set(duties.map((_,member)=>trackingRoom(member)));
   for (const [room,camera] of deckCameras) camera.dataset.tracking = occupiedCameras.has(room);
@@ -3418,23 +3461,68 @@ function crewSprite(member) {
 
 const svgNS = "http://www.w3.org/2000/svg";
 const miniCrew = new Map();
+const systemCards = new Map();
+
+function svgGlyph(parent,tag,attributes) {
+  const node = document.createElementNS(svgNS,tag);
+  for (const [key,value] of Object.entries(attributes)) node.setAttribute(key,value);
+  parent.append(node);
+  return node;
+}
+
+function setOverviewText(node,value) {
+  if (node.textContent !== value) node.textContent = value;
+}
+
 function setupMinimap() {
   const deck = element("deck-map");
-  function glyph(tag,attributes) {
-    const node = document.createElementNS(svgNS,tag);
-    for (const [key,value] of Object.entries(attributes)) node.setAttribute(key,value);
-    deck.append(node);
-    return node;
-  }
-  glyph("rect",{x:198,y:224,width:620,height:34,fill:"#334265"});
+  svgGlyph(deck,"rect",{x:198,y:224,width:620,height:34,rx:7,fill:"#334265"});
   for (const [id,zone] of Object.entries(zones)) {
-    const box = glyph("rect",{x:zone.x+2,y:zone.y+2,width:zone.w-4,height:zone.h-4,
-      rx:5,fill:zone.color,stroke:zone.accent,"stroke-width":3});
-    const title = document.createElementNS(svgNS,"title");
-    title.textContent = roomById.get(id).name;
-    box.append(title);
+    svgGlyph(deck,"rect",{x:zone.x+2,y:zone.y+2,width:zone.w-4,height:zone.h-4,
+      rx:8,fill:zone.color,stroke:zone.accent,"stroke-width":3});
+    const name = roomById.get(id).name;
+    const mapName = {"cargo-01":"Cargo","comms-01":"Comms"}[id] ?? name;
+    svgGlyph(deck,"text",{x:zone.x+zone.w/2,y:zone.y+32,fill:"#f2f4ff","font-size":25,
+      "font-weight":650,class:"deck-room-label"}).textContent = mapName;
+    const item = document.createElement("li");
+    item.textContent = name;
+    element("map-deck-rooms").append(item);
   }
-  duties.forEach((duty,i)=>miniCrew.set(i,glyph("circle",{r:11,fill:duty.color,stroke:"#101528","stroke-width":4})));
+  duties.forEach((duty,member)=>{
+    const marker = svgGlyph(deck,"g",{"aria-hidden":"true"});
+    svgGlyph(marker,"circle",{r:15,fill:duty.color,stroke:"#101528","stroke-width":3});
+    const character = characters[member];
+    svgGlyph(marker,"text",{y:6,fill:"#101528","font-size":18,"font-weight":800}).textContent = character.short[0];
+    const row = document.createElement("li");
+    const name = document.createElement("strong");
+    name.textContent = character.short;
+    name.style.color = duty.color;
+    const room = document.createElement("small");
+    room.className = "deck-room";
+    const task = document.createElement("small");
+    const progress = document.createElement("meter");
+    progress.max = 1;
+    progress.setAttribute("aria-label",character.short+" job progress");
+    row.append(name,room,task,progress);
+    element("map-deck-crew").append(row);
+    miniCrew.set(member,{marker,room,task,progress});
+  });
+  for (const [id,label] of [["co2","Cabin CO₂"],["flow","Scrubber flow"],["power","Power headroom"],["jobs","Assigned jobs"]]) {
+    const card = document.createElement("div");
+    card.className = "system-card";
+    card.dataset.system = id;
+    const title = document.createElement("dt");
+    title.textContent = label;
+    const detail = document.createElement("dd");
+    const value = document.createElement("output");
+    const note = document.createElement("small");
+    detail.append(value,note);
+    const graph = id === "jobs" ? null : svgGlyph(detail,"svg",{viewBox:"0 0 100 20",preserveAspectRatio:"none","aria-hidden":"true"});
+    const line = graph ? svgGlyph(graph,"path",{}) : null;
+    card.append(title,detail);
+    element("map-systems-readings").append(card);
+    systemCards.set(id,{card,value,note,graph,line});
+  }
   element("map-widget").addEventListener("click",event=>{
     const button = event.target.closest("[data-map-view]");
     if (button) selectOverviewTab(button);
@@ -3450,8 +3538,73 @@ function selectOverviewTab(button) {
   }
   const frame = currentFrame();
   updateGround(frame);
+  renderSystemOverview(frame);
   paintFlight(frame);
 }
+function paintDeckOccupant(member,outside,value,working) {
+  const {marker,room,task,progress} = miniCrew.get(member);
+  const [destination,action] = station(duties[member],member);
+  const position = crewPositions.get(pawns.get(member));
+  const location = outside ? "Exterior" : roomById.get(position.room).name;
+  const target = roomById.get(destination).name;
+  marker.setAttribute("transform","translate("+position.x+" "+Math.max(32,position.y)+")");
+  setOverviewText(room,location === target || outside ? location : location+" → "+target);
+  setOverviewText(task,action);
+  progress.hidden = !working;
+  if (working) progress.value = Number.isFinite(value) ? value : 0;
+}
+
+function renderSystemOverview(frame) {
+  if (element("map-systems").hidden) return;
+  const selected = data.crew.filter(id=>reducedActivity().has(id)).join(",");
+  const samples = data.frames[selected].slice(0,index+1);
+  const sourceSample = samples.at(-1);
+  const series = samples.filter(sample=>sample.air_source === sourceSample.air_source && !sample.air_source.startsWith("Scripted"));
+  const drill = frame.healthDrill;
+  const drillSamples = drill && data.health_drill.frames.filter(sample=>sample.co2.observed_at_s <= frame.time-connectedFlight.crewStarted);
+  const provenance = sourceSample.air_source.startsWith("Scripted") ? sourceSample.air_source : "Modeled outbound cabin";
+  setOverviewText(element("map-systems-source"),drill
+    ? drill.source+" · Sample T+"+clock(drill.co2.observed_at_s)+" · Power from replay"
+    : provenance+" · Replay sample T+"+clock(sourceSample.time));
+
+  const active = tasks.filter(task=>task.mode === crewMode() && task.queued<=frame.time && task.finishes>frame.time).length
+    + peerChecks.filter(check=>check.mode === crewMode() && check.requested<=frame.time && frame.time<check.due).length
+    + Number(Boolean(groundInspection(frame))) + Number(Boolean(connectedFlight?.stationWork));
+  const nominalFlow = drill ? data.health_drill.frames[0].flow_m3_h : data.frames[selected][0].removal;
+  const reducedFlow = frame.removal != null && frame.removal < nominalFlow;
+  const lowPower = frame.power != null && frame.power < .40;
+  showSystemReading("co2",frame.co2,"ppm",2,drill?.exposureRisk ? "Exposure drill active" : "",
+    drillSamples ? drillSamples.map(sample=>sample.co2.value) : series.map(sample=>sample.co2), Boolean(drill?.exposureRisk));
+  showSystemReading("flow",frame.removal,"m³/h",0,frame.removal == null ? "Unavailable" : reducedFlow ? "Degraded" : "Nominal",
+    drillSamples ? drillSamples.map(sample=>sample.flow_m3_h) : series.map(sample=>sample.removal),reducedFlow);
+  showSystemReading("power",frame.power,"kW",2,frame.power == null ? "Unavailable" : lowPower ? "Low headroom" : "Available",
+    series.map(sample=>sample.power),lowPower);
+  showSystemReading("jobs",active,"",0,active ? "Active or queued" : "None active or queued",[],false);
+}
+
+function showSystemReading(id,current,unit,precision,status,values,attention) {
+  const {card,value,note,graph,line} = systemCards.get(id);
+  const available = Number.isFinite(current);
+  const samples = values.filter(Number.isFinite).slice(-8);
+  const hasTrend = Boolean(graph && available && samples.length > 1);
+  const change = hasTrend ? Number((samples.at(-1)-samples.at(-2)).toFixed(precision)) : 0;
+  const trend = !hasTrend ? "" : change === 0 ? "Steady"
+    : (change > 0 ? "+" : "−")+Math.abs(change).toFixed(precision)+" "+unit+" vs prior";
+  card.dataset.status = attention ? "attention" : "";
+  setOverviewText(value,available ? [current.toFixed(precision),unit].filter(Boolean).join(" ") : "—");
+  setOverviewText(note,[status,trend].filter(Boolean).join(" · ") || "Latest sample");
+  if (!graph) return;
+  graph.toggleAttribute("hidden",!hasTrend);
+  if (!hasTrend) return;
+  const low = Math.min(...samples);
+  const high = Math.max(...samples);
+  const points = samples.map((reading,i)=>{
+    const y = high === low ? 10 : 17-14*(reading-low)/(high-low);
+    return (1+98*i/(samples.length-1)).toFixed(1)+" "+y.toFixed(1);
+  });
+  line.setAttribute("d","M"+points.join(" L"));
+}
+
 function openDigitalTwin(member, trigger) {
   selection = {crew:member};
   twinView = "body";
@@ -3899,7 +4052,7 @@ const campaignRelay = bindCampaignGround({
 });
 const groundPanel = bindFlightGround({
   panel:element("map-ground"), crewReceipt:element("flight-crew-receipt"),
-  clock, workflow:flightWorkflow, replayPacket:data.replay_ground, redraw:render,
+  clock, workflow:flightWorkflow, replayPacket:data.replay_ground, rehearsal:data.health_drill, redraw:render,
 });
 function updateGround(frame) {
   const mode = groundFlightContext?.mode ?? "menu";
@@ -3909,7 +4062,8 @@ function updateGround(frame) {
     : relayRunId ? "Ground · Advisory receipt" : "Ground · Fault inspection";
   element("replay-ground-order").hidden = Boolean(relayRunId || campaign);
   groundPanel.update({
-    mode, relayRunId, campaign, frame:groundFlightContext?.time == null ? frame : {...frame,time:groundFlightContext.time},
+    mode, relayRunId, campaign, rehearsalStart:connectedFlight?.timedDemo ? connectedFlight.crewStarted : null,
+    frame:groundFlightContext?.time == null ? frame : {...frame,time:groundFlightContext.time},
     groundVisible:!element("map-ground").closest("[hidden]"),
     crewVisible:!element("workflow-widget").closest("[hidden]"),
   });
@@ -3979,6 +4133,13 @@ const launchMission = bindLaunchCheckout(data.missions,data.replay_version,{
       for (const panel of profileWindows.values()) { panel.close(); panel.resetPosition(); }
       return true;
     }
+    if (action === "start-demo-scrubber") {
+      const job = allocator.routine(crewMode(),missionTime,missionTime,"shift");
+      if (allocator.problem(job)) return false;
+      tasks.push(job);
+      render();
+      return true;
+    }
     if (action === "start-demo-eva") {
       const job = allocator.routine(crewMode(),missionTime,missionTime,"eva");
       tasks.push(job);
@@ -4007,14 +4168,10 @@ const launchMission = bindLaunchCheckout(data.missions,data.replay_version,{
     render();
     return true;
   },
-  onDemoFrame(now) {
+  onDemoFrame(now, tickProgress) {
     if (!connectedFlight?.timedDemo || now-lastPaintAt < 48 || connectedFlight.recovery?.phase === "recovered") return;
-    const elapsed = connectedFlight.playbackLimit == null
-      ? Math.max(0,Math.min(TICK_SECONDS-1,(now-canvasTickStarted)*.004))
-      : Math.max(0,Math.min(TICK_SECONDS-1,connectedFlight.playbackLimit-missionTime,(now-canvasTickStarted)*.004));
-    const visualTime = missionTime+elapsed;
+    const visualTime = Math.min(missionTime+TICK_SECONDS*tickProgress,connectedFlight.playbackLimit ?? Infinity);
     if (!reducedMotion.matches) paintFlight(currentFrame(),visualTime);
-    element("hud-clock").textContent = "T+"+clock(Math.floor(visualTime));
     lastPaintAt = now;
   },
   exteriorBusy:(mode,time)=>tasks.some(job=>job.mode===mode && job.procedure==="eva" &&
