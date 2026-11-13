@@ -1,5 +1,8 @@
 import { Link, useParams } from "react-router-dom";
 import { fixtureFor } from "../../api/fixtures.js";
+import { CREW_HEALTH_FIXTURE } from "../../api/crewHealthFixture.js";
+import CrewHealthPanel from "../crew/CrewHealthPanel.jsx";
+import RadiationContext from "../crew/RadiationContext.jsx";
 import ServiceStatus from "./ServiceStatus.jsx";
 
 const ROLE_TITLES = { crew: "Crew console", ground: "Ground console" };
@@ -80,6 +83,13 @@ export default function MissionConsole({ role }) {
           <Reading label="Power headroom" quantity={equipment.power_headroom} />
         </ul>
       </section>
+
+      {role === "crew" && (
+        <>
+          <CrewHealthPanel health={CREW_HEALTH_FIXTURE} cabin={equipment.co2} />
+          <RadiationContext />
+        </>
+      )}
 
       {snapshot.delivery && <DeliveryPanel delivery={snapshot.delivery} />}
     </main>

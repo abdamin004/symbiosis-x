@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "fixture_id": "crew-health-context-v1",
+  "synthetic": true,
+  "visibility": "onboard_private",
+  "subject": {
+    "crew_id": "SIM-01",
+    "display_name": "SIM-01 (fictional)",
+    "simulated": true
+  },
+  "baseline": {
+    "metric": "heart_rate",
+    "value": 72,
+    "unit": "bpm",
+    "context": "rest"
+  },
+  "latest_observation": {
+    "metric": "heart_rate",
+    "value": 98,
+    "unit": "bpm",
+    "observed_at_s": 780,
+    "quality": "valid",
+    "activity": "rest",
+    "source_id": "synthetic.sim-01-wrist-hr"
+  },
+  "baseline_alert": {
+    "signal": "alert",
+    "reason_code": "RESTING_HR_ABOVE_BASELINE",
+    "reason": "Three consecutive resting readings (95, 97, 98 bpm) are at least 20 bpm above the 72 bpm personal baseline. Synthetic demo rule for onboard review, not a diagnosis.",
+    "quality": "valid",
+    "evidence_count": 3,
+    "threshold": {
+      "value": 92,
+      "unit": "bpm"
+    }
+  }
+}
