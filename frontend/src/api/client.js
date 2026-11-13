@@ -74,6 +74,11 @@ export function commitAction(runId, command) {
 export function readActionReceipt(runId, operationId) {
   return jsonRequest("/runs/" + encodeURIComponent(runId) + "/actions/" + encodeURIComponent(operationId), "crew");
 }
+export function submitGroundAdvisory(runId, command) {
+  return jsonRequest("/runs/" + encodeURIComponent(runId) + "/ground/advisories", "ground", {
+    method: "POST", body: JSON.stringify(command),
+  });
+}
 export function readRunView(runId, role) {
   return jsonRequest("/runs/" + encodeURIComponent(runId) + "/" + role, role);
 }
