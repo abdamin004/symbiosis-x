@@ -1,6 +1,6 @@
 """Pure, single-zone CO₂ model for the synthetic cabin scenario."""
 
-from math import expm1, isfinite
+from math import exp, expm1, isfinite
 
 PPM_PER_FRACTION = 1_000_000
 SECONDS_PER_HOUR = 3_600
@@ -40,6 +40,6 @@ def advance_co2_ppm(
     removed_fraction = -expm1(-removal_exposure)
     generation_factor = removed_fraction / removal_exposure
     return (
-        co2_ppm * (1 - removed_fraction)
+        co2_ppm * exp(-removal_exposure)
         + generation_m3_h * time_per_volume * generation_factor * PPM_PER_FRACTION
     )
