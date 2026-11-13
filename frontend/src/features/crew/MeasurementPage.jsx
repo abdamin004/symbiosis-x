@@ -112,9 +112,12 @@ export default function MeasurementPage() {
           </form>
           {preview && <section role="status" data-testid="measurement-preview" className="mt-5 rounded-md border border-emerald-200 bg-emerald-50 p-3">
             <h2 className="font-semibold">Measurement validated · local preview</h2>
-            <p className="mt-1 text-xs">Validated against the project metric shape. This page does not submit or persist the measurement.</p>
+            <p className="mt-1 text-xs">Validated against the project metric shape. Save sends this synthetic reading to the private Crew API.</p>
             <pre className="mt-2 overflow-auto text-xs">{JSON.stringify(preview, null, 2)}</pre>
+            <button type="button" onClick={saveMeasurement} disabled={saving} className="mt-3 rounded-md bg-selection px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{saving ? "Saving..." : "Save to private Crew record"}</button>
           </section>}
+          {saveError && <p role="alert" className="mt-3 rounded bg-red-50 p-3 text-sm text-red-800">{saveError}</p>}
+          {saved && <p role="status" data-testid="measurement-saved" className="mt-3 rounded border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">Saved privately for {saved.crew_id} at mission time {saved.received_at_s}s.</p>}
         </section>
         <MetricGuide guide={guide} />
       </div>
