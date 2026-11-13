@@ -271,7 +271,7 @@ function bindCampaignGround({find, clock, act, inspectionReady, origin}) {
     const canDecide = issueAllowed && ["received","acknowledged"].includes(status);
     ack.hidden = !canDecide || status === "acknowledged";
     assign.hidden = !canDecide;
-    assign.disabled = !inspectionReady(time) || flightWorkflow.timebox(time).finishes+campaignGround.downlink > (order?.expires ?? 0);
+    assign.disabled = !inspectionReady(time) || campaignGround.timebox(time).finishes+campaignGround.downlink > (order?.expires ?? 0);
     find("campaign-ground-hold-label").hidden = hold.hidden = !canDecide;
     hold.disabled = !reason.value.trim();
     report.hidden = !issueAllowed || work?.state !== "Ready to report";
