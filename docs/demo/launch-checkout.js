@@ -227,7 +227,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     if (!["skip","complete"].includes(tutorial.returnValue)) return;
     try { localStorage.setItem(lessonKey,"seen"); } catch {}
   });
-  const voiceButton = find("pad-audio");
+  const audioButtons = [find("pad-audio"),find("flight-audio")];
   const Audio = window.AudioContext || window.webkitAudioContext;
   let audio;
   function unlockAudio() {
@@ -248,10 +248,9 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     oscillator.start(time);
     oscillator.stop(time+duration);
   }
-  voiceButton.hidden = !(Audio || "speechSynthesis" in window);
-  voiceButton.addEventListener("click",()=>{
+  for (const button of audioButtons) button.addEventListener("click",()=>{
     voiceEnabled = !voiceEnabled;
-    voiceButton.setAttribute("aria-pressed",String(voiceEnabled));
+    for (const control of audioButtons) control.setAttribute("aria-pressed",String(voiceEnabled));
     if (voiceEnabled) unlockAudio();
     else {
       window.speechSynthesis?.cancel();
@@ -564,6 +563,8 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     const launch = view === "launch";
     const menu = view === "menu";
     const inOrbit = launch && state.insertion !== null && !state.aborted && activeBurn?.kind !== "insertion";
+    audioButtons[0].hidden = !(Audio || "speechSynthesis" in window);
+    audioButtons[1].hidden = !inOrbit || !(Audio || "speechSynthesis" in window);
     const controlsHome = find(inOrbit ? "mission-command-widget" : "pad-command");
     const controls = find("launch-controls");
     if (controls.parentElement !== controlsHome) controlsHome.append(controls);

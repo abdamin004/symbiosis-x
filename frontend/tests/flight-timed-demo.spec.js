@@ -85,6 +85,11 @@ test("the health demo shows the cabin response, private check and scheduled EVA 
   await expect(twin).toBeVisible();
   await expect(twin.locator("#personnel-name")).toHaveText("Sana Kepler");
   await expect(twin.locator("#region-source")).toHaveText("Synthetic demo · optical wristband");
+  const audioToggle = page.locator("#flight-audio");
+  await expect(audioToggle).toBeVisible();
+  await audioToggle.dispatchEvent("click");
+  await expect(audioToggle).toHaveAttribute("aria-pressed","false");
+  await expect(page.locator("#pad-audio")).toHaveAttribute("aria-pressed","false");
   await expect(twin.locator("#region-reading")).toHaveText(/68 bpm.*observed T\+02:10.*received T\+02:15.*accepted/);
   const [twinBounds, shipBounds, guideBounds, readingBounds] = await Promise.all([
     twin.boundingBox(), page.locator("#ship").boundingBox(), page.locator("#mission-guide").boundingBox(),
