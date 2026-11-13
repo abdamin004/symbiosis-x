@@ -9,6 +9,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from starlette.concurrency import run_in_threadpool
 
+from symbiosis_x.api.crew import router as crew_router
 from symbiosis_x.api.roles import new_demo_tokens, router as roles_router
 from symbiosis_x.api.runs import router as runs_router
 from symbiosis_x.storage.repository import Repository
@@ -41,6 +42,7 @@ def create_app(
     application.state.demo_tokens = new_demo_tokens() if enable_local_demo else {}
     application.include_router(roles_router)
     application.include_router(runs_router)
+    application.include_router(crew_router)
     if canvas_path:
         path_to_canvas = Path(canvas_path)
 

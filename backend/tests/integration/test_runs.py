@@ -40,7 +40,7 @@ def test_start_seed_at_zero(tmp_path):
         assert restarted.post("/api/v1/runs", json=START).json() == receipt
     with closing(sqlite3.connect(database)) as db:
         assert db.execute("SELECT run_id, mission_s FROM runs").fetchall() == [(receipt["run_id"], 0)]
-        assert db.execute("SELECT event_type FROM events").fetchall() == [("run.started",)]
+        assert db.execute("SELECT event_type FROM events").fetchall() == [("run.started",), ("observation.recorded",)]
 
 
 def test_duplicate_advance_returns_one_receipt(tmp_path):
@@ -65,6 +65,7 @@ def test_duplicate_advance_returns_one_receipt(tmp_path):
     with closing(sqlite3.connect(database)) as db:
         assert db.execute("SELECT mission_s, decision_rev FROM runs").fetchall() == [(60, 0)]
         assert db.execute("SELECT event_seq, event_type FROM events ORDER BY event_seq").fetchall() == [
-            (1, "run.started"), (2, "run.advanced"),
+            (1, "run.started"), (2, "observation.recorded"),
+            (3, "run.advanced"), (4, "observation.recorded"),
         ]
         assert db.execute("SELECT count(*) FROM operations").fetchone() == (1,)
