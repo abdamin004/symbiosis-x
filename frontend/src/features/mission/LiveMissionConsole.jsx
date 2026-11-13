@@ -68,7 +68,13 @@ export default function LiveMissionConsole({ role, runId }) {
         {view.status !== "closed" && plan && <ApprovalPanel runId={runId} plan={plan} candidateId={selected} onReceipt={onReceipt} />}
         <CheckInForm runId={runId} crewId={view.health_profile?.crew_id ?? "SIM-01"} />
         <details className="mt-6 rounded-lg border border-slate-200 bg-white p-4" data-testid="supporting-context">
-          <summary className="cursor-pointer font-semibold">Supporting context: archived radiation data</summary>
+          <summary className="cursor-pointer font-semibold">Supporting context: cabin deck and archived radiation data</summary>
+          <section className="mt-3 rounded-md border border-slate-200 p-3" data-testid="supporting-deck">
+            <h3 className="text-sm font-semibold">Cabin deck</h3>
+            <p className="mt-1 text-sm text-slate-700">The mission canvas shows the deck map, room inspector and cabin replay.</p>
+            <p className="mt-1 text-xs text-slate-500">It keeps its own run and replay, so it does not show run {view.run_id}. The 2D deck component (SX-08A) will be shown here once it is merged.</p>
+            <a className="mt-2 inline-block text-sm font-semibold text-selection underline" href="/mission" target="_blank" rel="noreferrer">Open the cabin deck</a>
+          </section>
           <RadiationContext />
         </details>
       </> : <section className="mt-6 rounded-lg border border-slate-200 bg-white p-4">
