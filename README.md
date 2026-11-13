@@ -17,7 +17,18 @@ python -m pip install -r contracts/requirements-test.txt
 python -m pytest backend/tests/integration/test_contract_examples.py -q
 ```
 
-On Windows PowerShell use `py -3 -m venv .venv` and `.\.venv\Scripts\Activate.ps1`. This setup exercises the shared JSON contract. The backend bootstrap, app health checks and dashboard launch are tracked as separate build tickets.
+On Windows PowerShell use `py -3 -m venv .venv` and `.\.venv\Scripts\Activate.ps1`. This setup exercises the shared JSON contract.
+
+## Run the backend locally
+
+From the repository root, activate the virtual environment and run:
+
+```sh
+python -m pip install -e 'backend[test]'
+python -m uvicorn symbiosis_x.main:app --host 127.0.0.1 --port 8766
+```
+
+Open [OpenAPI docs](http://127.0.0.1:8766/docs). Startup migrates the local database to revision 2. By default the file is `symbiosis-x.sqlite3` in the working directory. Set `SYMBIOSIS_X_DB_PATH` to use a different file. Use a temporary path for tests. The pilot canvas currently runs from generated replay data. The simulation API routes and health probes have their own tickets.
 
 ## SX-01A handoff
 
