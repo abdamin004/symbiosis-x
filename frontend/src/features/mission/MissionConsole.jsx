@@ -73,6 +73,7 @@ export default function MissionConsole({ role }) {
         </dl>
       </header>
 
+      <DeckMap role={role} />
       <p className="mt-3 text-xs text-slate-500">
         Synthetic fixture · scenario {snapshot.scenario_id} · seed {snapshot.seed}
       </p>
