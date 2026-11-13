@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { readRunView } from "../../api/client.js";
 import ApprovalPanel from "../crew/ApprovalPanel.jsx";
 import CandidateList from "../crew/CandidateList.jsx";
@@ -17,6 +17,9 @@ function time(seconds) {
 }
 
 export default function LiveMissionConsole({ role, runId }) {
+  const [query] = useSearchParams();
+  const crewId = role === "crew" ? query.get("crew_id") : null;
+  const subjectQuery = crewId ? "?crew_id=" + encodeURIComponent(crewId) : "";
   const [view, setView] = useState(null);
   const [error, setError] = useState("");
   const [plan, setPlan] = useState(null);
@@ -24,11 +27,13 @@ export default function LiveMissionConsole({ role, runId }) {
   const [reload, setReload] = useState(0);
   useEffect(() => {
     let active = true;
-    readRunView(runId, role).then((result) => {
+    setView(null);
+    setError("");
+    readRunView(runId, role, crewId).then((result) => {
       if (active) { setView(result); setError(""); }
     }).catch((e) => { if (active) setError(e.message); });
     return () => { active = false; };
-  }, [runId, role, reload]);
+  }, [runId, role, crewId, reload]);
   const onPlan = useCallback((result) => {
     setPlan(result);
     // A new evaluation may change which options are available.
@@ -50,7 +55,7 @@ export default function LiveMissionConsole({ role, runId }) {
       {view.status === "closed" && <p role="status" data-testid="console-run-ended" className="mt-4 rounded bg-slate-100 p-3 text-sm text-slate-700">Mission ended at {time(view.mission_s)}. This view is read only.</p>}
       {role === "crew" ? <>
         <CrewHealthDashboard profile={view.health_profile} assessment={view.health_assessment} metrics={HEALTH_METRICS}
-          measureHref={"/runs/" + encodeURIComponent(runId) + "/crew/measure"}
+          measureHref={"/runs/" + encodeURIComponent(runId) + "/crew/measure" + subjectQuery}
           emergencyHref={"/runs/" + encodeURIComponent(runId) + "/crew/emergency"} />
         <section className="mt-6 rounded-lg border border-sky-200 bg-sky-50 p-4" data-testid="live-cabin-context">
           <h2 className="font-semibold">Cabin context</h2>

@@ -127,6 +127,11 @@ export default function RunLauncher({ run: initialRun }) {
             <span className="font-semibold text-slate-900">{label}</span><span className="mt-1 block text-sm text-slate-600">{detail}</span>
           </Link>
         </li>)}
+        <li><a href={"/flight?view=replay&run_id=" + encodeURIComponent(run.runId)}
+          className="block rounded-lg border border-slate-200 bg-white p-5 hover:border-selection">
+          <span className="font-semibold text-slate-900">Open Flight crew portraits</span>
+          <span className="mt-1 block text-sm text-slate-600">Use the deck to open a private health record for this run.</span>
+        </a></li>
       </ul>}
       <p className="mt-6 text-sm text-slate-500">Only the facilitator can start, advance, reset or end a run. Crew and Ground links open role-scoped views.</p>
     </main>

@@ -74,8 +74,9 @@ export function commitAction(runId, command) {
 export function readActionReceipt(runId, operationId) {
   return jsonRequest("/runs/" + encodeURIComponent(runId) + "/actions/" + encodeURIComponent(operationId), "crew");
 }
-export function readRunView(runId, role) {
-  return jsonRequest("/runs/" + encodeURIComponent(runId) + "/" + role, role);
+export function readRunView(runId, role, crewId) {
+  const query = role === "crew" && crewId ? "?crew_id=" + encodeURIComponent(crewId) : "";
+  return jsonRequest("/runs/" + encodeURIComponent(runId) + "/" + role + query, role);
 }
 export function createPrivateCheckIn(runId, command) {
   return jsonRequest("/runs/" + encodeURIComponent(runId) + "/crew/check-ins", "crew", { method: "POST", body: JSON.stringify(command) });

@@ -626,6 +626,7 @@ __HUD_ICONS__
       <div id="personnel-art"></div>
       <div><span id="personnel-role"></span><strong id="personnel-name"></strong><span id="personnel-location"></span></div>
     </div>
+    <a id="personnel-health" hidden>Open private health record</a>
     <div class="choices personnel-actions" role="group" aria-label="Crew profile views">
       <button type="button" data-twin-view="body" aria-pressed="true">Body</button>
       <button type="button" data-twin-view="bio" aria-pressed="false">Bio</button>
@@ -979,6 +980,7 @@ __FLIGHT_PROCESSES__
 </script>
 <script>
 const element = id => document.getElementById(id);
+const flightHealthRun = new URLSearchParams(location.search).get("run_id");
 const data = JSON.parse(element("flight-data").textContent);
 const clock = seconds => {
   const whole = Math.floor(seconds);
@@ -1662,6 +1664,9 @@ function renderProfiles(frame) {
       element("personnel-name").textContent = persona.name;
       element("personnel-role").textContent = duties[member].role + " · " + id;
       element("personnel-location").textContent = roomById.get(zone).name + " · " + task;
+      const health = element("personnel-health");
+      health.hidden = !flightHealthRun;
+      if (flightHealthRun) health.href = "/runs/" + encodeURIComponent(flightHealthRun) + "/crew?crew_id=" + encodeURIComponent(id);
       element("twin-body").hidden = twinView !== "body";
       element("personnel-data").hidden = twinView === "body";
       for (const button of document.querySelectorAll("[data-twin-view]"))
