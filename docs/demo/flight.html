@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flight · SYMBIOSIS X</title>
+<style>
+:root{color-scheme:dark;--bg:#060810;--ink:#eef0ff;--muted:#aeb8d3;--blue:#9bdcff;--violet:#bdabff;--edge:#9d9fff33;font:16px/1.45 system-ui,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink)}
+main{max-width:1500px;margin:auto;padding:clamp(.9rem,3vw,2.5rem)}
+h1,h2,p{margin:0}a{color:var(--blue);text-underline-offset:.2em}
+header{display:flex;align-items:end;justify-content:space-between;gap:.8rem;flex-wrap:wrap;padding-bottom:1rem}
+.brand{color:var(--violet);font:650 .72rem ui-monospace,monospace;letter-spacing:.18em;margin-bottom:.4rem}
+h1{font-size:clamp(1.9rem,4vw,3.3rem);font-weight:630;letter-spacing:-.045em;line-height:1}
+.phase{color:var(--muted);font-size:.86rem;margin-top:.55rem}
+header a{font-size:.85rem}
+.stage{position:relative;isolation:isolate;overflow:clip;border:1px solid var(--edge);border-radius:18px;background:radial-gradient(ellipse at 64% 45%,#251944 0%,#0a0e20 53%,#05070f 82%)}
+.stage::before,.stage::after{content:"";position:absolute;pointer-events:none;z-index:-1}
+.stage::before{inset:-70px;background-image:radial-gradient(circle,#e5e2ffb8 1px,transparent 1.5px),radial-gradient(circle,#b9d7fba8 .8px,transparent 1.2px);background-size:97px 83px,149px 127px;background-position:11px 21px,63px 55px;opacity:.7}
+.stage[data-playing=true]::before{animation:travel 9s linear infinite}
+.stage::after{width:min(65vw,640px);aspect-ratio:1;border-radius:50%;right:-16%;top:48%;background:radial-gradient(circle at 25% 8%,#595989 0,#303451 23%,#111427 54%,#080a16 72%);box-shadow:-7px -10px 45px #736aff35;opacity:.7}
+@keyframes travel{to{transform:translateX(-97px)}}
+.viewport{overflow-x:auto;overscroll-behavior-x:contain;position:relative}
+.ship{width:100%;min-width:680px;aspect-ratio:1100/475;position:relative;isolation:isolate}
+#hull{position:absolute;width:100%;height:100%;inset:0;pointer-events:none;z-index:-1}
+button{font:inherit;color:inherit;cursor:pointer;background:#171d38;border:1px solid #767cb254;border-radius:8px;padding:.4rem .7rem}
+button:hover{background:#292852}button:focus-visible,input:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+button:disabled{opacity:.46;cursor:default}
+button[aria-pressed=true]{border-color:var(--violet);background:#3d315e}
+.zone,.pawn{position:absolute;transform:translate(-50%,-50%)}
+.zone{background:#0c1023aa;border-color:transparent;font-size:clamp(.68rem,1.15vw,.88rem);padding:.12rem .38rem;white-space:nowrap;color:#e1e6ff}
+.zone[data-alert=true]{color:#ffd198;border-color:#ffb56d80}
+.pawn{--suit:#a9c7ff;width:38px;height:38px;padding:0;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--suit),transparent 45%);border-radius:50%;background:#141a31;transition:left .95s ease,top .95s ease;z-index:2}
+.pawn::before{content:"";width:12px;height:15px;border:2px solid var(--suit);border-radius:6px 6px 4px 4px;box-shadow:0 0 9px color-mix(in srgb,var(--suit),transparent 54%)}
+.pawn::after{content:"";position:absolute;width:7px;height:3px;top:13px;border-radius:2px;background:var(--suit)}
+.pawn[aria-pressed=true]{outline:2px solid var(--suit);outline-offset:3px}
+.pawn span{position:absolute;top:100%;font:600 .62rem ui-monospace,monospace;color:#fff;background:#111629;padding:.13rem .25rem;border-radius:3px;white-space:nowrap}
+.control-deck{position:relative;display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;padding:.85rem 1rem;background:#070b17e8;border-top:1px solid var(--edge)}
+.control-deck input{flex:1;min-width:8rem;accent-color:var(--violet)}
+#play{background:#bcafff;color:#15102a;font-weight:700}#play:hover{background:#dbd2ff}
+.clock{font:700 .9rem ui-monospace,monospace;color:var(--blue)}
+.readout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:1rem;margin-top:1rem}
+.panel{background:#0e1325;border:1px solid var(--edge);border-radius:12px;padding:1rem}
+.panel h2{font-size:1.08rem}.panel p{color:var(--muted);margin:.35rem 0;font-size:.9rem}.panel .reading{color:var(--blue);font-weight:650}
+.roster{display:flex;flex-wrap:wrap;gap:.45rem;margin:.65rem 0}
+.roster button{font-size:.8rem}
+[hidden]{display:none!important}
+@media(max-width:720px){.readout{grid-template-columns:1fr}.stage::after{width:70vw}.control-deck input{flex-basis:100%}}
+@media(prefers-reduced-motion:reduce){.pawn{transition:none}.stage[data-playing=true]::before{animation:none}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div><p class="brand">SYMBIOSIS X</p><h1>Flight</h1><p class="phase" id="phase"></p></div>
+  <a href="/mission">Mission control</a>
+</header>
+<section class="stage" id="stage" aria-label="Spacecraft in flight">
+  <div class="viewport" tabindex="0" aria-label="Scrollable spacecraft cutaway">
+    <div class="ship" id="ship">
+      <canvas id="hull" width="1100" height="475" aria-hidden="true"></canvas>
+    </div>
+  </div>
+  <div class="control-deck">
+    <button id="play" type="button">Fly mission</button>
+    <button id="step" type="button">Step</button>
+    <button id="reset" type="button">Reset</button>
+    <input id="timeline" type="range" min="0" value="0" aria-label="Mission checkpoint">
+    <output class="clock" id="clock" for="timeline"></output>
+  </div>
+</section>
+<div class="readout">
+  <section class="panel" aria-labelledby="focus-name">
+    <h2 id="focus-name"></h2>
+    <p class="reading" id="reading"></p>
+    <p id="focus-detail"></p>
+    <button type="button" id="activity" hidden></button>
+  </section>
+  <section class="panel" aria-labelledby="crew-heading">
+    <h2 id="crew-heading">Crew on board</h2>
+    <div class="roster" id="roster"></div>
+    <p>Simulation replay. Crew duties are scripted and cabin readings use the Python model.</p>
+  </section>
+</div>
+</main>
+<script type="application/json" id="flight-data">__FLIGHT_DATA__</script>
+<script>
+const element = id => document.getElementById(id);
+const data = JSON.parse(element("flight-data").textContent);
+const clock = seconds => [Math.floor(seconds / 60), seconds % 60]
+  .map(part => String(part).padStart(2, "0")).join(":");
+const zones = {
+  "cargo-01": {x:162,y:194,w:126,h:89,color:"#252841"},
+  "engineering-01": {x:302,y:187,w:145,h:96,color:"#292443"},
+  "habitat-01": {x:458,y:130,w:181,h:98,color:"#222d4c"},
+  "medical-01": {x:458,y:257,w:181,h:93,color:"#263753"},
+  "life-support-01": {x:650,y:130,w:133,h:98,color:"#253954"},
+  "comms-01": {x:650,y:257,w:133,h:93,color:"#30294e"},
+  "command-01": {x:795,y:187,w:143,h:96,color:"#30395e"},
+};
+const duties = [
+  {role:"Commander", color:"#c9b4ff", stations:[
+    ["command-01","Clear the departure checkpoint"],["command-01","Log the life support alert"],
+    ["habitat-01","Check crew activity"],["command-01","Review the power report"],
+    ["cargo-01","Review the transfer manifest"]]},
+  {role:"Medical officer", color:"#a1eddd", stations:[
+    ["medical-01","Check the onboard medical station"],["habitat-01","Check in with the crew"],
+    ["medical-01","Review the activity checkpoint"],["medical-01","Monitor the crew"],
+    ["habitat-01","Follow up with the crew"]]},
+  {role:"Systems specialist", color:"#ffcb9c", stations:[
+    ["engineering-01","Inspect the power bus"],["life-support-01","Inspect the degraded scrubber"],
+    ["life-support-01","Check cabin CO₂"],["engineering-01","Inspect reduced power headroom"],
+    ["life-support-01","Review scrubber flow and CO₂"]]},
+  {role:"Communications specialist", color:"#a5d2ff", stations:[
+    ["comms-01","Check the Ground link"],["comms-01","Prepare the operational snapshot"],
+    ["comms-01","Track the first delivery"],["engineering-01","Record the power change"],
+    ["comms-01","Review the Ground handoff"]]},
+];
+const roomById = new Map(data.rooms.map(room => [room.room_id, room]));
+const reduced = new Set();
+const roomButtons = new Map();
+const pawns = new Map();
+const roster = new Map();
+const ctx = element("hull").getContext("2d");
+const last = data.frames[""].length - 1;
+let index = 0;
+let timer = null;
+let selection = {room:"command-01"};
+
+function place(button, x, y) {
+  button.style.left = x / 11 + "%";
+  button.style.top = y / 4.75 + "%";
+}
+
+function shape(points, fill, stroke) {
+  ctx.beginPath();
+  points.forEach(([x,y], i) => i ? ctx.lineTo(x,y) : ctx.moveTo(x,y));
+  ctx.closePath();
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.strokeStyle = stroke;
+  ctx.stroke();
+}
+
+function rectangle(x,y,w,h,fill) {
+  ctx.fillStyle = fill;
+  ctx.fillRect(x,y,w,h);
+}
+
+function drawShip(frame) {
+  ctx.clearRect(0,0,1100,475);
+  ctx.lineWidth = 2;
+  const plume = ctx.createLinearGradient(5,0,180,0);
+  plume.addColorStop(0,"#7b70ff00");
+  plume.addColorStop(1,"#a1c5ffe8");
+  shape([[13,235],[140,211],[163,213],[163,261],[140,263]],plume,"#7777ff39");
+  for (const y of [44,382]) {
+    rectangle(540,y,14,49,"#50557f");
+    rectangle(352,y,395,44,"#171f45");
+    for (let x=360;x<745;x+=23) rectangle(x,y+5,19,34,"#283668");
+  }
+  shape([[116,230],[167,166],[416,166],[448,110],[779,110],[811,165],[938,165],
+    [1005,235],[938,306],[810,306],[782,366],[449,366],[416,305],[166,305],[116,260]],
+    "#171b34","#8c9dd2a0");
+  rectangle(177,228,754,16,"#424c71");
+  rectangle(533,139,20,199,"#38486b");
+  rectangle(708,139,20,199,"#38486b");
+  for (const [id, z] of Object.entries(zones)) {
+    const warning = (id === "life-support-01" && frame.removal < 20)
+      || (id === "engineering-01" && frame.power < .40);
+    ctx.beginPath();
+    ctx.roundRect(z.x,z.y,z.w,z.h,12);
+    ctx.fillStyle = z.color;
+    ctx.fill();
+    ctx.strokeStyle = selection.room === id ? "#c8b7ff" : (warning ? "#dc9668" : "#6c7ea68c");
+    ctx.stroke();
+    rectangle(z.x+12,z.y+10,24,3,warning ? "#ffc486" : "#9bbffc");
+    for (let x=z.x+16;x<z.x+z.w-17;x+=19) rectangle(x,z.y+z.h-12,13,3,"#8093ca70");
+    roomButtons.get(id).dataset.alert = warning;
+  }
+}
+
+function inspect(frame) {
+  const name = element("focus-name");
+  const value = element("reading");
+  const detail = element("focus-detail");
+  const action = element("activity");
+  action.hidden = selection.crew === undefined;
+  if (selection.crew !== undefined) {
+    const id = data.crew[selection.crew];
+    const duty = duties[selection.crew];
+    const [room, task] = duty.stations[index];
+    name.textContent = id + " · " + duty.role;
+    value.textContent = roomById.get(room).name + " · " + task;
+    detail.textContent = reduced.has(id)
+      ? (frame.time < data.activity_s ? "Reduced activity confirmed for 06:00." : "Reduced activity is contributing to the cabin model.")
+      : "Baseline activity. Confirm a reduction to see its effect on cabin CO₂ after 06:00.";
+    action.textContent = reduced.has(id) ? "Restore baseline activity" : "Confirm reduced activity";
+    return;
+  }
+  const room = roomById.get(selection.room);
+  const readings = {
+    "command-01": clock(frame.time) + " · " + (index ? "Outbound transit" : "Departure"),
+    "habitat-01": "4 astronauts · " + frame.generation.toFixed(3) + " m³/h CO₂ generation",
+    "life-support-01": frame.co2.toFixed(2) + " ppm CO₂ · " + frame.removal + " m³/h scrubber flow",
+    "engineering-01": frame.power.toFixed(2) + " kW headroom" + (frame.power < .40 ? " · Low" : ""),
+    "medical-01": "Crew check-ins · Scripted",
+    "comms-01": frame.time >= data.relay_delivery_s ? "Ground packet delivered · Scripted" : "Awaiting Ground packet · Scripted",
+    "cargo-01": "Hatch and transfer checks · Planned",
+  };
+  name.textContent = room.name;
+  value.textContent = readings[room.room_id];
+  const occupants = duties.flatMap((duty, i) => duty.stations[index][0] === room.room_id
+    ? [data.crew[i] + " · " + duty.stations[index][1]] : []);
+  detail.textContent = room.function + (occupants.length ? " On station: " + occupants.join(" / ") : "");
+}
+
+function render() {
+  const key = data.crew.filter(id => reduced.has(id)).join(",");
+  const frame = data.frames[key][index];
+  element("clock").textContent = clock(frame.time);
+  element("phase").textContent = (index ? "Outbound transit" : "Departure") + " · " + frame.label;
+  element("timeline").value = index;
+  element("timeline").setAttribute("aria-valuetext", clock(frame.time) + " " + frame.label);
+  element("stage").dataset.playing = timer !== null;
+  element("play").textContent = timer ? "Pause flight" : (index === last ? "Replay flight" : "Fly mission");
+  element("step").disabled = index === last;
+  for (const [roomId, button] of roomButtons) {
+    button.setAttribute("aria-pressed", selection.room === roomId);
+  }
+  duties.forEach((duty, i) => {
+    const [roomId, task] = duty.stations[index];
+    const z = zones[roomId];
+    const button = pawns.get(i);
+    place(button,z.x+z.w*(i%2 ? .68 : .32),z.y+z.h*.66);
+    button.setAttribute("aria-label", data.crew[i] + " " + duty.role + " in " + roomById.get(roomId).name);
+    button.title = task;
+    button.setAttribute("aria-pressed", selection.crew === i);
+    roster.get(i).setAttribute("aria-pressed", selection.crew === i);
+  });
+  drawShip(frame);
+  inspect(frame);
+}
+
+function stop() {
+  clearInterval(timer);
+  timer = null;
+}
+
+function advance() {
+  if (index < last) index += 1;
+  if (index === last) stop();
+  render();
+}
+
+for (const room of data.rooms) {
+  const z = zones[room.room_id];
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "zone";
+  button.textContent = room.name;
+  place(button,z.x+z.w/2,z.y+z.h*.27);
+  button.addEventListener("click", () => { selection = {room:room.room_id}; render(); });
+  roomButtons.set(room.room_id,button);
+  element("ship").append(button);
+}
+duties.forEach((duty,i) => {
+  const pawn = document.createElement("button");
+  pawn.type = "button";
+  pawn.className = "pawn";
+  pawn.style.setProperty("--suit",duty.color);
+  const marker = document.createElement("span");
+  marker.textContent = data.crew[i];
+  marker.setAttribute("aria-hidden","true");
+  pawn.append(marker);
+  const member = document.createElement("button");
+  member.type = "button";
+  member.textContent = duty.role;
+  const select = () => { selection = {crew:i}; render(); };
+  pawn.addEventListener("click", select);
+  member.addEventListener("click", select);
+  pawns.set(i,pawn);
+  roster.set(i,member);
+  element("ship").append(pawn);
+  element("roster").append(member);
+});
+element("timeline").max = last;
+element("timeline").addEventListener("input", event => {
+  stop();
+  index = Number(event.target.value);
+  render();
+});
+element("play").addEventListener("click", () => {
+  if (timer !== null) stop();
+  else {
+    if (index === last) index = 0;
+    timer = setInterval(advance,2400);
+  }
+  render();
+});
+element("step").addEventListener("click", () => { stop(); advance(); });
+element("reset").addEventListener("click", () => { stop(); index = 0; reduced.clear(); render(); });
+element("activity").addEventListener("click", () => {
+  const id = data.crew[selection.crew];
+  if (reduced.has(id)) reduced.delete(id);
+  else reduced.add(id);
+  render();
+});
+render();
+</script>
+</body>
+</html>

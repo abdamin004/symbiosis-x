@@ -122,3 +122,13 @@ SYMBIOSIS_X_MISSION_CANVAS=/tmp/symbiosis-x-mission.html python -m uvicorn symbi
 Open [Mission canvas](http://127.0.0.1:8766/mission). Start the nominal run at 00:00 and advance it once to 01:00. The room catalog describes the ship's planned functions and links existing assets to the same IDs used by telemetry. Command uses the live run API. Switch between Crew and Ground on the same run. Ground waits for the first packet and shows observation time, delivery time and age once it arrives. Replay and planned labels identify the other room capabilities. The canvas enables loopback demo sessions. For API-only testing, set `SYMBIOSIS_X_LOCAL_DEMO=1` and POST to `/api/v1/demo/session` to get the three role tokens. Send the appropriate token in the Bearer authorization header. The local operator can switch viewpoints. This session issuer is for a trusted local demo and grants all three demo roles to that operator. Keep the service bound to loopback without a reverse proxy.
 
 The mission canvas shows all ship systems or filters them by room. Play, step, or scrub the travel replay to compare modeled cabin CO₂, astronaut activity, scrubber flow, and power headroom. Use **Show live readings** to return the system widgets to the nominal run's role-scoped readings where available. The five screen selectors link the working pilot slices and show the registered measurement types. Emergency workflows, measurement writes, and the integrated golden runtime remain separate tickets.
+
+### Open the player flight view
+
+Generate `flight.html` alongside the generated mission canvas.
+
+```sh
+python3 scripts/build_flight_canvas.py /tmp/flight.html
+```
+
+With the local backend running, open [Flight](http://127.0.0.1:8766/). Fly or scrub the replay, select rooms and crew, and confirm reduced activity to change the cabin readings after the activity checkpoint. Use [Mission control](http://127.0.0.1:8766/mission) for live nominal commands and Crew and Ground verification. Flight uses the shared Python replay, with scripted crew duties and Ground handoff.
