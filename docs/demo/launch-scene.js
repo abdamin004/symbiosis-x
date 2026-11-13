@@ -3,6 +3,7 @@ function createLaunchScene(canvas) {
   const ctx = canvas.getContext("2d");
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
   let phase = "pad", separated = false, elapsed = 0, burning = false, ignition = null, transition = null, frame;
+  let separation = null;
   let previous = {rise:0, drift:0, tilt:0, camera:0, space:0};
   const padPose = previous;
   let daylight = {angle:.8,altitude:.7,light:1};
@@ -108,6 +109,22 @@ function createLaunchScene(canvas) {
       rect("#58616a",x+offset-3,ground-39,52,3);
       for(let i=0;i<3;i++) rect("#dba77f",x+offset+6+i*10,ground-34,4,2);
     }
+    // The service road, hangar and tank farm give the launch complex a readable scale.
+    path("#252e34",[[x-380,ground-21],[x-166,ground-20],[x-145,ground-10],[x-412,ground-11]]);
+    for (let i=0;i<7;i++) rect("#b9a780",x-374+i*28,ground-16,11,1);
+    const hangar = x-282;
+    path("#5b6870",[[hangar,ground-39],[hangar+15,ground-68],[hangar+68,ground-68],[hangar+83,ground-39]]);
+    rect("#303e49",hangar,ground-40,83,26);
+    rect("#192839",hangar+20,ground-38,40,24);
+    for (let i=0;i<4;i++) rect("#5c7182",hangar+21,ground-34+i*5,38,1);
+    rect("#c1aa80",hangar+36,ground-50,12,2);
+    for (const offset of [234,269,304]) {
+      const tank = x+offset;
+      rect(gradient(tank,0,tank+25,0,[[0,"#425460"],[.5,"#93a0a1"],[1,"#3d4e57"]]),tank,ground-41,25,25);
+      ellipse("#a6afb0",tank+12.5,ground-41,12.5,4);
+      line("#a6a28b",1,[[tank+25,ground-22],[tank+30,ground-22],[tank+30,ground-11]]);
+    }
+    line("#68808c",2,[[x+145,ground-11],[x+338,ground-11]]);
   }
 
   function gantry(x,y,s,away) {
@@ -130,6 +147,10 @@ function createLaunchScene(canvas) {
       rect("#a4a19a",-65,level,9+reach,1);
     }
     rect("#26313e",-96,-5,41,5);
+    for (const level of [-200,-152,-104,-56]) {
+      rect("#77848c",-89,level,30,3);
+      rect("#ffcd91",-90,level-2,4,2);
+    }
     ctx.restore();
   }
 
@@ -139,7 +160,11 @@ function createLaunchScene(canvas) {
     ctx.scale(s,s);
     ctx.rotate(pose.tilt);
     if(thrust) {
-      const length=86+Math.sin(now*.051)*11+Math.sin(now*.032)*8;
+      const upper = phase === "upper";
+      const nozzleY = upper ? -121 : 0;
+      const length=(upper ? 45 : 86)+Math.sin(now*.051)*8+Math.sin(now*.032)*6;
+      ctx.save();
+      ctx.translate(0,nozzleY);
       const glow=ctx.createRadialGradient(0,-4,2,0,15,65);
       glow.addColorStop(0,"#fff5dcae");
       glow.addColorStop(.35,"#ff9b5566");
@@ -147,13 +172,13 @@ function createLaunchScene(canvas) {
       ellipse(glow,0,15,63,65);
       path(gradient(0,0,0,length,[[0,"#fff4bc"],[.38,"#ffc078"],[1,"#ff754500"]]),[[-12,-5],[12,-5],[14,length*.38],[7,length*.67],[0,length],[-10,length*.66],[-16,length*.38]]);
       path(gradient(0,0,0,length*.7,[[0,"#fff"],[.55,"#ffedbc"],[1,"#ffd08800"]]),[[-7,0],[7,0],[6,length*.39],[0,length*.72],[-6,length*.41]]);
+      ctx.restore();
     }
     const alloy=gradient(-22,0,22,0,[[0,"#8d9fac"],[.24,"#c6d1d6"],[.54,"#edf0eb"],[.77,"#d0cebf"],[1,"#7a8791"]]);
     if(!separated || pose.booster<1) {
       ctx.save();
-      ctx.translate(-43*pose.booster,116*pose.booster);
-      ctx.rotate(-.3*pose.booster);
-      ctx.globalAlpha=1-pose.booster;
+      ctx.translate(-72*pose.booster,215*pose.booster**1.25);
+      ctx.rotate(-.62*pose.booster);
       path("#445362",[[-19,-34],[-30,-12],[-30,-6],[-13,-10],[13,-10],[30,-6],[30,-12],[19,-34]]);
       path("#283846",[[-14,-14],[14,-14],[17,-2],[10,0],[-10,0],[-17,-2]]);
       rect(alloy,-21,-132,42,117);
@@ -165,6 +190,10 @@ function createLaunchScene(canvas) {
       rect("#758490",-19,-72,5,28);
       rect("#5d6e7a",-3,-47,8,17);
       rect("#a4aeb0",-1,-46,2,14);
+      ctx.font="700 7px system-ui";
+      ctx.fillStyle="#273e4c";
+      ctx.fillText("01",-14,-78);
+      for (const level of [-108,-92,-57,-30]) line("#576976",.7,[[-21,level],[21,level]]);
       ctx.restore();
     }
     path(alloy,[[-21,-130],[-21,-202],[-16,-215],[-16,-222],[-9,-238],[-3,-243],[-3,-260],[3,-260],[3,-243],[9,-238],[16,-222],[16,-215],[21,-202],[21,-130]]);
@@ -175,7 +204,20 @@ function createLaunchScene(canvas) {
     rect("#677c86",-14,-170,5,22);
     rect("#586b76",11,-154,5,15);
     rect("#33444e",-20,-135,40,4);
-    if(separated) path("#414d58",[[-10,-132],[10,-132],[14,-121],[-14,-121]]);
+    line("#e0e5e6",1,[[-18,-201],[-18,-137]]);
+    ctx.font="700 7px system-ui";
+    ctx.fillStyle="#253d4d";
+    ctx.fillText("ASTERIA",-16,-179);
+    if(separated) {
+      path("#414d58",[[-10,-132],[10,-132],[14,-121],[-14,-121]]);
+      if (pose.booster > 0 && pose.booster < .52) {
+        const spread = pose.booster*70;
+        for (let i=0;i<14;i++) {
+          const alpha = Math.max(0,1-2*pose.booster);
+          ellipse(`rgba(234,234,220,${alpha*.4})`,(rand(i+100)-.5)*spread,-128+rand(i+120)*spread,2+i%4,2+i%3);
+        }
+      }
+    }
     ctx.restore();
   }
 
@@ -201,7 +243,9 @@ function createLaunchScene(canvas) {
     const pose=Object.fromEntries(Object.keys(target).map(key=>[key,mix(transition?.from[key]??target[key],target[key],ease)]));
     previous=pose;
     const shipX=w*(w<610?.63:.66), ground=h*.79, s=Math.min(h/605,1.48);
-    const thrust=phase==="ascent" && burning;
+    if (separation !== null) pose.booster = clamp((now-separation)/1250);
+    const upperBurn = phase === "upper" && separation !== null && now-separation > 450 && now-separation < 1500;
+    const thrust=phase==="ascent" && burning || upperBurn;
     sky(w,h,ground,shipX,pose);
     if(pose.space<1) {
       ctx.save();
@@ -225,17 +269,21 @@ function createLaunchScene(canvas) {
       }
     }
     if(t===1) transition=null;
-    if(!reduced.matches && (transition || thrust || (ignition!==null && now-ignition<4000))) frame=requestAnimationFrame(draw);
+    if(!reduced.matches && (transition || thrust || separation!==null && now-separation<1500 ||
+        (ignition!==null && now-ignition<4000))) frame=requestAnimationFrame(draw);
   }
 
   function show(next,animate) {
     const changed=phase!==next.phase || elapsed!==next.elapsed || separated!==next.separated;
     const lift=phase==="pad" && next.phase==="ascent" && next.elapsed===0;
+    const staging=!separated && next.separated;
     phase=next.phase;
     separated=next.separated;
     elapsed=next.elapsed;
     burning=next.burning;
     const now=performance.now();
+    if (staging && animate && !reduced.matches) separation=now;
+    if (!separated || !animate || reduced.matches) separation=null;
     if(changed || !animate) {
       const motion=animate && !reduced.matches;
       transition=motion ? {start:now,from:previous,duration:lift?2600:820} : null;
