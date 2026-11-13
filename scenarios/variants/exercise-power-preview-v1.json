@@ -6,6 +6,7 @@
   "exercise_at_s": 120,
   "power_drop_at_s": 150,
   "outcome_at_s": 210,
+  "relay_delay_s": 45,
   "co2_at_exercise_ppm": 2350,
   "cabin_volume_m3": 100,
   "removal_m3_h": 12,

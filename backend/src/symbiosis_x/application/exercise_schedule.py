@@ -4,12 +4,15 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
+from symbiosis_x.contracts.projections import GroundCO2, GroundPacket, PowerHeadroom
+from symbiosis_x.workflows.relay import queue_ground_snapshot
 from symbiosis_x.simulation.spacecraft.atmosphere import advance_co2_ppm
 from symbiosis_x.twin.constraints import evaluate_exercise_options
 
 EXERCISE_SCENARIO = ("exercise-power-preview", "1")
 FIXTURE_PATH = Path(__file__).resolve().parents[4] / "scenarios/variants/exercise-power-preview-v1.json"
 DEFERRED = "crew.exercise_deferred"
+EXERCISE_RELAY_PREFIX = "exercise-operational-"
 
 
 def load_exercise_fixture() -> dict:
@@ -57,15 +60,29 @@ def record_exercise_checkpoint(db, run_id, mission_s, previous_s):
     if mission_s == fixture["power_drop_at_s"]:
         _append(db, run_id, mission_s, "exercise.power_reduced", {"headroom_kw":fixture["reduced_headroom_kw"]})
         db.execute("UPDATE runs SET decision_rev = decision_rev + 1 WHERE run_id = ?", (run_id,))
-    if mission_s == fixture["outcome_at_s"]:
+    if mission_s in (fixture["exercise_at_s"], fixture["outcome_at_s"]):
         row = _event(db, run_id, DEFERRED)
         decision = json.loads(row["payload_json"]) if row else None
-        _append(db, run_id, mission_s, "exercise.outcome_recorded", {
+        before_drop = mission_s < fixture["power_drop_at_s"]
+        power = fixture["initial_headroom_kw" if before_drop else "reduced_headroom_kw"]
+        outcome = {
             "observed_at_s": mission_s,
             "co2_ppm": _observed_co2(fixture, mission_s, decision),
-            "headroom_kw": fixture["reduced_headroom_kw"] - (0 if decision else fixture["exercise_load_kw"]),
-        })
-        db.execute("UPDATE runs SET decision_rev = decision_rev + 1 WHERE run_id = ?", (run_id,))
+            "headroom_kw": round(power - (0 if decision else fixture["exercise_load_kw"]), 3),
+        }
+        if mission_s == fixture["outcome_at_s"]:
+            _append(db, run_id, mission_s, "exercise.outcome_recorded", outcome)
+            db.execute("UPDATE runs SET decision_rev = decision_rev + 1 WHERE run_id = ?", (run_id,))
+        revision = db.execute("SELECT decision_rev FROM runs WHERE run_id = ?", (run_id,)).fetchone()[0]
+        queue_ground_snapshot(
+            db, run_id, snapshot_id=f"{EXERCISE_RELAY_PREFIX}{mission_s}", decision_rev=revision,
+            observed_at_s=mission_s, issued_at_s=mission_s, deliver_at_s=mission_s+fixture["relay_delay_s"],
+            packet=GroundPacket(
+                co2=GroundCO2(value=outcome["co2_ppm"], unit="ppm", observed_at_s=mission_s,
+                              kind="delivered_observation"),
+                power_headroom=PowerHeadroom(value=max(0,outcome["headroom_kw"]), unit="kW", observed_at_s=mission_s),
+            ),
+        )
 
 
 def read_exercise_preview(db, run_id: str) -> dict:

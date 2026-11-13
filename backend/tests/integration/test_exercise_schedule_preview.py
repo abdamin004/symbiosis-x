@@ -84,3 +84,49 @@ def test_accepted_deferral_updates_activity_load_once(tmp_path):
         assert result["outcome"]["observed_at_s"] == EXPECTED["outcome_at_s"]
         assert result["outcome"]["co2_ppm"] == pytest.approx(result["decision"]["projected_co2_ppm"])
         assert result["outcome"]["headroom_kw"] == EXPECTED["reduced_headroom_kw"]
+
+
+def test_wearable_debrief_uses_recorded_times_and_matches_replay(tmp_path):
+    from test_wearable_recheck import command as recheck_command, snapshot
+
+    with local_client(tmp_path / "debrief.sqlite") as client:
+        headers = setup(client)
+
+        def debrief(base, role="crew"):
+            return client.get(base + "/crew/wearable-debrief", headers=headers[role])
+
+        def replay(start_id):
+            response = client.post("/api/v1/runs", headers=headers["facilitator"], json={
+                **START, "scenario_id":"exercise-power-preview", "start_id":start_id,
+            })
+            assert response.status_code == 200
+            base = f"/api/v1/runs/{response.json()['run_id']}"
+            advance(client, headers, base, 0, 7)
+            task = snapshot(client, headers, base)["recheck"]
+            assert recheck_command(client, headers, base, task, "assign").status_code == 200
+            advance(client, headers, base, 7, 8)
+            assert recheck_command(client, headers, base, task, "record").status_code == 200
+            advance(client, headers, base, 8, 10)
+            assert command(client, headers, base, preview(client, headers, base), "defer")["applied"] is True
+            advance(client, headers, base, 10, 11)
+            pending = debrief(base).json()
+            assert pending["ground_report"]["delivered_at_s"] is None
+            assert pending["ground_delivery_lag_s"] is None
+            first = client.get(base + "/ground", headers=headers["ground"]).json()
+            assert first["packet"]["delivery"]["observed_at_s"] == 120
+            assert first["packet"]["delivery"]["received_at_s"] == 165
+            advance(client, headers, base, 11, 13)
+            final = debrief(base).json()
+            assert debrief(base, "ground").status_code == 403
+            assert final["time_to_verified_s"] == 28
+            assert final["ground_delivery_lag_s"] == 45
+            assert final["ground_report"]["delivered_at_s"] == 255
+            ground = client.get(base + "/ground", headers=headers["ground"])
+            assert ground.json()["packet"]["delivery"]["observed_at_s"] == 210
+            assert ground.json()["packet"]["delivery"]["received_at_s"] == 255
+            assert all(marker not in ground.text for marker in ("SIM-02", "SIM-03", "wrist-motion", "wrist-recheck"))
+            del final["run_id"]
+            del final["recheck"]["task_id"]
+            return final
+
+        assert replay("debrief-one") == replay("debrief-two")

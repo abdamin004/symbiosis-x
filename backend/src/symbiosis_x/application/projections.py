@@ -14,6 +14,10 @@ from symbiosis_x.contracts.projections import (
     TraceRecord,
 )
 from symbiosis_x.workflows.relay import ground_case_statuses
+from symbiosis_x.application.exercise_schedule import EXERCISE_RELAY_PREFIX, EXERCISE_SCENARIO, load_exercise_fixture
+from symbiosis_x.crew.wearable_series import load_wearable_fixture
+from symbiosis_x.application.wearables import FIXTURE_CREW_ID
+from symbiosis_x.workflows.monitor import read_wearable_recheck
 
 # Operational journal events that may appear in a role trace, and who recorded them.
 # Everything else (crew-visibility events, observations, run control) never enters a trace.
@@ -177,3 +181,40 @@ def read_ground(db: Connection, run_id: str) -> CurrentGroundView:
         trace=read_trace(db, run_id, run["mission_s"], onboard_until_s=onboard_until_s),
         health_cases=ground_case_statuses(db, run_id, run["mission_s"]),
     )
+
+
+
+def read_wearable_debrief(db: Connection, run_id: str) -> dict:
+    """Read the private timeline and the actual receipt of the final operational packet."""
+    run = read_run(db, run_id)
+    if (run["scenario_id"], run["scenario_version"]) != EXERCISE_SCENARIO:
+        raise LookupError("DEBRIEF_NOT_FOUND")
+    mission_s = run["mission_s"]
+    task = read_wearable_recheck(db, run_id, FIXTURE_CREW_ID, mission_s, load_wearable_fixture())
+    events = {}
+    for row in db.execute(
+        """SELECT event_type, mission_s, payload_json FROM events
+           WHERE run_id = ? AND mission_s <= ? AND event_type IN (
+               'crew.exercise_deferred', 'exercise.outcome_recorded')
+           ORDER BY event_seq""",
+        (run_id, mission_s),
+    ):
+        events[row["event_type"]] = (row["mission_s"], json.loads(row["payload_json"]))
+    outcome_s = load_exercise_fixture()["outcome_at_s"]
+    delivery = db.execute(
+        """SELECT s.decision_rev, s.observed_at_s, m.deliver_at_s, m.delivered_at_s
+           FROM messages m JOIN snapshots s ON s.run_id = m.run_id AND s.snapshot_id = m.ground_snapshot_id
+           WHERE m.run_id = ? AND m.ground_snapshot_id = ? AND m.issued_at_s <= ?""",
+        (run_id, f"{EXERCISE_RELAY_PREFIX}{outcome_s}", mission_s),
+    ).fetchone()
+    report = dict(delivery) if delivery is not None else None
+    return {
+        "run_id":run_id, "mission_s":mission_s, "synthetic":True,
+        "recheck":task.model_dump() if task else None,
+        "time_to_verified_s":task.completed_at_s-task.opened_at_s if task and task.completed_at_s is not None else None,
+        "decision_at_s":events.get("crew.exercise_deferred", (None,))[0],
+        "outcome":events.get("exercise.outcome_recorded", (None, None))[1],
+        "ground_report":report,
+        "ground_delivery_lag_s":report["delivered_at_s"]-report["observed_at_s"]
+        if report and report["delivered_at_s"] is not None else None,
+    }

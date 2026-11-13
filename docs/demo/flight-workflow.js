@@ -166,7 +166,7 @@ function bindExerciseInspector({find, runId, clock, session}) {
   const refresh = find("exercise-preview-refresh");
   const commit = find("exercise-preview-commit");
   const status = find("exercise-preview-status");
-  let plan, busy = false, eligible = false, pending;
+  let plan, debrief, busy = false, eligible = false, pending;
   const path = "/api/v1/runs/"+encodeURIComponent(runId);
   const number = (value,digits) => value.toFixed(digits);
 
@@ -179,6 +179,7 @@ function bindExerciseInspector({find, runId, clock, session}) {
   }
 
   function paint() {
+    paintDebrief();
     panel.hidden = !eligible || !plan;
     if (panel.hidden) return;
     find("exercise-preview-basis").textContent = "Basis v"+plan.decision_rev+" · T+"+clock(plan.mission_s)
@@ -207,13 +208,41 @@ function bindExerciseInspector({find, runId, clock, session}) {
     refresh.disabled = busy;
   }
 
+  function paintDebrief() {
+    const panel = find("wearable-debrief");
+    panel.hidden = !eligible || !debrief;
+    if (panel.hidden) return;
+    const {recheck,ground_report:report,outcome} = debrief;
+    const stamp = value => value == null ? "Pending" : "T+"+clock(value);
+    find("wearable-debrief-delays").textContent =
+      "Detection to verified check · "+(debrief.time_to_verified_s == null ? "Pending" : debrief.time_to_verified_s+" s")
+      +" · Ground delivery lag · "+(debrief.ground_delivery_lag_s == null ? "Pending" : debrief.ground_delivery_lag_s+" s");
+    const milestones = [
+      ["Motion artifact detected",recheck?.opened_at_s],
+      ["Crew observer assigned",recheck?.assigned_at_s],
+      ["Repeat verified",recheck?.completed_at_s],
+      ["Commander deferred exercise",debrief.decision_at_s],
+      ["Cabin outcome recorded",outcome?.observed_at_s],
+      ["Ground operational update",report?.delivered_at_s],
+    ];
+    find("wearable-debrief-events").replaceChildren(...milestones.map(([label,at])=>{
+      const row = document.createElement("li");
+      row.textContent = label+" · "+stamp(at);
+      if (label === "Ground operational update" && report && at == null) row.textContent += " · due "+stamp(report.deliver_at_s);
+      return row;
+    }));
+  }
+
   async function load() {
     const response = await request("/crew/exercise-preview");
-    if (response.status === 404) { plan = null; return; }
+    if (response.status === 404) { plan = debrief = null; return; }
     if (!response.ok) throw new Error("Exercise preview unavailable.");
     const next = await response.json();
     if (next.run_id !== runId) throw new Error("Exercise preview is for a different run.");
     plan = next;
+    const debriefResponse = await request("/crew/wearable-debrief");
+    debrief = debriefResponse.ok ? await debriefResponse.json() : null;
+    if (debrief?.run_id !== runId) debrief = null;
   }
 
   async function refreshPlan() {

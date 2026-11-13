@@ -17,7 +17,7 @@ from symbiosis_x.storage.repository import Repository
 from symbiosis_x.workflows.relay import deliver_due, receive_due_advisories
 
 NOMINAL_SCENARIO = ("nominal", "1")
-EXERCISE_STEPS_S = (*WEARABLE_STEPS_S, 150, 210)
+EXERCISE_STEPS_S = (*WEARABLE_STEPS_S, 150, 210, 225, 255)
 LOCAL_FACILITATOR = "local-facilitator"
 
 
