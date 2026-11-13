@@ -3,7 +3,7 @@
   "version": 1,
   "title": "Asteria Launch",
   "vehicle": "Asteria · three-part launch stack",
-  "objective": "Clear ignition, separate the booster and establish stable orbit.",
+  "objective": "Launch, establish orbit, and capture the station.",
   "stages": [
     {
       "id": "capsule",
@@ -53,5 +53,47 @@
     "insertion_cost": 55,
     "minimum_reserve": 15,
     "coast_cost_per_tick": 8
+  },
+  "rendezvous": {
+    "phasing_cost": 9,
+    "retreat_reserve": 15,
+    "approach": [
+      {
+        "seconds": 0,
+        "range": 100,
+        "closing": 0,
+        "state": "Phasing burn logged"
+      },
+      {
+        "seconds": 15,
+        "range": 65,
+        "closing": 4,
+        "state": "Closing on station"
+      },
+      {
+        "seconds": 30,
+        "range": 30,
+        "closing": 3,
+        "state": "Braking toward capture corridor"
+      },
+      {
+        "seconds": 45,
+        "range": 10,
+        "closing": 1,
+        "state": "Capture corridor clear"
+      },
+      {
+        "seconds": 60,
+        "range": 10,
+        "closing": 0,
+        "state": "Capture corridor clear"
+      },
+      {
+        "seconds": 75,
+        "range": 10,
+        "closing": 0,
+        "state": "Capture window expired"
+      }
+    ]
   }
 }

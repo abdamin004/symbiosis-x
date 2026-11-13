@@ -25,3 +25,24 @@ def launch_envelope(config: dict) -> dict:
             "after_burn": max(0, after_burn),
         })
     return {**ascent, "tick_s": TICK_SECONDS, "coast": coast}
+
+
+def rendezvous_envelope(config: dict) -> dict:
+    """Build the fictional station track and annotate its capture window."""
+    rendezvous = config["rendezvous"]
+    track = rendezvous["approach"]
+    if not track or [sample["seconds"] for sample in track] != list(range(0, len(track)*TICK_SECONDS, TICK_SECONDS)):
+        raise ValueError("The approach track must start at zero and follow the mission tick")
+
+    window_end = track[-1]["seconds"]
+    return {
+        **rendezvous,
+        "approach": [
+            {
+                **sample,
+                "capture": sample["range"] <= 10 and 0 <= sample["closing"] <= 1 and sample["seconds"] < window_end,
+                "expired": sample["seconds"] == window_end,
+            }
+            for sample in track
+        ],
+    }
