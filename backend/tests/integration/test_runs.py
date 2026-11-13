@@ -2,7 +2,7 @@
 
 import sqlite3
 from contextlib import closing
-
+from symbiosis_x.application.runs import reset_run
 from fastapi.testclient import TestClient
 
 from symbiosis_x.main import create_app
@@ -69,3 +69,59 @@ def test_duplicate_advance_returns_one_receipt(tmp_path):
             (3, "run.advanced"), (4, "observation.recorded"),
         ]
         assert db.execute("SELECT count(*) FROM operations").fetchone() == (1,)
+
+def test_reset_closes_old_run(tmp_path):
+    database = tmp_path / "reset.sqlite3"
+
+    with local_client(database) as client:
+        authenticate(client)
+
+        original = client.post(
+            "/api/v1/runs", json=START
+        ).json()
+
+        old_run_id = original["run_id"]
+
+        replacement = reset_run(
+            client.app.state.repository,
+            old_run_id,
+        )
+
+        assert replacement.run_id != old_run_id
+        assert replacement.mission_s == 0
+        assert replacement.step == 0
+
+    # Restart the application and verify persistence.
+    with local_client(database) as restarted:
+        authenticate(restarted)
+
+        old_advance = restarted.post(
+            f"/api/v1/runs/{old_run_id}/advance",
+            json={"advance_id": "after-reset", "expected_step": 0},
+        )
+
+        assert old_advance.status_code == 409
+        assert old_advance.json()["detail"] == "RUN_CLOSED"
+
+    with closing(sqlite3.connect(database)) as db:
+        old_run = db.execute(
+            "SELECT status FROM runs WHERE run_id = ?",
+            (old_run_id,),
+        ).fetchone()
+
+        new_run = db.execute(
+            """SELECT status, mission_s, reset_from_run_id
+               FROM runs WHERE run_id = ?""",
+            (replacement.run_id,),
+        ).fetchone()
+
+        assert old_run == ("closed",)
+        assert new_run == ("active", 0, old_run_id)
+
+        events = db.execute(
+            """SELECT event_type FROM events
+               WHERE run_id = ? ORDER BY event_seq""",
+            (old_run_id,),
+        ).fetchall()
+
+        assert ("run.closed",) in events
