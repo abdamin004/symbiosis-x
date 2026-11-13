@@ -695,6 +695,9 @@ ul.tutorial-startup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));g
 @media(min-width:1100px){
   .stage[data-demo-crew] .viewport{margin-right:clamp(280px,25vw,325px)}
 }
+@media(min-width:681px) and (max-height:740px){
+  .stage[data-demo-crew] #personnel-widget .personnel-hero{display:none}
+}
 .stage[data-asteria=true] .control-deck{border:1px solid #9cacf13d}
 .stage[data-asteria=true] #widget-shelf{top:var(--resource-bottom,calc(100% + 10rem))}
 #flight-instrument #navigation-caption{display:none}
@@ -1715,7 +1718,7 @@ function crewRoutine(member) {
 function crewWellbeing(member,frame) {
   const person = crewSession?.crew[member];
   return person && crewRoutines.wellbeing(person,frame.time,member,
-    frame.healthDrill?.flow_m3_h === 4);
+    frame.removal != null && frame.removal < 20);
 }
 function updateCrewRoutines(frame) {
   const mode = crewMode();
