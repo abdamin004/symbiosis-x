@@ -15,9 +15,12 @@ export default defineConfig({
   server: {
     // Allow the shared contract examples outside the frontend folder.
     fs: { allow: [repoRoot] },
+    // Keep the browser's Host header. The backend's loopback check compares the
+    // request Origin with its own base URL, and Vite's string shorthand would
+    // rewrite Host to the backend address, so every POST failed ORIGIN_NOT_ALLOWED.
     proxy: {
-      "/api": apiTarget,
-      "/health": apiTarget,
+      "/api": { target: apiTarget, changeOrigin: false },
+      "/health": { target: apiTarget, changeOrigin: false },
     },
   },
 });
