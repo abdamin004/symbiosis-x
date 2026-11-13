@@ -62,11 +62,11 @@ function createFlightAllocator({tick,booked,position}) {
       action:procedure === "shift" ? "Inspect the scrubber on the routine watch" : definition.name,
       result:definition.steps.at(-1)};
   }
-  function clear(mode,after=-1) {
+  function clear(mode,after=-1,{save=true}={}) {
     for (let i=tasks.length-1;i>=0;i--) {
       if (tasks[i].mode === mode && tasks[i].queued > after) tasks.splice(i,1);
     }
-    persist();
+    if (save) persist();
   }
   function events(job,now) {
     if (job.procedure === "eva") {

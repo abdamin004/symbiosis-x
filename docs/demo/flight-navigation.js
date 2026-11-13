@@ -14,13 +14,15 @@ function createFlightNavigation(reference, hosts) {
   function paint(canvas, data) {
     const ctx = canvas.getContext("2d");
     const {width,height} = canvas;
-    const scale = Math.min(width,height)*(canvas === hosts.burn ? .35 : .405)/reference.earth;
+    const guidance = canvas === hosts.guidance;
+    const scale = Math.min(width,height)*(guidance ? .31 : .405)/reference.earth;
     const center = [width/2,height/2];
+    let waypoint;
     // Expand altitude on the maneuver canvas so changes of a few hundred km
     // stay legible beside an Earth radius of more than six thousand km.
     const screen = (x,y)=>{
       const radius = Math.hypot(x,y);
-      const factor = canvas === hosts.burn && radius > 0
+      const factor = guidance && radius > 0
         ? 1+4*(radius-reference.earth)/radius : 1;
       return [center[0]+x*scale*factor,center[1]+y*scale*factor];
     };
@@ -39,6 +41,11 @@ function createFlightNavigation(reference, hosts) {
       ctx.stroke();
       ctx.setLineDash([]);
     }
+    function label(value,x,y,color) {
+      ctx.fillStyle=color;
+      ctx.font="600 12px system-ui";
+      ctx.fillText(value,x,y);
+    }
     ctx.fillStyle="#090f20";
     ctx.fillRect(0,0,width,height);
     const globe = ctx.createRadialGradient(width*.45,height*.41,3,...center,reference.earth*scale);
@@ -46,17 +53,33 @@ function createFlightNavigation(reference, hosts) {
     globe.addColorStop(1,"#142747");
     dot(...center,reference.earth*scale,globe);
     const orbit = data.inserted ? reference.parking : reference.insertion;
+    const insertionBurn = guidance && data.burn?.kind === "insertion";
     const epoch = data.inserted ? data.insertion : data.ignition;
     const elapsed = Math.max(0,data.time-(epoch ?? data.time));
     const target = pointAt(reference.station,data.time-(data.insertion ?? data.ignition)+reference.stationEpochS);
-    if (!data.checkout) {
+    if (!data.checkout && (!guidance || data.transfer !== null || data.guidanceMode === "burn")) {
       route(reference.station.points,"#778dc1",[4,4]);
       dot(...screen(...target),canvas === large ? 4 : 3,"#a6bcff");
     }
     if (!data.captured && data.departure === null && data.matched === null) {
-      route(orbit.points,data.inserted ? "#8ce5cb" : "#f4bf8f",data.inserted ? [] : [3,3]);
+      const path = insertionBurn ? orbit.points.map(([x,y],index)=>{
+        const [startX,startY] = reference.insertion.points[index];
+        return [startX+(x-startX)*data.burn.progress,startY+(y-startY)*data.burn.progress];
+      }) : orbit.points;
+      route(path,data.inserted ? "#8ce5cb" : "#f4bf8f",data.inserted ? [] : [3,3]);
     }
     let craft = pointAt(orbit,elapsed);
+    if (guidance && data.guidanceMode === "coast" && data.coastUntil !== undefined) {
+      waypoint = pointAt(orbit,data.coastUntil-epoch);
+    }
+    if (guidance && (data.plannedBurn === "insertion" || data.burn?.kind === "insertion")) {
+      route(reference.parking.points,"#ffbf92",[5,4]);
+    }
+    if (guidance && data.plannedBurn === "transfer") {
+      const angle = Math.atan2(craft[1],craft[0]);
+      route(reference.transfer.points.map(([x,y])=>[x*Math.cos(angle)-y*Math.sin(angle),
+        x*Math.sin(angle)+y*Math.cos(angle)]),"#ffbf92",[5,4]);
+    }
     if (!data.inserted) {
       const progress = Math.min(1,elapsed/data.ascentDuration);
       const angle = Math.PI + (progress-1)*.53;
@@ -83,6 +106,10 @@ function createFlightNavigation(reference, hosts) {
         return [x*scale,y*scale];
       });
       if (match < 1) route(reference.transfer.points.map(align),"#bd9bff",[3,4]);
+      if (guidance && data.guidanceMode === "burn" && data.matched === null && data.time >= data.transfer+reference.transferS) {
+        route(reference.station.points,"#ffbf92",[5,4]);
+      }
+      if (guidance && data.guidanceMode === "coast") waypoint = transfer[0];
       route(transfer,"#ffbb89");
       const fraction = Math.min(1,(data.time-data.transfer)/reference.transferS);
       const index = (180+Math.round(fraction*180))%360;
@@ -115,6 +142,13 @@ function createFlightNavigation(reference, hosts) {
       const fraction = Math.min(1,Math.max(0,(data.time-data.deorbit)/data.entryDuration));
       craft = [...entry[Math.round(fraction*29)],null];
     }
+    if (guidance && waypoint) {
+      const [wx,wy] = screen(...waypoint);
+      ctx.strokeStyle="#9dd7ff";
+      ctx.lineWidth=1.5;
+      ctx.strokeRect(wx-6,wy-6,12,12);
+      label("CHECKPOINT",wx+10,wy+4,"#9dd7ff");
+    }
     const [x,y] = screen(...craft);
     const heading = Math.atan2(craft[1],craft[0]) + Math.PI/2 + data.attitude*Math.PI/180;
     ctx.save();
@@ -129,10 +163,13 @@ function createFlightNavigation(reference, hosts) {
     ctx.beginPath();
     ctx.moveTo(7,0);ctx.lineTo(-4,4);ctx.lineTo(-2,0);ctx.lineTo(-4,-4);ctx.closePath();ctx.fill();
     ctx.restore();
-    if (canvas === hosts.burn) {
-      ctx.fillStyle="#b4c8de";
-      ctx.font="11px system-ui";
-      ctx.fillText("Altitude exaggerated",10,height-10);
+    if (guidance) {
+      label(data.ship,10,19,"#fff0bf");
+      label("Altitude exaggerated",10,height-10,"#b4c8de");
+      if (data.guidanceMode === "burn") label("Target path",width-76,19,"#ffbf92");
+      else if (data.deorbit !== null) label("Entry path",width-68,19,"#ff9778");
+      else if (data.matched !== null) label("ISS orbit",width-61,19,"#b9c8f7");
+      else if (data.inserted) label("Current path",width-85,19,data.transfer === null ? "#8ce5cb" : "#ffbb89");
     } else if (canvas === large && data.inserted && !data.captured && data.deorbit === null && data.transfer === null) {
       ctx.fillStyle="#d8f6ed";
       ctx.font="12px system-ui";
@@ -147,7 +184,7 @@ function createFlightNavigation(reference, hosts) {
     if (!data) return;
     const craft = paint(large,data);
     paintAttitude(data);
-    if (!hosts.burn.hidden) paint(hosts.burn,data);
+    if (!hosts.guidance.hidden) paint(hosts.guidance,data);
     const orbit = data.captured || data.departure !== null || data.matched !== null ? reference.station
       : data.inserted ? reference.parking : reference.insertion;
     hosts.caption.textContent = data.phase;

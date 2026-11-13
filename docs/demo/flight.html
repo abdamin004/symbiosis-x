@@ -392,7 +392,7 @@ button[aria-pressed=true]{background:#3d315e}
 #launch-jobs .checkout-job-status{font-size:.72rem}
 #orbit-track{width:100%;background:#0b1427;border-radius:7px}
 #orbit-status{color:var(--blue)}
-#maneuver-plan progress{width:100%;height:.55rem;accent-color:#ffbf92}
+#flight-guidance progress{width:100%;height:.55rem;accent-color:#ffbf92}
 #maneuver-track{display:block;width:100%;border-radius:6px}
 #flight-instrument{position:fixed;z-index:8;left:50%;bottom:.55rem;transform:translateX(-50%);display:grid;justify-items:center;gap:.25rem;color:#dce9ff;text-align:center}
 #navigation-mini{padding:0;width:clamp(86px,14vw,116px);aspect-ratio:1;border-radius:50%;background:#111c32;border:1px solid #8badd5;box-shadow:0 4px 20px #000a}
@@ -406,13 +406,20 @@ button[aria-pressed=true]{background:#3d315e}
 #demo-banner{display:flex;align-items:center;flex-wrap:wrap;gap:.25rem .4rem;margin-top:.52rem;padding-top:.45rem;border-top:1px solid #8ea2d042}
 #demo-banner button{font-size:.68rem;white-space:nowrap;padding:.25rem .36rem}
 #demo-time{font:650 .7rem ui-monospace,monospace;color:var(--blue)}
-#demo-status:not([data-stopped]){position:absolute;width:1px;height:1px;clip-path:inset(50%);overflow:hidden}
-#demo-status[data-stopped]{flex-basis:100%;font-size:.72rem;color:#ffcb95}
+#demo-status{flex-basis:100%;font-size:.75rem;font-weight:680;color:#e5edff}
+#demo-status[data-stopped]{color:#ffcb95}
 .launch-field[data-view=launch] .pad-checkout{padding-bottom:calc(clamp(116px,16vw,168px)*.6 + 2.8rem)}
 .launch-field[data-view=launch] .pad-checkout .launch-board{max-height:calc(100svh - var(--launch-clearance,100px) - clamp(116px,16vw,168px)*.6 - 3rem)}
 @media(max-width:850px){.launch-field[data-view=launch] .pad-checkout .launch-board{max-height:none}}
 #orbit-dialog{width:min(680px,calc(100% - 1.5rem))}
 #process-dialog{width:min(670px,calc(100% - 1.5rem))}
+#airlock-dialog{width:min(620px,calc(100% - 1.5rem))}
+#airlock-particles{width:100%;height:auto;display:block;background:#0b1329;border-radius:8px;margin:.6rem 0}
+#airlock-gases{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem;margin:.6rem 0}
+#airlock-gases section{background:#1b2744;border-radius:8px;padding:.55rem}
+#airlock-gases h3{font-size:.86rem}
+#airlock-gases p,#airlock-readings{font-variant-numeric:tabular-nums}
+#show-airlock{padding:.08rem .25rem;text-align:left;color:var(--blue);background:#243059}
 #process-diagram{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:.4rem;padding:0;list-style:none}
 #process-diagram li{padding:.55rem;background:#223451;border-radius:6px;font-size:.8rem}
 #process-diagram li[data-reached=true]{box-shadow:inset 3px 0 #9cebd0}
@@ -534,9 +541,31 @@ button[aria-pressed=true]{background:#3d315e}
 #guide-focus{background:#32336a;color:#f0ebff}
 .stage[data-asteria=true] #show-objectives,#launch-open-objectives{display:none}
 .stage[data-asteria=true] .ribbon .resource{position:absolute;clip-path:inset(50%);width:1px;height:1px;overflow:hidden}
-#mission-command-widget .command-status > div:nth-child(-n+2){display:none}
+#mission-command-widget .command-status{display:none}
+.command-resource{grid-column:1/-1;min-width:0}
+.mission-resources .command-resource{display:grid;grid-template-columns:3rem minmax(0,1fr)}
+.command-resource strong{font-weight:600;color:#aebde1}
+.stage[data-asteria=true] .mission-resources{width:max-content;max-width:min(19rem,calc(100vw - 1.3rem));grid-template-columns:repeat(2,minmax(0,max-content))}
+#checkpoint-control{position:relative}
+#step:has(#flight-step-label:not([hidden])){display:flex;align-items:center;gap:.25rem}
+#checkpoint-advance[aria-disabled=true]{color:#a8b4d1;background:#121a2c;cursor:default}
+#checkpoint-detail{position:absolute;z-index:1;top:calc(100% + .45rem);right:0;width:max-content;max-width:min(17rem,calc(100vw - 2rem));
+  padding:.45rem .55rem;border:1px solid var(--edge);border-radius:6px;background:#151e35;color:#eef2ff;font-size:.75rem;pointer-events:none;opacity:0}
+#checkpoint-control:focus-within #checkpoint-detail,#checkpoint-control:hover #checkpoint-detail{opacity:1}
+#flight-guidance{--guidance-color:#a3e6d3;margin:.3rem 0 .55rem}
+#flight-guidance[data-mode=coast]{--guidance-color:#9dd7ff}
+#flight-guidance[data-mode=burn]{--guidance-color:#ffbf92}
+#flight-guidance[data-mode=docking]{--guidance-color:#d3bbff}
+.guidance-heading{display:flex;align-items:baseline;flex-wrap:wrap;gap:.15rem .5rem;margin:0 0 .28rem}
+.guidance-heading span{font-size:.72rem;font-weight:700;color:var(--guidance-color)}
+.guidance-heading strong{font-size:.82rem}
+#maneuver-target{font-size:.75rem;color:#d4dff9;margin:.25rem 0}
+#flight-guidance canvas{border:1px solid color-mix(in srgb,var(--guidance-color),transparent 64%)}
+#mission-command-widget #maneuver-track{max-height:128px;object-fit:contain;background:#090f20}
+#mission-command-widget #docking-scene{max-height:128px;object-fit:contain;background:#090f20}
 .stage[data-asteria=true] #mission-command-widget{max-height:min(44vh,385px)}
 .stage[data-asteria=true] .control-deck{border:1px solid #9cacf13d}
+.stage[data-asteria=true] #widget-shelf{top:var(--resource-bottom,calc(100% + 10rem))}
 #flight-instrument #navigation-caption{display:none}
 #flight-instrument:has(#navigation-mini:focus-visible) #navigation-help{color:#fff;outline:1px solid var(--blue)}
 .launch-field[data-view=launch] .pad-checkout #pad-command{align-self:start;margin-top:var(--pad-guide-offset,0px);
@@ -550,23 +579,43 @@ button[aria-pressed=true]{background:#3d315e}
   .launch-hud .launch-ribbon .launch-nav-actions{flex-wrap:nowrap}
   .hud .ribbon a,.launch-hud .ribbon a{margin-left:0}
   .mission-guide{width:min(13.4rem,calc(100vw - 1.1rem));padding:.45rem .55rem}
+  .mission-guide:has(#demo-banner:not([hidden])) :is(#guide-next,#guide-detail,.guide-actions){display:none}
+  .stage[data-timed-demo] #personnel-widget{max-height:33dvh}
+  .stage[data-timed-demo] #personnel-widget :is(.personnel-actions,.anatomy-tabs,.device-links,#body-regions,.twin-camera){display:none}
+  .stage[data-timed-demo] #personnel-widget .body-layout{grid-template-columns:75px minmax(0,1fr)}
   .guide-head{margin-bottom:.26rem}.guide-track{margin-bottom:.3rem}
   .guide-actions{margin-top:.32rem}.guide-actions button{padding:.2rem .35rem}
   #guide-next{font-size:.84rem}#guide-detail{font-size:.68rem}
-  .stage[data-asteria=true] #mission-command-widget{max-height:min(30dvh,235px)}
+  .stage[data-asteria=true] #mission-command-widget{max-height:min(36dvh,270px)}
+  #mission-command-widget #maneuver-track,#mission-command-widget #docking-scene{max-height:96px}
   #flight-instrument{bottom:.3rem}.instrument-actions button{min-width:1.55rem}
 }
+@media(max-width:800px){
+  .stage[data-asteria=true] .flight-controls{top:calc(100% + 4.2rem)}
+}
+@media(max-width:680px){
+  .stage[data-asteria=true] .mission-resources{max-width:calc(51vw - 1.35rem);top:var(--resource-top,calc(100% + 4.15rem))}
+  .stage[data-asteria=true] #widget-shelf{right:auto;max-width:43%}
+}
 @media(max-width:430px){
-  .mission-guide{width:min(11.6rem,calc(100vw - 1.1rem))}
-  .stage[data-asteria=true] .mission-resources{grid-template-columns:max-content;font-size:.61rem;gap:.08rem;top:calc(100% + 4.15rem)}
-  .stage[data-asteria=true] #widget-shelf{top:calc(100% + 10rem);right:auto;max-width:43%}
+  .mission-guide{width:min(11.6rem,49vw)}
+  .stage[data-asteria=true] .mission-resources{font-size:.61rem;gap:.08rem .3rem}
+  .mission-resources .command-resource{grid-template-columns:2.55rem minmax(0,1fr)}
+  #flight-playback:has(#checkpoint-control:not([hidden])){max-width:calc(100vw - 1.2rem)}
+  #flight-playback:has(#checkpoint-control:not([hidden])) .control-deck{gap:.25rem}
+  #flight-playback:has(#checkpoint-control:not([hidden])) .control-deck button{padding-inline:.32rem}
+  #flight-step-label{white-space:nowrap}
+  #checkpoint-advance{font-size:.75rem}
   .stage[data-asteria=true] .viewport{padding-top:max(var(--control-clearance,110px),min(var(--guide-bottom,0px),48dvh))}
   #flight-instrument #navigation-mini{width:75px}
+}
+@media(max-width:365px){
+  #step:has(#flight-step-label:not([hidden])) .icon{display:none}
 }
 @media(max-width:680px) and (max-height:700px){
   .mission-guide{max-height:24dvh;overflow:auto}
   #flight-instrument #navigation-mini{width:63px}
-  .stage[data-asteria=true] #mission-command-widget{max-height:20dvh}
+  .stage[data-asteria=true] #mission-command-widget{max-height:28dvh}
 }
 </style>
 </head>
@@ -591,16 +640,24 @@ __HUD_ICONS__
   </div>
   <div class="mission-resources" id="mission-resources" role="group" aria-label="Mission resources">
     <span><svg class="icon" aria-hidden="true"><use href="#hud-wind"/></svg><output id="resource-air"></output></span>
+    <button type="button" id="show-airlock">Atmosphere</button>
     <span><svg class="icon" aria-hidden="true"><use href="#hud-zap"/></svg><output id="resource-power"></output></span>
     <span><svg class="icon" aria-hidden="true"><use href="#hud-users"/></svg><output id="resource-crew"></output></span>
     <span><svg class="icon" aria-hidden="true"><use href="#hud-package"/></svg><output id="resource-meals"></output></span>
     <span><svg class="icon" aria-hidden="true"><use href="#hud-droplets"/></svg><output id="resource-water"></output></span>
+    <span class="command-resource" id="command-phase-readout" hidden><strong>Phase</strong><output id="command-phase" aria-label="Flight phase"></output></span>
+    <span class="command-resource" id="command-next-readout" hidden><strong>Next</strong><output id="command-next" aria-label="Next action"></output></span>
+    <span class="command-resource" id="command-reserve-readout" hidden><strong>Reserve</strong><output id="command-reserve" aria-label="Maneuver reserve"></output></span>
   </div>
   <nav class="crew-strip" id="crew-strip" aria-label="Astronaut portraits"></nav>
   <div class="flight-controls" id="flight-playback"><div class="control-deck" role="group" aria-label="Flight playback">
     <button id="play" type="button" aria-label="Play" title="Play or pause"><svg class="icon" aria-hidden="true"><use id="play-icon" href="#hud-play"/></svg></button>
     <button id="speed-cycle" type="button" aria-label="Cycle speed" title="Cycle 1×, 2×, and 4×">1×</button>
-    <button id="step" type="button" aria-label="Skip one mission hour" title="Skip one mission hour"><svg class="icon" aria-hidden="true"><use href="#hud-skip-forward"/></svg></button>
+    <button id="step" type="button" aria-label="Skip one mission hour" title="Skip one mission hour"><svg class="icon" aria-hidden="true"><use href="#hud-skip-forward"/></svg><span id="flight-step-label" aria-hidden="true" hidden>Advance 15 s</span></button>
+    <span id="checkpoint-control" hidden>
+      <button id="checkpoint-advance" type="button" aria-describedby="checkpoint-detail">3 min before checkpoint</button>
+      <span id="checkpoint-detail" role="status"></span>
+    </span>
     <output class="clock" id="hud-clock" aria-label="Flight clock"></output>
   </div></div>
   <div id="widget-shelf" hidden><span>Parked widgets</span></div><span id="widget-notice" role="status"></span></div>
@@ -620,10 +677,6 @@ __HUD_ICONS__
       <h2 id="mission-command-title">Flight command</h2>
       <button class="widget-close" type="button" aria-label="Close flight command"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button>
     </div>
-    <figure id="docking-view" hidden>
-      <canvas id="docking-scene" width="760" height="320" role="img" aria-label="Exterior view of the ship and the International Space Station"></canvas>
-      <figcaption id="docking-caption"></figcaption>
-    </figure>
   </section>
   <section class="panel" id="workflow-widget" hidden aria-labelledby="workflow-title">
     <div class="widget-bar"><button class="move-widget widget-title" type="button" aria-label="Move orders with drag or arrow keys"><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button><h2 id="workflow-title">Onboard orders</h2><button class="widget-close" type="button" aria-label="Close orders"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button></div>
@@ -813,6 +866,16 @@ __HUD_ICONS__
   <p id="mission-objective-next"></p>
   <ol id="mission-objective-list" class="objective-list"></ol>
 </dialog>
+<dialog id="airlock-dialog" class="mission-dialog" aria-labelledby="airlock-title">
+  <div class="dialog-top"><h2 id="airlock-title">Atmosphere rehearsal</h2><form method="dialog"><button>Close</button></form></div>
+  <p>Cycle the empty chamber to compare it with the cabin. Dots represent the gas inventory.</p>
+  <p>O₂ <span style="color:#78dcff">●</span> · N₂ <span style="color:#c4adff">●</span> · CO₂ <span style="color:#ffc27d">●</span></p>
+  <canvas id="airlock-particles" width="560" height="128" role="img" aria-label="Cabin and airlock gas particles"></canvas>
+  <div id="airlock-gases"></div>
+  <p id="airlock-readings" role="status"></p>
+  <p id="airlock-exposure"></p>
+  <button type="button" id="airlock-cycle">Depressurize chamber</button>
+</dialog>
 <dialog id="process-dialog" class="mission-dialog" aria-labelledby="process-title">
   <div class="dialog-top"><h2 id="process-title">Ship workflows</h2><form method="dialog"><button>Close</button></form></div>
   <nav class="choices" id="process-list" aria-label="Operating procedures"></nav>
@@ -940,7 +1003,7 @@ __HUD_ICONS__
   </div>
   <div id="demo-banner" role="group" aria-label="Timed mission demo" hidden>
     <output id="demo-time" aria-label="Demo elapsed time" aria-live="off"></output>
-    <span id="demo-status"></span>
+    <span id="demo-status" role="status"></span>
     <button type="button" id="demo-pause">Pause demo</button>
     <button type="button" id="demo-exit">Exit demo</button>
   </div>
@@ -991,7 +1054,7 @@ __HUD_ICONS__
         <div><strong>ISS Research Replay</strong><p>Scripted checkpoints · self-paced</p></div>
         <button id="open-flight-replay" type="button">Open replay</button>
       </div>
-      <button id="start-timed-demo" type="button">Run 4-minute mission demo</button>
+      <button id="start-timed-demo" type="button">Run 3-minute mission demo</button>
       <p id="campaign-notice" role="status"></p>
     </section>
     <div class="pad-checkout" id="pad-controls" hidden>
@@ -1019,10 +1082,14 @@ __HUD_ICONS__
         <div><dt>Next action</dt><dd id="launch-next"></dd></div>
         <div><dt>Maneuver reserve</dt><dd id="launch-reserve"></dd></div>
       </dl>
-      <section id="maneuver-plan" aria-labelledby="maneuver-title" hidden>
-        <h3 id="maneuver-title"></h3>
+      <section id="flight-guidance" aria-label="Flight guidance" hidden>
+        <h3 class="guidance-heading"><span id="guidance-mode"></span><strong id="maneuver-title"></strong></h3>
+        <figure id="docking-view" hidden>
+          <canvas id="docking-scene" width="760" height="320" role="img" aria-label="Exterior view of the ship and the International Space Station"></canvas>
+          <figcaption id="docking-caption"></figcaption>
+        </figure>
         <p id="maneuver-target"></p>
-        <canvas id="maneuver-track" width="440" height="220" role="img" aria-label="Horizon and ISS maneuver trajectories" hidden></canvas>
+        <canvas id="maneuver-track" width="440" height="170" role="img" aria-label="Spacecraft trajectory" hidden></canvas>
         <progress id="maneuver-progress" max="1" value="0" aria-label="Engine burn progress" hidden></progress>
       </section>
       <div id="orbit-preview" hidden>
@@ -1102,6 +1169,7 @@ __FLIGHT_WIDGETS__
 __FLIGHT_STATIONS__
 __LAUNCH_SCENE__
 __FLIGHT_MISSIONS__
+__FLIGHT_DEMO__
 __LAUNCH_CHECKOUT__
 __FLIGHT_CREW__
 __DOCKING_SCENE__
@@ -1623,21 +1691,25 @@ function setupBodyMap() {
     });
   }
   element("request-peer-check").addEventListener("click",()=>{
-    if (element("request-peer-check").disabled) return;
-    const member = profileMembers.get("personnel");
-    const requested = Math.floor(missionTime);
-    const observer = availableObserver(member,requested);
-    const room = crewPositions.get(pawns.get(member)).room;
-    const arrival = nextTick(requested) + TICK_SECONDS;
-    for (let i = peerChecks.length-1; i >= 0; i--) {
-      if (peerChecks[i].mode === crewMode() && peerChecks[i].requested > requested) peerChecks.splice(i,1);
-    }
-    peerChecks.push({mode:crewMode(),member,observer,region:selectedRegion,requested,arrival,
-      due:arrival + TICK_SECONDS,origin:crewPositions.get(pawns.get(observer)),room});
-    if (connectedFlight) launchMission.refreshCrewWork();
-    render();
+    if (!element("request-peer-check").disabled) requestPeerCheck(profileMembers.get("personnel"),selectedRegion);
   });
 }
+function requestPeerCheck(member, region) {
+  const requested = Math.floor(missionTime);
+  const observer = availableObserver(member,requested);
+  if (observer === undefined) return false;
+  const room = crewPositions.get(pawns.get(member)).room;
+  const arrival = nextTick(requested) + TICK_SECONDS;
+  for (let i = peerChecks.length-1; i >= 0; i--) {
+    if (peerChecks[i].mode === crewMode() && peerChecks[i].requested > requested) peerChecks.splice(i,1);
+  }
+  peerChecks.push({mode:crewMode(),member,observer,region,requested,arrival,
+    due:arrival + TICK_SECONDS,origin:crewPositions.get(pawns.get(observer)),room});
+  if (connectedFlight) launchMission.refreshCrewWork();
+  render();
+  return true;
+}
+
 function renderAnatomyLayer() {
   const suit = activeLayer === "suit";
   anatomyFigure.toggleAttribute("hidden", suit);
@@ -1685,7 +1757,7 @@ const pendingWearables = new Set();
 let wearableSession;
 
 function refreshWearables(crewId) {
-  if (pendingWearables.has(crewId)) return;
+  if (connectedFlight?.timedDemo || pendingWearables.has(crewId)) return;
   pendingWearables.add(crewId);
   wearableSession ??= fetch("/api/v1/demo/session", {method:"POST",cache:"no-store"}).then(response=>{
     if (!response.ok) throw new Error("Crew session unavailable");
@@ -1753,7 +1825,10 @@ function updateBodyMap(sample, member, frame) {
   suitId.textContent = data.crew[member];
   const channel = activeLayer === "sensors" && selectedRegion === "torso" ? "back_pod"
     : selectedRegion === "wrist" && ["anatomy","cardiorespiratory","sensors"].includes(activeLayer) ? "wristband" : null;
-  const runSignal = missionWearables.get(data.crew[member])?.channels[channel];
+  const timed = connectedFlight?.timedDemo;
+  const runSignal = timed
+    ? channel === "wristband" ? flightDemoWristband(data.crew[member],frame.time,connectedFlight.crewStarted) : null
+    : missionWearables.get(data.crew[member])?.channels[channel];
   const eva = activeEva(frame.time);
   const suited = activeLayer === "suit" && eva?.member === member;
   const suit = suited ? allocator.suit(eva,frame.time) : null;
@@ -1764,8 +1839,12 @@ function updateBodyMap(sample, member, frame) {
       (evaLinkFault() ? "offline" : "online")+" · "+(suit.tethered ? "tether secured" : "tether on standby")+
       " · airlock "+suit.pressure.toLowerCase()+" · inner hatch "+(suit.inner ? "open" : "closed")+
       " · outer hatch "+(suit.outer ? "open" : "closed")+" · internal vitals unavailable",true]
-    : flightHealthRun && ["anatomy","cardiorespiratory","sensors","muscles"].includes(activeLayer)
-    ? runSignal ? [runSignal.source_id,wearableSummary(runSignal),"Synthetic mission device stream.",Boolean(runSignal.reading.accepted)]
+    : (timed || flightHealthRun) && ["anatomy","cardiorespiratory","sensors","muscles"].includes(activeLayer)
+    ? runSignal ? [runSignal.source_id,wearableSummary(runSignal),timed
+      ? runSignal.reading.evidence
+        ? "Suspect sample received T+"+clock(runSignal.reading.evidence.received_at_s)+". Hold the last accepted reading."
+        : "Sana’s resting reference · 68 bpm. Crew-only demo evidence."
+      : "Synthetic mission device stream.",Boolean(runSignal.reading.accepted)]
       : ["No mission device reading","Unobserved","No measurement for this region on the mission clock.",false]
     : regionTelemetry(sample);
   element("region-name").textContent = bodyRegions[selectedRegion].label;
@@ -1773,9 +1852,9 @@ function updateBodyMap(sample, member, frame) {
   element("region-reading").textContent = reading;
   element("region-detail").textContent = detail;
   element("region-time").textContent = suited ? "Observed T+"+clock(frame.time)+" · synthetic suit state"
-    : flightHealthRun ? "" : observed ? "Observed T+" + clock(sample.time) +
+    : timed || flightHealthRun ? "" : observed ? "Observed T+" + clock(sample.time) +
     (connectedFlight ? " · synthetic phase reference" : " · synthetic replay sample") : "";
-  element("wrist-readout").hidden = Boolean(flightHealthRun) || activeLayer !== "sensors" || selectedRegion !== "wrist";
+  element("wrist-readout").hidden = Boolean(timed || flightHealthRun) || activeLayer !== "sensors" || selectedRegion !== "wrist";
   element("wrist-bpm").textContent = sample.heart_rate + " bpm";
   element("wrist-sample").textContent = (connectedFlight ? "Synthetic phase reference" : "Latest simulated sample") +
     " · T+" + clock(sample.time);
@@ -1887,6 +1966,7 @@ function drawHistory(series, field, time) {
 }
 
 function renderProfiles(frame) {
+  const timed = connectedFlight?.timedDemo;
   for (const [kind, member] of profileMembers) {
     const id = data.crew[member];
     const row = data.history[id][index];
@@ -1895,7 +1975,7 @@ function renderProfiles(frame) {
     setIcon(element(kind + "-title"), profileIcons[kind],
       characters[member].short + " · " + (kind==="personnel" ? "Digital twin" : kind[0].toUpperCase() + kind.slice(1)));
     let rows;
-    if (flightHealthRun && ["personnel","devices","vitals"].includes(kind)
+    if (!timed && flightHealthRun && ["personnel","devices","vitals"].includes(kind)
         && !element(kind+"-widget").hidden && !missionWearables.has(id)) refreshWearables(id);
     if (kind === "personnel") {
       const persona = characters[member];
@@ -1909,7 +1989,7 @@ function renderProfiles(frame) {
       element("personnel-role").textContent = duties[member].role + " · " + id;
       element("personnel-location").textContent = roomById.get(zone).name + " · " + task;
       const health = element("personnel-health");
-      health.hidden = !flightHealthRun;
+      health.hidden = timed || !flightHealthRun;
       if (flightHealthRun) health.href = "/runs/" + encodeURIComponent(flightHealthRun) + "/crew?crew_id=" + encodeURIComponent(id);
       element("twin-body").hidden = twinView !== "body";
       element("personnel-data").hidden = twinView === "body";
@@ -1931,6 +2011,10 @@ function renderProfiles(frame) {
       rows = [...crewRoutines.meters(person,frame.time),["Current activity",task],["Needs queue",person.blocked || "Clear"],
         ["Crew checkup",person.checkup ? "Last T+" + clock(person.checkup.time) : "Every 24 mission hours"],
         ["Private mood",reports.mood || "No report"],["Symptoms",reports.symptoms || "No report"]];
+    } else if (timed && ["devices","vitals"].includes(kind)) {
+      const demoSignal = flightDemoWristband(id,frame.time,connectedFlight.crewStarted);
+      rows = [["Synthetic demo · optical wristband",demoSignal ? wearableSummary(demoSignal) : "Unobserved"]];
+      if (kind === "vitals") drawWearableHistory(null,frame.time);
     } else if (flightHealthRun && ["devices","vitals"].includes(kind)) {
       const snapshot = missionWearables.get(id);
       rows = [["Device stream",snapshot ? "Synthetic · run T+"+clock(snapshot.mission_s)
@@ -2329,6 +2413,7 @@ function render() {
   element("one-hour").hidden = Boolean(connectedFlight);
   element("next-event").textContent = connectedFlight ? "Advance 15 s" : "Next event";
   element("stage").dataset.asteria = Boolean(connectedFlight);
+  element("stage").toggleAttribute("data-timed-demo",Boolean(connectedFlight?.timedDemo));
   element("stage").dataset.vehicle = connectedFlight?.visual ?? "";
   element("stage").dataset.steering = Boolean(connectedFlight?.steering);
   element("ship").dataset.vehicle = connectedFlight?.visual ?? "";
@@ -2360,8 +2445,22 @@ function render() {
   const skipLabel = connectedFlight ? "Advance one mission tick" : "Skip one mission hour";
   element("step").setAttribute("aria-label",skipLabel);
   element("step").title = skipLabel;
+  element("flight-step-label").hidden = !connectedFlight;
   element("step").disabled = connectedFlight ? !connectedFlight.advance : missionTime >= endTime;
   element("next-event").disabled = connectedFlight ? !connectedFlight.advance : missionTime >= endTime;
+  for (const field of ["phase","next","reserve"]) {
+    element("command-"+field+"-readout").hidden = !connectedFlight;
+    if (connectedFlight) {
+      const readout = element("command-"+field);
+      if (readout.textContent !== connectedFlight.command[field]) readout.textContent = connectedFlight.command[field];
+    }
+  }
+  const checkpoint = connectedFlight?.checkpoint;
+  element("checkpoint-control").hidden = !checkpoint;
+  if (checkpoint) {
+    element("checkpoint-advance").setAttribute("aria-disabled",String(checkpoint.target === undefined));
+    if (element("checkpoint-detail").textContent !== checkpoint.detail) element("checkpoint-detail").textContent = checkpoint.detail;
+  }
   const displayedSpeed = connectedFlight?.speed ?? speed;
   element("speed-cycle").textContent = !connectedFlight && compressed ? "1 h" : displayedSpeed + "×";
   element("speed-cycle").title = !connectedFlight && compressed ? "One-hour pacing active. Click for normal speeds."
@@ -2780,6 +2879,11 @@ element("step").addEventListener("click", () => {
   setMissionTime(missionTime + 3600);
   render();
 });
+element("checkpoint-advance").addEventListener("click", event => {
+  // A tap can reveal the same mission-time explanation as keyboard focus.
+  event.currentTarget.focus({preventScroll:true});
+  launchMission.advanceToCheckpoint();
+});
 element("next-event").addEventListener("click", () => {
   if (connectedFlight) { launchMission.advance(); return; }
   stop();
@@ -2860,6 +2964,79 @@ function openProcesses(mode) {
   renderProcess(currentFrame());
 }
 element("show-processes").addEventListener("click",()=>openProcesses(crewMode()));
+const airlockDialog = element("airlock-dialog");
+const airlockCycle = element("airlock-cycle");
+const airlockFrames = data.airlock;
+const gasColors = [["n2_partial_kpa","#c4adff"],["o2_partial_kpa","#78dcff"],["co2_partial_kpa","#ffc27d"]];
+let airlockIndex = 0;
+let airlockTimer;
+function paintAirlock() {
+  const {rooms,time,phase,vented_mol,workload_cue} = airlockFrames[airlockIndex];
+  const canvas = element("airlock-particles");
+  const particles = canvas.getContext("2d");
+  particles.clearRect(0,0,560,128);
+  element("airlock-gases").replaceChildren(...rooms.map((room,index)=>{
+    const offset = index*280;
+    particles.fillStyle = "#1b2744";
+    particles.fillRect(offset+6,6,268,116);
+    for (const [key,color] of gasColors) {
+      const count = Math.round(room[key]*2);
+      particles.fillStyle = color;
+      for (let i=0;i<count;i++) {
+        const x = (i*73+Math.round(room[key]*13)+(reducedMotion.matches ? 0 : time*7))%250;
+        const y = (i*i*19+Math.round(room[key]*17)+(reducedMotion.matches ? 0 : time*3))%100;
+        particles.fillRect(offset+15+x,14+y,2,2);
+      }
+    }
+    const card = document.createElement("section");
+    const name = document.createElement("h3");
+    name.textContent = room.compartment_id+" · "+room.total_pressure_kpa.toFixed(2)+" kPa";
+    const mix = document.createElement("p");
+    mix.textContent = "Partial pressure · O₂ "+room.o2_partial_kpa.toFixed(2)+" · N₂ "+
+      room.n2_partial_kpa.toFixed(2)+" · CO₂ "+room.co2_partial_kpa.toFixed(2)+" kPa";
+    card.append(name,mix);
+    return card;
+  }));
+  element("airlock-readings").textContent = "Inner hatch "+(phase==="inner_open" ? "open" : "sealed")+
+    " · Outer hatch "+(phase==="outer_open" ? "open" : "sealed")+" · Vented "+vented_mol.toFixed(1)+" mol";
+  element("airlock-exposure").textContent = workload_cue === "ease_workload"
+    ? "Crew workload preview · Keep unsuited crew out of the chamber."
+    : "Crew workload preview · Chamber atmosphere within rehearsal limits.";
+  const action = {depressurizing:"Depressurizing…",pressurizing:"Repressurizing…",outer_open:"Repressurize chamber"};
+  airlockCycle.textContent = airlockIndex===0 ? "Depressurize chamber" : action[phase] ?? "Reset rehearsal";
+}
+element("show-airlock").addEventListener("click",()=>{
+  paintAirlock();
+  airlockDialog.showModal();
+});
+airlockCycle.addEventListener("click",()=>{
+  if (airlockIndex === airlockFrames.length-1) {
+    airlockIndex = 0;
+    paintAirlock();
+    return;
+  }
+  let destination = airlockFrames.length-1;
+  if (airlockIndex===0) destination = airlockFrames.findIndex(frame=>frame.phase==="outer_open");
+  if (reducedMotion.matches) {
+    airlockIndex = destination;
+    paintAirlock();
+    return;
+  }
+  airlockCycle.disabled = true;
+  airlockTimer = setInterval(()=>{
+    airlockIndex++;
+    paintAirlock();
+    if (airlockIndex===destination) {
+      clearInterval(airlockTimer);
+      airlockCycle.disabled = false;
+    }
+  },140);
+});
+airlockDialog.addEventListener("close",()=>{
+  clearInterval(airlockTimer);
+  airlockIndex = 0;
+  airlockCycle.disabled = false;
+});
 element("eva-antenna").addEventListener("click",()=>{
   selectedProcess = "eva";
   openProcesses(crewMode());
@@ -2869,7 +3046,8 @@ element("process-settings").addEventListener("submit",event=>{
   event.preventDefault();
   allocator.configure(crewMode(),Number(element("process-member").value),Number(element("process-deadline").value),
     selectedProcess,Number(element("process-repeat").value));
-  renderProcess(currentFrame());
+  if (connectedFlight && selectedProcess === "eva") launchMission.refreshCrewWork();
+  else renderProcess(currentFrame());
 });
 element("process-export").addEventListener("click",()=>{
   if (!processExport.length) return;
@@ -2913,9 +3091,11 @@ const layoutFixedControls = new ResizeObserver(() => {
 for (const control of [launchHud,padTransport,controller,missionGuide,flightInstrument]) layoutFixedControls.observe(control);
 const hudSize = new ResizeObserver(() => {
   const portraitsBottom = element("crew-strip").getBoundingClientRect().bottom;
-  const clearance = Math.max(controller.getBoundingClientRect().bottom, portraitsBottom,shelf.getBoundingClientRect().bottom,
-    element("mission-resources").getBoundingClientRect().bottom)
-    + 8;
+  const resources = element("mission-resources");
+  resources.style.setProperty("--resource-top",Math.ceil(controller.getBoundingClientRect().bottom+8)+"px");
+  const resourceBottom = resources.getBoundingClientRect().bottom;
+  shelf.style.setProperty("--resource-bottom",Math.max(0,resourceBottom+8)+"px");
+  const clearance = Math.max(controller.getBoundingClientRect().bottom, portraitsBottom,shelf.getBoundingClientRect().bottom,resourceBottom) + 8;
   playArea.style.setProperty("--control-clearance", Math.max(0, clearance) + "px");
 });
 hudSize.observe(controller);
@@ -2959,8 +3139,35 @@ const launchMission = bindLaunchCheckout(data.missions,data.replay_version,{
   crew: characters.map((character,index)=>({name:character.name,role:duties[index].role,portrait:()=>crewFace(index)})),
   pauseReplay:stop,
   openCommand:trigger=>commandPanel.open(trigger),
+  closeCommand:()=>commandPanel.close(),
+  onDemoCrew(action) {
+    if (action === "close-twin") {
+      for (const panel of profileWindows.values()) panel.close();
+      return true;
+    }
+    const member = data.crew.indexOf(flightDemoCrew);
+    if (action === "crew-check") return requestPeerCheck(member,"wrist");
+    selection = {crew:member};
+    twinView = "body";
+    activeLayer = "sensors";
+    selectedRegion = "wrist";
+    profileMembers.set("personnel",member);
+    profileWindows.get("personnel").open(portraits.get(member));
+    render();
+    return true;
+  },
   exteriorBusy:(mode,time)=>tasks.some(job=>job.mode===mode && job.procedure==="eva" &&
     job.queued<=time && time<job.finishes),
+  nextExteriorHold:(mode,time,orbitStart,canReleaseExterior)=>{
+    const exterior = tasks.filter(job=>job.mode===mode && job.procedure==="eva");
+    const queued = Math.min(Infinity,...exterior.filter(job=>job.queued>time).map(job=>job.queued));
+    const {repeat} = allocator.settings(mode,"eva");
+    const last = exterior.findLast(job=>job.queued<=time);
+    // A repeat can release once the latest inspection is complete and cleared.
+    const repeatDue = canReleaseExterior && repeat && canReleaseRoutine(last,{time})
+      ? (last?.verifiedAt ?? last?.finishes ?? orbitStart) + repeat : Infinity;
+    return Math.min(queued,repeatDue);
+  },
   antennaUnverified:(mode,time)=>{
     const last = tasks.findLast(job=>job.mode===mode && job.procedure==="eva" && job.queued<=time);
     return Boolean(last && last.verifiedAt == null);
@@ -3007,7 +3214,7 @@ const launchMission = bindLaunchCheckout(data.missions,data.replay_version,{
   },
   resetCrew(missionId) {
     for (let i = peerChecks.length-1; i >= 0; i--) if (peerChecks[i].mode === missionId) peerChecks.splice(i,1);
-    allocator.clear(missionId);
+    allocator.clear(missionId,-1,{save:!missionId.endsWith("-timed-demo")});
     evaFaults.delete(missionId);
     activityModes.delete(missionId);
   },
