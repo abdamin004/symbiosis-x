@@ -62,7 +62,7 @@ const CSS = `
 @media(max-width:800px){.deck-map-layout{grid-template-columns:1fr}.deck-map-inspector{min-height:130px}}
 `;
 
-export default function DeckMap({ role }) {
+export default function DeckMap({ role, equipment = null }) {
   const [selected, setSelected] = useState("scrubber");
   const [enlarged, setEnlarged] = useState(false);
   const item = ITEMS[selected] ?? ITEMS.scrubber;
@@ -98,7 +98,7 @@ export default function DeckMap({ role }) {
           <div className="deck-map-canvas" onClick={select} onKeyDown={selectByKeyboard} tabIndex={-1} aria-label="Interactive spacecraft deck map">
             <div dangerouslySetInnerHTML={{ __html: displayedSVG }} />
           </div>
-          <div className="map-readouts"><span>SCRUBBER · 20 m³/h</span><span>HEADROOM · 0.60 kW</span></div>
+          <div className="map-readouts" data-testid="deck-readouts"><span data-testid="deck-scrubber">SCRUBBER · {equipment?.scrubber_removal?.value == null ? "Unknown" : `${equipment.scrubber_removal.value} ${equipment.scrubber_removal.unit}`}</span><span data-testid="deck-power">HEADROOM · {equipment?.power_headroom?.value == null ? "Unknown" : `${Number(equipment.power_headroom.value).toFixed(2)} ${equipment.power_headroom.unit}`}</span></div>
         </div>
         <aside className="deck-map-inspector" aria-live="polite" data-testid="deck-inspector">
           <p className="eyebrow">{item[0]}</p><h3 data-testid="deck-selected-title">{item[1]}</h3>

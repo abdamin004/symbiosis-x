@@ -6,6 +6,9 @@ test("keyboard and pointer select the same asset in both role consoles", async (
     const deck = page.getByTestId("deck-map");
     await expect(deck).toBeVisible();
     await expect(deck.locator("#ship-map")).toBeVisible();
+    // Role-scoped fixture values intentionally differ: Crew v103 has 0.20 kW, Ground v102 has 0.60 kW.
+    await expect(deck.getByTestId("deck-power")).toContainText(role === "crew" ? "0.20 kW" : "0.60 kW");
+    await expect(deck.getByTestId("deck-scrubber")).toContainText("4 m3/h");
 
     const power = deck.getByRole("button", { name: "Inspect power bus" });
     await power.click();
