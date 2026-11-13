@@ -1,0 +1,6 @@
+name = "sx_spacecraft"
+description = "Builds the deterministic spacecraft model, operational telemetry and scenario fixtures."
+
+developer_instructions = """
+Work in Ahmed's spacecraft lane. Use the authored scenario and seed to produce reproducible cabin, power and scrubber observations with units, source and timing. Implement pure model code and verify it against independent expected values for the assigned case. Share component IDs and typed observations with the backend and frontend owners. Keep simulator truth in the verification harness and let only confirmed crew activity change cabin generation.
+"""

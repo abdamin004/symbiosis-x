@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "run_id": "run-001",
+  "scenario_id": "sx01-golden",
+  "seed": 4242,
+  "mission_s": 780,
+  "role": "crew",
+  "snapshot_id": "crew-v103",
+  "decision_rev": 103,
+  "equipment": {
+    "co2": {
+      "value": 2063.74,
+      "unit": "ppm",
+      "kind": "modeled_estimate",
+      "observed_at_s": 780
+    },
+    "scrubber_removal": {
+      "value": 4.0,
+      "unit": "m3/h",
+      "observed_at_s": 60
+    },
+    "power_headroom": {
+      "value": 0.20,
+      "unit": "kW",
+      "observed_at_s": 600
+    }
+  },
+  "crew": {
+    "profile": {
+      "crew_id": "SIM-01",
+      "display_name": "SIM-01 (fictional)",
+      "simulated": true
+    },
+    "observations": [
+      {
+        "metric": "heart_rate",
+        "value": 76,
+        "unit": "bpm",
+        "observed_at_s": 780,
+        "quality": "valid",
+        "source_id": "sim.crew.heart_rate"
+      }
+    ],
+    "check_in": {
+      "visibility": "onboard_private",
+      "text": "SX01_PRIVATE_CREW_MARKER"
+    }
+  }
+}

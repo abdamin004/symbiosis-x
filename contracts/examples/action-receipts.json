@@ -1,0 +1,8 @@
+{
+  "operation_id": "op-demo-013",
+  "status": "rejected",
+  "reason_code": "STALE_DECISION_REV",
+  "basis_decision_rev": 102,
+  "current_decision_rev": 103,
+  "applied": false
+}

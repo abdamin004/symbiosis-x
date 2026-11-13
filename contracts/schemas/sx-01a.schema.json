@@ -1,0 +1,450 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SX-01A golden handoff example payloads",
+  "description": "Wire shapes for the four kickoff examples. Later tickets implement the full API models.",
+  "$defs": {
+    "quantity": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "number",
+          "minimum": 0
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 1
+        },
+        "observed_at_s": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "value",
+        "unit",
+        "observed_at_s"
+      ],
+      "additionalProperties": false
+    },
+    "co2": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "number",
+          "minimum": 0
+        },
+        "unit": {
+          "const": "ppm"
+        },
+        "observed_at_s": {
+          "type": "integer"
+        },
+        "kind": {
+          "enum": [
+            "modeled_estimate",
+            "delivered_observation"
+          ]
+        }
+      },
+      "required": [
+        "value",
+        "unit",
+        "observed_at_s",
+        "kind"
+      ],
+      "additionalProperties": false
+    },
+    "equipment": {
+      "type": "object",
+      "properties": {
+        "co2": {
+          "$ref": "#/$defs/co2"
+        },
+        "scrubber_removal": {
+          "$ref": "#/$defs/quantity",
+          "properties": {
+            "unit": {
+              "const": "m3/h"
+            }
+          }
+        },
+        "power_headroom": {
+          "$ref": "#/$defs/quantity",
+          "properties": {
+            "unit": {
+              "const": "kW"
+            }
+          }
+        }
+      },
+      "required": [
+        "co2",
+        "scrubber_removal",
+        "power_headroom"
+      ],
+      "additionalProperties": false
+    },
+    "snapshot": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scenario_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "seed": {
+          "type": "integer"
+        },
+        "mission_s": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "snapshot_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "decision_rev": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "equipment": {
+          "$ref": "#/$defs/equipment"
+        }
+      },
+      "required": [
+        "schema_version",
+        "run_id",
+        "scenario_id",
+        "seed",
+        "mission_s",
+        "snapshot_id",
+        "decision_rev",
+        "equipment"
+      ]
+    },
+    "crew": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/snapshot"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "role": {
+              "const": "crew"
+            },
+            "crew": {
+              "type": "object",
+              "properties": {
+                "profile": {
+                  "type": "object",
+                  "properties": {
+                    "crew_id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "display_name": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "simulated": {
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "crew_id",
+                    "display_name",
+                    "simulated"
+                  ],
+                  "additionalProperties": false
+                },
+                "observations": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "metric": {
+                        "const": "heart_rate"
+                      },
+                      "value": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "unit": {
+                        "const": "bpm"
+                      },
+                      "observed_at_s": {
+                        "type": "integer"
+                      },
+                      "quality": {
+                        "const": "valid"
+                      },
+                      "source_id": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "metric",
+                      "value",
+                      "unit",
+                      "observed_at_s",
+                      "quality",
+                      "source_id"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "check_in": {
+                  "type": "object",
+                  "properties": {
+                    "visibility": {
+                      "const": "onboard_private"
+                    },
+                    "text": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "visibility",
+                    "text"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "profile",
+                "observations",
+                "check_in"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "role",
+            "crew"
+          ]
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "ground": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/snapshot"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "role": {
+              "const": "ground"
+            },
+            "delivery": {
+              "type": "object",
+              "properties": {
+                "observed_at_s": {
+                  "type": "integer"
+                },
+                "received_at_s": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "age_s": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "link_status": {
+                  "const": "delayed"
+                }
+              },
+              "required": [
+                "observed_at_s",
+                "received_at_s",
+                "age_s",
+                "link_status"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "role",
+            "delivery"
+          ]
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "candidateResults": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "const": "NO_FEASIBLE_PLAN"
+        },
+        "basis_snapshot_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expected_decision_rev": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "policy_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "horizon_s": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "candidates": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "candidate_id": {
+                    "const": "hold_course"
+                  },
+                  "status": {
+                    "const": "rejected"
+                  },
+                  "reason_code": {
+                    "const": "CO2_PEAK_LIMIT"
+                  },
+                  "peak_co2_ppm": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "candidate_id",
+                  "status",
+                  "reason_code",
+                  "peak_co2_ppm"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "candidate_id": {
+                    "const": "start_standby"
+                  },
+                  "status": {
+                    "const": "rejected"
+                  },
+                  "reason_code": {
+                    "const": "POWER_LIMIT"
+                  },
+                  "required_kw": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "available_kw": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "candidate_id",
+                  "status",
+                  "reason_code",
+                  "required_kw",
+                  "available_kw"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "candidate_id": {
+                    "const": "reduce_activity"
+                  },
+                  "status": {
+                    "const": "rejected"
+                  },
+                  "reason_code": {
+                    "const": "ACTIVITY_RESTRICTED"
+                  }
+                },
+                "required": [
+                  "candidate_id",
+                  "status",
+                  "reason_code"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      },
+      "required": [
+        "status",
+        "basis_snapshot_id",
+        "expected_decision_rev",
+        "policy_version",
+        "horizon_s",
+        "candidates"
+      ],
+      "additionalProperties": false
+    },
+    "actionReceipt": {
+      "type": "object",
+      "properties": {
+        "operation_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "const": "rejected"
+        },
+        "reason_code": {
+          "const": "STALE_DECISION_REV"
+        },
+        "basis_decision_rev": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "current_decision_rev": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "applied": {
+          "const": false
+        }
+      },
+      "required": [
+        "operation_id",
+        "status",
+        "reason_code",
+        "basis_decision_rev",
+        "current_decision_rev",
+        "applied"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/crew"
+    },
+    {
+      "$ref": "#/$defs/ground"
+    },
+    {
+      "$ref": "#/$defs/candidateResults"
+    },
+    {
+      "$ref": "#/$defs/actionReceipt"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "run_id": "run-001",
+  "scenario_id": "sx01-golden",
+  "seed": 4242,
+  "mission_s": 780,
+  "role": "ground",
+  "snapshot_id": "ground-v102",
+  "decision_rev": 102,
+  "equipment": {
+    "co2": {
+      "value": 2000.0,
+      "unit": "ppm",
+      "kind": "delivered_observation",
+      "observed_at_s": 60
+    },
+    "scrubber_removal": {
+      "value": 4.0,
+      "unit": "m3/h",
+      "observed_at_s": 60
+    },
+    "power_headroom": {
+      "value": 0.60,
+      "unit": "kW",
+      "observed_at_s": 60
+    }
+  },
+  "delivery": {
+    "observed_at_s": 60,
+    "received_at_s": 360,
+    "age_s": 720,
+    "link_status": "delayed"
+  }
+}
