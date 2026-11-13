@@ -67,3 +67,9 @@ export function readRunView(runId, role) {
 export function createPrivateCheckIn(runId, command) {
   return jsonRequest("/runs/" + encodeURIComponent(runId) + "/crew/check-ins", "crew", { method: "POST", body: JSON.stringify(command) });
 }
+
+export function saveCrewMeasurement(runId, command) {
+  return jsonRequest("/runs/" + encodeURIComponent(runId) + "/crew/measurements", "crew", {
+    method: "POST", body: JSON.stringify(command),
+  });
+}
