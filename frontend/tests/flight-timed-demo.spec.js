@@ -121,7 +121,15 @@ test("the three-minute demo shows Crew evidence and returns without touching pla
   await page.getByRole("button",{name:"Exit demo"}).dispatchEvent("click");
   await expect(page.locator("#campaign-save")).toHaveText("Launch held · T+0:15");
   await begin();
-  await advance(31);
+  await expect(beat).toHaveText("Systems and crew checkout");
+  // Drive the second replay through the same visible checkpoints as the first.
+  // One large fake-clock jump can starve sequential requestAnimationFrame cues.
+  await advance(10);
+  await expect(phase).toHaveText("Booster ascent");
+  await advance(11);
+  await expect(phase).toHaveText("Orbital insertion burn");
+  await advance(10);
+  await expect(beat).toHaveText("Stable orbit · Sana’s health baseline");
   await expect(twin.locator("#region-reading")).toHaveText(/68 bpm.*accepted/);
   await expect(twin.locator("#peer-check")).toBeHidden();
   await page.getByRole("button",{name:"Exit demo"}).dispatchEvent("click");
