@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "source_id": "synthetic.medical-timeline-v1",
+  "cases": [
+    {
+      "id": "inflammation",
+      "crew_id": "SIM-01",
+      "label": "Suspected local inflammation",
+      "history": [{"kind":"medical_history","note":"Fictional report of wrist soreness after prior equipment work."}],
+      "events": [
+        {"at_s":60,"kind":"symptom","quality":"reported","note":"Mara reports new wrist soreness after moving equipment."},
+        {"at_s":120,"kind":"observation","quality":"conflicting","note":"Mara reports swelling. The peer visual check cannot confirm swelling."},
+        {"at_s":180,"kind":"review","quality":"uncertain","note":"Medical records suspected local inflammation with the cause undetermined. The Commander offers a duty handoff and assigns Ivo a recheck."},
+        {"at_s":360,"kind":"recheck","quality":"reported","note":"Ivo records that Mara reports less soreness. The earlier conflicting observation stays in the record."}
+      ]
+    },
+    {
+      "id": "sensitivity",
+      "crew_id": "SIM-01",
+      "label": "Suspected sensitivity",
+      "history": [{"kind":"allergy_note","note":"Fictional earlier report of irritation after using an adhesive patch. Confirmation is unknown."}],
+      "events": [
+        {"at_s":60,"kind":"symptom","quality":"reported","note":"Mara reports itching near a training sensor patch."},
+        {"at_s":120,"kind":"observation","quality":"unknown","note":"The camera view is unavailable and the patch material record is incomplete."},
+        {"at_s":180,"kind":"review","quality":"uncertain","note":"Medical flags possible sensitivity to the patch and assigns Ivo to repeat the observation and check the equipment record."},
+        {"at_s":360,"kind":"recheck","quality":"observed","note":"Ivo completes the peer observation and logs the equipment record. The suspected trigger remains unresolved."}
+      ]
+    },
+    {
+      "id": "illness",
+      "crew_id": "SIM-01",
+      "label": "Illness check-in",
+      "history": [{"kind":"medical_history","note":"No prior illness information is available for this fictional case."}],
+      "events": [
+        {"at_s":60,"kind":"symptom","quality":"reported","note":"Mara reports fatigue during the watch."},
+        {"at_s":120,"kind":"observation","quality":"unknown","note":"The temperature observation is missing. A sleep log entry is available for review."},
+        {"at_s":180,"kind":"review","quality":"uncertain","note":"Medical tracks the symptoms as a suspected illness and requests a repeat crew check-in."},
+        {"at_s":360,"kind":"recheck","quality":"reported","note":"Mara reports that fatigue persists. The Medical record stays open for follow-up."}
+      ]
+    }
+  ]
+}

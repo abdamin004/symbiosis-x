@@ -221,6 +221,7 @@ function bindFlightHealthStory({find, clock, metrics, openTwin, onUpdate}) {
   button.addEventListener("click", () => openTwin(crewId,button));
   return {
     start, stop, update,
+    runId() { return session?.view?.run_id; },
     visibleFor(id, timed) { return Boolean(timed && id === crewId && session?.view); },
   };
 }

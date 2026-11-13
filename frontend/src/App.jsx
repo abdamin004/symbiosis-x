@@ -4,6 +4,7 @@ import MissionConsole from "./features/mission/MissionConsole.jsx";
 import RunLauncher from "./features/mission/RunLauncher.jsx";
 import MeasurementPage from "./features/crew/MeasurementPage.jsx";
 import EmergencyAssist from "./features/crew/EmergencyAssist.jsx";
+import MedicalTimeline from "./features/crew/MedicalTimeline.jsx";
 import BackupReplay from "./features/mission/BackupReplay.jsx";
 
 // Routes choose a view. The server resolves the caller's role and decides what it may read.
@@ -14,6 +15,7 @@ export default function App() {
       <Route path="/runs/:runId/crew" element={<MissionConsole role="crew" />} />
       <Route path="/runs/:runId/crew/measure" element={<MeasurementPage />} />
       <Route path="/runs/:runId/crew/emergency" element={<EmergencyAssist />} />
+      <Route path="/runs/:runId/crew/medical" element={<MedicalTimeline />} />
       <Route path="/runs/:runId/ground" element={<MissionConsole role="ground" />} />
       <Route path="/backup" element={<BackupReplay />} />
       <Route path="*" element={<NotFound />} />

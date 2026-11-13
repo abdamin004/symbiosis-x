@@ -141,6 +141,24 @@ def test_health_story_clear_review_emergency_and_private_ground_delivery(mission
                 assert cases[0]["ground_ack"] == checkpoint["ground_ack"]
 
 
+def test_medical_cases_hide_future_evidence_and_stay_onboard(mission):
+    request, run, _ = mission
+    initial = twin(request, run)["medical_timeline"]
+    assert [case["id"] for case in initial["cases"]] == ["inflammation", "sensitivity", "illness"]
+    assert all(not case["events"] for case in initial["cases"])
+    assert twin(request, run, "SIM-02")["medical_timeline"]["cases"] == []
+    for step, now in enumerate((120, 180, 360)):
+        assert advance(request, run, step, now).status_code == 200
+        by_id = {case["id"]: case for case in twin(request, run)["medical_timeline"]["cases"]}
+        assert by_id["inflammation"]["events"][1]["quality"] == "conflicting"
+        assert by_id["sensitivity"]["events"][1]["quality"] == "unknown"
+        assert by_id["sensitivity"]["history"][0]["kind"] == "allergy_note"
+        assert all(len(case["events"]) == step + 2 for case in by_id.values())
+    ground = request("GET", run + "/ground", role="ground")
+    assert all(marker not in ground.text for marker in ("medical_timeline", "allergy_note", "swelling"))
+    assert request("GET", run + "/crew/health-twin", role="ground", params={"crew_id": "SIM-01"}).status_code == 403
+
+
 def test_gravity_context_follows_phase_boundaries_and_stays_onboard(mission):
     request, run, _ = mission
     assert twin(request, run, "SIM-02")["gravity_context"] is None

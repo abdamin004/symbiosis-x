@@ -128,5 +128,24 @@ test("Mara's live Flight twin explains review and shares only a delayed case sta
 
   await page.getByRole("button",{name:"Exit demo"}).dispatchEvent("click");
   await expect(show).toBeHidden();
+  await page.goto("/flight?view=replay&run_id=" + started.run_id);
+  await page.getByRole("button",{name:"Medical",exact:true}).click();
+  const medical = page.getByRole("link",{name:"Open private Medical record"});
+  await expect(medical).toHaveAttribute("href",/\/crew\/medical\?crew_id=SIM-02$/);
+  const mara = page.getByRole("group",{name:"Medical subject"}).getByRole("button",{name:/Mara/});
+  await mara.click();
+  const medicalPath = await medical.getAttribute("href");
+  expect(medicalPath).toContain("crew_id=SIM-01");
+  await page.goto(medicalPath);
+  const timeline = page.getByRole("region",{name:"Private Medical timeline"});
+  await expect(timeline).toContainText(/observation · conflicting/i);
+  await expect(timeline).toContainText("Ivo records that Mara reports less soreness");
+  await timeline.getByRole("button",{name:"Suspected sensitivity"}).click();
+  await expect(timeline).toContainText("Allergy note");
+  await expect(timeline).toContainText("camera view is unavailable");
+  await timeline.getByRole("button",{name:"Illness check-in"}).click();
+  await expect(timeline).toContainText("fatigue persists");
+  await page.getByRole("link",{name:"Open collapse drill"}).click();
+  await expect(page.getByLabel("Choose scripted drill")).toHaveValue("drill-collapse-v1");
   expect(errors).toEqual([]);
 });

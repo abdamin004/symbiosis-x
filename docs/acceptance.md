@@ -179,3 +179,8 @@ NASA's study uses consistent measurements to characterize adaptation across mult
 The Horizon training campaign records meal lot usage and surface inspections on its mission clock. A suspected exposure removes held packs from available provisions. A second astronaut verifies cleanup or records a failed check. A failed check keeps the surface on hold. The scenario uses fictional observations and a generic contamination flag.
 
 Medical shows the meal history and each astronaut's reported symptoms in the local Crew campaign. The Ground tab reveals the approved action status after 300 simulated seconds. This campaign uses browser-local saves and a simulated Ground relay. [NASA human-system standards](https://standards.nasa.gov/standard/NASA/NASA-STD-3001-VOL-2)
+## Medical training timeline
+
+Medical shows a versioned fictional record of suspected local inflammation, sensitivity and illness for Mara in the `health-story` training run. Each case separates reported symptoms, peer observations, suspected findings and reassessment. The Crew projection reveals entries through the current mission time and preserves missing or conflicting evidence. The existing chest-pain and collapse drills open with their own responders and follow-up.
+
+The NASA immune risk summary supplies spaceflight research context. The three Medical histories, observed changes and review times are authored training examples. [NASA risk of altered immune system responses](https://www.nasa.gov/reference/risk-of-altered-immune-system-responses/)
