@@ -8,10 +8,10 @@ from dataclasses import dataclass
 from typing import Literal
 
 AgentName = Literal["monitor", "planner", "relay"]
-IntentKind = Literal["assign_inspection", "queue_message"]
+IntentKind = Literal["assign_inspection", "queue_message", "request_evaluation"]
 
 AGENTS: frozenset[str] = frozenset({"monitor", "planner", "relay"})
-INTENT_KINDS: frozenset[str] = frozenset({"assign_inspection", "queue_message"})
+INTENT_KINDS: frozenset[str] = frozenset({"assign_inspection", "queue_message", "request_evaluation"})
 
 
 @dataclass(frozen=True)
@@ -62,8 +62,11 @@ class ToolRegistry:
         return self._tools.get(name)
 
 
+FAULT_TRIGGERS = frozenset({"fault.scrubber_degraded", "fault.power_drop"})
+
+
 def default_registry() -> ToolRegistry:
-    """Return the first allowlisted tool: Monitor assigns a Crew inspection on an observation."""
+    """Monitor may assign a Crew inspection on an observation, or ask the planner to evaluate a fault."""
     registry = ToolRegistry()
     registry.register(
         ToolSpec(
@@ -73,6 +76,16 @@ def default_registry() -> ToolRegistry:
             trigger_keys=frozenset({"observation.recorded"}),
             arg_names=frozenset({"entity_id"}),
             owner="crew",
+        )
+    )
+    registry.register(
+        ToolSpec(
+            name="request_plan_evaluation",
+            kind="request_evaluation",
+            allowed_agents=frozenset({"monitor"}),
+            trigger_keys=FAULT_TRIGGERS,
+            arg_names=frozenset({"component_id"}),
+            owner="planner",
         )
     )
     return registry

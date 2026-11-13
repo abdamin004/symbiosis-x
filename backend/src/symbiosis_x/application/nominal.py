@@ -8,6 +8,11 @@ from symbiosis_x.simulation.spacecraft.atmosphere import advance_co2_ppm
 from symbiosis_x.telemetry.sampling import CabinCO2Sensor
 
 MODEL_VERSION = "cabin-1"
+# The nominal pilot's single-zone cabin, in the units the atmosphere model takes.
+INITIAL_CO2_PPM = 2000
+CABIN_VOLUME_M3 = 100
+GENERATION_M3_H = 0.04
+NOMINAL_REMOVAL_M3_H = 20
 SENSOR = CabinCO2Sensor(
     source_id="sim.cabin.co2", component_id="co2-sensor-01", entity_id="cabin-01",
     metric="co2", unit="ppm", sample_period_s=60, input_kind="simulated",
@@ -17,7 +22,8 @@ SENSOR = CabinCO2Sensor(
 
 def record_nominal_co2(db: Connection, run_id: str, mission_s: int) -> None:
     value = advance_co2_ppm(
-        2000, duration_s=mission_s, volume_m3=100, generation_m3_h=0.04, removal_m3_h=20,
+        INITIAL_CO2_PPM, duration_s=mission_s, volume_m3=CABIN_VOLUME_M3,
+        generation_m3_h=GENERATION_M3_H, removal_m3_h=NOMINAL_REMOVAL_M3_H,
     )
     event = SENSOR.sample(value, run_id=run_id, mission_s=mission_s, model_version=MODEL_VERSION)
     if event is None:
