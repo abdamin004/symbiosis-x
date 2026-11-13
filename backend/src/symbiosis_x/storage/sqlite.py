@@ -12,6 +12,7 @@ MIGRATIONS = (
     "002_integer_integrity.sql",
     "003_observation_series.sql",
     "004_health.sql",
+    "005_driver_pause.sql",
 )
 SCHEMA_REVISION = len(MIGRATIONS)
 

@@ -35,6 +35,16 @@ class AdvanceReceipt(RunReceipt):
     advance_id: Identifier
 
 
+class DriverPauseRequest(Contract):
+    paused: bool
+
+
+class DriverPauseReceipt(Contract):
+    run_id: Identifier
+    paused: bool
+    mission_s: NonnegativeInt
+
+
 class ResetRunRequest(Contract):
     reset_id: Identifier
 
