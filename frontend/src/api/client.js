@@ -105,3 +105,58 @@ export function isActiveRunId(runId) {
   try { return sessionStorage.getItem("symbiosis-x-active-run") === runId; }
   catch { return false; }
 }
+
+// Facilitator session state. It lives in this browser tab's sessionStorage, so a
+// reload keeps the run and any unconfirmed command ID, and a Crew or Ground
+// session in another browser never sees it. Storage can be unavailable; then
+// the state lasts only as long as the page.
+const FACILITATOR_RUN_KEY = "symbiosis-x-facilitator-run";
+const PENDING_COMMANDS_KEY = "symbiosis-x-pending-commands";
+const memory = { run: null, pending: {} };
+
+function readStored(key, fallback) {
+  try {
+    const raw = sessionStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+function writeStored(key, value) {
+  try { sessionStorage.setItem(key, JSON.stringify(value)); } catch { /* keep the in-memory copy */ }
+}
+
+/** The run this facilitator last started, stepped or reset, or null. */
+export function loadFacilitatorRun() {
+  return readStored(FACILITATOR_RUN_KEY, memory.run);
+}
+export function saveFacilitatorRun(run) {
+  memory.run = run;
+  writeStored(FACILITATOR_RUN_KEY, run);
+  setActiveRunId(run.runId);
+}
+
+/**
+ * Return the stable ID for a facilitator command. A retry of the same command
+ * (same kind and same request fields) reuses the stored ID, even after a reload,
+ * so the server replays its first receipt instead of acting twice. A different
+ * request gets a new ID, so an edited start never reuses an old start_id.
+ */
+export function pendingCommandId(kind, fingerprint) {
+  const pending = readStored(PENDING_COMMANDS_KEY, memory.pending);
+  const key = JSON.stringify(fingerprint);
+  const prior = pending[kind];
+  if (prior && prior.key === key) return prior.id;
+  const id = createOperationId(kind);
+  const next = { ...pending, [kind]: { key, id } };
+  memory.pending = next;
+  writeStored(PENDING_COMMANDS_KEY, next);
+  return id;
+}
+/** Forget a command ID once its receipt has been accepted. */
+export function clearPendingCommand(kind) {
+  const pending = { ...readStored(PENDING_COMMANDS_KEY, memory.pending) };
+  delete pending[kind];
+  memory.pending = pending;
+  writeStored(PENDING_COMMANDS_KEY, pending);
+}
