@@ -1,4 +1,9 @@
-import { readFileSync } from "node:fs";
+import { spawn } from "node:child_process";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { createServer } from "node:net";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 
 const example = (name) =>
@@ -254,4 +259,142 @@ test("facilitator starts and steps one shared run", async ({ browser, baseURL })
   } finally {
     await Promise.all(contexts.map((context) => context.close()));
   }
+});
+
+
+// SX-20E: a real backend on a fresh SQLite file, shared by three browser sessions.
+// CI's browser job has no backend, so the test starts its own on a free port and
+// routes each session's /api and /health calls to it.
+const repoRoot = fileURLToPath(new URL("../../", import.meta.url));
+
+function freePort() {
+  return new Promise((resolve, reject) => {
+    const server = createServer();
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", () => {
+      const { port } = server.address();
+      server.close(() => resolve(port));
+    });
+  });
+}
+
+async function startBackend() {
+  const directory = mkdtempSync(join(tmpdir(), "sx20e-"));
+  const port = await freePort();
+  const python = process.env.SX_TEST_PYTHON || "python3";
+  const child = spawn(python, [
+    "-m", "uvicorn", "symbiosis_x.main:app", "--host", "127.0.0.1", "--port", String(port), "--no-proxy-headers",
+  ], {
+    cwd: repoRoot,
+    env: { ...process.env, SYMBIOSIS_X_DB_PATH: join(directory, "two-roles.sqlite3"), SYMBIOSIS_X_LOCAL_DEMO: "1" },
+    stdio: ["ignore", "ignore", "pipe"],
+  });
+  let stderr = "";
+  child.stderr.on("data", (chunk) => { stderr += chunk; });
+  const origin = `http://127.0.0.1:${port}`;
+  for (let attempt = 0; attempt < 120; attempt++) {
+    if (child.exitCode !== null) throw new Error("backend exited: " + stderr);
+    try {
+      const response = await fetch(origin + "/health/ready");
+      if (response.ok) return { origin, child, directory };
+    } catch { /* not listening yet */ }
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  child.kill();
+  throw new Error("backend did not become ready: " + stderr);
+}
+
+/** Send this page's API calls to the test backend. Origin is dropped so the loopback check sees one host. */
+async function useBackend(page, origin) {
+  // Match the path prefix only: Vite serves app modules such as /src/api/client.js.
+  const isBackendPath = (url) => url.pathname.startsWith("/api/") || url.pathname.startsWith("/health/");
+  await page.route(isBackendPath, async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const headers = { ...request.headers() };
+    delete headers.origin;
+    delete headers.host;
+    const response = await route.fetch({ url: origin + url.pathname + url.search, headers });
+    return route.fulfill({ response });
+  });
+}
+
+test.describe("two-role browser run", () => {
+  let backend;
+  test.beforeAll(async () => { backend = await startBackend(); });
+  test.afterAll(async () => {
+    backend?.child.kill();
+    if (backend) rmSync(backend.directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+  });
+
+  test("two roles share a run without sharing private state", async ({ browser, baseURL }) => {
+    test.setTimeout(60_000);
+    const marker = "SX20E_PRIVATE_MARKER fictional note";
+    const contexts = await Promise.all([0, 1, 2].map(() => browser.newContext({ baseURL })));
+    const [facilitator, crewPage, groundPage] = await Promise.all(contexts.map((context) => context.newPage()));
+    try {
+      await Promise.all([facilitator, crewPage, groundPage].map((page) => useBackend(page, backend.origin)));
+
+      // Facilitator starts the golden run and steps it to 13:00 from the launcher.
+      await facilitator.goto("/");
+      await facilitator.getByRole("button", { name: "Start run" }).click();
+      await expect(facilitator.getByTestId("launcher-run-id")).toHaveText(/^[0-9a-f]{32}$/);
+      const runId = (await facilitator.getByTestId("launcher-run-id").textContent()).trim();
+      for (const seconds of ["60", "360", "480", "600", "780"]) {
+        await facilitator.getByRole("button", { name: "Advance one step" }).click();
+        await expect(facilitator.getByTestId("launcher-mission-time")).toHaveText(seconds);
+      }
+
+      // Crew: same run, private panel present, and a private check-in saved.
+      await crewPage.goto(`/runs/${runId}/crew`);
+      await expect(crewPage.getByTestId("console-shell")).toHaveAttribute("data-run-id", runId);
+      await expect(crewPage.getByText(/Mission time 13:00/)).toBeVisible();
+      const privatePanel = crewPage.getByTestId("private-checkin");
+      await expect(privatePanel).toBeVisible();
+      await privatePanel.getByRole("textbox").fill(marker);
+      await privatePanel.getByRole("button", { name: "Save private check-in" }).click();
+      await expect(crewPage.getByTestId("checkin-receipt")).toBeVisible();
+
+      // Ground: same run, delayed v102 values, and no private state.
+      await groundPage.goto(`/runs/${runId}/ground`);
+      await expect(groundPage.getByTestId("console-shell")).toHaveAttribute("data-run-id", runId);
+      await expect(groundPage.getByText(/Mission time 13:00/)).toBeVisible();
+      await expect(groundPage.getByTestId("ground-basis-snapshot")).toHaveText("ground-v102");
+      await expect(groundPage.getByTestId("ground-basis-revision")).toHaveText("v102");
+      await expect(groundPage.getByTestId("ground-power")).toHaveText("0.60 kW");
+      await expect(groundPage.getByTestId("ground-age")).toHaveText("12:00");
+      await expect(groundPage.getByTestId("private-checkin")).toHaveCount(0);
+      await expect(groundPage.getByTestId("crew-health-dashboard")).toHaveCount(0);
+      await expect(groundPage.locator("body")).not.toContainText("SX20E_PRIVATE_MARKER");
+
+      // The projections differ: Crew reads its own live view, Ground only what was delivered.
+      const views = await groundPage.evaluate(async (id) => {
+        const tokens = await (await fetch("/api/v1/demo/session", { method: "POST" })).json();
+        const read = (role) => fetch(`/api/v1/runs/${id}/${role}`, {
+          headers: { Authorization: "Bearer " + tokens[role] },
+        }).then((response) => response.text());
+        return { crew: await read("crew"), ground: await read("ground") };
+      }, runId);
+      const crewView = JSON.parse(views.crew);
+      const groundView = JSON.parse(views.ground);
+      expect(crewView.run_id).toBe(runId);
+      expect(groundView.run_id).toBe(runId);
+      expect(crewView.decision_rev).toBe(103);
+      expect(groundView.packet.decision_rev).toBe(102);
+      expect(crewView).toHaveProperty("health_profile");
+      expect(groundView).not.toHaveProperty("health_profile");
+      expect(views.ground).not.toContain("SX20E_PRIVATE_MARKER");
+      expect(views.ground).not.toContain("SIM-01");
+
+      // One advice flow: Ground queues advice on the displayed v102 basis.
+      const form = groundPage.getByTestId("advisory-form");
+      await form.getByLabel("Start standby scrubber").check();
+      await form.getByRole("button", { name: "Queue advice" }).click();
+      await expect(form.getByTestId("advisory-status")).toHaveText("Queued");
+      await expect(form.getByTestId("advisory-receipt-basis")).toHaveText("ground-v102 · v102");
+      await expect(form.getByTestId("advisory-due")).toHaveText("18:00");
+    } finally {
+      await Promise.all(contexts.map((context) => context.close()));
+    }
+  });
 });
