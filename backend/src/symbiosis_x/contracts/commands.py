@@ -124,10 +124,44 @@ class CandidateResults(Contract):
         return self
 
 
+
+
+PlanReasonCode = Literal[
+    "CO2_PEAK_LIMIT", "POWER_LIMIT", "FEEDER_DISCONNECTED", "ACTIVITY_RESTRICTED",
+    "CO2_EVIDENCE_MISSING", "HEADROOM_UNKNOWN", "FEEDER_UNKNOWN", "STANDBY_RATE_UNKNOWN",
+    "ACTIVITY_PERMISSION_UNKNOWN", "ACTIVITY_RATE_UNKNOWN",
+]
+
+
+class PlanCandidate(Contract):
+    candidate_id: CandidateId
+    result: Literal["feasible", "rejected", "unknown"]
+    reason_code: PlanReasonCode | None = None
+    peak_co2_ppm: NonnegativeNumber | None = None
+    required_kw: NonnegativeNumber | None = None
+    available_kw: NonnegativeNumber | None = None
+
+
+class PlanEvaluationReceipt(Contract):
+    status: Literal["FEASIBLE_PLAN", "NO_FEASIBLE_PLAN", "INSUFFICIENT_EVIDENCE"]
+    basis_snapshot_id: Identifier
+    decision_rev: NonnegativeInt
+    policy_version: Identifier
+    horizon_s: Annotated[int, Field(gt=0)]
+    candidates: list[PlanCandidate]
+
+
+class ActionRequest(Contract):
+    operation_id: Identifier
+    candidate_id: CandidateId
+    basis_decision_rev: NonnegativeInt
+
+
 class ActionReceipt(Contract):
     operation_id: Identifier
-    status: Literal["rejected"]
-    reason_code: Literal["STALE_DECISION_REV"]
+    candidate_id: CandidateId
+    status: Literal["accepted", "rejected"]
+    reason_code: PlanReasonCode | Literal["STALE_DECISION_REV"] | None = None
     basis_decision_rev: NonnegativeInt
     current_decision_rev: NonnegativeInt
-    applied: Literal[False]
+    applied: bool
