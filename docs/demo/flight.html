@@ -46,7 +46,7 @@ button[aria-pressed=true]{background:#3d315e}
 .ribbon output{color:var(--blue)}
 .flight-controls{position:absolute;top:3.4rem;right:.65rem;z-index:100;width:min(410px,calc(100% - 1.3rem))}
 .viewport{padding-top:clamp(10rem,24vh,14rem)}
-#map-widget{width:280px}.route-map{width:100%;display:block}.route-map circle{fill:#b0bdfa}.route-map #ship-position{fill:#e8ccff;stroke:#fbf4ff}
+#map-widget{width:280px}#workflow-widget{width:320px}.route-map{width:100%;display:block}.route-map circle{fill:#b0bdfa}.route-map #ship-position{fill:#e8ccff;stroke:#fbf4ff}
 @media(max-width:720px){.flight-controls{top:5.5rem}.viewport{padding-top:15rem}}
 .control-deck a{margin-left:auto;font-size:.85rem}
 #phase{flex:1 0 100%;color:var(--muted);font-size:.86rem}
@@ -70,6 +70,7 @@ button[aria-pressed=true]{background:#3d315e}
     <output id="resource-phase"></output><output id="resource-air"></output><output id="resource-power"></output><output id="resource-crew"></output>
     <button type="button" id="show-inspector" aria-pressed="false">Inspector</button>
     <button type="button" id="show-crew" aria-pressed="false">Crew</button>
+    <button type="button" id="show-workflow" aria-pressed="false">Orders</button>
     <button type="button" id="show-map" aria-pressed="true">Route map</button>
     <a href="/mission">Mission control</a>
   </div>
@@ -88,6 +89,15 @@ button[aria-pressed=true]{background:#3d315e}
     <output class="clock" id="clock" for="timeline"></output>
   </div></div>
 <div class="overlays" id="overlays">
+  <section class="panel" id="workflow-widget" hidden aria-labelledby="workflow-title">
+    <div class="widget-bar"><button class="move-widget" type="button" aria-label="Move orders with drag or arrow keys">⠿ Move</button></div>
+    <h2 id="workflow-title">Onboard orders</h2>
+    <p id="workflow-state"></p>
+    <p id="monitor-state"></p>
+    <button id="assign-order" type="button" hidden>Commander · Assign inspection</button>
+    <button id="hold-order" type="button" hidden>Commander · Hold</button>
+    <button id="complete-order" type="button" hidden>SIM-03 · Report inspection</button>
+  </section>
   <section class="panel" id="map-widget" aria-label="Route minimap">
     <div class="widget-bar"><button class="move-widget" type="button" aria-label="Move route map with drag or arrow keys">⠿ Move</button></div>
     <svg class="route-map" viewBox="0 0 260 58" aria-hidden="true">
@@ -138,6 +148,9 @@ button[aria-pressed=true]{background:#3d315e}
 </main>
 <script type="application/json" id="flight-data">__FLIGHT_DATA__</script>
 <script>
+__FLIGHT_WORKFLOW__
+</script>
+<script>
 const element = id => document.getElementById(id);
 const data = JSON.parse(element("flight-data").textContent);
 const clock = seconds => [Math.floor(seconds / 60), seconds % 60]
@@ -178,6 +191,12 @@ const stationDuties = [
   [["comms-01","Report approach"],["comms-01","Acknowledge capture"],["comms-01","Track the experiment handoff"],["habitat-01","Use the WC and log hydration"],["comms-01","Report departure"],["comms-01","Confirm recovery"]],
 ];
 function station(duty, member) {
+  const order = flightWorkflow.read();
+  const time = data.frames[""][index].time;
+  if (member === 2 && order?.assigned && time >= order.decided &&
+      (order.completed == null || time < order.completed)) {
+    return ["life-support-01", "Inspect life support at the Commander's request"];
+  }
   return duty.stations[index] ?? stationDuties[member][index - duty.stations.length];
 }
 
@@ -396,9 +415,19 @@ function inspect(frame) {
   detail.textContent = room.function + air + (occupants.length ? " On station: " + occupants.join(" / ") : "");
 }
 
-function render() {
+function currentFrame() {
   const key = data.crew.filter(id => reduced.has(id)).join(",");
-  const frame = data.frames[key][index];
+  return data.frames[key][index];
+}
+
+function render() {
+  const frame = currentFrame();
+  element("workflow-state").textContent = flightWorkflow.status(frame, clock);
+  element("monitor-state").textContent = frame.removal != null && frame.removal < 20
+    ? "Monitor · Primary scrubber degraded. Inspection records evidence." : "";
+  element("assign-order").hidden = !flightWorkflow.canDecide(frame);
+  element("hold-order").hidden = !flightWorkflow.canDecide(frame);
+  element("complete-order").hidden = !flightWorkflow.canComplete(frame);
   element("clock").textContent = clock(frame.time);
   element("phase").textContent = frame.phase + " · " + frame.label;
   element("resource-phase").textContent = frame.phase + " · " + frame.vehicle;
@@ -512,6 +541,10 @@ for (const field of ["mood", "symptoms"]) {
     render();
   });
 }
+element("assign-order").addEventListener("click", () => { flightWorkflow.decide(currentFrame(),true); render(); });
+element("hold-order").addEventListener("click", () => { flightWorkflow.decide(currentFrame(),false); render(); });
+element("complete-order").addEventListener("click", () => { flightWorkflow.complete(currentFrame()); render(); });
+window.addEventListener("storage", event => { if (event.key === flightWorkflow.key) render(); });
 const overlay = element("overlays");
 let widgetOrder = 3;
 
@@ -554,6 +587,7 @@ function enableWidget(panel, toggle, initialPosition) {
   window.addEventListener("resize", () => move(position.x,position.y));
   move(position.x,position.y);
 }
+enableWidget(element("workflow-widget"), element("show-workflow"), () => ({x:14,y:100}));
 enableWidget(element("map-widget"), element("show-map"), () => ({x:14,y:overlay.clientHeight - 165}));
 enableWidget(element("inspector-widget"), element("show-inspector"), () => ({x:14,y:80}));
 enableWidget(element("crew-widget"), element("show-crew"), () => ({

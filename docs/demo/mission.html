@@ -108,6 +108,13 @@ button[aria-pressed=true]{color:var(--ink);background:#9d93ff22}
         <input id="checkpoint" type="range" min="0" value="0" aria-label="Travel checkpoint">
       </div>
       <p id="replay-caption"></p>
+      <section aria-labelledby="ground-order-title">
+        <h2 id="ground-order-title">Ground inspection request</h2>
+        <p class="muted" id="ground-order-state"></p>
+        <button type="button" id="send-order">Send inspection request</button>
+        <button type="button" id="reset-order">Clear replay request</button>
+        <p class="muted">At or after 06:00, send from delivered v102. In Flight, open Orders and advance to the uplink time for the Commander’s decision.</p>
+      </section>
       <p class="muted">Cabin values come from the Python model. Scrubber faults and power changes follow the replay scenario.</p>
       <div id="replay-crew" role="group" aria-label="Confirm reduced activity at 06:00"></div>
     </section>
@@ -120,6 +127,9 @@ button[aria-pressed=true]{color:var(--ink);background:#9d93ff22}
   </section>
 </main>
 <script type="application/json" id="room-catalog">__ROOM_CATALOG__</script>
+<script>
+__FLIGHT_WORKFLOW__
+</script>
 <script>
 const byId = id => document.getElementById(id);
 const catalog = JSON.parse(byId("room-catalog").textContent);
@@ -212,6 +222,9 @@ function renderReplay() {
   const key = catalog.crew_ids.filter(id => reducedCrew.has(id)).join(",");
   const frame = catalog.replays[key][frameIndex];
   byId("checkpoint").value = frameIndex;
+  byId("ground-order-state").textContent = flightWorkflow.status(frame, formatTime, true);
+  byId("send-order").disabled = !flightWorkflow.canSend(frame);
+  byId("reset-order").disabled = !flightWorkflow.read();
   byId("live-systems").hidden = !replayMode || !run;
   byId("checkpoint").setAttribute("aria-valuetext", formatTime(frame.time) + " " + frame.label);
   byId("replay-caption").textContent = "Replay " + formatTime(frame.time) + " · " + frame.phase + " · " + frame.vehicle + " · " + frame.label + " · Cabin " + frame.co2.toFixed(2) + " ppm";
@@ -282,6 +295,12 @@ byId("checkpoint").addEventListener("input", event => {
   frameIndex = Number(event.target.value);
   renderReplay();
 });
+byId("send-order").addEventListener("click", () => {
+  flightWorkflow.send(catalog.replays[""][frameIndex]);
+  renderReplay();
+});
+byId("reset-order").addEventListener("click", () => { flightWorkflow.reset(); renderReplay(); });
+window.addEventListener("storage", event => { if (event.key === flightWorkflow.key) renderReplay(); });
 byId("next-checkpoint").addEventListener("click", nextCheckpoint);
 byId("reset-replay").addEventListener("click", () => {
   stopReplay();

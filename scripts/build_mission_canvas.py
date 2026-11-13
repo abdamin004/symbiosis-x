@@ -30,7 +30,8 @@ def build(output: Path) -> None:
     }
     template = (ROOT / "docs/demo/mission.html").read_text(encoding="utf-8")
     payload = json.dumps(data, ensure_ascii=False).replace("<", "\\u003c")
-    output.write_text(template.replace("__ROOM_CATALOG__", payload), encoding="utf-8")
+    workflow = (ROOT / "docs/demo/flight-workflow.js").read_text(encoding="utf-8")
+    output.write_text(template.replace("__ROOM_CATALOG__", payload).replace("__FLIGHT_WORKFLOW__", workflow), encoding="utf-8")
 
 
 if __name__ == "__main__":
