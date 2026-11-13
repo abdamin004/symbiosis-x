@@ -70,6 +70,16 @@ def load_wearable_fixture(path: str | Path = DEFAULT_FIXTURE_PATH) -> dict:
         for key in ("motion_sample_id", "repeat_of_sample_id"):
             if key in row and row[key] not in ids - {row["sample_id"]}:
                 raise ValueError("wearable evidence link must name another fixture sample")
+    repeat = fixture["recheck_repeat"]
+    trigger = next((row for row in fixture["deliveries"]
+                    if row["sample_id"] == repeat.get("repeat_of_sample_id")), None)
+    if (
+        trigger is None or trigger["quality"] != "suspect" or repeat["quality"] != "valid"
+        or (repeat["channel"], repeat["activity"]) != (trigger["channel"], trigger["activity"])
+        or not trigger["received_at_s"] < repeat["observed_at_s"]
+        or not repeat["received_at_s"] < fixture["recheck"]["expires_at_s"]
+    ):
+        raise ValueError("wearable recheck requires a later, comparable repeat before expiry")
     return fixture
 
 

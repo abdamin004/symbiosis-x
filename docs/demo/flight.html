@@ -1048,6 +1048,17 @@ __HUD_ICONS__
     </div>
     <a id="personnel-health" hidden>Open private health record</a>
     <p id="crew-exposure" hidden>Suspected CO₂ exposure · simulated risk. Crew check requested.</p>
+    <div class="twin-peer" id="wearable-recheck" hidden>
+      <strong>Private wearable recheck</strong>
+      <output id="wearable-recheck-status" aria-live="polite"></output>
+      <output id="wearable-recheck-evidence"></output>
+      <label id="wearable-recheck-observer-label">Crewmate observer
+        <select id="wearable-recheck-observer"></select>
+      </label>
+      <button id="wearable-recheck-action" type="button"></button>
+      <output id="wearable-recheck-error" aria-live="polite"></output>
+      <a id="wearable-recheck-emergency">Open Emergency Assist</a>
+    </div>
     <div class="choices personnel-actions" role="group" aria-label="Crew profile views">
       <button type="button" data-twin-view="body" aria-pressed="true">Body</button>
       <button type="button" data-twin-view="bio" aria-pressed="false">Bio</button>
@@ -2211,22 +2222,26 @@ const missionWearables = new Map();
 const pendingWearables = new Set();
 let wearableSession;
 
-function refreshWearables(crewId) {
-  if (connectedFlight?.timedDemo || pendingWearables.has(crewId)) return;
-  pendingWearables.add(crewId);
-  wearableSession ??= fetch("/api/v1/demo/session", {method:"POST",cache:"no-store"}).then(response=>{
+function wearableEndpoint(crewId, suffix = "") {
+  const path = "/api/v1/runs/"+encodeURIComponent(flightHealthRun)+"/crew/wearables";
+  return path+suffix+"?"+new URLSearchParams({crew_id:crewId});
+}
+
+function crewWearableSession() {
+  return wearableSession ??= fetch("/api/v1/demo/session", {method:"POST",cache:"no-store"}).then(response=>{
     if (!response.ok) throw new Error("Crew session unavailable");
     return response.json();
   });
-  wearableSession.then(async ({crew})=>{
-    const path = "/api/v1/runs/"+encodeURIComponent(flightHealthRun)+"/crew/wearables";
-    const response = await fetch(path+"?"+new URLSearchParams({crew_id:crewId}), {
+}
+
+function refreshWearables(crewId) {
+  if (connectedFlight?.timedDemo || pendingWearables.has(crewId)) return;
+  pendingWearables.add(crewId);
+  crewWearableSession().then(async ({crew})=>{
+    const response = await fetch(wearableEndpoint(crewId), {
       headers:{Authorization:"Bearer "+crew},cache:"no-store",
     });
-    if (!response.ok) {
-      if (response.status === 401) wearableSession = undefined;
-      throw new Error("Device stream unavailable");
-    }
+    if (!response.ok) throw new Error("Device stream unavailable");
     const result = await response.json();
     if (result.run_id !== flightHealthRun || result.crew_id !== crewId) throw new Error("Device stream mismatch");
     missionWearables.set(crewId,result);
@@ -2238,6 +2253,84 @@ function refreshWearables(crewId) {
     render();
   });
 }
+
+const recheckErrors = new Map();
+const pendingRechecks = new Set();
+const recheckReasons = {
+  EXPIRED:"The recheck deadline passed.",
+  OBSERVER_UNAVAILABLE:"No crewmate is available.",
+  REPEAT_EVIDENCE_UNAVAILABLE:"The repeat observation is not available yet.",
+  ALREADY_ASSIGNED:"A crewmate is already assigned.",
+  WRONG_OBSERVER:"Only the assigned crewmate can record the repeat.",
+};
+const observerName = id => characters[data.crew.indexOf(id)]?.name ?? id;
+
+function renderWearableRecheck(crewId, timed) {
+  const panel = element("wearable-recheck");
+  const snapshot = missionWearables.get(crewId);
+  const task = timed ? null : snapshot?.recheck;
+  panel.hidden = !task;
+  if (!task) return;
+  const time = seconds => "T+"+clock(seconds);
+  const status = {
+    offered:"Offered · choose a crewmate",
+    held:"On hold · "+recheckReasons[task.reason_code],
+    assigned:"Assigned to "+observerName(task.observer_id)+" at "+time(task.assigned_at_s),
+    verified:"Repeat verified by "+observerName(task.observer_id)+" at "+time(task.completed_at_s),
+  }[task.status];
+  element("wearable-recheck-status").textContent = status+" · due "+time(task.expires_at_s);
+  const readings = snapshot.channels.wristband.history;
+  const evidence = task.evidence_ids.map(id=>{
+    const sample = readings.find(reading=>reading.event_id === id);
+    return sample ? sample.quality+" "+sample.value+" "+sample.unit+" at "+time(sample.observed_at_s) : id;
+  });
+  if (task.status === "assigned" && snapshot.mission_s < task.repeat_available_at_s) {
+    evidence.push("Repeat available at "+time(task.repeat_available_at_s));
+  }
+  element("wearable-recheck-evidence").textContent = evidence.join(" · ");
+
+  const observer = element("wearable-recheck-observer");
+  const ids = task.available_observers.join(",");
+  if (observer.dataset.ids !== ids) {
+    observer.replaceChildren(...task.available_observers.map(id=>new Option(observerName(id),id)));
+    observer.dataset.ids = ids;
+  }
+  element("wearable-recheck-observer-label").hidden = task.status !== "offered";
+  const button = element("wearable-recheck-action");
+  button.hidden = !["offered","assigned"].includes(task.status);
+  button.disabled = pendingRechecks.has(crewId)
+    || task.status === "assigned" && snapshot.mission_s < task.repeat_available_at_s;
+  button.textContent = task.status === "offered" ? "Assign wearable recheck" : "Record simulated repeat";
+  element("wearable-recheck-error").textContent = recheckErrors.get(crewId) ?? "";
+  element("wearable-recheck-emergency").href = "/runs/"+encodeURIComponent(flightHealthRun)
+    +"/crew/emergency";
+}
+
+element("wearable-recheck-action").addEventListener("click",async ()=>{
+  const crewId = data.crew[profileMembers.get("personnel")];
+  const task = missionWearables.get(crewId)?.recheck;
+  if (!task || pendingRechecks.has(crewId) || !["offered","assigned"].includes(task.status)) return;
+  const action = task.status === "offered" ? "assign" : "record";
+  const observerId = task.observer_id ?? element("wearable-recheck-observer").value;
+  pendingRechecks.add(crewId);
+  recheckErrors.delete(crewId);
+  render();
+  try {
+    const {crew} = await crewWearableSession();
+    const response = await fetch(wearableEndpoint(crewId,"/rechecks/"+encodeURIComponent(task.task_id)),{
+      method:"POST",cache:"no-store",
+      headers:{Authorization:"Bearer "+crew,"Content-Type":"application/json"},
+      body:JSON.stringify({action,observer_id:observerId}),
+    });
+    if (response.status === 401) wearableSession = undefined;
+    if (!response.ok) throw new Error(recheckReasons[(await response.json()).detail] ?? "Recheck could not be saved.");
+  } catch (error) {
+    recheckErrors.set(crewId,error.message);
+  } finally {
+    pendingRechecks.delete(crewId);
+    refreshWearables(crewId);
+  }
+});
 
 function wearableSummary(channel) {
   const {status,accepted,age_s,evidence} = channel.reading;
@@ -2450,6 +2543,7 @@ function renderProfiles(frame) {
       element("personnel-data").hidden = twinView === "body";
       for (const button of document.querySelectorAll("[data-twin-view]"))
         button.setAttribute("aria-pressed",String(button.dataset.twinView===twinView));
+      renderWearableRecheck(id,timed);
       if (twinView === "body") updateBodyMap(row,member,frame);
       rows = twinView === "social" ? [
         ["Crew relationship",characters[persona.link].name + " · " + persona.bond,"users"],

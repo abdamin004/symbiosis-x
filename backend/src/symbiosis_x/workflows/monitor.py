@@ -4,8 +4,8 @@ Monitor asks the allowlisted ``request_plan_evaluation`` tool for permission,
 then opens at most one incident per fault type and component in a run. The
 first fault event opens the case and asks the planner to evaluate the three
 options; later events for the same fault are linked to that case. The case
-names its next owner, plan result and explanation. Everything here is
-operational and advisory: no private wellbeing data, no plant command.
+names its next owner, plan result and explanation. Fault handling is operational and advisory. The separate wearable rule reads
+only private Crew evidence and issues no plant command.
 """
 
 import json
@@ -15,6 +15,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
+from symbiosis_x.crew.wearable_series import EVENT_TYPE, WearableObservation, WRISTBAND_SOURCE
 from symbiosis_x.twin.constraints import PlanEvaluation
 from symbiosis_x.workflows.planner import evaluate_run
 from symbiosis_x.workflows.runner import ToolCall, dispatch
@@ -142,3 +143,72 @@ def handle_fault(db: Connection, run_id: str, event_id: str) -> IncidentCase:
                  fault["mission_s"], {"incident_id": case.incident_id, "fault_event_id": event_id})
         linked = (*linked, event_id)
     return case.model_copy(update={"linked_event_ids": linked})
+
+
+class WearableRecheck(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    task_id: str
+    trigger_event_id: str
+    opened_at_s: int
+    expires_at_s: int
+    repeat_available_at_s: int
+    status: Literal["offered", "held", "assigned", "verified"]
+    reason_code: Literal["OBSERVER_UNAVAILABLE", "EXPIRED"] | None = None
+    available_observers: tuple[str, ...] = ()
+    observer_id: str | None = None
+    assigned_at_s: int | None = None
+    completed_at_s: int | None = None
+    evidence_ids: tuple[str, ...]
+    synthetic: Literal[True] = True
+
+
+def read_wearable_recheck(
+    db: Connection, run_id: str, crew_id: str, mission_s: int, fixture: dict,
+) -> WearableRecheck | None:
+    """Offer one Crew recheck for the first delivered exercise motion artifact."""
+    row = db.execute(
+        """SELECT e.payload_json FROM health_observations h
+           JOIN events e ON e.run_id = h.run_id AND e.event_id = h.event_id
+           WHERE h.run_id = ? AND h.crew_id = ? AND h.source_id = ?
+             AND h.received_at_s <= ? AND h.quality = 'suspect'
+             AND json_extract(h.context_json, '$.reason_code') = 'MOTION_ARTIFACT'
+             AND json_extract(h.context_json, '$.activity') = 'exercise'
+             AND e.event_type = ? AND e.visibility = 'crew'
+           ORDER BY h.received_at_s, e.event_seq LIMIT 1""",
+        (run_id, crew_id, WRISTBAND_SOURCE, mission_s, EVENT_TYPE),
+    ).fetchone()
+    if row is None:
+        return None
+
+    trigger = WearableObservation(**json.loads(row["payload_json"]))
+    task_id = "wearable-recheck-" + sha256(f"{run_id}:{trigger.event_id}".encode()).hexdigest()[:24]
+    history = db.execute(
+        """SELECT payload_json FROM events
+           WHERE run_id = ? AND visibility = 'crew' AND mission_s <= ?
+             AND event_id IN (?, ?)
+           ORDER BY event_seq DESC LIMIT 1""",
+        (run_id, mission_s, task_id + ":assigned", task_id + ":verified"),
+    ).fetchone()
+    expires_at_s = fixture["recheck"]["expires_at_s"]
+    available = tuple(
+        observer for observer, free_at_s in fixture["recheck"]["observers"].items()
+        if observer != crew_id and free_at_s <= mission_s < expires_at_s
+    )
+    task = (
+        WearableRecheck.model_validate_json(history["payload_json"])
+        if history else WearableRecheck(
+            task_id=task_id, trigger_event_id=trigger.event_id, opened_at_s=trigger.received_at_s,
+            expires_at_s=expires_at_s, repeat_available_at_s=fixture["recheck_repeat"]["received_at_s"],
+            status="offered", evidence_ids=(trigger.event_id,),
+        )
+    )
+    if task.status == "verified":
+        return task
+    if mission_s >= expires_at_s:
+        return task.model_copy(update={"status": "held", "reason_code": "EXPIRED", "available_observers": ()})
+    if task.status == "assigned":
+        return task
+    if not available:
+        return task.model_copy(update={"status": "held", "reason_code": "OBSERVER_UNAVAILABLE"})
+    return task.model_copy(update={"available_observers": available})
