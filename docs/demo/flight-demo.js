@@ -10,7 +10,9 @@ const flightDemoCues = [
   [14, "Booster separation", "launch-separate"],
   [19, "Orbital insertion", "launch-insert"],
   [29, "Stable orbit · cabin and Crew baseline", "crew-baseline"],
+  [33, null, "show-deck"],
   [36, "Suspected CO₂ exposure · check on Sana", 1],
+  [40, null, "show-systems"],
   [43, "Private Crew check · Noor checks on Sana", "crew-check"],
   [51, "Ivo inspects the scrubber · Noor’s operational alert is in transit", 1],
   [60, "Private Crew check · observation recorded", 1],
@@ -18,7 +20,10 @@ const flightDemoCues = [
   [74, "Scrubber repair · Ivo restores airflow", 1],
   [81, "Crew verifies restored flow and watches the CO₂ trend", 1],
   [85, "Crew confirms CO₂ is falling · recovery report in transit", 1],
+  [86, null, "close-twin", "show-ground"],
+  [87, null, "show-orders"],
   [88, null, 1],
+  [91, null, "reset-panels"],
   [94, "Scheduled spacewalk · Mara releases antenna inspection", 1, "start-demo-eva"],
   [97, "Ground receives the cabin recovery report", 1],
   [100, "Spacewalk · Ivo exits to service the antenna", 1],
@@ -27,7 +32,8 @@ const flightDemoCues = [
   [109, "Spacewalker returns through the airlock", 1],
   [111, null, 1],
   [114, "Mara verifies Ivo’s safe return", 1, "verify-demo-eva", "close-twin"],
-  [117, "Coast to the ISS window", "close-twin", "launch-coast"],
+  [115, null, "show-workflows"],
+  [117, "Coast to the ISS window", "reset-panels", "close-twin", "launch-coast"],
   [122, "ISS transfer burn", "launch-phasing"],
   [132, "Transfer coast · engines off", "launch-coast"],
   [137, "Match station orbit", "launch-match"],
@@ -93,7 +99,7 @@ function flightDemoWristband(crewId, time, insertion) {
   }};
 }
 
-function createFlightDemo({banner, clock, status, pause}, {begin, run, busy, next, suspend, resume}) {
+function createFlightDemo({banner, clock, status, pause}, {begin, run, busy, next, suspend, resume, paintScene, soundCue}) {
   const format = seconds => Math.floor(seconds/60) + ":" + String(seconds%60).padStart(2,"0");
   const duration = flightDemoCues.at(-1)[0];
   let started, pausedAt, cursor, frame;
@@ -113,8 +119,10 @@ function createFlightDemo({banner, clock, status, pause}, {begin, run, busy, nex
         return;
       }
       if (label) status.textContent = label;
+      soundCue(cue[0]);
       cursor++;
     }
+    paintScene(now);
     if (cursor < flightDemoCues.length) frame = requestAnimationFrame(paint);
     else pause.hidden = true;
   }

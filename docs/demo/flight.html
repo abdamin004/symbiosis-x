@@ -435,12 +435,12 @@ button[aria-pressed=true]{background:#3d315e}
 #return-scene{position:relative;display:grid;justify-items:center;max-width:660px;margin:0 auto;color:#deefff;pointer-events:none}
 #return-art{width:min(100%,570px);height:min(48dvh,370px);overflow:visible}
 #return-sea-backdrop{display:none}
-.stage[data-vehicle=landed]::before,.stage[data-vehicle=landed]::after{display:none}
-.stage[data-vehicle=landed]{background:linear-gradient(#244964 2%,#7c9aaa 39%,#91b2bd 49%,#2e7296 50%,#102e42 100%)}
+.stage:is([data-vehicle=landed],[data-return=chutes])::before,.stage:is([data-vehicle=landed],[data-return=chutes])::after{display:none}
+.stage:is([data-vehicle=landed],[data-return=chutes]){background:linear-gradient(#244964 2%,#7c9aaa 39%,#91b2bd 49%,#2e7296 50%,#102e42 100%)}
 .stage[data-vehicle=landed] .viewport{max-width:none;overflow:visible}
 .stage[data-vehicle=landed] #return-scene{max-width:none}
-.stage[data-vehicle=landed] #return-sea-backdrop{display:block;position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
-.stage[data-vehicle=landed] #return-art .return-environment{display:none}
+.stage:is([data-vehicle=landed],[data-return=chutes]) #return-sea-backdrop{display:block;position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
+.stage:is([data-vehicle=landed],[data-return=chutes]) #return-art .return-environment{display:none}
 .stage[data-vehicle=landed] #return-art{filter:drop-shadow(0 12px 20px #031a2d88)}
 #return-scene .return-piece{display:none}
 #return-scene[data-phase=separation] #return-module,#return-scene[data-phase=entry] #return-heat,
@@ -464,6 +464,9 @@ button[aria-pressed=true]{background:#3d315e}
 @media(max-width:850px){.launch-field[data-view=launch] .pad-checkout .launch-board{max-height:none}}
 #orbit-dialog{width:min(680px,calc(100% - 1.5rem))}
 #process-dialog{width:min(670px,calc(100% - 1.5rem))}
+#process-dialog[data-demo-dock]{position:fixed;inset:auto auto max(.65rem,env(safe-area-inset-bottom)) max(.65rem,env(safe-area-inset-left));width:min(345px,calc(100vw - 1.3rem));max-height:43dvh;margin:0;z-index:11}
+#process-dialog[data-demo-dock] :is(#process-settings,#process-release,#process-recall,#process-verify,#process-comm-check,#process-list){display:none}
+@media(min-width:681px){.stage[data-demo-crew] #personnel-widget .body-layout{grid-template-columns:82px minmax(0,1fr)}}
 #airlock-dialog{width:min(620px,calc(100% - 1.5rem))}
 #airlock-particles{width:100%;height:auto;display:block;background:#0b1329;border-radius:8px;margin:.6rem 0}
 #airlock-gases{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem;margin:.6rem 0}
@@ -885,8 +888,6 @@ ul.tutorial-startup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));g
   #map-current{font-size:.68rem}
   #map-current-objective{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
   #map-plan-open{min-height:28px}
-  main:has(.stage[data-timed-demo]) #map-widget :is([data-map-view=deck],[data-map-view=systems]){display:none}
-  main:has(.stage[data-timed-demo]) #map-widget .map-views:not(:has([data-map-view]:not([data-map-view=route],[data-map-view=deck],[data-map-view=systems]))){display:none}
   .plan-milestones{gap:1px;margin-top:.35rem}
   .plan-milestones li{font-size:.56rem}
   .plan-milestones li + li::before{top:.53rem}
@@ -1519,7 +1520,7 @@ __HUD_ICONS__
       <button id="launch-open-missions" type="button" hidden>Save and exit</button>
       <button id="launch-open-objectives" type="button" hidden>Objectives</button>
       <button id="launch-show-processes" type="button" hidden>Workflows</button>
-      <button id="pad-audio" type="button" aria-pressed="true">Voice cues</button>
+      <button id="pad-audio" type="button" aria-pressed="true">Mission audio</button>
       <a href="/mission">Mission control · golden run</a>
     </div>
   </nav>
@@ -3238,6 +3239,7 @@ function doorClearance(x,y) {
 function paintFlight(frame, sceneTime = missionTime) {
   const returnScene = element("return-scene");
   const recovery = connectedFlight?.recovery;
+  element("stage").dataset.return = recovery?.phase ?? "";
   returnScene.hidden = !recovery;
   if (recovery) {
     returnScene.dataset.phase = recovery.phase;
@@ -3637,14 +3639,16 @@ choices("process-list",Object.entries(flightProcedures).map(([id,process])=>[id,
   loadProcessSettings();
 });
 const exerciseInspector = bindExerciseInspector({find:element, runId:flightHealthRun, clock, session:crewWearableSession});
-function openProcesses(mode) {
+function openProcesses(mode, modal = true) {
   exerciseInspector.open(mode === "replay");
   processMode = mode;
   if (mode === "pad") selectedProcess = "checkout";
   loadProcessSettings();
   setChoices("process-list",selectedProcess);
   lastProcessRender = "";
-  element("process-dialog").showModal();
+  const dialog = element("process-dialog");
+  dialog.toggleAttribute("data-demo-dock",!modal);
+  if (!dialog.open) modal ? dialog.showModal() : dialog.show();
   renderProcess(currentFrame());
 }
 element("show-processes").addEventListener("click",()=>openProcesses(crewMode()));
@@ -3858,6 +3862,26 @@ const launchMission = bindLaunchCheckout(data.missions,data.replay_version,{
   openCommand:trigger=>commandPanel.open(trigger),
   closeCommand:()=>commandPanel.close(),
   onDemoCrew(action) {
+    if (action === "reset-panels") {
+      if (element("process-dialog").open) element("process-dialog").close();
+      if (!element("workflow-widget").hidden) ordersWindow.close();
+      selectOverviewTab(document.querySelector('[data-map-view="route"]'));
+      return true;
+    }
+    if (["show-deck","show-systems","show-ground"].includes(action)) {
+      const tab = document.querySelector('[data-map-view="'+action.slice(5)+'"]');
+      if (getComputedStyle(tab).display !== "none") selectOverviewTab(tab);
+      return true;
+    }
+    if (action === "show-orders") {
+      ordersWindow.open(element("demo-pause"));
+      return true;
+    }
+    if (action === "show-workflows") {
+      selectedProcess = "eva";
+      openProcesses(crewMode(),false);
+      return true;
+    }
     if (action === "close-twin") {
       element("stage").removeAttribute("data-demo-crew");
       for (const panel of profileWindows.values()) { panel.close(); panel.resetPosition(); }
@@ -3890,6 +3914,16 @@ const launchMission = bindLaunchCheckout(data.missions,data.replay_version,{
     profile.open(portraits.get(member));
     render();
     return true;
+  },
+  onDemoFrame(now) {
+    if (!connectedFlight?.timedDemo || now-lastPaintAt < 48 || connectedFlight.recovery?.phase === "recovered") return;
+    const elapsed = connectedFlight.playbackLimit == null
+      ? Math.max(0,Math.min(TICK_SECONDS-1,(now-canvasTickStarted)*.004))
+      : Math.max(0,Math.min(TICK_SECONDS-1,connectedFlight.playbackLimit-missionTime,(now-canvasTickStarted)*.004));
+    const visualTime = missionTime+elapsed;
+    if (!reducedMotion.matches) paintFlight(currentFrame(),visualTime);
+    element("hud-clock").textContent = "T+"+clock(Math.floor(visualTime));
+    lastPaintAt = now;
   },
   exteriorBusy:(mode,time)=>tasks.some(job=>job.mode===mode && job.procedure==="eva" &&
     job.queued<=time && time<job.finishes),
