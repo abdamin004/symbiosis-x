@@ -1,6 +1,7 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SYMBIOSIS X — Feature Backlog and Build Plan</title>
 <style>
+.tablewrap{overflow:auto}.health-table{width:100%;min-width:640px;border-collapse:collapse}.health-table td,.health-table th{padding:10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}.health-table td{color:var(--dim);font-size:.9rem}
 .wireframe{min-width:0;scroll-margin-top:12px}.wire{display:grid;gap:6px;padding:9px;margin:10px 0;background:#101d25;border:1px solid #526f7a;border-radius:8px;font-size:.8rem}.wire-top{display:flex;justify-content:space-between;gap:5px;color:#a7edca;font-weight:700}.wire-item{background:#253d49;border:1px solid #54707c;padding:7px;border-radius:4px;min-width:0}.wire-item small{display:block;color:#d2e3e5}.wire-item.accent{border-color:#91d5b6}.wire-cols{display:grid;gap:6px;grid-template-columns:1fr 1fr}.sequence-group{background:#192a34;border:1px solid #43606d;border-radius:9px;margin:8px 0}.sequence-group ul{padding:0 25px 10px 34px}.sequence-group li{margin:4px 0}.sequence-group summary{font-weight:700}.seq-dep{display:block;color:#c0d1d5;font-size:.82rem}
 
 :root{color-scheme:dark;--bg:#101820;--panel:#192a34;--line:#43606d;--ink:#f0f6f2;--dim:#c0d1d5;--green:#a7edca;--blue:#b6d6fb;--amber:#ffca8c}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,sans-serif}p,h1,h2,h3{margin:0}a{color:var(--green);text-underline-offset:.2em}button,select,textarea{font:inherit;color:inherit;background:#233946;border:1px solid #678592;border-radius:6px;padding:7px 10px}button{cursor:pointer}button:hover{border-color:var(--green)}:focus-visible{outline:2px solid white;outline-offset:3px}.wrap{width:min(1230px,calc(100% - 42px));margin:auto}header{padding:clamp(45px,7vw,87px) 0 37px;background:radial-gradient(ellipse at 84% 15%,#2a4a43,transparent 67%);border-bottom:1px solid var(--line)}h1{font-size:clamp(2.9rem,7vw,6.1rem);line-height:1;letter-spacing:-.07em;margin:9px 0 18px}h2{font-size:clamp(1.8rem,4vw,3.05rem);letter-spacing:-.05em;line-height:1.08;margin-bottom:12px}h3{font-size:1.08rem;line-height:1.25;margin-bottom:6px}.lead{max-width:780px;font-size:1.13rem;color:#dceae7}.meta,.ticket-id{font:650 .76rem/1.4 ui-monospace,monospace;letter-spacing:.07em;color:var(--green);text-transform:uppercase}.intro,.note{color:var(--dim)}.intro{max-width:920px;margin-bottom:16px}.note{font-size:.89rem}nav{display:flex;flex-wrap:wrap;gap:8px 22px;padding:13px 0;font-size:.9rem}nav a{text-decoration:none}main>section{border-top:1px solid var(--line);padding:35px 0;scroll-margin-top:10px}.flow,.grid{display:grid;gap:10px;margin:11px 0}.flow{grid-template-columns:repeat(4,minmax(0,1fr));list-style:none;padding:0}.flow li,.card,details{background:var(--panel);border:1px solid var(--line);border-radius:9px}.flow li,.card{padding:13px}.flow li{position:relative}.flow li+li::before{content:"›";color:var(--green);position:absolute;left:-11px;top:38%;font-weight:bold}.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}.note-box{border-left:3px solid var(--blue);background:#1b2d37;padding:10px 12px;margin:12px 0}.toolbar{display:flex;flex-wrap:wrap;align-items:end;gap:9px;margin:13px 0}.toolbar label{display:flex;flex-direction:column;gap:4px}.toolbar label span{font-size:.82rem;color:var(--dim)}.toolbar select,.toolbar button{font-size:.9rem}details{margin:8px 0;scroll-margin-top:11px}summary{cursor:pointer;padding:12px 14px}summary .ticket-id{margin-right:9px}summary strong{margin-right:8px}.chip{font-size:.74rem;font-weight:650;display:inline-block;border:1px solid #688794;border-radius:5px;padding:0 6px;color:var(--blue);margin:0 4px 3px 0}.chip.expand{color:var(--amber)}.summary-check{display:block;color:var(--dim);font-size:.85rem;margin:5px 0 0 19px}.ticket-body{padding:2px 14px 13px}.ticket-body p+p{margin-top:7px}.ticket-body button{font-size:.82rem;margin:8px 7px 0 0}.ticket-body textarea{display:block;width:100%;min-height:130px;margin-top:9px}code{color:var(--blue);overflow-wrap:anywhere}ul{margin:7px 0;padding-left:20px}.links{display:flex;flex-wrap:wrap;gap:8px 19px;margin-top:13px}[hidden]{display:none!important}
@@ -8,16 +9,16 @@
 @media(max-width:650px){.wrap{width:calc(100% - 26px)}.grid,.grid.two{grid-template-columns:1fr}main>section{padding:26px 0}}
 @media print{details[hidden]{display:block!important}.toolbar,nav,.ticket-body button{display:none}.ticket-body{display:block}}
 </style></head><body>
-<header><div class="wrap"><p class="meta">SYMBIOSIS X / Build handoff · 13 November 2026</p><h1>Feature backlog</h1><p class="lead">Small tickets for the six-person team, each with a focused change, exact files and a named test or review check. Start with one shared flight run. Add the incident, Crew and Ground handoff, and release evidence in that order.</p></div></header>
-<nav class="wrap" aria-label="Sections"><a href="#plan">Build plan</a><a href="SYMBIOSIS%20X%2030-Second%20Demo%20Brief.html">30-second demo</a><a href="#first">First tickets</a><a href="#pages">Page mockups</a><a href="#sequence">Build sequence</a><a href="#tickets">Ticket board</a><a href="#checks">Health and merge checks</a><a href="#incoming">Incoming data</a><a href="#judging">Judging evidence</a><a href="#release">Release checks</a></nav>
+<header><div class="wrap"><p class="meta">SYMBIOSIS X / Build handoff · 13 November 2026</p><h1>Feature backlog</h1><p class="lead">Small tickets for the six-person team, each with a focused change, exact files and a named test or review check. Build the astronaut self-assessment path first, then prove local emergency response and a delayed Ground handoff.</p></div></header>
+<nav class="wrap" aria-label="Sections"><a href="#plan">Build plan</a><a href="SYMBIOSIS%20X%2030-Second%20Demo%20Brief.html">30-second demo</a><a href="#first">First tickets</a><a href="#pages">Five pages</a><a href="#health-scope">Health requirements</a><a href="#sequence">Build sequence</a><a href="#tickets">Ticket board</a><a href="#checks">Health and merge checks</a><a href="#incoming">Incoming data</a><a href="#judging">Judging evidence</a><a href="#release">Release checks</a></nav>
 <main class="wrap">
 <section id="plan"><h2>Build in four checkpoints</h2>
-<p class="intro"><strong>Sprint goal.</strong> Start and advance a seeded flight on one host, show Crew and delayed Ground views, and demonstrate an auditable Crew decision. Team A integrates simulation and backend. Team B integrates crew, agents and the React views.</p>
+<p class="intro"><strong>Sprint goal.</strong> Enter a simulated health reading, explain the change, and complete an onboard emergency handoff while Ground is delayed. Team A integrates simulation and backend. Team B integrates crew, agents and the React views.</p>
 <ol class="flow" aria-label="Build and integration plan">
 <li><p class="meta">Start</p><h3>Agree on the boundary</h3><p class="note">Agree the first examples and scenario ID. Prepare the SQLite migration while cabin, crew, deck and workflow owners start in parallel.</p></li>
 <li><p class="meta">First slice</p><h3>Start → step → read</h3><p class="note">Run one mission through FastAPI and SQLite. Add live and ready probes, then connect both role views to the run.</p></li>
-<li><p class="meta">Golden run</p><h3>Replay the complete handoff</h3><p class="note">Combine cabin faults, power rules, the command gate, agent status, Relay and both views. Check the stale advice and separate accepted retry.</p></li>
-<li><p class="meta">Release</p><h3>Rehearse from the tag</h3><p class="note">Export backup frames, verify privacy and role views on two laptops, then prepare the subtitled demo and submission.</p></li>
+<li><p class="meta">Golden run</p><h3>Replay the complete handoff</h3><p class="note">Integrate profile, measurements, trends and reminders. Open an emergency locally, then verify what Ground receives.</p></li>
+<li><p class="meta">Release</p><h3>Rehearse from the tag</h3><p class="note">Rehearse the health replay and collapse variant. Verify privacy and prepare the subtitled demo and fallback.</p></li>
 </ol>
 <div class="grid two">
 <article class="card"><h3>Team A · Simulation and backend</h3><p class="note">Mohamed leads integration, Ahmed owns the spacecraft, and Sama owns FastAPI, SQLite and the approval gate. Merge feature branches into <code>integration/sim</code>.</p></article>
@@ -26,41 +27,54 @@
 <p class="note-box note">Use the same base commit and folder structure on every laptop. P1 coordinates the joint release merge. In the short Daily Scrum, each person identifies the next pull, any blocker, and the next cross-team handoff. After a boundary change, run the integrated replay. End with a review from the release checkout and a short retrospective.</p>
 </section>
 <section id="first"><h2>What each member pulls first</h2>
+<p class="note-box note"><strong>First working health slice.</strong> Run SIM-01 with one resting heart-rate entry, one explained personal comparison and one local chest-pain drill. Build the measurement and emergency screens against shared examples while the backend lands. Then connect delayed Ground status and reuse the same form for the other six indicators. Test collapse separately. The <strong>Health demo</strong> filter shows the work needed for release.</p>
 <div class="grid">
 <article class="card"><h3>Mohamed</h3><p class="note"><a href="#SX-01A">SX-01A · Freeze examples</a>. Share the golden fixture ID and identify the producer and consumer of each payload.</p></article>
 <article class="card"><h3>Ahmed</h3><p class="note"><a href="#SX-03">SX-03 · Cabin and power</a>. Start the pure model and check the 100 m³ reference.</p></article>
 <article class="card"><h3>Sama</h3><p class="note"><a href="#SX-21A">SX-21A · Backend bootstrap</a>, then <a href="#SX-05D">SX-05D · SQLite schema</a>.</p></article>
 <article class="card"><h3>Abdelrahman</h3><p class="note"><a href="#SX-07A">SX-07A · Workflow runner</a>. Build trigger and tool boundaries against example events.</p></article>
-<article class="card"><h3>Jana</h3><p class="note"><a href="#SX-04A">SX-04A · Confirmed activity</a>. Provide one sample event and get Ahmed to validate the cabin input.</p></article>
-<article class="card"><h3>Suhad</h3><p class="note"><a href="#SX-08A">SX-08A · 2D deck</a>. Port the original SVG in React JSX and build against the fixtures.</p></article>
+<article class="card"><h3>Jana</h3><p class="note"><a href="#SX-23B">SX-23B · Health metric catalog</a>. Start with a resting heart-rate example, then add the six remaining input shapes. Coordinate the profile in <a href="#SX-23A">SX-23A</a>.</p></article>
+<article class="card"><h3>Suhad</h3><p class="note"><a href="#SX-08C">SX-08C · Route shells</a>. Use fixtures for the Crew Health, Measurement and Emergency Assist flows while the backend is in progress.</p></article>
 </div>
 <p class="note">Members can prepare these tickets in parallel. Dependencies on SX-01A mean the example payload needs agreement before those changes are integrated. Use the planned owner as the default and coordinate any reassignment on the shared board.</p>
 </section>
-<section id="pages"><h2>Three pages for the first release</h2>
-<p class="intro">These wireframes show where each feature goes. The same run ID connects Crew and Ground. The deck inspector and case trace live inside the consoles. Facilitator controls appear only in a session with that capability.</p>
+<section id="pages"><h2>Five pages for the health-first release</h2>
+<p class="intro">These are the proposed React routes. The same run ID connects the Crew pages and Ground. Use tabs or drawers for the cabin inspector, metric guides, history and source notes.</p>
 <div class="grid">
-<article class="card wireframe" id="page-launch"><span class="meta">Page 1 · /</span><h3>Run launcher</h3>
-<div class="wire"><div class="wire-top">SYMBIOSIS X <span>Service ready</span></div><div class="wire-item"><b>Start a mission</b><small>SX-01 golden · seed 4242</small></div><div class="wire-item accent">Start run</div><div class="wire-cols"><div class="wire-item">Open Crew</div><div class="wire-item">Open Ground</div></div><div class="wire-item">Run ID · Reset run</div></div>
-<p class="note"><a href="#SX-08C">Page shell</a> · <a href="#SX-08D">Run controls</a> · <a href="#SX-20C">Health badge</a></p></article>
-<article class="card wireframe" id="page-crew"><span class="meta">Page 2 · /runs/:runId/crew</span><h3>Crew console</h3>
-<div class="wire"><div class="wire-top">CREW <span>13:00 · v103</span></div><div class="wire-item">Flight phase · Next waypoint · ETA</div><div class="wire-cols"><div class="wire-item"><b>2D ship and layers</b><small>Cabin · Power · Asset inspector</small></div><div class="wire-item"><b>Private crew health</b><small>Baseline · Check-in · RadLab context</small></div></div><div class="wire-item accent">Candidate checks → Crew approval → Receipt</div><div class="wire-item">Agent status and case timeline</div></div>
-<p class="note"><a href="#SX-08A">2D deck</a> · <a href="#SX-09A">Crew health</a> · <a href="#SX-09C">Approval</a> · <a href="#SX-10">Case trace</a></p></article>
-<article class="card wireframe" id="page-ground"><span class="meta">Page 3 · /runs/:runId/ground</span><h3>Ground console</h3>
-<div class="wire"><div class="wire-top">GROUND <span>Delivered v102</span></div><div class="wire-item">Observed 01:00 · Received 06:00 · Age 12 min</div><div class="wire-cols"><div class="wire-item"><b>Same 2D ship</b><small>Delivered values · 0.60 kW</small></div><div class="wire-item"><b>Link and packets</b><small>Last received · Delivery status</small></div></div><div class="wire-item accent">Advise standby on v102 → Queued receipt</div><div class="wire-item">Disposition pending delivery</div></div>
-<p class="note"><a href="#SX-09B">Snapshot panel</a> · <a href="#SX-09D">Advisory form</a> · <a href="#SX-22F">Role-safe trace</a></p></article>
+<article class="card wireframe" id="page-launch"><span class="meta">1 · /</span><h3>Run Launcher</h3><div class="wire"><div class="wire-top">SYMBIOSIS X <span>Service ready</span></div><div class="wire-item"><b>Choose training case</b><small>Health monitoring · Chest pain · Collapse · Cabin replay</small></div><div class="wire-item accent">Start run · Open Crew · Open Ground</div><div class="wire-item">Seed and version · Step / Reset for facilitator</div></div><p class="note"><a href="#SX-08C">Route shell</a> · <a href="#SX-08D">Run controls</a></p></article>
+<article class="card wireframe" id="page-crew"><span class="meta">2 · /runs/:runId/crew</span><h3>Crew Health</h3><div class="wire"><div class="wire-top">SIM-01 <span>Private Crew view</span></div><div class="wire-item">Profile · History · Personal baselines</div><div class="wire-cols"><div class="wire-item"><b>Seven indicators</b><small>Latest value · Unit · Trend</small></div><div class="wire-item"><b>What changed?</b><small>Personal range · Reference · Why review</small></div></div><div class="wire-item accent">Take measurement · Review alert · Emergency</div><div class="wire-item">Reminders · Trends · Cabin and NASA context</div></div><p class="note"><a href="#SX-24B">Health dashboard</a> · <a href="#SX-24C">Reminders</a> · <a href="#SX-19B">RadLab</a></p></article>
+<article class="card wireframe" id="page-measure"><span class="meta">3 · /runs/:runId/crew/measure</span><h3>Take Measurement</h3><div class="wire"><div class="wire-top">MEASUREMENT <span>Heart rate ▾</span></div><div class="wire-item">What it measures · How to take it · Why it matters</div><div class="wire-item">Reading and unit · Device or manual · Rest/activity</div><div class="wire-item accent">Save → See comparison and reason</div><div class="wire-item">Sample quality · Source · Back to Crew Health</div></div><p class="note"><a href="#SX-23C">Measurement guides</a> · <a href="#SX-24A">Form</a></p></article>
+<article class="card wireframe" id="page-emergency"><span class="meta">4 · /runs/:runId/crew/emergency</span><h3>Emergency Assist</h3><div class="wire"><div class="wire-top">TRAINING DRILL <span>Crew response</span></div><div class="wire-item">Chest pain / Collapse · Reporter and responsiveness</div><div class="wire-item accent">Alert onboard medical lead · Open procedure reference</div><div class="wire-cols"><div class="wire-item">Crew acknowledgment</div><div class="wire-item">Ground queued / delivered</div></div><div class="wire-item">Case ID · Next owner · Local timeline</div></div><p class="note"><a href="#SX-25A">Case rules</a> · <a href="#SX-25B">Assist page</a></p></article>
+<article class="card wireframe" id="page-ground"><span class="meta">5 · /runs/:runId/ground</span><h3>Ground</h3><div class="wire"><div class="wire-top">GROUND <span>Last delivered</span></div><div class="wire-item">Delivery time · Age · Link state</div><div class="wire-item accent">Health case status · Acknowledge receipt</div><div class="wire-cols"><div class="wire-item">Cabin and power</div><div class="wire-item">Operational advice</div></div><div class="wire-item">Allowlisted event timeline · No packet state</div></div><p class="note"><a href="#SX-25C">Case handoff</a> · <a href="#SX-09B">Snapshot</a></p></article>
 </div>
-<p class="note">Empty states are part of the design. Ground can show “No packet received”, Crew can show an unknown reading, and both pages can show service unreachable while keeping mission data and simulated link status distinct. The wireframes illustrate the golden checkpoint. <a href="SYMBIOSIS%20X%20Flight%20Simulation%20Design.html#console">Open the existing interactive deck reference</a></p>
+<p class="note">The body map is optional. Keep the seven indicators reachable from the measurement picker and the emergency entry visible on Crew Health. <a href="SYMBIOSIS%20X%20Flight%20Simulation%20Design.html#console">Existing 2D cabin reference</a></p>
+</section>
+<section id="health-scope"><h2>Health requirements and what proves them</h2>
+<p class="intro">The primary path is <strong>profile → measure → explain → act → follow up</strong>. Use one fictional astronaut, one shared metric catalog, one measurement form and one rules engine. Crew can finish the local response while Ground is delayed. The existing spacecraft scenario is a separate supporting case.</p>
+<div class="tablewrap" tabindex="0" aria-label="Health requirements and acceptance">
+<table class="health-table"><thead><tr><th scope="col">Requirement</th><th scope="col">First-release behavior</th><th scope="col">Evidence</th></tr></thead><tbody>
+<tr><td>Profile</td><td>SIM-01, private synthetic medical history and versioned baseline by measurement context. Missing history stays unknown.</td><td><a href="#SX-23A">Profile ticket</a></td></tr>
+<tr><td>Seven indicators</td><td>Heart rate, blood pressure, glucose, body temperature, sleep, mood and symptoms. One manual entry flow with units and contextual fields.</td><td><a href="#SX-23B">Catalog</a> · <a href="#SX-24A">Entry form</a></td></tr>
+<tr><td>Assessment</td><td>Show personal range and applicable sourced reference side by side. Record the rule, context and evidence. A missing or mismatched context gives unknown or reference unavailable. Sleep, mood and symptoms use personal trends or structured review prompts.</td><td><a href="#SX-23D">Assessment</a> · <a href="#SX-23E">Trends</a></td></tr>
+<tr><td>Measurement education</td><td>Each card explains what it measures, why it matters, how to obtain it with the assigned kit or self-report, and what conditions affect the reading. Link reference and procedure context.</td><td><a href="#SX-23C">Seven guides</a></td></tr>
+<tr><td>Emergency response</td><td>Separate scripted chest-pain and collapse drills. Show immediate onboard escalation, assign roles, surface the approved procedure reference, and track acknowledgement. Ground delivery runs independently.</td><td><a href="#SX-25A">Routing</a> · <a href="#SX-25B">Response page</a></td></tr>
+<tr><td>Recommendations and reminders</td><td>Show personal due times and workflow actions such as repeat a comparable reading when appropriate, review a trend, or request onboard medical review. Save acknowledgement and last measurement time.</td><td><a href="#SX-24C">Follow-up</a></td></tr>
+<tr><td>NASA sources</td><td>Use NASA ExMC to motivate onboard operation with a delayed handoff. Plot the vetted OSDR RadLab instrument series with source, unit, UTC coverage and provenance. It remains environmental context, separate from synthetic vitals and assessments.</td><td><a href="#SX-19B">Archive chart</a> · <a href="#SX-26B">Source register</a></td></tr>
+<tr><td>Privacy and mission context</td><td>Crew has the personal record and case. Ground gets an allowlisted case status and approved operational telemetry only after delivery. Cabin CO₂, power and scrubber state appear beside the health timeline as context, with no inferred symptom cause.</td><td><a href="#SX-25C">Health handoff</a> · <a href="#SX-26A">Health replay</a></td></tr>
+</tbody></table></div>
+<p class="note-box note"><strong>Clinical content boundary.</strong> Use simulation fixtures for personal baselines and drill inputs. Reference values carry measurement method, context, source and version. Ground-based references are labeled as such. Real procedures require mission medical review. The demo emergency page can guide users through escalation, role assignment and communication using static training cards. Treatment instructions and medication decisions require approved mission protocols.</p>
+<div class="links"><a href="https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/">NASA Space Apps challenge</a><a href="https://ntrs.nasa.gov/citations/20220017856">NASA ExMC concept of operations</a><a href="https://science.data.nasa.gov/features-events/data-software-highlights-may-2026">NASA OSDR Artemis I release</a><a href="https://medlineplus.gov/ency/article/002341.htm">MedlinePlus vital signs context</a><a href="https://www.heart.org/en/health-topics/high-blood-pressure/understanding-blood-pressure-readings/monitoring-your-blood-pressure-at-home">AHA blood pressure measurement</a><a href="https://www.niddk.nih.gov/health-information/professionals/clinical-tools-patient-management/diabetes/diabetes-prediabetes">NIDDK glucose method context</a><a href="https://www.nasa.gov/reference/jsc-behavioral-health/">NASA behavioral health</a><a href="https://cpr.heart.org/en/resuscitation-science/2024-first-aid-guidelines">AHA/Red Cross first-aid background</a></div>
 </section>
 <section id="sequence"><h2>Build sequence and handoffs</h2>
 <p class="intro">The numbers follow dependencies. Work can run in parallel when its linked prerequisites are ready. A prerequisite governs live integration. Suhad can build later screens against agreed examples while the API is in progress. Use the sequence to decide the next pull, and use the shared Git board to track actual status and reassignment.</p>
 <div id="sequence-list"></div>
-<p class="note-box note"><strong>Protect the demo.</strong> Use the <a href="SYMBIOSIS%20X%2030-Second%20Demo%20Brief.html">30-second brief</a> to choose the next priority. Prioritize role views, Crew health, immutable Ground snapshots, stale-advice hold and the golden replay. Use the existing seeded fallback if new data is late. Keep advanced models and automatic stepping in Expansion. When a dependency changes, update the affected ticket, test and reviewer together on the shared board.</p>
+<p class="note-box note"><strong>Protect the demo.</strong> Use the <a href="SYMBIOSIS%20X%2030-Second%20Demo%20Brief.html">30-second brief</a> to choose the next priority. Prioritize the private profile, one working measurement and comparison, the local emergency handoff, and the delayed status packet. Extend the shared form to all seven indicators. Keep the cabin replay as a separate supporting proof. Keep one seeded health replay independent of new data. Use the existing cabin fixture for its own supporting run. Keep advanced models and automatic stepping in Expansion. When a dependency changes, update the affected ticket, test and reviewer together on the shared board.</p>
 </section>
 <section id="tickets"><h2>Pull a ticket</h2>
 <p class="intro">All tickets are shown in build order. Filter by member or checkpoint, or open every card to review the full implementation plan. Each card shows what to change and how to check it. Expand a card for the files to edit, the test file and the exact check to run or add. This HTML is the planning copy. Claim the issue and track <strong>Ready → Doing → Review → Integrated</strong> in the team’s shared board. JSON export carries ticket IDs, owners, dependencies and acceptance checks for other tools.</p>
 <div class="toolbar" role="group" aria-label="Filter or export the backlog">
 <label><span>Owner</span><select id="owner"><option value="">Everyone</option></select></label>
-<label><span>Checkpoint</span><select id="milestone"><option value="">All checkpoints</option></select></label>
+<label><span>Priority</span><select id="priority"><option value="">All priorities</option><option>Health demo</option><option>Cabin replay</option><option>Optional</option></select></label><label><span>Checkpoint</span><select id="milestone"><option value="">All checkpoints</option></select></label>
 <button id="expand" type="button">Expand all shown</button><button id="collapse" type="button">Collapse all</button><button id="export" type="button">Download all tickets as JSON</button>
 </div>
 <p class="note" id="count" aria-live="polite"></p><div id="board"></div>
@@ -75,7 +89,7 @@
 <ol class="flow" aria-label="Feature testing and merge cycle">
 <li><p class="meta">Feature branch</p><h3>Run the focused check</h3><p class="note">Start from the ticket’s file list. Add its named test or record its manual evidence. Tests use temporary SQLite files and checked-in synthetic or sourced fixtures.</p></li>
 <li><p class="meta">Before merge</p><h3>Run the shared check</h3><p class="note"><a href="#SX-20D">SX-20D</a> adds <code>python3 scripts/check.py</code>. Run backend tests, schema examples and the React build locally and in GitHub Actions when available.</p></li>
-<li><p class="meta">Candidate merge</p><h3>Verify both views</h3><p class="note">Run the same check on each merged team branch and the combined candidate. Start and step a seeded run, verify ready, then run <a href="#SX-18D">golden API replay</a> and <a href="#SX-20E">two-role browser smoke</a> once available.</p></li>
+<li><p class="meta">Candidate merge</p><h3>Verify both views</h3><p class="note">Run the same check on each merged team branch and the combined candidate. Start and step a seeded run, verify ready, then run <a href="#SX-26A">health-first browser replay</a>. Verify the <a href="#SX-18D">cabin API replay</a> when that path lands.</p></li>
 <li><p class="meta">Release tag</p><h3>Repeat from a clean checkout</h3><p class="note">Record commit, scenario version, seed and pass/fail. Hold a failed merge or revert the isolated change and rerun. Tag the revision after the checks pass.</p></li>
 </ol>
 <p class="note-box note"><strong>Keep the proofs separate.</strong> Golden replay checks stale advice at 13:00 and the delivered Ground values. Command tests independently prove a stale or expired approval applies zero effects and a fresh retry applies once across restart. Check privacy on the actual Ground, Relay and shared outputs. A test that did not run stays unverified.</p>
@@ -94,18 +108,18 @@
 <p class="intro">Use the five criteria in the <a href="Official%20Event%20Sources/2026-Cairo-Judging-Guidelines.pdf">Cairo participant judging guide</a>. Show one piece of evidence for each in the existing demo or submission.</p>
 <div class="grid">
 <article class="card"><h3>Impact</h3><p class="note">Show how the Crew view helps an astronaut or operator understand a change from their personal baseline and identify who should review it. <a href="#SX-09A">Crew context</a></p></article>
-<article class="card"><h3>Creativity</h3><p class="note">Show Crew v103 beside Ground v102 and explain how the system stops a stale recommendation from becoming a command. <a href="#SX-07D">Stale advice</a></p></article>
-<article class="card"><h3>Validity</h3><p class="note">Reproduce the seeded scenario. Show why standby is blocked, the zero-effect rejection, and a separate apply-once check. <a href="#SX-06B">Commit test</a></p></article>
+<article class="card"><h3>Creativity</h3><p class="note">Show Crew opening and acknowledging a case before the delayed Ground handoff arrives. Show stale operational advice as a separate supporting proof. <a href="#SX-07D">Stale advice</a></p></article>
+<article class="card"><h3>Validity</h3><p class="note">Reproduce a baseline comparison and an emergency handoff during link loss. Show the role checks and a privacy test. <a href="#SX-26A">Health replay</a></p></article>
 <article class="card"><h3>Relevance</h3><p class="note">Name the astronaut health monitoring challenge. Show where the NASA RadLab series provides mission radiation context and label the astronaut readings as synthetic. <a href="#SX-19">Archive context</a></p></article>
-<article class="card"><h3>Presentation</h3><p class="note">Start with the crew review, follow the cabin and Ground decision on the map, and finish with the outcome. Open all submission links outside the owner session. <a href="#SX-11E">Submission check</a></p></article>
+<article class="card"><h3>Presentation</h3><p class="note">Start with the measurement, show why it was flagged, then show the local response and Ground receipt. Open all submission links outside the owner session. <a href="#SX-11E">Submission check</a></p></article>
 </div>
 </section>
 <section id="release"><h2>Definition of done and release checks</h2>
 <div class="grid two">
 <article class="card"><h3>Before merging a ticket</h3><p class="note">Name the dependency and affected consumer. Attach the passing fixture or test. Have the named reviewer check the diff. Verify model logic at the API boundary or UI behavior in the actual screen, depending on the ticket. Record known gaps with their own issue.</p></article>
-<article class="card"><h3>Before tagging the release</h3><p class="note">Verify nominal, stale advice and fresh retry from a clean checkout. Test exact Ground snapshot values and private-field exclusion. Rehearse both browser sessions on one host and the offline backup. Test playback and English subtitles before final submission.</p></article>
+<article class="card"><h3>Before tagging the release</h3><p class="note">From a clean checkout, verify the entered reading and explanation, both emergency drills, the delayed Ground handoff and private-field exclusion. Rehearse the health fallback. Run the seeded cabin replay and command tests when that supporting path is integrated. Verify playback and English subtitles.</p></article>
 </div>
-<p class="note-box note"><strong>Golden replay.</strong> Five display beats at 00:00, 01:00, 08:00, 10:00 and 13:00. Relay also delivers at 06:00 and 15:00. At 13:00 Crew is on v103 with 0.20 kW and Ground remains on v102 with 0.60 kW. The stale advisory produces zero applied effects. The separate fresh approval test applies once.</p>
+<p class="note-box note"><strong>Supporting cabin replay.</strong> Five display beats at 00:00, 01:00, 08:00, 10:00 and 13:00. Relay also delivers at 06:00 and 15:00. At 13:00 Crew is on v103 with 0.20 kW and Ground remains on v102 with 0.60 kW. The stale advisory produces zero applied effects. The separate fresh approval test applies once.</p>
 <div class="links"><a href="SYMBIOSIS%20X%20Technical%20Architecture.html">Technical architecture and file ownership</a><a href="SYMBIOSIS%20X%20Flight%20Simulation%20Design.html">Flight simulation and 2D deck</a></div>
 </section>
 </main>
@@ -136,7 +150,8 @@
     "sequence": 1,
     "surface": "Kickoff contracts",
     "implementation": "Use the four examples to agree on units, revision, role scope and typed reason codes. Sama wires the schema and Suhad uses these as mock responses.",
-    "page_ids": []
+    "page_ids": [],
+    "priority": "Health demo"
   },
   {
     "id": "SX-21A",
@@ -162,7 +177,8 @@
     "sequence": 2,
     "surface": "Backend or test runner",
     "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
-    "page_ids": []
+    "page_ids": [],
+    "priority": "Health demo"
   },
   {
     "id": "SX-03",
@@ -192,7 +208,8 @@
     "page_ids": [
       "page-crew",
       "page-ground"
-    ]
+    ],
+    "priority": "Health demo"
   },
   {
     "id": "SX-04A",
@@ -222,7 +239,8 @@
     "implementation": "Jana sends a confirmed crew ID, activity mode and modeled zone. Ahmed consumes the accepted event once. The first release can use a scheduled scenario trigger to demonstrate confirmation.",
     "page_ids": [
       "page-crew"
-    ]
+    ],
+    "priority": "Health demo"
   },
   {
     "id": "SX-07A",
@@ -250,7 +268,8 @@
     "sequence": 5,
     "surface": "Backend · Agent dispatch",
     "implementation": "Register the tool name, agent allowlist and trigger key. Return typed intents for Sama’s writer. Unit-test a denied tool before adding incident and relay behavior.",
-    "page_ids": []
+    "page_ids": [],
+    "priority": "Health demo"
   },
   {
     "id": "SX-08A",
@@ -281,7 +300,8 @@
     "page_ids": [
       "page-crew",
       "page-ground"
-    ]
+    ],
+    "priority": "Health demo"
   },
   {
     "id": "SX-05D",
@@ -308,7 +328,8 @@
     "sequence": 7,
     "surface": "Backend · Initial SQLite migration",
     "implementation": "Create runs, events, operations, messages and snapshots with run-scoped keys. Keep migrations separate from probe reads.",
-    "page_ids": []
+    "page_ids": [],
+    "priority": "Health demo"
   },
   {
     "id": "SX-21B",
@@ -338,7 +359,8 @@
     "sequence": 8,
     "surface": "Backend or test runner",
     "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
-    "page_ids": []
+    "page_ids": [],
+    "priority": "Health demo"
   },
   {
     "id": "SX-08C",
@@ -370,7 +392,39 @@
     "implementation": "Create the three route shells and fixture links. Configure development proxies for /api and /health. Move live commands to SX-08D.",
     "page_ids": [
       "page-launch"
-    ]
+    ],
+    "priority": "Health demo"
+  },
+  {
+    "id": "SX-23B",
+    "title": "Register the seven measurement types",
+    "owner": "Jana",
+    "reviewers": [
+      "Ahmed"
+    ],
+    "milestone": "Start",
+    "deps": [
+      "SX-01A"
+    ],
+    "paths": [
+      "catalogs/crew/health-metrics.json",
+      "backend/src/symbiosis_x/contracts/health.py"
+    ],
+    "surface": "Take Measurement · Metric catalog",
+    "build": "Define one schema that supports all seven health indicators.",
+    "implementation": "Use bpm for heart rate, systolic and diastolic mmHg for BP, mg/dL plus method and meal context for glucose, °C plus method/site for temperature, duration or start/end for sleep, a defined self-report scale for mood, and structured symptoms plus optional private text. Carry timestamps, source and quality.",
+    "done": "All seven representative payloads validate. Incomplete paired BP and unsupported units are rejected.",
+    "test": {
+      "path": "backend/tests/unit/test_health_metrics.py",
+      "name": "test_seven_metric_fixtures",
+      "method": "Parameterize valid and invalid inputs and verify context is retained.",
+      "command": "python -m pytest backend/tests/unit/test_health_metrics.py::test_seven_metric_fixtures -q"
+    },
+    "page_ids": [
+      "page-measure"
+    ],
+    "priority": "Health demo",
+    "sequence": 10
   },
   {
     "id": "SX-05E",
@@ -396,10 +450,42 @@
       "method": "Use a temporary file, raise before commit, reopen and confirm no partial records.",
       "command": "python -m pytest backend/tests/integration/test_migrations.py::test_transaction_rolls_back -q"
     },
-    "sequence": 10,
+    "sequence": 11,
     "surface": "Backend or test runner",
     "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
-    "page_ids": []
+    "page_ids": [],
+    "priority": "Health demo"
+  },
+  {
+    "id": "SX-23A",
+    "title": "Seed a private astronaut profile",
+    "owner": "Jana",
+    "reviewers": [
+      "Sama"
+    ],
+    "milestone": "Start",
+    "deps": [
+      "SX-04A"
+    ],
+    "paths": [
+      "catalogs/crew/sim-01-health.json",
+      "backend/src/symbiosis_x/crew/profile.py"
+    ],
+    "surface": "Crew Health · Profile",
+    "build": "Define SIM-01’s fictional history and personal baselines.",
+    "implementation": "Version the baseline. Record source, unit and context, such as resting heart rate. Support unknown history. The backend maps the fixture into the Crew projection.",
+    "done": "Crew sees the profile. Ground receives neither the history nor the baselines.",
+    "test": {
+      "path": "backend/tests/integration/test_health_projection.py",
+      "name": "test_profile_is_crew_only",
+      "method": "Check both real role responses for the seeded history and baseline.",
+      "command": "python -m pytest backend/tests/integration/test_health_projection.py::test_profile_is_crew_only -q"
+    },
+    "page_ids": [
+      "page-crew"
+    ],
+    "priority": "Health demo",
+    "sequence": 12
   },
   {
     "id": "SX-05A",
@@ -424,72 +510,13 @@
       "method": "POST a seeded run; assert run ID, zero clock and correct scenario ID.",
       "command": "python -m pytest backend/tests/integration/test_runs.py::test_start_seed_at_zero -q"
     },
-    "sequence": 11,
+    "sequence": 13,
     "surface": "Run launcher · Start",
     "implementation": "Return a run ID, scenario ID and zero mission time. Return the same run for the same start request and reject a reused ID with a different request.",
     "page_ids": [
       "page-launch"
-    ]
-  },
-  {
-    "id": "SX-03B",
-    "title": "Check standby power",
-    "owner": "Ahmed",
-    "reviewers": [
-      "Sama"
     ],
-    "milestone": "First slice",
-    "deps": [
-      "SX-01A"
-    ],
-    "paths": [
-      "backend/src/symbiosis_x/simulation/spacecraft/electrical.py"
-    ],
-    "build": "Compare standby demand with available headroom.",
-    "done": "0.40 kW standby is blocked at 0.20 kW.",
-    "test": {
-      "path": "backend/tests/unit/test_electrical.py",
-      "name": "test_standby_blocked_at_point_two_kw",
-      "method": "Compare 0.40 kW demand against 0.20 kW headroom; expect a blocked reason.",
-      "command": "python -m pytest backend/tests/unit/test_electrical.py::test_standby_blocked_at_point_two_kw -q"
-    },
-    "sequence": 12,
-    "surface": "Both consoles · Power layer",
-    "implementation": "Accept headroom and candidate demand in kW. Return the required and available values and an explicit blocked or unknown reason. Feed the result to the planner.",
-    "page_ids": [
-      "page-crew",
-      "page-ground"
-    ]
-  },
-  {
-    "id": "SX-02",
-    "title": "Show phase and next waypoint",
-    "owner": "Ahmed",
-    "reviewers": [
-      "Sama"
-    ],
-    "milestone": "First slice",
-    "deps": [
-      "SX-01A"
-    ],
-    "paths": [
-      "backend/src/symbiosis_x/simulation/spacecraft/navigation.py"
-    ],
-    "build": "Return planned phase, next waypoint and schedule-based ETA.",
-    "done": "The same seed reproduces the phase and ETA sequence.",
-    "test": {
-      "path": "backend/tests/unit/test_navigation.py",
-      "name": "test_seed_repeats_phase_and_eta",
-      "method": "Replay the same phase checkpoints; assert ETA basis and phase hold behavior.",
-      "command": "python -m pytest backend/tests/unit/test_navigation.py::test_seed_repeats_phase_and_eta -q"
-    },
-    "sequence": 13,
-    "surface": "Both consoles · Phase and ETA",
-    "implementation": "Read mission time and planned checkpoints. Return the current phase, next checkpoint and scheduled ETA. When readiness holds a phase, keep the plan unchanged and return a conditional ETA.",
-    "page_ids": [
-      "page-crew",
-      "page-ground"
-    ]
+    "priority": "Health demo"
   },
   {
     "id": "SX-05B",
@@ -519,7 +546,8 @@
     "implementation": "The route invokes one SQLite-backed cursor change. The handler receives expected cursor and advance ID. Keep a stale cursor conflict distinct from a successful duplicate retry.",
     "page_ids": [
       "page-launch"
-    ]
+    ],
+    "priority": "Health demo"
   },
   {
     "id": "SX-17",
@@ -552,7 +580,8 @@
     "page_ids": [
       "page-crew",
       "page-ground"
-    ]
+    ],
+    "priority": "Health demo"
   },
   {
     "id": "SX-04B",
@@ -582,7 +611,8 @@
     "implementation": "Use synthetic fixture records only. Store note, mission timestamp and authorized crew reference in the private lane. Keep that lane out of operational revision updates.",
     "page_ids": [
       "page-crew"
-    ]
+    ],
+    "priority": "Health demo"
   },
   {
     "id": "SX-19",
@@ -612,7 +642,8 @@
     "implementation": "Publish one reviewed instrument export. Suhad consumes the approved static JSON. Preserve detector, unit, UTC, coverage and gaps.",
     "page_ids": [
       "page-crew"
-    ]
+    ],
+    "priority": "Health demo"
   },
   {
     "id": "SX-18A",
@@ -642,7 +673,8 @@
     "implementation": "Write the canonical demo manifest. Pin 100 m³, seed 4242 and the seven reference timestamps. Store expected role values separately from scenario inputs.",
     "page_ids": [
       "page-launch"
-    ]
+    ],
+    "priority": "Health demo"
   },
   {
     "id": "SX-20A",
@@ -672,7 +704,8 @@
     "implementation": "Mount the liveness route during app bootstrap. Return a small status payload without accessing the store or clock.",
     "page_ids": [
       "page-launch"
-    ]
+    ],
+    "priority": "Health demo"
   },
   {
     "id": "SX-20D",
@@ -700,8 +733,9 @@
     },
     "sequence": 20,
     "surface": "Developer workflow · Local and CI",
-    "implementation": "Run the same check entry point on each laptop. Enable suites as they land and make replay and browser smoke required for the release.",
-    "page_ids": []
+    "implementation": "Run schema, unit and build checks locally and in CI. Require the health replay and privacy check at release. Run cabin and other suites for integrated features.",
+    "page_ids": [],
+    "priority": "Health demo"
   },
   {
     "id": "SX-22A",
@@ -729,7 +763,133 @@
     "sequence": 21,
     "surface": "Backend or test runner",
     "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
-    "page_ids": []
+    "page_ids": [],
+    "priority": "Health demo"
+  },
+  {
+    "id": "SX-23C",
+    "title": "Write seven measurement guides",
+    "owner": "Jana",
+    "reviewers": [
+      "Mohamed"
+    ],
+    "milestone": "First slice",
+    "deps": [
+      "SX-23B"
+    ],
+    "paths": [
+      "catalogs/crew/health-guides.json"
+    ],
+    "surface": "Take Measurement · Help cards",
+    "build": "Write what, why and how cards with cited methods.",
+    "implementation": "Describe assigned device or manual self-report. Distinguish exercise/rest, cuff setup, glucose meter versus lab method, measurement site, sleep periods and self-report. Label ground-based procedures and cite the source/version.",
+    "done": "All seven metric IDs have a guide, source and context note.",
+    "test": {
+      "path": "backend/tests/integration/test_contract_examples.py",
+      "name": "test_all_metrics_have_sourced_guides",
+      "method": "Join catalog to guides and check fields and source links for each entry.",
+      "command": "python -m pytest backend/tests/integration/test_contract_examples.py::test_all_metrics_have_sourced_guides -q"
+    },
+    "page_ids": [
+      "page-measure"
+    ],
+    "priority": "Health demo",
+    "sequence": 22
+  },
+  {
+    "id": "SX-23D",
+    "title": "Explain assessment against two references",
+    "owner": "Jana",
+    "reviewers": [
+      "Sama"
+    ],
+    "milestone": "First slice",
+    "deps": [
+      "SX-23A",
+      "SX-23B"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/crew/assessment.py",
+      "catalogs/crew/health-reference-rules.json"
+    ],
+    "surface": "Crew Health · Assessment",
+    "build": "Evaluate personal baseline and applicable sourced reference independently.",
+    "implementation": "Match reading method, units and context. Label Earth-based comparison, store rule version and evidence, and return unknown or reference unavailable when unsupported. Keep sleep, mood and symptoms contextual. Do not apply lab glucose cutoffs to a handheld reading.",
+    "done": "A seeded resting heart-rate deviation returns a reason and personal range. Missing context never produces a normal assessment.",
+    "test": {
+      "path": "backend/tests/unit/test_health_assessment.py",
+      "name": "test_baseline_and_reference_are_separate",
+      "method": "Exercise out-of-baseline, applicable reference, missing context and rejected-quality inputs.",
+      "command": "python -m pytest backend/tests/unit/test_health_assessment.py::test_baseline_and_reference_are_separate -q"
+    },
+    "page_ids": [
+      "page-crew",
+      "page-measure"
+    ],
+    "priority": "Health demo",
+    "sequence": 23
+  },
+  {
+    "id": "SX-03B",
+    "title": "Check standby power",
+    "owner": "Ahmed",
+    "reviewers": [
+      "Sama"
+    ],
+    "milestone": "First slice",
+    "deps": [
+      "SX-01A"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/simulation/spacecraft/electrical.py"
+    ],
+    "build": "Compare standby demand with available headroom.",
+    "done": "0.40 kW standby is blocked at 0.20 kW.",
+    "test": {
+      "path": "backend/tests/unit/test_electrical.py",
+      "name": "test_standby_blocked_at_point_two_kw",
+      "method": "Compare 0.40 kW demand against 0.20 kW headroom; expect a blocked reason.",
+      "command": "python -m pytest backend/tests/unit/test_electrical.py::test_standby_blocked_at_point_two_kw -q"
+    },
+    "sequence": 24,
+    "surface": "Both consoles · Power layer",
+    "implementation": "Accept headroom and candidate demand in kW. Return the required and available values and an explicit blocked or unknown reason. Feed the result to the planner.",
+    "page_ids": [
+      "page-crew",
+      "page-ground"
+    ],
+    "priority": "Cabin replay"
+  },
+  {
+    "id": "SX-02",
+    "title": "Show phase and next waypoint",
+    "owner": "Ahmed",
+    "reviewers": [
+      "Sama"
+    ],
+    "milestone": "First slice",
+    "deps": [
+      "SX-01A"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/simulation/spacecraft/navigation.py"
+    ],
+    "build": "Return planned phase, next waypoint and schedule-based ETA.",
+    "done": "The same seed reproduces the phase and ETA sequence.",
+    "test": {
+      "path": "backend/tests/unit/test_navigation.py",
+      "name": "test_seed_repeats_phase_and_eta",
+      "method": "Replay the same phase checkpoints; assert ETA basis and phase hold behavior.",
+      "command": "python -m pytest backend/tests/unit/test_navigation.py::test_seed_repeats_phase_and_eta -q"
+    },
+    "sequence": 25,
+    "surface": "Both consoles · Phase and ETA",
+    "implementation": "Read mission time and planned checkpoints. Return the current phase, next checkpoint and scheduled ETA. When readiness holds a phase, keep the plan unchanged and return a conditional ETA.",
+    "page_ids": [
+      "page-crew",
+      "page-ground"
+    ],
+    "priority": "Cabin replay"
   },
   {
     "id": "SX-05C",
@@ -753,41 +913,13 @@
       "method": "Reopen the SQLite file and verify the old run is readable and closed to new writes.",
       "command": "python -m pytest backend/tests/integration/test_runs.py::test_reset_closes_old_run -q"
     },
-    "sequence": 22,
+    "sequence": 26,
     "surface": "Run launcher · Reset",
     "implementation": "Close the old run and return a new run ID. Preserve audit reads. Suhad updates both console links in SX-08D.",
     "page_ids": [
       "page-launch"
-    ]
-  },
-  {
-    "id": "SX-17B",
-    "title": "Reject stale sensor samples",
-    "owner": "Sama",
-    "reviewers": [
-      "Ahmed"
     ],
-    "milestone": "First slice",
-    "deps": [
-      "SX-17"
-    ],
-    "paths": [
-      "backend/src/symbiosis_x/twin/reducer.py"
-    ],
-    "build": "Keep the last valid sample and show its quality and age.",
-    "done": "A stale or out-of-order sample cannot overwrite the latest accepted value.",
-    "test": {
-      "path": "backend/tests/unit/test_reducer.py",
-      "name": "test_stale_sample_cannot_replace_accepted_value",
-      "method": "Send a newer valid sample, then an older one; keep the accepted value and timestamp.",
-      "command": "python -m pytest backend/tests/unit/test_reducer.py::test_stale_sample_cannot_replace_accepted_value -q"
-    },
-    "sequence": 23,
-    "surface": "Both consoles · Accepted readings",
-    "implementation": "Order each signal by observation time and stable event order. Preserve the latest good value while exposing invalid or missing evidence explicitly. Test before wiring the reducer to the run.",
-    "page_ids": [
-      "page-crew"
-    ]
+    "priority": "Health demo"
   },
   {
     "id": "SX-04C",
@@ -811,12 +943,13 @@
       "method": "Replay valid out-of-band samples and a missing sample; assert reason and unknown.",
       "command": "python -m pytest backend/tests/unit/test_wellbeing.py::test_baseline_alert_and_unknown -q"
     },
-    "sequence": 24,
+    "sequence": 27,
     "surface": "Crew console · Baseline alert",
     "implementation": "Jana evaluates documented synthetic readings and returns the signal, reason, quality and last good sample. Suhad renders this in SX-09A.",
     "page_ids": [
       "page-crew"
-    ]
+    ],
+    "priority": "Health demo"
   },
   {
     "id": "SX-20B",
@@ -842,12 +975,13 @@
       "method": "Assert 200 for migrated store, 503 for unready dependency and unchanged cursor on probes. Test missing manifest and schema mismatch; return a bounded reason without filesystem paths.",
       "command": "python -m pytest backend/tests/integration/test_health.py::test_ready_checks_schema_without_advancing_run -q"
     },
-    "sequence": 25,
+    "sequence": 28,
     "surface": "Service · Readiness",
     "implementation": "Read the initialized database schema revision and registered golden manifest. Report unavailable, mismatched or missing state with a small public reason code. Never create a database or run in this read.",
     "page_ids": [
       "page-launch"
-    ]
+    ],
+    "priority": "Health demo"
   },
   {
     "id": "SX-22B",
@@ -873,12 +1007,13 @@
       "method": "Read as Crew, verify role shape and compare the clock before and after.",
       "command": "python -m pytest backend/tests/integration/test_projections.py::test_crew_read_keeps_clock -q"
     },
-    "sequence": 26,
+    "sequence": 29,
     "surface": "Backend or test runner",
     "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
     "page_ids": [
       "page-crew"
-    ]
+    ],
+    "priority": "Health demo"
   },
   {
     "id": "SX-22C",
@@ -904,12 +1039,145 @@
       "method": "Give the run newer Crew data but no delivery. Ground returns an empty or previous delivered view.",
       "command": "python -m pytest backend/tests/integration/test_projections.py::test_ground_has_no_onboard_fallback -q"
     },
-    "sequence": 27,
+    "sequence": 30,
     "surface": "Backend or test runner",
     "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
     "page_ids": [
       "page-ground"
-    ]
+    ],
+    "priority": "Health demo"
+  },
+  {
+    "id": "SX-24A",
+    "title": "Build the shared measurement page",
+    "owner": "Suhad",
+    "reviewers": [
+      "Jana"
+    ],
+    "milestone": "First slice",
+    "deps": [
+      "SX-08C",
+      "SX-23B",
+      "SX-23C"
+    ],
+    "paths": [
+      "frontend/src/features/crew/MeasurementPage.jsx",
+      "frontend/src/features/crew/MetricGuide.jsx",
+      "frontend/src/App.jsx"
+    ],
+    "surface": "Take Measurement · Form and guide",
+    "build": "Add a metric picker and one data-driven form.",
+    "implementation": "Render value, unit, context and the corresponding guide from the catalog. Start against fixtures. Connect the private write via SX-24D and display its assessment when SX-24E lands.",
+    "done": "Each indicator opens the matching input and guide. A BP pair has both values.",
+    "test": {
+      "path": "frontend/tests/health.spec.js",
+      "name": "seven metrics open the matching form",
+      "method": "Check all seven controls, keyboard entry, units and invalid input state.",
+      "command": "cd frontend && npx playwright test tests/health.spec.js -g \"seven metrics open the matching form\""
+    },
+    "page_ids": [
+      "page-measure"
+    ],
+    "priority": "Health demo",
+    "sequence": 31
+  },
+  {
+    "id": "SX-25A",
+    "title": "Route two emergency drills onboard",
+    "owner": "Sama",
+    "reviewers": [
+      "Jana"
+    ],
+    "milestone": "First slice",
+    "deps": [
+      "SX-22A",
+      "SX-05E"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/crew/emergency.py",
+      "backend/src/symbiosis_x/api/crew.py",
+      "scenarios/variants/health-emergency-drills.json",
+      "backend/src/symbiosis_x/application/runs.py",
+      "backend/src/symbiosis_x/storage/migrations/002_health.sql"
+    ],
+    "surface": "Emergency Assist · Case rules",
+    "build": "Create separate scripted chest-pain and collapse cases.",
+    "implementation": "Proposed POST /crew/emergencies under a run opens a case once for an authorized user. Assign a local responder, surface the approved procedure reference or a clearly labeled training placeholder, and record acknowledgment. Escalate independently of vital readings and relay availability. The chest-pain drill records a direct symptom report. The collapse drill uses a bystander report and a responsiveness field. Unknown responsiveness stays visible and never blocks the local alert.",
+    "done": "Each scripted trigger opens one local case with owner and timestamp even during blackout.",
+    "test": {
+      "path": "backend/tests/integration/test_emergency.py",
+      "name": "test_emergency_cases_route_without_ground",
+      "method": "Parameterize chest pain and collapse; use missing vitals, disconnected relay and duplicate request.",
+      "command": "python -m pytest backend/tests/integration/test_emergency.py::test_emergency_cases_route_without_ground -q"
+    },
+    "page_ids": [
+      "page-emergency"
+    ],
+    "priority": "Health demo",
+    "sequence": 32
+  },
+  {
+    "id": "SX-26B",
+    "title": "Map NASA evidence to product behavior",
+    "owner": "Mohamed",
+    "reviewers": [
+      "Jana"
+    ],
+    "milestone": "First slice",
+    "deps": [
+      "SX-19",
+      "SX-23B"
+    ],
+    "paths": [
+      "README.md",
+      "docs/acceptance.md"
+    ],
+    "surface": "Submission · Source register",
+    "build": "Record NASA ExMC, HRP, RadLab and measurement references with actual uses.",
+    "implementation": "For each entry capture link, source date, data type, coverage/units when applicable, limitations and the visible feature it supports. Keep environmental context and personal measurements distinct.",
+    "done": "A judge can trace the RadLab chart and see why local response works before Ground delivery.",
+    "test": {
+      "path": "docs/acceptance.md",
+      "name": "Source-to-feature review",
+      "method": "Open the links and check that each source supports its stated use.",
+      "command": "Record the review in docs/acceptance.md."
+    },
+    "page_ids": [
+      "page-crew",
+      "page-ground"
+    ],
+    "priority": "Health demo",
+    "sequence": 33
+  },
+  {
+    "id": "SX-17B",
+    "title": "Reject stale sensor samples",
+    "owner": "Sama",
+    "reviewers": [
+      "Ahmed"
+    ],
+    "milestone": "First slice",
+    "deps": [
+      "SX-17"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/twin/reducer.py"
+    ],
+    "build": "Keep the last valid sample and show its quality and age.",
+    "done": "A stale or out-of-order sample cannot overwrite the latest accepted value.",
+    "test": {
+      "path": "backend/tests/unit/test_reducer.py",
+      "name": "test_stale_sample_cannot_replace_accepted_value",
+      "method": "Send a newer valid sample, then an older one; keep the accepted value and timestamp.",
+      "command": "python -m pytest backend/tests/unit/test_reducer.py::test_stale_sample_cannot_replace_accepted_value -q"
+    },
+    "sequence": 34,
+    "surface": "Both consoles · Accepted readings",
+    "implementation": "Order each signal by observation time and stable event order. Preserve the latest good value while exposing invalid or missing evidence explicitly. Test before wiring the reducer to the run.",
+    "page_ids": [
+      "page-crew"
+    ],
+    "priority": "Cabin replay"
   },
   {
     "id": "SX-08B",
@@ -922,14 +1190,13 @@
     "deps": [
       "SX-08A",
       "SX-08C",
-      "SX-02",
       "SX-22B",
       "SX-22C"
     ],
     "paths": [
       "frontend/src/api/useRunProjection.js"
     ],
-    "build": "Wire the role-scoped projection hook and map the route and deck to one run. Abort prior requests on run or role change. The first Ground response may have no delivered packet.",
+    "build": "Wire role-scoped reads into the Crew and Ground shells.",
     "done": "Start → step → read both roles on the same run. GET never ticks the clock.",
     "test": {
       "path": "frontend/tests/smoke.spec.js",
@@ -937,13 +1204,14 @@
       "method": "Step once, reload each view, and assert reads leave mission time unchanged. A late response from a previous role or run cannot overwrite the current view.",
       "command": "cd frontend && npx playwright test tests/smoke.spec.js -g \"reading projections does not tick mission time\""
     },
-    "sequence": 28,
+    "sequence": 35,
     "surface": "Crew and Ground consoles · Route and deck",
-    "implementation": "Consume the role-specific GET responses in one hook. Render phase and ETA in the shell. Cancel or ignore a response when the run or role changes.",
+    "implementation": "Reuse one run ID and ignore outdated role or run requests. Put accepted or delivered cabin readings in the context panel. Use fixture values until the backend projection is ready.",
     "page_ids": [
       "page-crew",
       "page-ground"
-    ]
+    ],
+    "priority": "Health demo"
   },
   {
     "id": "SX-04D",
@@ -968,12 +1236,13 @@
       "method": "POST and read back as Crew. Reject unauthorized Ground access.",
       "command": "python -m pytest backend/tests/integration/test_crew_checkins.py::test_checkin_round_trip_is_crew_only -q"
     },
-    "sequence": 29,
+    "sequence": 36,
     "surface": "Crew console · Check-in API",
     "implementation": "Validate a synthetic check-in at POST /api/v1/runs/{id}/crew/check-ins. Persist it through the single writer and return its authorized record ID. Reject a Ground session.",
     "page_ids": [
       "page-crew"
-    ]
+    ],
+    "priority": "Health demo"
   },
   {
     "id": "SX-20C",
@@ -998,14 +1267,52 @@
       "method": "Fail the probe then simulate a relay outage; assert distinct labels.",
       "command": "cd frontend && npx playwright test tests/smoke.spec.js -g \"service health is separate from simulated relay\""
     },
-    "sequence": 30,
-    "surface": "All three pages · Service badge",
+    "sequence": 37,
+    "surface": "All five pages · Service badge",
     "implementation": "Show the same badge in the launcher and shared console shell. Distinguish an HTTP readiness failure from lost browser connectivity and simulated relay loss.",
     "page_ids": [
       "page-launch",
       "page-crew",
-      "page-ground"
-    ]
+      "page-ground",
+      "page-measure",
+      "page-emergency"
+    ],
+    "priority": "Health demo"
+  },
+  {
+    "id": "SX-24D",
+    "title": "Save and read typed health measurements",
+    "owner": "Sama",
+    "reviewers": [
+      "Jana"
+    ],
+    "milestone": "First slice",
+    "deps": [
+      "SX-23B",
+      "SX-22B"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/api/crew.py",
+      "backend/src/symbiosis_x/crew/measurements.py",
+      "backend/src/symbiosis_x/application/projections.py",
+      "backend/src/symbiosis_x/storage/migrations/002_health.sql"
+    ],
+    "surface": "Take Measurement · Save and read back",
+    "build": "Add a protected Crew measurement write and return recent readings in Crew.",
+    "implementation": "Proposed POST /api/v1/runs/{id}/crew/measurements uses a stable operation ID and typed payload. Validate units, context and quality. Keep the stored sample private and leave the spacecraft decision revision unchanged. Sama owns the shared health migration. Land it in the first of the two health API PRs and extend it with a follow-on migration if it has already been merged.",
+    "done": "A Crew save round-trips once after retry. Ground and the shared trace never return the reading.",
+    "test": {
+      "path": "backend/tests/integration/test_health_measurements.py",
+      "name": "test_measurement_is_private_and_idempotent",
+      "method": "Save twice with one ID, read each role and compare spacecraft decision revision.",
+      "command": "python -m pytest backend/tests/integration/test_health_measurements.py::test_measurement_is_private_and_idempotent -q"
+    },
+    "page_ids": [
+      "page-measure",
+      "page-crew"
+    ],
+    "priority": "Health demo",
+    "sequence": 38
   },
   {
     "id": "SX-08D",
@@ -1017,6 +1324,7 @@
     "milestone": "First slice",
     "deps": [
       "SX-08B",
+      "SX-05B",
       "SX-05C",
       "SX-22A"
     ],
@@ -1033,43 +1341,13 @@
       "method": "Use separate browser sessions and verify the clock and access response.",
       "command": "cd frontend && npx playwright test tests/smoke.spec.js -g \"facilitator starts and steps one shared run\""
     },
-    "sequence": 31,
+    "sequence": 39,
     "surface": "Operator console",
     "implementation": "Use the start, advance and reset API from facilitator controls. Reuse the returned run ID for both console links and redirect links after reset. Preserve stable IDs across retries.",
     "page_ids": [
       "page-launch"
-    ]
-  },
-  {
-    "id": "SX-06",
-    "title": "Evaluate three response options",
-    "owner": "Sama",
-    "reviewers": [
-      "Ahmed"
     ],
-    "milestone": "Golden run",
-    "deps": [
-      "SX-03",
-      "SX-03B",
-      "SX-17B"
-    ],
-    "paths": [
-      "backend/src/symbiosis_x/twin/constraints.py"
-    ],
-    "build": "Return feasibility and a reason for hold, standby and permitted activity change.",
-    "done": "Known no-feasible and missing-evidence cases return different outcomes.",
-    "test": {
-      "path": "backend/tests/unit/test_planner.py",
-      "name": "test_known_constraints_differ_from_missing_evidence",
-      "method": "Compare a blocked candidate set with a missing-signal case; assert different codes.",
-      "command": "python -m pytest backend/tests/unit/test_planner.py::test_known_constraints_differ_from_missing_evidence -q"
-    },
-    "sequence": 32,
-    "surface": "Crew console · Plan evaluation",
-    "implementation": "Evaluate the three existing candidates against accepted cabin, power, permissions and evidence. Return candidate, result, reason and basis. Preserve unknown versus no-feasible.",
-    "page_ids": [
-      "page-crew"
-    ]
+    "priority": "Health demo"
   },
   {
     "id": "SX-07C",
@@ -1095,12 +1373,13 @@
       "method": "Assert Ground v102/0.60 kW at 13:00 and v103/0.20 kW at 15:00.",
       "command": "python -m pytest backend/tests/integration/test_relay.py::test_ground_keeps_delivered_values_until_new_packet -q"
     },
-    "sequence": 33,
+    "sequence": 40,
     "surface": "Ground console · Delivered ship",
     "implementation": "Store the immutable operational packet with snapshot ID, basis, observation time and due time. The Ground projection reads only delivered records.",
     "page_ids": [
       "page-ground"
-    ]
+    ],
+    "priority": "Health demo"
   },
   {
     "id": "SX-09A",
@@ -1126,40 +1405,13 @@
       "method": "Assert the baseline alert, evidence quality and separate environmental context.",
       "command": "cd frontend && npx playwright test tests/crew.spec.js -g \"Crew can read the alert reason\""
     },
-    "sequence": 34,
+    "sequence": 41,
     "surface": "Crew console · Private health panel",
     "implementation": "Show one synthetic baseline, one alert and its reason, plus the cabin reading on a separate line. Keep missing measurements visibly unknown.",
     "page_ids": [
       "page-crew"
-    ]
-  },
-  {
-    "id": "SX-18C",
-    "title": "Verify seeded sensor noise",
-    "owner": "Ahmed",
-    "reviewers": [
-      "Mohamed"
     ],
-    "milestone": "Golden run",
-    "deps": [
-      "SX-17",
-      "SX-18A"
-    ],
-    "paths": [
-      "scenarios/variants/sensor-noise.json"
-    ],
-    "build": "Add one noisy sensor case with a stable per-sensor stream.",
-    "done": "The same seed reproduces the sample trace. Changing seed changes samples under the same input history.",
-    "test": {
-      "path": "backend/tests/unit/test_sampling.py",
-      "name": "test_seed_repeats_sensor_trace",
-      "method": "Compare equal seeds and one alternate seed under the same history.",
-      "command": "python -m pytest backend/tests/unit/test_sampling.py::test_seed_repeats_sensor_trace -q"
-    },
-    "sequence": 35,
-    "surface": "Scenario or component data",
-    "implementation": "Register a versioned input with stable IDs, units and provenance. Keep the expected test result separate from the input and rerun the reference case.",
-    "page_ids": []
+    "priority": "Health demo"
   },
   {
     "id": "SX-09E",
@@ -1185,12 +1437,340 @@
       "method": "Submit a synthetic marker and verify confirmation in Crew only.",
       "command": "cd frontend && npx playwright test tests/crew.spec.js -g \"Crew can submit a private check-in\""
     },
-    "sequence": 36,
+    "sequence": 42,
     "surface": "Operator console",
     "implementation": "Place this in the linked run shell and wire only the authorized response fields. Use the fixture until the listed backend dependencies pass.",
     "page_ids": [
       "page-crew"
-    ]
+    ],
+    "priority": "Health demo"
+  },
+  {
+    "id": "SX-23E",
+    "title": "Explain one comparable trend",
+    "owner": "Jana",
+    "reviewers": [
+      "Suhad"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-23D",
+      "SX-24D"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/crew/trends.py",
+      "frontend/src/features/crew/HealthTrend.jsx"
+    ],
+    "surface": "Crew Health · Trend",
+    "build": "Use one trend evaluator across comparable repeated measurements.",
+    "implementation": "Use a fixture-defined window and minimum samples, ordered by recorded time. Avoid mixing exercise/rest or different measurement methods. Show supporting dates and direction. For a thin series show insufficient history.",
+    "done": "Three comparable synthetic samples can trigger a review trend. Incompatible or missing samples do not count.",
+    "test": {
+      "path": "backend/tests/unit/test_health_trends.py",
+      "name": "test_only_comparable_samples_count",
+      "method": "Use ordered, mixed-context and insufficient samples in the same fixture.",
+      "command": "python -m pytest backend/tests/unit/test_health_trends.py::test_only_comparable_samples_count -q"
+    },
+    "page_ids": [
+      "page-crew"
+    ],
+    "priority": "Health demo",
+    "sequence": 43
+  },
+  {
+    "id": "SX-24E",
+    "title": "Expose the assessment result to Crew",
+    "owner": "Sama",
+    "reviewers": [
+      "Jana"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-24D",
+      "SX-23D"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/api/crew.py",
+      "backend/src/symbiosis_x/application/projections.py"
+    ],
+    "surface": "Crew Health · Assessment API",
+    "build": "Include the rule result in the private save receipt or Crew projection.",
+    "implementation": "Expose personal comparison, applicable reference and scope, evidence timestamp, quality and explanation through the existing role boundary. The public result has no personal payload.",
+    "done": "The synthetic deviation is visible with its reason in Crew and absent from Ground.",
+    "test": {
+      "path": "backend/tests/integration/test_health_projection.py",
+      "name": "test_assessment_appears_only_in_crew",
+      "method": "Save the demo reading and assert the private result and both role shapes.",
+      "command": "python -m pytest backend/tests/integration/test_health_projection.py::test_assessment_appears_only_in_crew -q"
+    },
+    "page_ids": [
+      "page-measure",
+      "page-crew"
+    ],
+    "priority": "Health demo",
+    "sequence": 44
+  },
+  {
+    "id": "SX-24C",
+    "title": "Add personal reminders and follow-up",
+    "owner": "Jana",
+    "reviewers": [
+      "Suhad"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-24D",
+      "SX-23D"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/crew/followup.py",
+      "backend/src/symbiosis_x/application/projections.py",
+      "frontend/src/features/crew/HealthReminders.jsx",
+      "backend/src/symbiosis_x/api/crew.py"
+    ],
+    "surface": "Crew Health · Reminders",
+    "build": "Compute due checks and show an action linked to the assessment.",
+    "implementation": "Use the personal monitoring schedule and last accepted time. Suggest repeat measurement when appropriate, review or contact the designated role. Save acknowledgment through the Crew route. Emergency takes precedence over routine reminders.",
+    "done": "One overdue and one acknowledged reminder are distinguishable. Emergency does not wait for a repeat.",
+    "test": {
+      "path": "backend/tests/integration/test_health_followup.py",
+      "name": "test_reminder_uses_personal_schedule",
+      "method": "Advance the fixed clock across due time, acknowledge and check emergency precedence.",
+      "command": "python -m pytest backend/tests/integration/test_health_followup.py::test_reminder_uses_personal_schedule -q"
+    },
+    "page_ids": [
+      "page-crew"
+    ],
+    "priority": "Health demo",
+    "sequence": 45
+  },
+  {
+    "id": "SX-25B",
+    "title": "Build Emergency Assist",
+    "owner": "Suhad",
+    "reviewers": [
+      "Jana"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-08C",
+      "SX-25A"
+    ],
+    "paths": [
+      "frontend/src/features/crew/EmergencyAssist.jsx",
+      "frontend/src/App.jsx"
+    ],
+    "surface": "Emergency Assist · Response page",
+    "build": "Show the drill choice, local handoff, acknowledgment and case status.",
+    "implementation": "Place a persistent entry on Crew Health. Keep the procedure reference and status prominent. Allow a crew member to acknowledge the local task. Show Ground pending as a separate status.",
+    "done": "The collapse and chest-pain drill show an onboard action without a Ground acknowledgment.",
+    "test": {
+      "path": "frontend/tests/emergency.spec.js",
+      "name": "local response remains available during blackout",
+      "method": "Start a scripted case and acknowledge locally while the relay shows unavailable.",
+      "command": "cd frontend && npx playwright test tests/emergency.spec.js -g \"local response remains available during blackout\""
+    },
+    "page_ids": [
+      "page-emergency",
+      "page-crew"
+    ],
+    "priority": "Health demo",
+    "sequence": 46
+  },
+  {
+    "id": "SX-06",
+    "title": "Evaluate three response options",
+    "owner": "Sama",
+    "reviewers": [
+      "Ahmed"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-03",
+      "SX-03B",
+      "SX-17B"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/twin/constraints.py"
+    ],
+    "build": "Return feasibility and a reason for hold, standby and permitted activity change.",
+    "done": "Known no-feasible and missing-evidence cases return different outcomes.",
+    "test": {
+      "path": "backend/tests/unit/test_planner.py",
+      "name": "test_known_constraints_differ_from_missing_evidence",
+      "method": "Compare a blocked candidate set with a missing-signal case; assert different codes.",
+      "command": "python -m pytest backend/tests/unit/test_planner.py::test_known_constraints_differ_from_missing_evidence -q"
+    },
+    "sequence": 47,
+    "surface": "Crew console · Plan evaluation",
+    "implementation": "Evaluate the three existing candidates against accepted cabin, power, permissions and evidence. Return candidate, result, reason and basis. Preserve unknown versus no-feasible.",
+    "page_ids": [
+      "page-crew"
+    ],
+    "priority": "Cabin replay"
+  },
+  {
+    "id": "SX-18C",
+    "title": "Verify seeded sensor noise",
+    "owner": "Ahmed",
+    "reviewers": [
+      "Mohamed"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-17",
+      "SX-18A"
+    ],
+    "paths": [
+      "scenarios/variants/sensor-noise.json"
+    ],
+    "build": "Add one noisy sensor case with a stable per-sensor stream.",
+    "done": "The same seed reproduces the sample trace. Changing seed changes samples under the same input history.",
+    "test": {
+      "path": "backend/tests/unit/test_sampling.py",
+      "name": "test_seed_repeats_sensor_trace",
+      "method": "Compare equal seeds and one alternate seed under the same history.",
+      "command": "python -m pytest backend/tests/unit/test_sampling.py::test_seed_repeats_sensor_trace -q"
+    },
+    "sequence": 48,
+    "surface": "Scenario or component data",
+    "implementation": "Register a versioned input with stable IDs, units and provenance. Keep the expected test result separate from the input and rerun the reference case.",
+    "page_ids": [],
+    "priority": "Cabin replay"
+  },
+  {
+    "id": "SX-09B",
+    "title": "Show Ground snapshot age",
+    "owner": "Suhad",
+    "reviewers": [
+      "Abdelrahman"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-08B",
+      "SX-07C"
+    ],
+    "paths": [
+      "frontend/src/features/ground/GroundSnapshot.jsx"
+    ],
+    "build": "Render the delivered basis, values and age.",
+    "done": "Ground v102 stays at 0.60 kW while Crew shows 0.20 kW.",
+    "test": {
+      "path": "frontend/tests/ground.spec.js",
+      "name": "Ground shows delivered basis and sample age",
+      "method": "Verify old power, revision and sample age are displayed from the delivered projection.",
+      "command": "cd frontend && npx playwright test tests/ground.spec.js -g \"Ground shows delivered basis and sample age\""
+    },
+    "sequence": 49,
+    "surface": "Ground console · Delivered snapshot panel",
+    "implementation": "Show observation time, receive time, sample age, and the value from the delivered packet. The empty state stays visible before the first delivery.",
+    "page_ids": [
+      "page-ground"
+    ],
+    "priority": "Health demo"
+  },
+  {
+    "id": "SX-19B",
+    "title": "Plot the archive series in Crew",
+    "owner": "Suhad",
+    "reviewers": [
+      "Jana"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-19",
+      "SX-09A"
+    ],
+    "paths": [
+      "frontend/src/features/crew/RadiationContext.jsx"
+    ],
+    "build": "Render the reviewed instrument series as a separately labeled chart.",
+    "done": "The chart shows source and units, preserves gaps and does not label it as personal dose.",
+    "test": {
+      "path": "frontend/tests/crew.spec.js",
+      "name": "archive chart shows source and missing gaps",
+      "method": "Assert the archive label and unit. Verify a data gap and no personal-dose label.",
+      "command": "cd frontend && npx playwright test tests/crew.spec.js -g \"archive chart shows source and missing gaps\""
+    },
+    "sequence": 50,
+    "surface": "Crew console · Radiation panel",
+    "implementation": "Load the reviewed public instrument JSON. Show detector, unit and UTC range beside the chart and preserve missing intervals. Label it archival instrument context.",
+    "page_ids": [
+      "page-crew"
+    ],
+    "priority": "Health demo"
+  },
+  {
+    "id": "SX-24B",
+    "title": "Make Crew Health the main console",
+    "owner": "Suhad",
+    "reviewers": [
+      "Mohamed"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-08B",
+      "SX-23A",
+      "SX-24A",
+      "SX-24E"
+    ],
+    "paths": [
+      "frontend/src/features/crew/CrewHealthPanel.jsx",
+      "frontend/src/features/mission/MissionConsole.jsx",
+      "frontend/src/api/client.js"
+    ],
+    "surface": "Crew Health · Dashboard",
+    "build": "Show the profile, seven indicators and assessment before the cabin context.",
+    "implementation": "Link to measurement and emergency pages. Render personal baseline, sourced comparison and current quality on the selected metric. Keep the deck and RadLab in a supporting panel.",
+    "done": "A reviewer can save a fictional reading, see why it is flagged and open Emergency Assist.",
+    "test": {
+      "path": "frontend/tests/health.spec.js",
+      "name": "crew sees the reason for a saved reading",
+      "method": "Follow the measurement save to Crew and assert the assessment and emergency link.",
+      "command": "cd frontend && npx playwright test tests/health.spec.js -g \"crew sees the reason for a saved reading\""
+    },
+    "page_ids": [
+      "page-crew",
+      "page-measure"
+    ],
+    "priority": "Health demo",
+    "sequence": 51
+  },
+  {
+    "id": "SX-25C",
+    "title": "Relay only the approved case status",
+    "owner": "Abdelrahman",
+    "reviewers": [
+      "Sama"
+    ],
+    "milestone": "Golden run",
+    "deps": [
+      "SX-25A",
+      "SX-07C",
+      "SX-22C"
+    ],
+    "paths": [
+      "backend/src/symbiosis_x/workflows/relay.py",
+      "backend/src/symbiosis_x/application/projections.py",
+      "frontend/src/features/ground/GroundHealthStatus.jsx",
+      "backend/src/symbiosis_x/api/ground.py"
+    ],
+    "surface": "Emergency Assist and Ground · Handoff",
+    "build": "Add a separate allowlisted packet for a simulated health case.",
+    "implementation": "Share case alias, generic review priority, status and delivery time. Leave history, raw vitals, symptoms, notes and private event timestamps onboard. Ground acknowledges receipt. Acknowledgment never gates local escalation.",
+    "done": "Ground sees pending until delivery, then sees only the approved payload and can acknowledge it.",
+    "test": {
+      "path": "backend/tests/integration/test_health_relay.py",
+      "name": "test_delayed_case_packet_is_minimal",
+      "method": "Inspect the pre-delivery and delivered responses and search for the private marker.",
+      "command": "python -m pytest backend/tests/integration/test_health_relay.py::test_delayed_case_packet_is_minimal -q"
+    },
+    "page_ids": [
+      "page-emergency",
+      "page-ground"
+    ],
+    "priority": "Health demo",
+    "sequence": 52
   },
   {
     "id": "SX-06B",
@@ -1215,12 +1795,13 @@
       "method": "Apply, restart and retry for one effect. Run a separate stale/expired case for zero effects. Include expiry with unchanged decision revision.",
       "command": "python -m pytest backend/tests/integration/test_actions.py::test_fresh_retry_applies_once_after_restart -q"
     },
-    "sequence": 37,
+    "sequence": 53,
     "surface": "Crew console · Approval gate",
     "implementation": "Check current role, revision, policy, expiry and evidence. Store the committed action and stable receipt atomically. Read the prior receipt on same-request retry. Reused ID with different normalized input conflicts.",
     "page_ids": [
       "page-crew"
-    ]
+    ],
+    "priority": "Cabin replay"
   },
   {
     "id": "SX-07B",
@@ -1246,42 +1827,13 @@
       "method": "Repeat the same trigger; assert one incident and one named next owner.",
       "command": "python -m pytest backend/tests/integration/test_monitor.py::test_repeated_fault_opens_one_case -q"
     },
-    "sequence": 38,
+    "sequence": 54,
     "surface": "Both consoles · Operational incident",
     "implementation": "Link the accepted fault event to one incident and delegate evaluation to Sama’s planner. Store next owner, result and explanation in the case. Keep private wellbeing follow-up separate.",
     "page_ids": [
       "page-crew"
-    ]
-  },
-  {
-    "id": "SX-09B",
-    "title": "Show Ground snapshot age",
-    "owner": "Suhad",
-    "reviewers": [
-      "Abdelrahman"
     ],
-    "milestone": "Golden run",
-    "deps": [
-      "SX-08B",
-      "SX-07C"
-    ],
-    "paths": [
-      "frontend/src/features/ground/GroundSnapshot.jsx"
-    ],
-    "build": "Render the delivered basis, values and age.",
-    "done": "Ground v102 stays at 0.60 kW while Crew shows 0.20 kW.",
-    "test": {
-      "path": "frontend/tests/ground.spec.js",
-      "name": "Ground shows delivered basis and sample age",
-      "method": "Verify old power, revision and sample age are displayed from the delivered projection.",
-      "command": "cd frontend && npx playwright test tests/ground.spec.js -g \"Ground shows delivered basis and sample age\""
-    },
-    "sequence": 39,
-    "surface": "Ground console · Delivered snapshot panel",
-    "implementation": "Show observation time, receive time, sample age, and the value from the delivered packet. The empty state stays visible before the first delivery.",
-    "page_ids": [
-      "page-ground"
-    ]
+    "priority": "Cabin replay"
   },
   {
     "id": "SX-07E",
@@ -1305,42 +1857,59 @@
       "method": "Assert the receipt retains delivered basis; reject a snapshot never delivered.",
       "command": "python -m pytest backend/tests/integration/test_ground_advisory.py::test_advice_is_queued_on_delivered_basis -q"
     },
-    "sequence": 40,
+    "sequence": 55,
     "surface": "Backend or test runner",
     "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
     "page_ids": [
       "page-ground"
-    ]
+    ],
+    "priority": "Cabin replay"
   },
   {
-    "id": "SX-19B",
-    "title": "Plot the archive series in Crew",
-    "owner": "Suhad",
+    "id": "SX-26A",
+    "title": "Run the health-first release replay",
+    "owner": "Mohamed",
     "reviewers": [
-      "Jana"
+      "Abdelrahman"
     ],
     "milestone": "Golden run",
     "deps": [
-      "SX-19",
-      "SX-09A"
+      "SX-24B",
+      "SX-23E",
+      "SX-24C",
+      "SX-25B",
+      "SX-25C",
+      "SX-19B",
+      "SX-20D",
+      "SX-08D",
+      "SX-26B",
+      "SX-20C",
+      "SX-09B"
     ],
     "paths": [
-      "frontend/src/features/crew/RadiationContext.jsx"
+      "scenarios/variants/health-demo-v1.json",
+      "scenarios/expected/health-demo-v1.json",
+      "frontend/tests/health-demo.spec.js"
     ],
-    "build": "Render the reviewed instrument series as a separately labeled chart.",
-    "done": "The chart shows source and units, preserves gaps and does not label it as personal dose.",
+    "surface": "End to end · Health demo",
+    "build": "Run all five routes on a fresh seeded instance.",
+    "implementation": "Enter a simulated reading, compare baseline and reference, show a trend and reminder, open chest pain drill, acknowledge locally, then deliver an allowlisted Ground case. Run collapse as a separate replay. Assert cabin context remains available. Keep one short evidence capture for fallback. The longer walkthrough demonstrates all seven form entries and the collapse drill.",
+    "done": "The live path passes on a fresh database, including delayed packet and private marker assertions.",
     "test": {
-      "path": "frontend/tests/crew.spec.js",
-      "name": "archive chart shows source and missing gaps",
-      "method": "Assert the archive label and unit. Verify a data gap and no personal-dose label.",
-      "command": "cd frontend && npx playwright test tests/crew.spec.js -g \"archive chart shows source and missing gaps\""
+      "path": "frontend/tests/health-demo.spec.js",
+      "name": "health demo passes across Crew and Ground",
+      "method": "Record commit, fixture and seed. Verify both views and preserve an offline fallback.",
+      "command": "cd frontend && npx playwright test tests/health-demo.spec.js -g \"health demo passes across Crew and Ground\""
     },
-    "sequence": 41,
-    "surface": "Crew console · Radiation panel",
-    "implementation": "Load the reviewed public instrument JSON. Show detector, unit and UTC range beside the chart and preserve missing intervals. Label it archival instrument context.",
     "page_ids": [
-      "page-crew"
-    ]
+      "page-launch",
+      "page-crew",
+      "page-measure",
+      "page-emergency",
+      "page-ground"
+    ],
+    "priority": "Health demo",
+    "sequence": 56
   },
   {
     "id": "SX-07D",
@@ -1364,12 +1933,13 @@
       "method": "Deliver v102 advice against v103 and assert held disposition with zero applied effects.",
       "command": "python -m pytest backend/tests/integration/test_relay.py::test_stale_advisory_held_without_plant_effect -q"
     },
-    "sequence": 42,
+    "sequence": 57,
     "surface": "Crew console · Advice disposition",
     "implementation": "Classify stale, expired or valid advice at onboard receipt. Valid advice can enter Crew review. Crew authorization is a separate request handled by the gate.",
     "page_ids": [
       "page-crew"
-    ]
+    ],
+    "priority": "Cabin replay"
   },
   {
     "id": "SX-09D",
@@ -1394,12 +1964,13 @@
       "method": "Submit on v102 and assert the request basis and the displayed queued receipt.",
       "command": "cd frontend && npx playwright test tests/ground.spec.js -g \"advice uses displayed delivered snapshot\""
     },
-    "sequence": 43,
+    "sequence": 58,
     "surface": "Ground console · Advisory form",
     "implementation": "Send the selected candidate and delivered snapshot ID. Show queued or rejected status in the form. Approval stays in the Crew console.",
     "page_ids": [
       "page-ground"
-    ]
+    ],
+    "priority": "Cabin replay"
   },
   {
     "id": "SX-22D",
@@ -1425,12 +1996,13 @@
       "method": "Assert no mutation on evaluate; verify receipt lookup, wrong role and mismatched payload.",
       "command": "python -m pytest backend/tests/integration/test_decision_routes.py::test_evaluate_commit_and_lookup -q"
     },
-    "sequence": 44,
+    "sequence": 59,
     "surface": "Backend or test runner",
     "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
     "page_ids": [
       "page-crew"
-    ]
+    ],
+    "priority": "Cabin replay"
   },
   {
     "id": "SX-22E",
@@ -1464,13 +2036,14 @@
       "method": "Step across queued deliveries and assert the journal order, decision basis and no duplicate effects.",
       "command": "python -m pytest backend/tests/integration/test_runs.py::test_compose_applies_due_events_in_order -q"
     },
-    "sequence": 45,
+    "sequence": 60,
     "surface": "Backend or test runner",
     "implementation": "Compose the approved manifest and domain handlers in the single writer. Merge due state changes and observation acceptance before delivering packets and checking queued requests. Send only accepted readings to the projection.",
     "page_ids": [
       "page-crew",
       "page-ground"
-    ]
+    ],
+    "priority": "Cabin replay"
   },
   {
     "id": "SX-22F",
@@ -1498,13 +2071,14 @@
       "method": "Populate a private case and an undelivered disposition and verify both are excluded from Ground.",
       "command": "python -m pytest backend/tests/integration/test_projections.py::test_trace_filters_by_role_and_delivery -q"
     },
-    "sequence": 46,
+    "sequence": 61,
     "surface": "Backend or test runner",
     "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
     "page_ids": [
       "page-crew",
       "page-ground"
-    ]
+    ],
+    "priority": "Cabin replay"
   },
   {
     "id": "SX-09F",
@@ -1530,12 +2104,13 @@
       "method": "Assert the real response reasons appear without changing plant state.",
       "command": "cd frontend && npx playwright test tests/crew.spec.js -g \"standby shows its power constraint\""
     },
-    "sequence": 47,
+    "sequence": 62,
     "surface": "Operator console",
     "implementation": "Place this in the linked run shell and wire only the authorized response fields. Use the fixture until the listed backend dependencies pass.",
     "page_ids": [
       "page-crew"
-    ]
+    ],
+    "priority": "Cabin replay"
   },
   {
     "id": "SX-09C",
@@ -1560,12 +2135,13 @@
       "method": "Retry one request and assert the original receipt and reason are rendered.",
       "command": "cd frontend && npx playwright test tests/crew.spec.js -g \"approval retries use the same operation ID\""
     },
-    "sequence": 48,
+    "sequence": 63,
     "surface": "Crew console · Approval and receipt",
     "implementation": "Use the selected eligible candidate and current evidence basis. Render the server decision. For uncertain delivery, look up the original operation ID.",
     "page_ids": [
       "page-crew"
-    ]
+    ],
+    "priority": "Cabin replay"
   },
   {
     "id": "SX-10",
@@ -1591,13 +2167,14 @@
       "method": "Open the 13:00 milestone and inspect the linked case and role-allowed output.",
       "command": "cd frontend && npx playwright test tests/workflow.spec.js -g \"case card shows the hold reason and next owner\""
     },
-    "sequence": 49,
+    "sequence": 64,
     "surface": "Crew and Ground consoles · Case timeline",
     "implementation": "Mount the agent status strip and a compact trace in each console. Use the role-filtered case payload. Keep the graph editor and richer BPM analysis for later.",
     "page_ids": [
       "page-crew",
       "page-ground"
-    ]
+    ],
+    "priority": "Cabin replay"
   },
   {
     "id": "SX-18D",
@@ -1623,10 +2200,11 @@
       "method": "Use a fresh database; run the real endpoints and compare both snapshots and effect count.",
       "command": "python -m pytest backend/tests/integration/test_golden_replay.py::test_golden_replay_through_api -q"
     },
-    "sequence": 50,
+    "sequence": 65,
     "surface": "Backend or test runner",
     "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
-    "page_ids": []
+    "page_ids": [],
+    "priority": "Cabin replay"
   },
   {
     "id": "SX-20E",
@@ -1656,14 +2234,73 @@
       "method": "Use separate sessions and a temporary store; assert one run ID and different projections.",
       "command": "cd frontend && npx playwright test tests/smoke.spec.js -g \"two roles share a run without sharing private state\""
     },
-    "sequence": 51,
-    "surface": "All three pages · Browser smoke",
+    "sequence": 66,
+    "surface": "Supporting cabin replay · Browser smoke",
     "implementation": "Use separate Crew, Ground and facilitator sessions against one temporary store. Start and step from the launcher, then inspect both consoles and one advice flow.",
     "page_ids": [
       "page-launch",
       "page-crew",
       "page-ground"
-    ]
+    ],
+    "priority": "Cabin replay"
+  },
+  {
+    "id": "SX-11A",
+    "title": "Prove privacy at the actual boundary",
+    "owner": "Mohamed",
+    "reviewers": [
+      "Sama"
+    ],
+    "milestone": "Release",
+    "deps": [
+      "SX-04D",
+      "SX-24D",
+      "SX-25C"
+    ],
+    "paths": [
+      "backend/tests/integration/test_privacy.py"
+    ],
+    "build": "Prove private data is absent from actual Ground and shared outputs.",
+    "done": "Crew can read it. Ground, Relay and shared logs omit its text and private metadata.",
+    "test": {
+      "path": "backend/tests/integration/test_privacy.py",
+      "name": "test_private_marker_absent_from_shared_outputs",
+      "method": "Write via Crew API; inspect delivered Ground, Relay payload, shared trace and logs.",
+      "command": "python -m pytest backend/tests/integration/test_privacy.py::test_private_marker_absent_from_shared_outputs -q"
+    },
+    "sequence": 67,
+    "surface": "Backend or test runner",
+    "implementation": "Write markers through the real Crew check-in and measurement APIs, trigger the health handoff, then inspect Ground, Relay and operational trace. Include cabin trace checks when that variant is integrated.",
+    "page_ids": [],
+    "priority": "Health demo"
+  },
+  {
+    "id": "SX-11D",
+    "title": "Write the project description",
+    "owner": "Mohamed",
+    "reviewers": [
+      "Sama"
+    ],
+    "milestone": "Release",
+    "deps": [
+      "SX-26B"
+    ],
+    "paths": [
+      "README.md"
+    ],
+    "build": "Write the submission around astronaut self-assessment, explainable changes, local emergency response and privacy-aware delayed support.",
+    "done": "The draft names the challenge, uses source links and labels simulation assumptions.",
+    "test": {
+      "path": "README.md",
+      "name": "Project description review",
+      "method": "Check challenge alignment, stakeholder benefit, NASA provenance and fixture labels.",
+      "command": "Record the manual review in README.md."
+    },
+    "sequence": 68,
+    "surface": "Submission · Project description",
+    "implementation": "Draft challenge relevance and evidence while features are being built. Update claims and links after the release rehearsal.",
+    "page_ids": [],
+    "priority": "Health demo"
   },
   {
     "id": "SX-18B",
@@ -1690,66 +2327,11 @@
       "method": "Compare exported frames with a fresh replay. Open the offline player in a browser.",
       "command": "python -m pytest backend/tests/integration/test_storyboard.py::test_saved_frames_match_golden_run -q"
     },
-    "sequence": 52,
+    "sequence": 69,
     "surface": "Offline fallback · Five frames",
     "implementation": "Generate role-scoped frames from the passing integrated replay, attach the seed and model version, and open the saved frames in the backup player.",
-    "page_ids": []
-  },
-  {
-    "id": "SX-11A",
-    "title": "Prove privacy at the actual boundary",
-    "owner": "Mohamed",
-    "reviewers": [
-      "Sama"
-    ],
-    "milestone": "Release",
-    "deps": [
-      "SX-04D",
-      "SX-07C",
-      "SX-22F"
-    ],
-    "paths": [
-      "backend/tests/integration/test_privacy.py"
-    ],
-    "build": "Add a private marker through the Crew API and inspect Ground and shared output.",
-    "done": "Crew can read it. Ground, Relay and shared logs omit its text and private metadata.",
-    "test": {
-      "path": "backend/tests/integration/test_privacy.py",
-      "name": "test_private_marker_absent_from_shared_outputs",
-      "method": "Write via Crew API; inspect delivered Ground, Relay payload, shared trace and logs.",
-      "command": "python -m pytest backend/tests/integration/test_privacy.py::test_private_marker_absent_from_shared_outputs -q"
-    },
-    "sequence": 53,
-    "surface": "Backend or test runner",
-    "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
-    "page_ids": []
-  },
-  {
-    "id": "SX-11D",
-    "title": "Write the project description",
-    "owner": "Mohamed",
-    "reviewers": [
-      "Sama"
-    ],
-    "milestone": "Release",
-    "deps": [
-      "SX-01A"
-    ],
-    "paths": [
-      "README.md"
-    ],
-    "build": "Explain who benefits, what the prototype proves and where NASA data enters.",
-    "done": "The draft names the challenge, uses source links and labels simulation assumptions.",
-    "test": {
-      "path": "README.md",
-      "name": "Project description review",
-      "method": "Check challenge alignment, stakeholder benefit, NASA provenance and fixture labels.",
-      "command": "Record the manual review in README.md."
-    },
-    "sequence": 54,
-    "surface": "Submission · Project description",
-    "implementation": "Draft challenge relevance and evidence while features are being built. Update claims and links after the release rehearsal.",
-    "page_ids": []
+    "page_ids": [],
+    "priority": "Cabin replay"
   },
   {
     "id": "SX-11B",
@@ -1760,29 +2342,26 @@
     ],
     "milestone": "Release",
     "deps": [
+      "SX-26A",
       "SX-11A",
-      "SX-18B",
-      "SX-19B",
-      "SX-09C",
-      "SX-09D",
-      "SX-20E",
       "SX-20D"
     ],
     "paths": [
       "docs/acceptance.md"
     ],
-    "build": "Open Crew and Ground from a clean checkout on the demo host.",
-    "done": "Both views share the run. The offline backup opens.",
+    "build": "Rehearse the health-first run and separate collapse drill. Keep the cabin replay as a second demonstration when it passes.",
+    "done": "The health recording path is reproducible from the tagged release, with a verified offline fallback.",
     "test": {
       "path": "docs/acceptance.md",
       "name": "Tagged release rehearsal",
       "method": "Record commit, seed and browser evidence for two roles and the one-laptop fallback.",
       "command": "Record the manual review in docs/acceptance.md."
     },
-    "sequence": 55,
+    "sequence": 70,
     "surface": "Build or submission evidence",
     "implementation": "Record the result with the tested commit and fixture. Link the evidence for the named reviewer.",
-    "page_ids": []
+    "page_ids": [],
+    "priority": "Health demo"
   },
   {
     "id": "SX-11C",
@@ -1806,10 +2385,11 @@
       "method": "Open the final file, read captions, and compare claims and screens to the release.",
       "command": "Record the manual review in docs/acceptance.md."
     },
-    "sequence": 56,
+    "sequence": 71,
     "surface": "Build or submission evidence",
-    "implementation": "Record the result with the tested commit and fixture. Link the evidence for the named reviewer.",
-    "page_ids": []
+    "implementation": "Use the timed health-first storyboard and capture the passing release. Keep the cabin context to a quick visual. Verify English subtitles and compare the footage against the role responses.",
+    "page_ids": [],
+    "priority": "Health demo"
   },
   {
     "id": "SX-11E",
@@ -1834,10 +2414,11 @@
       "method": "Open every submission link from a separate session and review applicable disclosure.",
       "command": "Record the manual review in docs/acceptance.md."
     },
-    "sequence": 57,
+    "sequence": 72,
     "surface": "Build or submission evidence",
     "implementation": "Record the result with the tested commit and fixture. Link the evidence for the named reviewer.",
-    "page_ids": []
+    "page_ids": [],
+    "priority": "Health demo"
   },
   {
     "id": "SX-12",
@@ -1859,10 +2440,11 @@
       "method": "Trace one sample to source, permission, version/hash, unit and time; mark gaps pending.",
       "command": "Record the manual review in docs/data/intake.md."
     },
-    "sequence": 58,
+    "sequence": 73,
     "surface": "Data intake · Separate replay scenario",
     "implementation": "Keep the original data and source evidence separate. Publish only the approved adapter output or synthetic test sample. Preserve the reference demo and retest its output.",
-    "page_ids": []
+    "page_ids": [],
+    "priority": "Optional"
   },
   {
     "id": "SX-13",
@@ -1888,10 +2470,11 @@
       "method": "Check one nominal sample and one missing sample for the chosen subsystem.",
       "command": "python -m pytest backend/tests/unit/test_subsystem_signal.py::test_new_signal_keeps_unit_and_quality -q"
     },
-    "sequence": 59,
+    "sequence": 74,
     "surface": "Backend or test runner",
     "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
-    "page_ids": []
+    "page_ids": [],
+    "priority": "Optional"
   },
   {
     "id": "SX-14",
@@ -1916,10 +2499,11 @@
       "method": "Apply capture and unknown seal evidence; hatch and transfer stay held.",
       "command": "python -m pytest backend/tests/unit/test_mechanical.py::test_unknown_seal_blocks_hatch -q"
     },
-    "sequence": 60,
+    "sequence": 75,
     "surface": "Backend or test runner",
     "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
-    "page_ids": []
+    "page_ids": [],
+    "priority": "Optional"
   },
   {
     "id": "SX-16",
@@ -1944,10 +2528,11 @@
       "method": "Compare an open step and a completed step without treating open time as zero.",
       "command": "python -m pytest backend/tests/unit/test_trace.py::test_open_interval_has_no_end_time -q"
     },
-    "sequence": 61,
+    "sequence": 76,
     "surface": "Backend or test runner",
     "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
-    "page_ids": []
+    "page_ids": [],
+    "priority": "Optional"
   },
   {
     "id": "SX-15B",
@@ -1973,12 +2558,13 @@
       "method": "Compete manual and automatic calls at one cursor and verify one effect.",
       "command": "python -m pytest backend/tests/integration/test_runs.py::test_driver_shares_advance_cursor -q"
     },
-    "sequence": 62,
+    "sequence": 77,
     "surface": "Backend or test runner",
     "implementation": "Implement this boundary in the listed module. Pass its typed result to the dependent ticket and verify the named test with an isolated store or fixture.",
     "page_ids": [
       "page-launch"
-    ]
+    ],
+    "priority": "Optional"
   },
   {
     "id": "SX-15",
@@ -2002,12 +2588,13 @@
       "method": "Pause the server driver and verify the stored clock remains fixed until resume.",
       "command": "python -m pytest backend/tests/integration/test_runs.py::test_pause_stops_automatic_advance -q"
     },
-    "sequence": 63,
+    "sequence": 78,
     "surface": "Expansion · Facilitator controls",
     "implementation": "Add pause once the optional driver is wired in SX-15B. Pausing the simulation must leave the last role projections readable.",
     "page_ids": [
       "page-launch"
-    ]
+    ],
+    "priority": "Optional"
   },
   {
     "id": "SX-12B",
@@ -2034,10 +2621,11 @@
       "method": "Check mapped unit and timestamp, reject ambiguous units, and preserve missing as unknown.",
       "command": "python -m pytest backend/tests/unit/test_data_adapter.py::test_sample_normalizes_or_reports_quality -q"
     },
-    "sequence": 64,
+    "sequence": 79,
     "surface": "Data intake · Separate replay scenario",
     "implementation": "Keep the original data and source evidence separate. Publish only the approved adapter output or synthetic test sample. Preserve the reference demo and retest its output.",
-    "page_ids": []
+    "page_ids": [],
+    "priority": "Optional"
   },
   {
     "id": "SX-12C",
@@ -2063,10 +2651,11 @@
       "method": "Run both variants twice; compare outputs and assert the original golden fixture is untouched.",
       "command": "python -m pytest backend/tests/integration/test_organizer_replay.py::test_variant_replays_without_golden_changes -q"
     },
-    "sequence": 65,
+    "sequence": 80,
     "surface": "Incoming data · Replay and regression",
     "implementation": "Pin the new variant and expected outputs. Run it twice and then run the canonical demo. Compare delivered revisions and applied effect counts.",
-    "page_ids": []
+    "page_ids": [],
+    "priority": "Optional"
   },
   {
     "id": "SX-12D",
@@ -2091,10 +2680,11 @@
       "method": "Compare Crew, Ground, Relay and shared trace against the marker and metadata.",
       "command": "python -m pytest backend/tests/integration/test_data_projection.py::test_imported_private_marker_stays_onboard -q"
     },
-    "sequence": 66,
+    "sequence": 81,
     "surface": "Data intake · Separate replay scenario",
     "implementation": "Keep the original data and source evidence separate. Publish only the approved adapter output or synthetic test sample. Preserve the reference demo and retest its output.",
-    "page_ids": []
+    "page_ids": [],
+    "priority": "Optional"
   }
 ]</script>
 <script>
@@ -2103,6 +2693,7 @@ const board = document.getElementById("board");
 const owner = document.getElementById("owner");
 const milestone = document.getElementById("milestone");
 const count = document.getElementById("count");
+const priority = document.getElementById("priority");
 const cards = new Map();
 const checkpointNames = ["Start","First slice","Golden run","Release","Expansion"];
 
@@ -2129,6 +2720,7 @@ function issueText(t) {
     "**Reviewers** " + t.reviewers.join(", "),
     "**Build order** " + t.sequence + " · " + t.milestone,
     "**Page or service** " + t.surface,
+    "**Priority** " + t.priority,
     "**Depends on** " + (t.deps.join(", ") || "Kickoff agreement"),
     "**Paths** " + t.paths.map(path=>"`"+path+"`").join(", "),
     "### Build",
@@ -2174,7 +2766,7 @@ for (const ticket of tickets) {
   card.id = ticket.id;
   const summary = element("summary");
   summary.append(element("span",String(ticket.sequence).padStart(2,"0")+" · "+ticket.id,"ticket-id"),element("strong",ticket.title),
-    element("span",ticket.owner,"chip"),
+    element("span",ticket.owner,"chip"),element("span",ticket.priority,"chip"),
     element("span",ticket.milestone,"chip"+(ticket.milestone==="Expansion"?" expand":"")),
     element("span",ticket.build+" Check: "+ticket.done,"summary-check"));
   const body = element("div",null,"ticket-body");
@@ -2220,7 +2812,7 @@ for (const ticket of tickets) {
 function filter() {
   let visible = 0;
   for (const ticket of tickets) {
-    const match = (!owner.value||ticket.owner===owner.value)&&(!milestone.value||ticket.milestone===milestone.value);
+    const match = (!owner.value||ticket.owner===owner.value)&&(!milestone.value||ticket.milestone===milestone.value)&&(!priority.value||ticket.priority===priority.value);
     cards.get(ticket.id).hidden = !match;
     if (match) visible++;
   }
@@ -2233,6 +2825,7 @@ function openLinkedTicket() {
   if (card.hidden) {
     owner.value = "";
     milestone.value = "";
+    priority.value = "";
     filter();
   }
   card.open = true;
@@ -2260,9 +2853,10 @@ document.getElementById("expand").addEventListener("click",()=>{for(const card o
 document.getElementById("collapse").addEventListener("click",()=>{for(const card of cards.values())card.open=false;});
 owner.addEventListener("change",filter);
 milestone.addEventListener("change",filter);
+priority.addEventListener("change",filter);
 window.addEventListener("hashchange",openLinkedTicket);
 document.getElementById("export").addEventListener("click",()=>{
-  const file = new Blob([JSON.stringify({schema_version:3,project:"SYMBIOSIS X",tickets},null,2)+"\n"],{type:"application/json"});
+  const file = new Blob([JSON.stringify({schema_version:4,project:"SYMBIOSIS X",tickets},null,2)+"\n"],{type:"application/json"});
   const link = element("a");
   link.href = URL.createObjectURL(file);
   link.download = "symbiosis-x-feature-backlog.json";
