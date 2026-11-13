@@ -14,6 +14,14 @@ class Repository:
     database_path: Path
 
     @contextmanager
+    def read(self) -> Iterator[sqlite3.Connection]:
+        """Read one consistent snapshot without allowing writes."""
+        with closing(connect(self.database_path)) as connection:
+            connection.execute("PRAGMA query_only = ON")
+            connection.execute("BEGIN")
+            yield connection
+
+    @contextmanager
     def write(self) -> Iterator[sqlite3.Connection]:
         """Commit all records in a write together or roll them back together."""
         with closing(connect(self.database_path)) as connection:

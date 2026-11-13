@@ -102,3 +102,22 @@ class GroundProjection(Snapshot):
         if delivery.age_s != self.mission_s - delivery.observed_at_s:
             raise ValueError("age must be measured from observation time")
         return self
+
+
+class RunView(Contract):
+    run_id: Identifier
+    scenario_id: Identifier
+    scenario_version: Identifier
+    mission_s: NonnegativeInt
+
+
+class AcceptedCO2(Quantity):
+    unit: Literal["ppm"]
+    source_id: Identifier
+    event_id: Identifier
+
+
+class CurrentCrewView(RunView):
+    role: Literal["crew"] = "crew"
+    decision_rev: NonnegativeInt
+    co2: AcceptedCO2 | None
