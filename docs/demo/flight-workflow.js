@@ -116,7 +116,7 @@ const campaignGround = (() => {
   const issuer = "Simulated Ground · Flight Director";
 
   function issue(current, time, departure) {
-    const expires = Math.max(departure + 600, time + uplink + 450);
+    const expires = Math.max(departure + 600, time + uplink + 600);
     return {
       issuer, basis: "ISS departure readiness · checkpoint T+" + clock(departure),
       sent: time, arrives: time + uplink, expires,
