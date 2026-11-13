@@ -371,6 +371,9 @@ button[aria-pressed=true]{background:#3d315e}
 .stage[data-vehicle=entry]{background:radial-gradient(ellipse at 68% 46%,#6b3c46,#201935 58%,#080a18)}
 .stage[data-vehicle=landed]{background:linear-gradient(#111a34 35%,#43516d 70%,#242b3c 70%)}
 .stage[data-vehicle=landed] #ship{transform:translateY(10%) scale(.8)}
+.stage[data-steering=true] #ship{rotate:var(--ship-bank,0deg);transform:translate(var(--ship-x,0px),var(--ship-y,0px)) scale(.96)}
+.stage[data-steering=true][data-vehicle=approach] #ship{transform:translate(calc(-3% + var(--ship-x,0px)),var(--ship-y,0px)) scale(.9)}
+#orbital-burn-scene{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}
 @media(prefers-reduced-motion:reduce){.stage[data-asteria=true] #ship,#orbital-station{transition:none}}
 @keyframes reveal-asteria{from{opacity:0;translate:-3% 6%;scale:.96}to{opacity:1;translate:0;scale:1}}
 @media(prefers-reduced-motion:reduce){.stage[data-asteria=true] #ship{animation:none}}
@@ -391,9 +394,17 @@ button[aria-pressed=true]{background:#3d315e}
 #orbit-status{color:var(--blue)}
 #maneuver-plan progress{width:100%;height:.55rem;accent-color:#ffbf92}
 #maneuver-track{display:block;width:100%;border-radius:6px}
-#navigation-mini{position:fixed;z-index:8;right:.65rem;bottom:.65rem;width:clamp(116px,16vw,168px);padding:.35rem;background:#101932df;box-shadow:0 4px 16px #0006;text-align:left}
-#navigation-mini canvas,#navigation-track{display:block;width:100%;border-radius:6px}
-#navigation-mini small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.68rem;color:#c7d7ed}
+#flight-instrument{position:fixed;z-index:8;left:50%;bottom:.55rem;transform:translateX(-50%);display:grid;justify-items:center;gap:.25rem;color:#dce9ff;text-align:center}
+#navigation-mini{padding:0;width:clamp(86px,14vw,116px);aspect-ratio:1;border-radius:50%;background:#111c32;border:1px solid #8badd5;box-shadow:0 4px 20px #000a}
+#navigation-mini canvas{display:block;width:100%;border-radius:inherit}
+#navigation-track{display:block;width:100%;border-radius:6px}
+#flight-instrument small,#flight-instrument button:not(#navigation-mini){font-size:.68rem}
+#navigation-help{background:#0b1428ed;border-radius:4px;padding:.1rem .3rem}
+#navigation-heading,#navigation-caption{max-width:210px;background:#0b1428ed;border-radius:4px;padding:.15rem .35rem}
+.instrument-actions{display:flex;align-items:center;gap:.25rem}
+.instrument-actions button{padding:.2rem .35rem;background:#111a32ed}
+#demo-banner{position:fixed;left:50%;top:25%;transform:translateX(-50%);z-index:9;display:flex;align-items:center;gap:.65rem;padding:.45rem .6rem;background:#101932ee;border:1px solid #8ea2d0;border-radius:8px;max-width:calc(100% - 1rem)}
+#demo-banner button{white-space:nowrap}
 .launch-field[data-view=launch] .pad-checkout{padding-bottom:calc(clamp(116px,16vw,168px)*.6 + 2.8rem)}
 .launch-field[data-view=launch] .pad-checkout .launch-board{max-height:calc(100svh - var(--launch-clearance,100px) - clamp(116px,16vw,168px)*.6 - 3rem)}
 @media(max-width:850px){.launch-field[data-view=launch] .pad-checkout .launch-board{max-height:none}}
@@ -525,6 +536,7 @@ __HUD_ICONS__
     <div class="ship" id="ship">
       <canvas id="hull" width="1100" height="475" aria-hidden="true"></canvas>
     </div>
+    <canvas id="orbital-burn-scene" role="img" aria-label="Exterior spacecraft burn" hidden></canvas>
   </div>
 <div class="overlays" id="overlays">
   <section class="panel" id="mission-command-widget" aria-labelledby="mission-command-title" hidden>
@@ -816,10 +828,27 @@ __HUD_ICONS__
     <button type="button" data-attitude="15">Rotate +15°</button>
   </div>
 </dialog>
-<button id="navigation-mini" type="button" aria-label="Open orbit minimap" hidden>
-  <canvas id="navigation-thumb" width="240" height="144" aria-hidden="true"></canvas>
+<section id="flight-instrument" aria-label="Flight attitude instrument" hidden>
+  <small id="navigation-heading"></small>
+  <button id="navigation-mini" type="button" aria-label="Steer spacecraft" aria-describedby="navigation-help">
+    <canvas id="navigation-thumb" width="168" height="168" aria-hidden="true"></canvas>
+  </button>
+  <div class="instrument-actions">
+    <button type="button" data-pitch="-15" aria-label="Pitch down">↓</button>
+    <button type="button" data-attitude="-15" aria-label="Yaw left">←</button>
+    <button id="open-orbit-minimap" type="button" aria-label="Open orbit minimap">Orbit</button>
+    <button type="button" data-attitude="15" aria-label="Yaw right">→</button>
+    <button type="button" data-pitch="15" aria-label="Pitch up">↑</button>
+  </div>
+  <small id="navigation-help">Select the ball to steer with WASD or arrows</small>
   <small id="navigation-caption"></small>
-</button>
+</section>
+<aside id="demo-banner" aria-label="Timed mission demo" hidden>
+  <output id="demo-time" aria-label="Demo elapsed time"></output>
+  <span id="demo-status"></span>
+  <button type="button" id="demo-pause">Pause demo</button>
+  <button type="button" id="demo-exit">Exit demo</button>
+</aside>
 <section id="launch-page" class="launch-page" aria-label="SYMBIOSIS X flight game" hidden>
   <div class="launch-hud">
   <nav class="ribbon launch-ribbon" aria-label="Flight navigation">
@@ -866,6 +895,7 @@ __HUD_ICONS__
         <div><strong>ISS Research Replay</strong><p>Scripted checkpoints · self-paced</p></div>
         <button id="open-flight-replay" type="button">Open replay</button>
       </div>
+      <button id="start-timed-demo" type="button">Run 4-minute mission demo</button>
       <p id="campaign-notice" role="status"></p>
     </section>
     <div class="pad-checkout" id="pad-controls" hidden>
@@ -2108,6 +2138,7 @@ function render() {
   element("next-event").textContent = connectedFlight ? "Advance 15 s" : "Next event";
   element("stage").dataset.asteria = Boolean(connectedFlight);
   element("stage").dataset.vehicle = connectedFlight?.visual ?? "";
+  element("stage").dataset.steering = Boolean(connectedFlight?.steering);
   element("ship").dataset.vehicle = connectedFlight?.visual ?? "";
   element("flight-mission-name").textContent = connectedFlight?.missionTitle ?? "ISS Research Replay";
   element("show-missions").textContent = connectedFlight ? "Save and exit" : "Mission menu";
@@ -2260,6 +2291,15 @@ function doorClearance(x,y) {
 }
 
 function paintFlight(frame, sceneTime = missionTime) {
+  if (connectedFlight?.steering) {
+    const ship = element("ship");
+    const phase = (sceneTime-connectedFlight.crewStarted)*.075;
+    const yaw = Math.sin(connectedFlight.yaw*Math.PI/180);
+    const drift = reducedMotion.matches ? 0 : Math.sin(phase);
+    ship.style.setProperty("--ship-x", (yaw*27+drift*12)+"px");
+    ship.style.setProperty("--ship-y", (-connectedFlight.pitch*.55+drift*5)+"px");
+    ship.style.setProperty("--ship-bank", (yaw*12+drift*1.7)+"deg");
+  }
   const inspection = groundInspection(frame);
   for (const [member,button] of pawns) {
     const motion = crewMotion(member,frame);
@@ -2605,7 +2645,9 @@ const overlay = element("overlays");
 const controller = document.querySelector(".flight-controls");
 const playArea = document.querySelector(".play-area");
 const shelf = element("widget-shelf");
-const widgets = createFlightWidgets(overlay,shelf,element("widget-notice"));
+const flightInstrument = element("flight-instrument");
+const widgets = createFlightWidgets(overlay,shelf,element("widget-notice"),flightInstrument);
+new ResizeObserver(()=>widgets.schedule()).observe(flightInstrument);
 const launchHud = document.querySelector(".launch-hud");
 new ResizeObserver(() => {
   element("launch-field").style.setProperty("--launch-clearance", launchHud.offsetHeight + "px");
@@ -2684,9 +2726,11 @@ const launchMission = bindLaunchCheckout(data.missions,data.replay_version,{
       canvasTickStarted = performance.now();
       function animate(now) {
         const elapsed = Math.min(TICK_SECONDS, (now-canvasTickStarted)*.004*(connectedFlight?.speed ?? 1));
-        if (!reducedMotion.matches && now-lastPaintAt >= 32) {
-          paintFlight(currentFrame(),missionTime+elapsed);
-          launchMission.paintNavigation(missionTime+elapsed);
+        const sceneTime = Math.min(missionTime+elapsed,connectedFlight?.playbackLimit ?? Infinity);
+        if (now-lastPaintAt >= 48) {
+          if (!reducedMotion.matches) paintFlight(currentFrame(),sceneTime);
+          element("hud-clock").textContent = "T+"+clock(Math.floor(sceneTime));
+          launchMission.paintNavigation(sceneTime);
           lastPaintAt = now;
         }
         canvasAnimation = requestAnimationFrame(animate);

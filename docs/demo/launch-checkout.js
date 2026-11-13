@@ -5,11 +5,13 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
   const find = id => document.getElementById(id);
   const canvas = find("launch-scene");
   const scene = createLaunchScene(canvas);
+  const burnCanvas = find("orbital-burn-scene");
+  const burnScene = createLaunchScene(burnCanvas);
   const dockingScene = createDockingScene(find("docking-scene"),find("docking-caption"));
-  const attitudeControls = [...document.querySelectorAll("[data-attitude]")];
+  const attitudeControls = [...document.querySelectorAll("[data-attitude],[data-pitch]")];
   const navigationHosts = {
     mini:find("navigation-thumb"),large:find("navigation-track"),burn:find("maneuver-track"),dialog:find("orbit-dialog"),
-    caption:find("navigation-caption"),attitudeControls,
+    caption:find("navigation-caption"),heading:find("navigation-heading"),attitudeControls,
     fields:Object.fromEntries(["ap","pe","altitude","speed","period","target","owner","stage","attitude","reserve","basis","approach"]
       .map(name=>[name,find("navigation-"+name)])),
   };
@@ -18,7 +20,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
   const fresh = mission => ({time:0,jobs:{},hold:false,startupAt:null,armed:null,ignition:null,separation:null,insertion:null,aborted:false,phasing:null,capture:null,retreat:null,approachHeld:false,sealAt:null,pressureAt:null,hatchAt:null,transferAt:null,researchAt:null,
     archivedAt:null,departedAt:null,deorbitAt:null,landedAt:null,recoveredAt:null,systemsCheckAt:null,
     transferArrival:null,matchedAt:null,
-    attitude:0,rcs:mission.navigation.rcsPulses});
+    attitude:0,pitch:0,rcs:mission.navigation.rcsPulses});
   let ascent, rendezvous, docking, returnPlan, navigation;
   let view = "menu";
   let ascentTimer = null;
@@ -31,6 +33,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
   let orbitPreviewStarted = 0;
   let orbitPreviewUntil = 0;
   let activeBurn = null;
+  let demo = null;
   const burnDuration = 7200;
   const groundRate = 2;
   const systems = [
@@ -59,7 +62,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
   let tick, countdown;
   let state;
   function persist() {
-    return saves.write(config,state);
+    return demo ? true : saves.write(config,state);
   }
   function loadMission(mission) {
     cancelAnimationFrame(orbitConfirmation);
@@ -166,7 +169,8 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
         : state.time < state.systemsCheckAt + config.checkout_s
           ? {phase:"Orbital systems checkout",next:"Wait for Ivo’s systems check",advance:true}
           : {phase:"Orbital systems verified",next:"Commit deorbit",canDeorbit:true};
-      return {reserve:remaining,orbit:true,...(state.deorbitAt === null ? checkout : returnState())};
+      return {reserve:remaining,orbit:true,canWaitForCrew:state.deorbitAt === null,
+        ...(state.deorbitAt === null ? checkout : returnState())};
     }
     if (state.retreat !== null) return {phase:"Station approach ended",next:"Safe orbit",
       reserve:reserve-(state.phasing === null ? 0 : rendezvous.phasing_cost),terminal:true,orbit:true};
@@ -184,7 +188,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     }
     if (state.transferArrival !== null && state.time < state.transferArrival) {
       return {phase:"Transfer coast · engines off",next:"Coast to transfer apoapsis · "+missionStamp(state.transferArrival),
-        reserve:remaining,orbit:true,warpTo:state.transferArrival};
+        reserve:remaining,orbit:true,advance:true,warpTo:state.transferArrival};
     }
     if (state.transferArrival !== null && state.matchedAt === null) {
       return {phase:"At transfer apoapsis",next:"Match the station’s orbit before approaching",reserve:remaining,orbit:true,matchBurn:true};
@@ -304,8 +308,10 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     }
     const phases = {5:"Approach",6:"Docked",7:"Station research",9:"Return transit",10:"Recovery"};
     const stationWork = missionWork();
-    return {missionId:config.id,missionTitle:config.title,time:state.time,phaseStarted,crewStarted:state.insertion,
-      frameIndex,visual,advance:canAdvance(),playable:flight.advance,speed,stationWork,frame:{
+    return {missionId:demo ? config.id+"-timed-demo" : config.id,missionTitle:config.title,time:state.time,phaseStarted,crewStarted:state.insertion,
+      frameIndex,visual,advance:!demo && canAdvance(),playable:!demo && canPlay(),speed,stationWork,
+      steering:state.capture === null && state.deorbitAt === null, yaw:state.attitude,pitch:state.pitch,
+      playbackLimit:flight.warpTo,frame:{
       phase:phases[frameIndex] ?? "Orbit",
       label:flight.phase,site,dock,
       vehicle:state.departedAt !== null ? config.ship + " return capsule" : config.ship,
@@ -320,7 +326,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
 
   function renderNavigation(flight) {
     const visible = view === "launch" && state.ignition !== null;
-    find("navigation-mini").hidden = !visible;
+    find("flight-instrument").hidden = !visible;
     if (!visible) { navigation.show(null); return; }
     const progress = activeBurn ? burnProgress(performance.now()) : 0;
     const time = activeBurn?.kind === "coast" ? state.time+(activeBurn.destination-state.time)*progress : state.time;
@@ -329,7 +335,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
       transfer:state.phasing,matched:state.matchedAt,burn:activeBurn && {...activeBurn,progress},
       captured:state.capture !== null && state.departedAt === null,departure:state.departedAt,deorbit:state.deorbitAt,
       ascentDuration:ascent.burn_s+ascent.minimum_coast_s,entryDuration:returnPlan.entry_s+returnPlan.descent_s,
-      attitude:state.attitude,rcs:state.rcs,canOrient:canOrient(),phase:flight.phase,target:flight.next,
+      attitude:state.attitude,pitch:state.pitch,rcs:state.rcs,canOrient:!demo && canOrient(),phase:flight.phase,target:flight.next,
       owner:"Mara · guidance and commit / Ivo · propulsion",
       approach:!rendezvous ? "Orbital checkout" : state.capture !== null ? state.departedAt === null ? "Hard dock" : "Clear of station"
         : flight.sample ? flight.sample.range+" game units · closing "+flight.sample.closing+" units/tick" : "No approach active",
@@ -367,6 +373,10 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     }
     const flight = launch ? flightState() : null;
     if (flight) render(animate);
+    const orbitalBurn = inOrbit && ["transfer","match"].includes(activeBurn?.kind);
+    burnCanvas.hidden = !orbitalBurn;
+    if (orbitalBurn) burnScene.show({phase:"orbital",elapsed:0,separated:true,ship:config.ship},animate);
+    else burnScene.hide();
     renderNavigation(flight);
     const checks = ready() ? Math.max(...config.jobs.map(job=>state.jobs[job.id].due)) : null;
     const reached = milestones=>milestones.filter(([time])=>time !== null && time<=state.time)
@@ -386,7 +396,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     if (!canAdvance()) return;
     state.time = Math.min(state.time+tick,flightState().warpTo ?? Infinity);
     persist();
-    if (!flightState().advance) stopPlayback();
+    if (!canPlay()) stopPlayback();
     renderView();
   }
 
@@ -394,8 +404,12 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     if (view !== "launch" || activeBurn || performance.now() < orbitPreviewUntil) return false;
     const flight = flightState();
     if (flight.matchBurn) return false;
-    return Boolean(flight.advance || flight.separate || flight.insert || flight.capture ||
-      flight.canWaitForCrew);
+    return Boolean(flight.advance || flight.canWaitForCrew || flight.capture);
+  }
+  function canPlay() {
+    if (view !== "launch" || activeBurn) return false;
+    const flight = flightState();
+    return Boolean(flight.advance || flight.canWaitForCrew);
   }
   function updatePadClock(time) {
     const light = lightAt(time);
@@ -419,6 +433,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
   }
 
   function togglePlayback() {
+    if (demo) return;
     if (state.ignition !== null && state.insertion === null) {
       if (state.aborted || !flightState().advance) return;
       if (ascentPlaying) stopPlayback();
@@ -427,7 +442,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
       return;
     }
     if (playback !== null) {stopPlayback(); return;}
-    if (!flightState().advance || !canAdvance()) return;
+    if (!canPlay()) return;
     if (state.ignition === null) {
       const frame = now => {
         const duration = tick/(groundRate*speed)*1000;
@@ -525,8 +540,8 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     find("pad-play-label").textContent = launchPlaying ? "Pause" : "Play";
     find("pad-play-icon").setAttribute("href",launchPlaying ? "#hud-pause" : "#hud-play");
     const flight = flightState();
-    find("pad-play").disabled = !flight.advance || !canAdvance();
-    find("pad-step").disabled = !canAdvance();
+    find("pad-play").disabled = Boolean(demo) || !canPlay();
+    find("pad-step").disabled = Boolean(demo) || !canAdvance();
     find("pad-speed").textContent = speed+"×";
     find("pad-speed").title = (groundRate*speed)+" ground mission seconds per real second";
     if (state.ignition !== null) {
@@ -564,7 +579,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     find("launch-arm").hidden = state.ignition !== null || state.armed !== null;
     find("launch-arm").disabled = state.hold || !systemsReady() || !ready();
     find("launch-go").disabled = state.hold || !systemsReady() || !ready() || state.armed === null || state.time < state.armed+countdown;
-    find("launch-step").disabled = !canAdvance();
+    find("launch-step").disabled = Boolean(demo) || !canAdvance();
     find("launch-crew-checks").hidden = state.ignition !== null;
     find("launch-research").hidden = state.transferAt === null || state.researchAt !== null;
     const researchDone = state.researchAt !== null && state.time >= state.researchAt+returnPlan.research_s;
@@ -668,7 +683,11 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     }
     const flight = flightState();
     const orbit = find("orbit-preview");
-    if (!orbit.hidden) paintOrbit(orbit,burnProgress(now));
+    const progress = burnProgress(now);
+    if (!orbit.hidden) paintOrbit(orbit,progress);
+    const throttle = Math.max(0,Math.min(1,progress*14,(1-progress)*10));
+    if (activeBurn.kind === "insertion") scene.setThrottle(throttle);
+    if (!burnCanvas.hidden) burnScene.setThrottle(throttle);
     renderManeuver(flight,now);
     renderNavigation(flight);
     orbitConfirmation = requestAnimationFrame(animateBurn);
@@ -760,7 +779,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
   find("pad-speed").addEventListener("click",cycleSpeed);
   for (const id of ["show-briefing","launch-briefing","pad-briefing"]) find(id).addEventListener("click",()=>{
     pauseReplay();
-    stopPlayback();
+    if (!demo) stopPlayback();
     if (view === "launch") renderView(false);
     menuUI.setBriefing(view === "replay" ? null : config);
     find("mission-briefing").showModal();
@@ -769,13 +788,29 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     find("orbit-dialog").showModal();
     renderNavigation(flightState());
   }
-  for (const id of ["show-orbit","navigation-mini"]) find(id).addEventListener("click",openNavigation);
-  for (const button of attitudeControls) button.addEventListener("click",()=>{
-    if (!canOrient()) return;
-    state.attitude = (state.attitude + Number(button.dataset.attitude) + 540)%360 - 180;
+  for (const id of ["show-orbit","open-orbit-minimap"]) find(id).addEventListener("click",openNavigation);
+  function steer(axis, degrees) {
+    if (demo || !canOrient()) return;
+    const before = state[axis];
+    state[axis] = axis === "pitch" ? Math.max(-75,Math.min(75,before+degrees)) : (before+degrees+540)%360-180;
+    if (state[axis] === before) return;
     state.rcs--;
     persist();
-    renderNavigation(flightState());
+    renderView(false);
+  }
+  for (const button of attitudeControls) button.addEventListener("click",()=>{
+    if ("pitch" in button.dataset) steer("pitch",Number(button.dataset.pitch));
+    else steer("attitude",Number(button.dataset.attitude));
+  });
+  find("navigation-mini").addEventListener("keydown",event=>{
+    const directions = {
+      a:["attitude",-15],d:["attitude",15],w:["pitch",15],s:["pitch",-15],
+      arrowleft:["attitude",-15],arrowright:["attitude",15],arrowup:["pitch",15],arrowdown:["pitch",-15],
+    };
+    const direction = directions[event.key.toLowerCase()];
+    if (!direction || event.altKey || event.ctrlKey || event.metaKey) return;
+    event.preventDefault();
+    if (!event.repeat) steer(...direction);
   });
   const objectiveRows = new Map();
   function buildMissionControls() {
@@ -841,11 +876,17 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     return {view:next === "replay" || next === "launch" ? next : "menu",mission};
   }
 
-  function showView(next, mission, navigate = false) {
+  function showView(next, mission, navigate = false, timed = false) {
+    if (!timed && demo) {
+      cancelAnimationFrame(demo.frame);
+      demo = null;
+      find("demo-banner").hidden = true;
+    }
     if (find("mission-objectives").open) find("mission-objectives").close();
     pauseReplay();
     stopPlayback();
     loadMission(mission);
+    if (timed) state = fresh(mission);
     view = next;
     renderView(false);
     if (navigate) {
@@ -862,7 +903,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
   }
 
   function openObjectives() {
-    stopPlayback();
+    if (!demo) stopPlayback();
     renderView(false);
     find("mission-objectives").showModal();
   }
@@ -872,6 +913,92 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     find("campaign-notice").textContent = saved ? "" : "Browser storage is unavailable. This run can only resume in this tab.";
     showView("menu",config,true);
   }
+
+  // Offsets are active presentation seconds. Each command uses the same gate
+  // as the corresponding player action. The demo owns a fresh in-memory run.
+  const demoCues = [
+    [2,"startup"],[4,()=>{ for (const row of rows.values()) row.assign.click(); }],
+    [8,3],[22,"launch-arm"],[26,1],[34,"launch-go"],[54,"launch-separate"],
+    [70,"launch-insert"],[92,"launch-coast"],[104,"launch-phasing"],[125,"launch-coast"],
+    [137,"launch-match"],[155,1],[161,1],[167,1],[173,"launch-capture"],
+    [181,"launch-check-seal"],[183,"launch-check-pressure"],[188,"launch-open-hatch"],
+    [194,"launch-transfer"],[201,"launch-research"],[205,1],[209,1],[214,"launch-archive"],
+    [219,"launch-depart"],[224,"launch-deorbit"],[227,1],[230,1],[233,1],[236,1],
+    [238,"launch-land"],[240,"launch-recover"],
+  ];
+  function paintDemo(now) {
+    if (!demo || demo.pausedAt !== null) return;
+    const seconds = Math.min(240,Math.floor((now-demo.started)/1000));
+    find("demo-time").textContent = missionStamp(seconds).slice(2)+" / 4:00";
+    const cue = demoCues[demo.cursor];
+    if (cue && seconds >= cue[0] && !activeBurn && !ascentPlaying) {
+      const [, action] = cue;
+      if (typeof action === "number") {
+        for (let step=0;step<action;step++) advance();
+      } else if (typeof action === "function") action();
+      else {
+        const control = find(action);
+        if (control.hidden || control.disabled) {
+          find("demo-status").textContent = "Stopped · "+flightState().next;
+          find("demo-pause").hidden = true;
+          return;
+        }
+        control.click();
+      }
+      demo.cursor++;
+    }
+    find("demo-status").textContent = flightState().phase;
+    if (demo.cursor === demoCues.length) {
+      find("demo-pause").hidden = true;
+      return;
+    }
+    demo.frame = requestAnimationFrame(paintDemo);
+  }
+  find("start-timed-demo").addEventListener("click",()=>{
+    demo = {started:performance.now(),pausedAt:null,cursor:0,frame:null};
+    resetCrew(missions[0].id+"-timed-demo");
+    showView("launch",missions[0],false,true);
+    find("demo-banner").hidden = false;
+    find("demo-pause").hidden = false;
+    find("demo-pause").textContent = "Pause demo";
+    find("demo-pause").focus();
+    demo.frame = requestAnimationFrame(paintDemo);
+  });
+  find("demo-exit").addEventListener("click",exit);
+  find("demo-pause").addEventListener("click",()=>{
+    if (!demo) return;
+    const now = performance.now();
+    if (demo.pausedAt === null) {
+      demo.pausedAt = now;
+      cancelAnimationFrame(demo.frame);
+      clearTimeout(ascentTimer);
+      ascentTimer = null;
+      cancelAnimationFrame(orbitConfirmation);
+      if (activeBurn) {
+        scene.hide();
+        burnScene.hide();
+      }
+      find("demo-pause").textContent = "Resume demo";
+    } else {
+      const pausedFor = now-demo.pausedAt;
+      demo.started += pausedFor;
+      demo.pausedAt = null;
+      if (activeBurn) {
+        orbitPreviewStarted += pausedFor;
+        orbitPreviewUntil += pausedFor;
+        orbitConfirmation = requestAnimationFrame(animateBurn);
+      }
+      animateAscent();
+      demo.frame = requestAnimationFrame(paintDemo);
+      find("demo-pause").textContent = "Pause demo";
+    }
+  });
+  document.addEventListener("click",event=>{
+    if (demo && event.isTrusted && event.target.closest("#launch-controls,#launch-jobs,#launch-systems,#pad-transport,#play,#step,#next-event")) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+  },true);
 
   function startNew(mission) {
     resetCrew(mission.id);
@@ -1046,6 +1173,6 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     });
   }
 
-  return {advance,togglePlayback,cycleSpeed,refreshCrewWork:()=>renderView(false),
+  return {advance:()=>{if (!demo) advance();},togglePlayback,cycleSpeed,refreshCrewWork:()=>renderView(false),
     paintNavigation:time=>navigation.showAt(time)};
 }

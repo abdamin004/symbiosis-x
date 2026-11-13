@@ -98,6 +98,16 @@ test("Horizon burns into orbit, reaches ISS and returns to Earth in one saved mi
   await expect(navigation.locator("#navigation-reserve")).toContainText("11 cold-gas pulses");
   await button("Close").click();
   await expect(page).toHaveURL(missionUrl);
+  const instrument = page.getByRole("button",{name:"Steer spacecraft"});
+  await instrument.focus();
+  await instrument.press("w");
+  await expect(page.locator("#navigation-heading")).toHaveText("Yaw 15° · Pitch 15°");
+  await instrument.press("ArrowDown");
+  await expect(page.locator("#navigation-heading")).toHaveText("Yaw 15° · Pitch 0°");
+  const clockBeforePlay = await page.locator("#hud-clock").innerText();
+  await flightPlayback.getByRole("button",{name:"Play",exact:true}).click();
+  await expect(page.locator("#hud-clock")).not.toHaveText(clockBeforePlay);
+  await flightPlayback.getByRole("button",{name:"Pause",exact:true}).click();
 
   await page.locator("#crew-strip .crew-portrait").first().click();
   const twin = page.locator("#personnel-widget");
@@ -127,6 +137,7 @@ test("Horizon burns into orbit, reaches ISS and returns to Earth in one saved mi
   await expect(button("Coast to transfer apoapsis")).toBeEnabled({timeout:12_000});
   await page.reload();
   await expect(page.locator("#launch-status")).toHaveText("Transfer coast · engines off");
+  await expect(flightPlayback.getByRole("button",{name:"Play",exact:true})).toBeEnabled();
   await expect(button("Match station orbit")).toBeHidden();
   await button("Coast to transfer apoapsis").click();
   await expect(page.getByRole("progressbar",{name:"Coast progress"})).toBeVisible();
@@ -170,7 +181,32 @@ test("Horizon burns into orbit, reaches ISS and returns to Earth in one saved mi
   await expect(page.locator("#ship canvas")).toBeVisible();
   await expect(page).toHaveURL(missionUrl);
   await button("Open orbit minimap").click();
-  await expect(navigation.locator("#navigation-reserve")).toContainText("11 cold-gas pulses");
+  await expect(navigation.locator("#navigation-reserve")).toContainText("9 cold-gas pulses");
+});
+
+test("timed demo recovers the crew in four active minutes without touching the campaign", async ({ page }) => {
+  await page.clock.install();
+  await page.route(url=>url.pathname==="/flight",route=>route.fulfill({contentType:"text/html",body:flightHtml}));
+  await page.goto("/flight");
+  await page.evaluate(()=>localStorage.setItem("sx:launch-checkout:v1",JSON.stringify({time:15,jobs:{},hold:true})));
+  await page.reload();
+  await expect(page.locator("#campaign-save")).toHaveText("Launch held · T+0:15");
+  await page.getByRole("button",{name:"Run 4-minute mission demo"}).click();
+  await page.clock.runFor(55_000);
+  await expect(page.locator("#demo-time")).toHaveText(/0:55/);
+  await page.getByRole("button",{name:"Pause demo"}).click();
+  await page.clock.runFor(10_000);
+  await expect(page.locator("#demo-time")).toHaveText(/0:55/);
+  await page.getByRole("button",{name:"Resume demo"}).click();
+  await page.clock.runFor(53_000);
+  await expect(page.locator("#orbital-burn-scene")).toBeVisible();
+  await page.clock.runFor(127_000);
+  await expect(page.locator("#demo-status")).not.toHaveText("Crew recovered on Earth");
+  await page.clock.runFor(5000);
+  await expect(page.locator("#demo-time")).toHaveText("4:00 / 4:00");
+  await expect(page.locator("#demo-status")).toHaveText("Crew recovered on Earth");
+  await page.getByRole("button",{name:"Exit demo"}).click();
+  await expect(page.locator("#campaign-save")).toHaveText("Launch held · T+0:15");
 });
 
 test("ISS replay portraits and pawns open crew anatomy with evidence for the selected region", async ({ page }) => {

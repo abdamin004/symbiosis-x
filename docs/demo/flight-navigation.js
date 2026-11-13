@@ -145,12 +145,13 @@ function createFlightNavigation(reference, hosts) {
   function show(data) {
     snapshot = data;
     if (!data) return;
-    const craft = paint(minimap,data);
-    if (hosts.dialog.open) paint(large,data);
+    const craft = paint(large,data);
+    paintAttitude(data);
     if (!hosts.burn.hidden) paint(hosts.burn,data);
     const orbit = data.captured || data.departure !== null || data.matched !== null ? reference.station
       : data.inserted ? reference.parking : reference.insertion;
     hosts.caption.textContent = data.phase;
+    hosts.heading.textContent = "Yaw "+data.attitude+"° · Pitch "+data.pitch+"°";
     const transferProgress = data.burn?.kind === "transfer" ? data.burn.progress : 1;
     const transferring = data.transfer !== null && data.matched === null && !data.captured && data.departure === null;
     const ap = transferring ? Math.round(orbit.ap+(reference.transfer.ap-orbit.ap)*transferProgress) : orbit.ap;
@@ -164,7 +165,7 @@ function createFlightNavigation(reference, hosts) {
     fields.speed.textContent = craft[2] === null ? "Scripted segment" : craft[2].toFixed(2)+" km/s";
     fields.period.textContent = data.inserted && data.deorbit === null
       ? Math.round((transferring ? reference.transfer : orbit).period/60)+" min" : "—";
-    fields.attitude.textContent = data.attitude+"° relative to prograde";
+    fields.attitude.textContent = data.attitude+"° relative to prograde · pitch "+data.pitch+"°";
     fields.reserve.textContent = data.rcs+" cold-gas pulses";
     fields.stage.textContent = data.propulsion;
     fields.target.textContent = data.target;
@@ -176,6 +177,56 @@ function createFlightNavigation(reference, hosts) {
       : data.transfer !== null ? "Ideal coplanar transfer · fictional station ephemeris"
       : data.inserted ? "Ideal two-body parking orbit · approach follows the range readout" : "Scripted ascent · dashed insertion reference";
     for (const button of hosts.attitudeControls) button.disabled = !data.canOrient;
+  }
+
+  function paintAttitude(data) {
+    const ctx = minimap.getContext("2d");
+    const center = minimap.width/2;
+    const yaw = data.attitude*Math.PI/180;
+    const horizon = center + data.pitch*.72;
+    ctx.clearRect(0,0,minimap.width,minimap.height);
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(center,center,center-4,0,tau);
+    ctx.clip();
+    ctx.fillStyle = "#244f7d";
+    ctx.fillRect(0,0,minimap.width,horizon);
+    ctx.fillStyle = "#604236";
+    ctx.fillRect(0,horizon,minimap.width,minimap.height);
+    ctx.strokeStyle = "#e6efff";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0,horizon);
+    ctx.lineTo(minimap.width,horizon);
+    ctx.stroke();
+    ctx.font = "13px system-ui";
+    ctx.textAlign = "center";
+    for (let angle=-360;angle<=360;angle+=15) {
+      const x = center+(angle-data.attitude)*1.55;
+      if (Math.abs(x-center)>center) continue;
+      ctx.fillStyle = "#d5e5ff";
+      ctx.fillRect(x,17,1,angle%45===0 ? 10 : 5);
+      if (angle%45===0) ctx.fillText(String((angle+360)%360),x,42);
+    }
+    for (const offset of [-30,-15,15,30]) {
+      const y = horizon+offset*1.2;
+      ctx.fillStyle = "#d5e5ff";
+      ctx.fillRect(center-12,y,24,1);
+    }
+    ctx.beginPath();
+    ctx.arc(center-Math.sin(yaw)*54,horizon,7,0,tau);
+    ctx.strokeStyle = "#97f7ce";
+    ctx.stroke();
+    ctx.strokeStyle = "#ffd789";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(center-30,center);
+    ctx.lineTo(center-9,center);
+    ctx.lineTo(center,center+8);
+    ctx.lineTo(center+9,center);
+    ctx.lineTo(center+30,center);
+    ctx.stroke();
+    ctx.restore();
   }
 
   function showAt(time) {

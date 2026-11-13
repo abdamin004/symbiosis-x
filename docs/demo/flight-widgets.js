@@ -1,6 +1,6 @@
 // Single owner for canvas panel placement and lifecycle. Parked panels retain
 // their contents and can be recalled without stacking on the active panels.
-function createFlightWidgets(overlay, shelf, notice) {
+function createFlightWidgets(overlay, shelf, notice, instrument) {
   const gap = 10;
   const entries = [];
   const overlaps = (a, b) => a.x < b.x+b.w+gap && a.x+a.w+gap > b.x
@@ -8,6 +8,13 @@ function createFlightWidgets(overlay, shelf, notice) {
   const clamp = (value, max) => Math.max(0, Math.min(value, max));
   const rect = entry => ({...entry.position,w:entry.panel.offsetWidth,h:entry.panel.offsetHeight});
   let focused = null;
+
+  function reserveInstrument(occupied) {
+    if (!instrument || instrument.hidden) return;
+    const bounds = overlay.getBoundingClientRect();
+    const fixed = instrument.getBoundingClientRect();
+    occupied.push({x:fixed.left-bounds.left,y:fixed.top-bounds.top,w:fixed.width,h:fixed.height});
+  }
 
   function place(entry, preferred, occupied) {
     const {w,h} = rect(entry);
@@ -40,6 +47,7 @@ function createFlightWidgets(overlay, shelf, notice) {
       ...active.filter(entry=>entry!==focused && !entry.persistent)]
       .filter((entry,index,list)=>entry?.wanted && list.indexOf(entry)===index);
     const occupied = [];
+    reserveInstrument(occupied);
     for (const entry of ordered) {
       const hadFocus = entry.panel.contains(document.activeElement);
       entry.panel.hidden = false;
@@ -92,6 +100,7 @@ function createFlightWidgets(overlay, shelf, notice) {
     }
     function move(x,y) {
       const occupied = entries.filter(other=>other!==entry && !other.panel.hidden).map(rect);
+      reserveInstrument(occupied);
       place(entry,{x,y},occupied);
     }
 
