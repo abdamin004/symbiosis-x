@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { advanceRun, createOperationId, resetRun, setActiveRunId, startRun } from "../../api/client.js";
+import { advanceRun, createOperationId, endRun, resetRun, setActiveRunId, startRun } from "../../api/client.js";
 import ServiceStatus from "./ServiceStatus.jsx";
 
 const ROLE_LINKS = [
@@ -16,7 +16,9 @@ export default function RunLauncher({ run: initialRun }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const pending = useRef({ start: null, advance: null, reset: null });
+  const [confirmingEnd, setConfirmingEnd] = useState(false);
+  const pending = useRef({ start: null, advance: null, reset: null, end: null });
+  const ended = run?.status === "closed";
 
   async function handleStart(event) {
     event.preventDefault();
@@ -27,6 +29,8 @@ export default function RunLauncher({ run: initialRun }) {
       setRun({ runId: receipt.run_id, scenarioId: receipt.scenario_id, seed: receipt.seed, mission_s: receipt.mission_s, step: receipt.step });
       setActiveRunId(receipt.run_id);
       pending.current.start = null;
+      pending.current.advance = null;
+      setConfirmingEnd(false);
       setNotice("Run started. Crew and Ground now share this run ID.");
     } catch (e) { setError(e.message); }
     finally { setBusy(false); }
@@ -53,7 +57,22 @@ export default function RunLauncher({ run: initialRun }) {
       setActiveRunId(receipt.run_id);
       pending.current.reset = null;
       pending.current.advance = null;
+      setConfirmingEnd(false);
       setNotice("A new run has started. Both role links now point to the replacement run.");
+    } catch (e) { setError(e.message); }
+    finally { setBusy(false); }
+  }
+  async function handleEnd() {
+    if (!run?.runId) return;
+    setBusy(true); setError(""); setNotice("");
+    // One end ID per attempt, so a retry after a lost response returns the same receipt.
+    pending.current.end ??= createOperationId("end");
+    try {
+      const receipt = await endRun(run.runId, { end_id: pending.current.end });
+      setRun((old) => ({ ...old, mission_s: receipt.mission_s, step: receipt.step, status: receipt.status }));
+      pending.current.end = null;
+      setConfirmingEnd(false);
+      setNotice("Mission ended at " + receipt.mission_s + " seconds. Crew and Ground can still review it. Start a new run to fly again.");
     } catch (e) { setError(e.message); }
     finally { setBusy(false); }
   }
@@ -82,10 +101,23 @@ export default function RunLauncher({ run: initialRun }) {
           <dt className="text-slate-500">Mission seconds</dt><dd data-testid="launcher-mission-time">{run.mission_s ?? 0}</dd>
           <dt className="text-slate-500">Step</dt><dd>{run.step ?? 0}</dd>
         </dl>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <button disabled={busy} onClick={handleAdvance} className="rounded-md border px-4 py-2 text-sm font-semibold disabled:opacity-50">Advance one step</button>
-          <button disabled={busy} onClick={handleReset} className="rounded-md border border-red-300 px-4 py-2 text-sm font-semibold text-red-800 disabled:opacity-50">Reset run</button>
-        </div>
+        {ended ? (
+          <p className="mt-4 rounded bg-slate-100 p-3 text-sm text-slate-700" data-testid="launcher-run-status">Mission ended · read only</p>
+        ) : (
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <button disabled={busy} onClick={handleAdvance} className="rounded-md border px-4 py-2 text-sm font-semibold disabled:opacity-50">Advance one step</button>
+            <button disabled={busy} onClick={handleReset} className="rounded-md border border-red-300 px-4 py-2 text-sm font-semibold text-red-800 disabled:opacity-50">Reset run</button>
+            {confirmingEnd ? (
+              <span className="flex flex-wrap items-center gap-2 rounded-md bg-red-50 px-3 py-1.5 text-sm text-red-900">
+                End this mission? It cannot be resumed.
+                <button disabled={busy} onClick={handleEnd} className="rounded-md bg-red-700 px-3 py-1 font-semibold text-white disabled:opacity-50">Confirm end</button>
+                <button disabled={busy} onClick={() => setConfirmingEnd(false)} className="rounded-md border border-red-300 px-3 py-1 font-semibold">Keep flying</button>
+              </span>
+            ) : (
+              <button disabled={busy} onClick={() => setConfirmingEnd(true)} className="rounded-md border border-red-300 px-4 py-2 text-sm font-semibold text-red-800 disabled:opacity-50">End mission</button>
+            )}
+          </div>
+        )}
       </section>}
       {error && <p role="alert" className="mt-4 rounded bg-red-50 p-3 text-sm text-red-800">{error}</p>}
       {notice && <p role="status" className="mt-4 rounded bg-emerald-50 p-3 text-sm text-emerald-800">{notice}</p>}
@@ -96,7 +128,7 @@ export default function RunLauncher({ run: initialRun }) {
           </Link>
         </li>)}
       </ul>}
-      <p className="mt-6 text-sm text-slate-500">Only the facilitator can start, advance or reset a run. Crew and Ground links open role-scoped views.</p>
+      <p className="mt-6 text-sm text-slate-500">Only the facilitator can start, advance, reset or end a run. Crew and Ground links open role-scoped views.</p>
     </main>
   );
 }

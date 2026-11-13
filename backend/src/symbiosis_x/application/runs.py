@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from symbiosis_x.application.nominal import deliver_nominal_ground, record_nominal_co2
 from symbiosis_x.contracts.commands import (
-    AdvanceReceipt, AdvanceRunRequest, DriverPauseRequest, DriverPauseReceipt, ResetReceipt, ResetRunRequest, RunReceipt, StartRunRequest,
+    AdvanceReceipt, AdvanceRunRequest, DriverPauseRequest, DriverPauseReceipt, EndReceipt, EndRunRequest, ResetReceipt, ResetRunRequest, RunReceipt, StartRunRequest,
 )
 from symbiosis_x.simulation.scenario import (GOLDEN_SCENARIO, GOLDEN_STEPS_S, ORGANIZER_SCENARIO,
     load_golden_manifest, load_organizer_manifest)
@@ -41,7 +41,7 @@ def next_event_seq(db, run_id: str) -> int:
     ).fetchone()[0]
 
 
-def request_digest(command: StartRunRequest | AdvanceRunRequest | ResetRunRequest) -> str:
+def request_digest(command: StartRunRequest | AdvanceRunRequest | ResetRunRequest | EndRunRequest) -> str:
     return sha256(command.model_dump_json().encode()).hexdigest()
 
 
@@ -148,6 +148,59 @@ def reset_run(repository: Repository, run_id: str, command: ResetRunRequest) -> 
             """INSERT INTO operations (run_id, operation_scope, operation_id, request_digest, receipt_json)
                VALUES (?, 'reset', ?, ?, ?)""",
             (run_id, command.reset_id, digest, receipt.model_dump_json()),
+        )
+    return receipt
+
+
+
+def _step_of(run) -> int:
+    """The facilitator step cursor for a run's current mission time."""
+    scenario = (run["scenario_id"], run["scenario_version"])
+    steps = GOLDEN_STEPS_S if scenario in (GOLDEN_SCENARIO, ORGANIZER_SCENARIO) else NOMINAL_STEPS_S
+    return steps.index(run["mission_s"]) if run["mission_s"] in steps else 0
+
+
+def end_run(repository: Repository, run_id: str, command: EndRunRequest) -> EndReceipt:
+    """End a mission: close the run at its current mission time without starting another.
+
+    The run stays readable by both roles. Advancing, resetting and every other
+    write then fail with RUN_CLOSED. Retrying the same end_id returns the
+    original receipt.
+    """
+    digest = request_digest(command)
+    with repository.write() as db:
+        run = db.execute("SELECT * FROM runs WHERE run_id = ?", (run_id,)).fetchone()
+        if run is None:
+            raise RunNotFound("RUN_NOT_FOUND")
+        prior = db.execute(
+            """SELECT request_digest, receipt_json FROM operations
+               WHERE run_id = ? AND operation_scope = 'end' AND operation_id = ?""",
+            (run_id, command.end_id),
+        ).fetchone()
+        if prior is not None:
+            if prior["request_digest"] != digest:
+                raise RunConflict("END_ID_REUSED")
+            return EndReceipt.model_validate_json(prior["receipt_json"])
+        if run["status"] != "active":
+            raise RunConflict("RUN_CLOSED")
+
+        receipt = EndReceipt(
+            run_id=run_id, scenario_id=run["scenario_id"], scenario_version=run["scenario_version"],
+            seed=run["seed"], mission_s=run["mission_s"], step=_step_of(run),
+            end_id=command.end_id, status="closed",
+        )
+        db.execute("UPDATE runs SET status = 'closed' WHERE run_id = ?", (run_id,))
+        db.execute(
+            """INSERT INTO events
+               (run_id, event_seq, event_id, event_type, mission_s, visibility, payload_json)
+               VALUES (?, ?, ?, 'run.ended', ?, 'operational', ?)""",
+            (run_id, next_event_seq(db, run_id), f"end:{command.end_id}", run["mission_s"],
+             receipt.model_dump_json()),
+        )
+        db.execute(
+            """INSERT INTO operations (run_id, operation_scope, operation_id, request_digest, receipt_json)
+               VALUES (?, 'end', ?, ?, ?)""",
+            (run_id, command.end_id, digest, receipt.model_dump_json()),
         )
     return receipt
 
