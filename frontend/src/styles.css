@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+/* Violet marks selection, blue marks telemetry and amber marks degraded equipment. */
+@theme {
+  --color-selection: oklch(0.55 0.2 293);
+  --color-telemetry: oklch(0.55 0.15 250);
+  --color-degraded: oklch(0.7 0.16 70);
+}
