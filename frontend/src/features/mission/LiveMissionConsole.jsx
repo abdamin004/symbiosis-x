@@ -35,7 +35,7 @@ export default function LiveMissionConsole({ role, runId }) {
           <h2 className="font-semibold">Private Crew health profile</h2>
           <p className="mt-2 text-sm">Crew ID: {view.health_profile?.crew_id ?? "Unknown"} · Synthetic data</p>
           <p className="mt-2 text-sm">Assessment: {view.health_assessment?.personal?.status ?? "No assessment available"}</p>
-          <Link className="mt-3 inline-block text-sm font-semibold text-selection underline" to={"/runs/" + encodeURIComponent(runId) + "/crew/measure"}>Take a measurement</Link>
+          <div className="mt-3 flex flex-wrap gap-4"><Link className="text-sm font-semibold text-selection underline" to={"/runs/" + encodeURIComponent(runId) + "/crew/measure"}>Take a measurement</Link><Link className="text-sm font-semibold text-red-700 underline" to={"/runs/" + encodeURIComponent(runId) + "/crew/emergency"}>Open Emergency Assist</Link></div>
         </section>
         <CheckInForm runId={runId} crewId={view.health_profile?.crew_id ?? "SIM-01"} />
       </> : <section className="mt-6 rounded-lg border border-slate-200 bg-white p-4">
