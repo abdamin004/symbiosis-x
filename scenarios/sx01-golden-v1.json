@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "scenario_id": "sx01-golden",
+  "scenario_version": "1",
+  "title": "SX-01 golden cabin replay (synthetic)",
+  "synthetic": true,
+  "provenance": "synthetic_fixture",
+  "seed": 4242,
+  "noise": "off",
+  "model_version": "cabin-1",
+  "policy_version": "demo-1",
+  "time_unit": "s",
+  "clock": "mission",
+  "start_s": 0,
+  "end_s": 900,
+  "cabin": {
+    "entity_id": "cabin-01",
+    "volume_m3": 100,
+    "initial_co2_ppm": 2000,
+    "generation_m3_h": 0.04,
+    "nominal_removal_m3_h": 20,
+    "degraded_removal_m3_h": 4,
+    "initial_power_headroom_kw": 0.60,
+    "reduced_power_headroom_kw": 0.20
+  },
+  "reference_timestamps_s": {
+    "ground_initial_observed": -60,
+    "scrubber_degraded": 60,
+    "ground_receives_v102": 360,
+    "ground_advice_issued": 480,
+    "power_drops": 600,
+    "stale_advice_arrives": 780,
+    "ground_receives_v103": 900
+  },
+  "decision_revisions": [
+    {"decision_rev": 100, "effective_at_s": -60, "cause": "ground_initial_snapshot"},
+    {"decision_rev": 101, "effective_at_s": 0, "cause": "run_started"},
+    {"decision_rev": 102, "effective_at_s": 60, "cause": "scrubber_degraded"},
+    {"decision_rev": 103, "effective_at_s": 600, "cause": "power_drops"}
+  ],
+  "scripted_events": [
+    {
+      "event_id": "evt-scrubber-degraded",
+      "event_type": "fault.scrubber_degraded",
+      "mission_s": 60,
+      "component_id": "scrubber-primary",
+      "removal_m3_h": 4
+    },
+    {
+      "event_id": "evt-ground-advice",
+      "event_type": "ground.advisory_issued",
+      "mission_s": 480,
+      "basis_decision_rev": 102,
+      "operation_id": "op-demo-013"
+    },
+    {
+      "event_id": "evt-power-drops",
+      "event_type": "fault.power_drop",
+      "mission_s": 600,
+      "power_headroom_kw": 0.20
+    },
+    {
+      "event_id": "evt-stale-advice-arrives",
+      "event_type": "crew.advisory_received",
+      "mission_s": 780,
+      "basis_decision_rev": 102,
+      "operation_id": "op-demo-013"
+    }
+  ],
+  "ground_initial_snapshot": {
+    "snapshot_id": "ground-v100",
+    "decision_rev": 100,
+    "observed_at_s": -60,
+    "received_at_s": 0
+  },
+  "delivery_events": [
+    {
+      "delivery_id": "dlv-ground-v102",
+      "snapshot_id": "ground-v102",
+      "decision_rev": 102,
+      "observed_at_s": 60,
+      "received_at_s": 360
+    },
+    {
+      "delivery_id": "dlv-ground-v103",
+      "snapshot_id": "ground-v103",
+      "decision_rev": 103,
+      "observed_at_s": 600,
+      "received_at_s": 900
+    }
+  ],
+  "display_beats": [
+    {"beat_id": "beat-1-nominal", "label": "Nominal cabin", "mission_s": 0},
+    {"beat_id": "beat-2-scrubber-degraded", "label": "Main scrubber degrades", "mission_s": 60},
+    {"beat_id": "beat-3-ground-advice", "label": "Ground issues advice on v102", "mission_s": 480},
+    {"beat_id": "beat-4-power-drops", "label": "Power headroom drops", "mission_s": 600},
+    {"beat_id": "beat-5-stale-advice", "label": "Stale v102 advice meets v103", "mission_s": 780}
+  ]
+}

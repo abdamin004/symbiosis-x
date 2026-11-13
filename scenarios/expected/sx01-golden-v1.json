@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "scenario_id": "sx01-golden",
+  "scenario_version": "1",
+  "seed": 4242,
+  "model_version": "cabin-1",
+  "synthetic": true,
+  "co2_tolerance_ppm": 0.01,
+  "beats": [
+    {
+      "beat_id": "beat-1-nominal",
+      "mission_s": 0,
+      "crew": {
+        "decision_rev": 101,
+        "co2": {"value": 2000.0, "unit": "ppm", "kind": "modeled_estimate", "observed_at_s": 0},
+        "scrubber_removal": {"value": 20.0, "unit": "m3/h", "observed_at_s": 0},
+        "power_headroom": {"value": 0.60, "unit": "kW", "observed_at_s": 0}
+      },
+      "ground": {
+        "decision_rev": 100,
+        "co2": {"value": 2000.0, "unit": "ppm", "kind": "delivered_observation", "observed_at_s": -60},
+        "scrubber_removal": {"value": 20.0, "unit": "m3/h", "observed_at_s": -60},
+        "power_headroom": {"value": 0.60, "unit": "kW", "observed_at_s": -60},
+        "delivery": {"observed_at_s": -60, "received_at_s": 0, "age_s": 60}
+      }
+    },
+    {
+      "beat_id": "beat-2-scrubber-degraded",
+      "mission_s": 60,
+      "crew": {
+        "decision_rev": 102,
+        "co2": {"value": 2000.0, "unit": "ppm", "kind": "modeled_estimate", "observed_at_s": 60},
+        "scrubber_removal": {"value": 4.0, "unit": "m3/h", "observed_at_s": 60},
+        "power_headroom": {"value": 0.60, "unit": "kW", "observed_at_s": 60}
+      },
+      "ground": {
+        "decision_rev": 100,
+        "co2": {"value": 2000.0, "unit": "ppm", "kind": "delivered_observation", "observed_at_s": -60},
+        "scrubber_removal": {"value": 20.0, "unit": "m3/h", "observed_at_s": -60},
+        "power_headroom": {"value": 0.60, "unit": "kW", "observed_at_s": -60},
+        "delivery": {"observed_at_s": -60, "received_at_s": 0, "age_s": 120}
+      }
+    },
+    {
+      "beat_id": "beat-3-ground-advice",
+      "mission_s": 480,
+      "crew": {
+        "decision_rev": 102,
+        "co2": {"value": 2037.25, "unit": "ppm", "kind": "modeled_estimate", "observed_at_s": 480},
+        "scrubber_removal": {"value": 4.0, "unit": "m3/h", "observed_at_s": 60},
+        "power_headroom": {"value": 0.60, "unit": "kW", "observed_at_s": 60}
+      },
+      "ground": {
+        "decision_rev": 102,
+        "co2": {"value": 2000.0, "unit": "ppm", "kind": "delivered_observation", "observed_at_s": 60},
+        "scrubber_removal": {"value": 4.0, "unit": "m3/h", "observed_at_s": 60},
+        "power_headroom": {"value": 0.60, "unit": "kW", "observed_at_s": 60},
+        "delivery": {"observed_at_s": 60, "received_at_s": 360, "age_s": 420}
+      }
+    },
+    {
+      "beat_id": "beat-4-power-drops",
+      "mission_s": 600,
+      "crew": {
+        "decision_rev": 103,
+        "co2": {"value": 2047.86, "unit": "ppm", "kind": "modeled_estimate", "observed_at_s": 600},
+        "scrubber_removal": {"value": 4.0, "unit": "m3/h", "observed_at_s": 60},
+        "power_headroom": {"value": 0.20, "unit": "kW", "observed_at_s": 600}
+      },
+      "ground": {
+        "decision_rev": 102,
+        "co2": {"value": 2000.0, "unit": "ppm", "kind": "delivered_observation", "observed_at_s": 60},
+        "scrubber_removal": {"value": 4.0, "unit": "m3/h", "observed_at_s": 60},
+        "power_headroom": {"value": 0.60, "unit": "kW", "observed_at_s": 60},
+        "delivery": {"observed_at_s": 60, "received_at_s": 360, "age_s": 540}
+      }
+    },
+    {
+      "beat_id": "beat-5-stale-advice",
+      "mission_s": 780,
+      "crew": {
+        "decision_rev": 103,
+        "co2": {"value": 2063.74, "unit": "ppm", "kind": "modeled_estimate", "observed_at_s": 780},
+        "scrubber_removal": {"value": 4.0, "unit": "m3/h", "observed_at_s": 60},
+        "power_headroom": {"value": 0.20, "unit": "kW", "observed_at_s": 600}
+      },
+      "ground": {
+        "decision_rev": 102,
+        "co2": {"value": 2000.0, "unit": "ppm", "kind": "delivered_observation", "observed_at_s": 60},
+        "scrubber_removal": {"value": 4.0, "unit": "m3/h", "observed_at_s": 60},
+        "power_headroom": {"value": 0.60, "unit": "kW", "observed_at_s": 60},
+        "delivery": {"observed_at_s": 60, "received_at_s": 360, "age_s": 720}
+      },
+      "action_receipt": {
+        "operation_id": "op-demo-013",
+        "status": "rejected",
+        "reason_code": "STALE_DECISION_REV",
+        "basis_decision_rev": 102,
+        "current_decision_rev": 103,
+        "applied": false
+      },
+      "applied_effects": []
+    }
+  ],
+  "deliveries": [
+    {
+      "delivery_id": "dlv-ground-v102",
+      "received_at_s": 360,
+      "ground": {
+        "decision_rev": 102,
+        "co2": {"value": 2000.0, "unit": "ppm", "kind": "delivered_observation", "observed_at_s": 60},
+        "power_headroom": {"value": 0.60, "unit": "kW", "observed_at_s": 60}
+      }
+    },
+    {
+      "delivery_id": "dlv-ground-v103",
+      "received_at_s": 900,
+      "ground": {
+        "decision_rev": 103,
+        "co2": {"value": 2047.86, "unit": "ppm", "kind": "delivered_observation", "observed_at_s": 600},
+        "power_headroom": {"value": 0.20, "unit": "kW", "observed_at_s": 600}
+      }
+    }
+  ]
+}
