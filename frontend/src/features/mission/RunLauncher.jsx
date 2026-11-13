@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import ServiceStatus from "./ServiceStatus.jsx";
 
 const ROLE_LINKS = [
   { role: "crew", label: "Open Crew console", detail: "Onboard view with the current modeled state." },
@@ -8,7 +9,10 @@ const ROLE_LINKS = [
 export default function RunLauncher({ run }) {
   return (
     <main className="mx-auto max-w-3xl px-4 py-12">
-      <p className="text-sm font-medium uppercase tracking-wide text-slate-500">SYMBIOSIS X</p>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-medium uppercase tracking-wide text-slate-500">SYMBIOSIS X</p>
+        <ServiceStatus />
+      </div>
       <h1 className="mt-1 text-3xl font-semibold text-slate-900">Run launcher</h1>
 
       <section aria-labelledby="run-heading" className="mt-8 rounded-lg border border-slate-200 bg-white p-5">

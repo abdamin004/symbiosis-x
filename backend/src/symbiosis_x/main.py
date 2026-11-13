@@ -19,14 +19,19 @@ from symbiosis_x.storage.sqlite import migrate
 
 API_TITLE = "SYMBIOSIS X"
 API_VERSION = "0.1.0"
+# The editable install runs from the repository, where SX-18A froze the golden scenario.
+DEFAULT_GOLDEN_MANIFEST = Path(__file__).resolve().parents[3] / "scenarios" / "sx01-golden-v1.json"
 
 
 def create_app(
     *, database_path: str | Path | None = None, enable_local_demo: bool | None = None,
+    golden_manifest_path: str | Path | None = None,
 ) -> FastAPI:
-    """Build the application with an optional isolated SQLite file path."""
+    """Build the application with an optional isolated SQLite file and golden manifest."""
     if database_path is None:
         database_path = environ.get("SYMBIOSIS_X_DB_PATH", "symbiosis-x.sqlite3")
+    if golden_manifest_path is None:
+        golden_manifest_path = environ.get("SYMBIOSIS_X_GOLDEN_MANIFEST", DEFAULT_GOLDEN_MANIFEST)
 
     path = Path(database_path)
 
@@ -38,6 +43,7 @@ def create_app(
 
     application = FastAPI(title=API_TITLE, version=API_VERSION, lifespan=lifespan)
     application.state.database_path = path
+    application.state.golden_manifest_path = Path(golden_manifest_path)
     canvas_path = environ.get("SYMBIOSIS_X_MISSION_CANVAS")
     if enable_local_demo is None:
         enable_local_demo = bool(canvas_path) or environ.get("SYMBIOSIS_X_LOCAL_DEMO") == "1"
