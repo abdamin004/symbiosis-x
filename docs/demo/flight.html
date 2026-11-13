@@ -59,7 +59,25 @@ button[aria-pressed=true]{background:#3d315e}
 .asset-target{position:absolute;transform:translate(-50%,-50%);display:grid;place-items:center;padding:2px;color:#c8d8ff;background:#10182fc9;border-radius:4px}
 .asset-target .icon{width:.85rem;height:.85rem}
 .ribbon output{color:var(--blue)}
-.flight-controls{width:min(680px,100%);margin-left:auto}
+.flight-controls{position:absolute;right:.6rem;top:calc(100% + .35rem);width:min(545px,calc(100vw - 1.2rem));pointer-events:none}
+.flight-controls .control-deck{pointer-events:auto;gap:.3rem .44rem;padding:.4rem .55rem;background:#0b1026aa;backdrop-filter:blur(9px);border-radius:10px}
+.control-deck button{padding:.25rem .45rem;font-size:.8rem}
+.transport{display:flex;align-items:center;gap:.3rem}
+.control-deck #reset{margin-inline-start:auto;background:#682c42;color:#ffe1e9}
+.control-deck #reset:hover{background:#8c3854}
+#phase{font-size:.75rem}
+.overlays{top:var(--control-clearance,100px)}
+.asset-target[data-work="active"]{color:#ffd49d;background:#513953}
+.asset-target[data-work="complete"]{color:#abecd9}
+#asset-controls{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center}
+#asset-controls select{max-width:100%}
+#work-progress{display:block;width:100%;height:.4rem;margin:.55rem 0;accent-color:#c1aaff}
+.asset-target{min-width:23px;min-height:23px}
+.pawn[data-working=true]{box-shadow:0 0 14px #ffca9c99}
+.widget-bar h2{overflow-wrap:anywhere}
+@media(max-width:540px){.flight-controls .control-deck{gap:.2rem .35rem}.speed-buttons button{padding:.22rem .38rem}#timeline{flex-basis:6rem;min-width:5rem}}
+
+.widget-bar h2 .icon{margin-inline-end:.4rem;color:var(--violet)}
 .viewport{padding-top:clamp(2rem,9vh,6rem)}
 #map-widget{width:280px}#workflow-widget{width:320px}.route-map{width:100%;display:block}.route-map circle{fill:#b0bdfa}.route-map #ship-position{fill:#e8ccff;stroke:#fbf4ff}
 
@@ -92,9 +110,10 @@ __HUD_ICONS__
   </div>
   <div class="flight-controls"><div class="control-deck">
     <p id="phase"></p>
-    <button id="play" type="button">Fly mission</button>
-    <button id="step" type="button">Skip to next event</button>
-    <button id="reset" type="button">Reset</button>
+    <div class="transport">
+      <button id="play" type="button" aria-label="Play" title="Play or pause"><svg class="icon" aria-hidden="true"><use id="play-icon" href="#hud-play"/></svg></button>
+      <button id="step" type="button" aria-label="Skip to next event" title="Skip to next event"><svg class="icon" aria-hidden="true"><use href="#hud-skip-forward"/></svg></button>
+    </div>
     <div class="speed-buttons" role="group" aria-label="Playback speed">
       <button type="button" data-rate="1" aria-pressed="true">1×</button>
       <button type="button" data-rate="2" aria-pressed="false">2×</button>
@@ -103,6 +122,7 @@ __HUD_ICONS__
     </div>
     <input id="timeline" type="range" min="0" value="0" aria-label="Mission time">
     <output class="clock" id="clock" for="timeline"></output>
+    <button id="reset" type="button" aria-label="Reset game" title="Reset game"><svg class="icon" aria-hidden="true"><use href="#hud-rotate-ccw"/></svg></button>
   </div></div></div>
   <div class="play-area">
   <div class="viewport" tabindex="0" aria-label="Scrollable spacecraft cutaway">
@@ -132,6 +152,11 @@ __HUD_ICONS__
   <section class="panel" id="inspector-widget" hidden aria-labelledby="focus-name">
     <div class="widget-bar"><button class="move-widget widget-title" type="button" aria-label="Move inspector with drag or arrow keys"><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button><h2 id="focus-name"></h2><button class="widget-close" type="button" aria-label="Close inspector"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button></div>
     <p class="reading" id="reading"></p>
+    <progress id="work-progress" max="30" value="0" aria-label="Equipment task progress" hidden></progress>
+    <div id="asset-controls" hidden>
+      <label>Astronaut <select id="asset-crew"></select></label>
+      <button id="assign-asset" type="button"></button>
+    </div>
     <p id="focus-detail"></p>
     <button type="button" id="activity" hidden></button>
     <div id="crew-profile" hidden>
@@ -247,11 +272,37 @@ const stationDuties = [
 function station(duty, member) {
   const order = flightWorkflow.read();
   const time = Math.floor(missionTime);
+  const task = activeTask(member, time);
+  if (task) {
+    const asset = equipment.get(task.asset);
+    return [asset.room, asset.task];
+  }
   if (member === 2 && order?.assigned && time >= order.decided &&
       (order.completed == null || time < order.completed)) {
     return ["life-support-01", "Inspect life support at the Commander's request"];
   }
   return duty.stations[index] ?? stationDuties[member][index - duty.stations.length];
+}
+
+const fixtures = [
+  {id:"bed",room:"habitat-01",x:497,y:174,icon:"bed-single",name:"Crew bunk",use:"Rest and sleep",task:"Tidy bunk",result:"Bunk tidy",crew:1},
+  {id:"wc",room:"habitat-01",x:579,y:174,icon:"toilet",name:"WC",use:"Crew hygiene",task:"Service WC",result:"WC serviced",crew:3},
+  {id:"galley",room:"habitat-01",x:614,y:174,icon:"droplets",name:"Galley",use:"Food and hydration",task:"Prepare provisions",result:"Provisions ready",crew:0},
+  {id:"lab",room:"medical-01",x:534,y:300,icon:"flask-conical",name:"Medical workbench",use:"Research and simulated medical stock",task:"Prepare simulated medical supplies",result:"Training supplies ready",crew:1},
+  {id:"radio",room:"comms-01",x:686,y:300,icon:"radio",name:"Comms console",use:"Operational status reports",task:"Send status report",result:"Status transmitted",crew:3},
+  {id:"scrubber",room:"life-support-01",x:692,y:174,icon:"wind",name:"Scrubber rack",use:"Cabin CO₂ removal",task:"Inspect scrubber",result:"Scrubber inspected",crew:2},
+  {id:"bus",room:"engineering-01",x:342,y:229,icon:"zap",name:"Power bus",use:"Power distribution",task:"Inspect bus",result:"Bus inspected",crew:2},
+  {id:"stores",room:"cargo-01",x:201,y:235,icon:"package",name:"Cargo lockers",use:"Payload stowage",task:"Reconcile inventory",result:"Inventory reconciled",crew:0},
+];
+const equipment = new Map(fixtures.map(asset => [asset.id, asset]));
+const tasks = [];
+const equipmentButtons = new Map();
+function taskAt(asset, time) {
+  return tasks.findLast(task => task.asset === asset && task.assigned <= time);
+}
+
+function activeTask(member, time) {
+  return tasks.find(task => task.member === member && task.assigned <= time && time < task.finishes);
 }
 
 const roomById = new Map(data.rooms.map(room => [room.room_id, room]));
@@ -412,7 +463,8 @@ function renderProfiles(frame) {
     const row = data.history[id][index];
     const reports = checkIns.get(id + ":" + row.time) ?? {};
     const [zone, task] = station(duties[member], member);
-    element(kind + "-title").textContent = id + " · " + kind[0].toUpperCase() + kind.slice(1);
+    setIcon(element(kind + "-title"), {duty:"clipboard-list",needs:"bed-single",vitals:"activity",devices:"zap"}[kind],
+      id + " · " + kind[0].toUpperCase() + kind.slice(1));
     let rows;
     if (kind === "needs") {
       element("mood").value = reports.mood ?? "";
@@ -441,6 +493,16 @@ function renderProfiles(frame) {
   }
 }
 
+function setIcon(node, icon, label) {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
+  svg.setAttribute("class","icon");
+  svg.setAttribute("aria-hidden","true");
+  const use = document.createElementNS("http://www.w3.org/2000/svg","use");
+  use.setAttribute("href","#hud-" + icon);
+  svg.append(use);
+  node.replaceChildren(svg, document.createTextNode(label));
+}
+
 function inspect(frame) {
   const name = element("focus-name");
   const value = element("reading");
@@ -448,11 +510,39 @@ function inspect(frame) {
   const action = element("activity");
   action.hidden = selection.crew === undefined;
   element("crew-profile").hidden = action.hidden;
+  element("asset-controls").hidden = !selection.asset;
+  const progress = element("work-progress");
+  progress.hidden = true;
+  if (selection.asset) {
+    const asset = equipment.get(selection.asset);
+    const task = taskAt(asset.id, frame.time);
+    const active = task && frame.time < task.finishes;
+    progress.hidden = !task;
+    if (task) progress.value = Math.min(30, frame.time - task.assigned);
+    setIcon(name, asset.icon, asset.name);
+    let condition = "Available";
+    if (asset.id === "bed") condition = frame.habitat.beds ? "Rest period in progress" : "Needs tidying";
+    if (asset.id === "radio") condition = "Local simulated status transmission";
+    if (asset.id === "wc") condition = frame.habitat.wc;
+    if (asset.id === "scrubber") condition = frame.removal == null ? "Flow unmodeled" : frame.removal + " m³/h";
+    if (asset.id === "bus") condition = frame.power == null ? "Headroom unmodeled" : frame.power.toFixed(2) + " kW headroom";
+    value.textContent = active ? data.crew[task.member] + " · " + (task.finishes - frame.time) + " s remaining"
+      : (task ? task.result + " · " + clock(task.finishes) : condition);
+    detail.textContent = asset.use + " · " + (task && !active && asset.id === "bed" ? "Bunk ready" : condition);
+    const assign = element("assign-asset");
+    assign.textContent = asset.task;
+    const crew = Number(element("asset-crew").value);
+    const memberBusy = activeTask(crew, frame.time) ||
+      (crew === 2 && (flightWorkflow.canComplete(frame)));
+    assign.disabled = Boolean(active || memberBusy || frame.habitat.beds && ["bed","wc"].includes(asset.id)
+      || frame.time + 30 > endTime);
+    return;
+  }
   if (selection.crew !== undefined) {
     const id = data.crew[selection.crew];
     const duty = duties[selection.crew];
     const [room, task] = station(duty, selection.crew);
-    name.textContent = id + " · " + duty.role;
+    setIcon(name, "users", id + " · " + duty.role);
     value.textContent = roomById.get(room).name + " · " + task;
     detail.textContent = reduced.has(id)
       ? (frame.time < data.activity_s ? "Reduced activity confirmed for 06:00." : "Reduced activity is contributing to the cabin model.")
@@ -470,7 +560,7 @@ function inspect(frame) {
     "comms-01": frame.time >= data.relay_delivery_s ? "Ground packet delivered · Scripted" : "Awaiting Ground packet · Scripted",
     "cargo-01": frame.dock + " · Scripted",
   };
-  name.textContent = room.name;
+  setIcon(name, room.room_id === "life-support-01" ? "wind" : "map", room.name);
   value.textContent = readings[room.room_id];
   const occupants = duties.flatMap((duty, i) => station(duty,i)[0] === room.room_id
     ? [data.crew[i] + " · " + station(duty,i)[1]] : []);
@@ -511,7 +601,8 @@ function render() {
   element("timeline").value = Math.floor(missionTime);
   element("timeline").setAttribute("aria-valuetext", clock(frame.time) + " " + frame.label);
   element("stage").dataset.playing = timer !== null;
-  element("play").textContent = timer ? "Pause flight" : (index === last ? "Replay flight" : "Fly mission");
+  element("play").setAttribute("aria-label", timer !== null ? "Pause" : "Play");
+  element("play-icon").setAttribute("href", timer !== null ? "#hud-pause" : "#hud-play");
   element("step").disabled = missionTime >= endTime;
   for (const [roomId, button] of roomButtons) {
     button.setAttribute("aria-pressed", selection.room === roomId);
@@ -520,12 +611,21 @@ function render() {
     const [roomId, task] = station(duty,i);
     const z = zones[roomId];
     const button = pawns.get(i);
-    place(button,z.x+z.w*(.18 + i*.21),z.y+z.h*.68);
+    const work = activeTask(i, frame.time);
+    const asset = work ? equipment.get(work.asset) : null;
+    if (asset) place(button,asset.x + 16,asset.y + 26);
+    else place(button,z.x+z.w*(.18 + i*.21),z.y+z.h*.68);
     button.setAttribute("aria-label", data.crew[i] + " " + duty.role + " in " + roomById.get(roomId).name);
     button.title = task;
+    button.dataset.working = Boolean(work);
     button.setAttribute("aria-pressed", selection.crew === i);
     roster.get(i).setAttribute("aria-pressed", selection.crew === i);
   });
+  for (const [id,button] of equipmentButtons) {
+    const task = taskAt(id, frame.time);
+    button.dataset.work = task ? (frame.time < task.finishes ? "active" : "complete") : "available";
+    button.setAttribute("aria-pressed", selection.asset === id);
+  }
   drawShip(frame);
   inspect(frame);
   renderProfiles(frame);
@@ -581,6 +681,40 @@ duties.forEach((duty,i) => {
   element("ship").append(pawn);
   element("roster").append(member);
 });
+for (const asset of fixtures) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "asset-target";
+  button.setAttribute("aria-label", asset.name);
+  button.title = asset.name;
+  setIcon(button, asset.icon, "");
+  place(button, asset.x, asset.y);
+  button.addEventListener("click", () => {
+    selection = {asset:asset.id};
+    element("asset-crew").value = asset.crew;
+    showInspector();
+    render();
+  });
+  equipmentButtons.set(asset.id, button);
+  element("ship").append(button);
+}
+duties.forEach((duty,index) => {
+  const option = new Option(data.crew[index] + " · " + duty.role, index);
+  element("asset-crew").append(option);
+});
+element("asset-crew").addEventListener("change", render);
+element("assign-asset").addEventListener("click", () => {
+  if (!selection.asset || element("assign-asset").disabled) return;
+  const asset = equipment.get(selection.asset);
+  const assigned = Math.floor(missionTime);
+  // Assigning while scrubbed back branches the local task history.
+  while (tasks.length && tasks.at(-1).assigned > assigned) tasks.pop();
+  tasks.push({
+    asset:asset.id, member:Number(element("asset-crew").value),
+    assigned, finishes:assigned+30, result:asset.result,
+  });
+  render();
+});
 element("timeline").max = endTime;
 element("timeline").addEventListener("input", event => {
   stop();
@@ -602,7 +736,7 @@ element("step").addEventListener("click", () => {
   render();
 });
 element("reset").addEventListener("click", () => {
-  stop(); setMissionTime(0); reduced.clear(); checkIns.clear(); render();
+  stop(); setMissionTime(0); reduced.clear(); checkIns.clear(); tasks.length = 0; flightWorkflow.reset(); render();
 });
 element("activity").addEventListener("click", () => {
   const id = data.crew[selection.crew];
@@ -632,6 +766,14 @@ element("hold-order").addEventListener("click", () => { flightWorkflow.decide(cu
 element("complete-order").addEventListener("click", () => { flightWorkflow.complete(currentFrame()); render(); });
 window.addEventListener("storage", event => { if (event.key === flightWorkflow.key) render(); });
 const overlay = element("overlays");
+const controller = document.querySelector(".flight-controls");
+const playArea = document.querySelector(".play-area");
+const hudSize = new ResizeObserver(() => {
+  const clearance = controller.getBoundingClientRect().bottom - playArea.getBoundingClientRect().top + 8;
+  playArea.style.setProperty("--control-clearance", Math.max(0, clearance) + "px");
+});
+hudSize.observe(controller);
+hudSize.observe(document.querySelector(".hud"));
 let widgetOrder = 3;
 
 function enableWidget(panel, toggle, initialPosition) {

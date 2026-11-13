@@ -150,3 +150,5 @@ python3 scripts/build_flight_canvas.py /tmp/flight.html
 ```
 
 With the local backend running, open [Flight](http://127.0.0.1:8766/). Fly or scrub the replay, select rooms and crew, and confirm reduced activity to change the cabin readings after the activity checkpoint. Use [Mission control](http://127.0.0.1:8766/mission) for live nominal commands and Crew and Ground verification. Flight uses the shared Python replay, with scripted crew duties and Ground handoff.
+
+Flight starts paused. The transport controls float below the resource ribbon. At 1×, four mission seconds pass per real second. Use the forward control or timeline to jump. Red Reset clears the local replay's tasks, check-ins and inspection request. Select an equipment icon, choose an astronaut and assign work. The astronaut moves to the station and the progress bar tracks 30 mission seconds. Duty, Needs, Vitals and Devices open separate movable overlays.
