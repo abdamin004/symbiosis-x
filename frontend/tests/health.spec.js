@@ -54,6 +54,15 @@ test("crew sees the reason for a saved reading", async ({ page }) => {
   // Crew Health comes before the separate cabin context.
   const [healthBox, cabinBox] = [await dashboard.boundingBox(), await page.getByTestId("live-cabin-context").boundingBox()];
   expect(healthBox.y).toBeLessThan(cabinBox.y);
+  // The deck and RadLab sit in the supporting panel, after Crew Health.
+  const supporting = page.getByTestId("supporting-context");
+  await supporting.locator("> summary").click();
+  await expect(supporting.getByRole("link", { name: "Open the cabin deck" })).toHaveAttribute("href", "/mission");
+  await expect(supporting.getByTestId("supporting-deck")).toContainText(`does not show run ${RUN_ID}`);
+  await expect(supporting.getByTestId("radlab-context")).toBeVisible();
+  const followsCabin = await supporting.evaluate((panel) =>
+    !!(document.querySelector('[data-testid="live-cabin-context"]').compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING));
+  expect(followsCabin).toBe(true);
 
   await dashboard.getByRole("link", { name: "Take a measurement" }).click();
   await page.locator("#value").fill("118");
