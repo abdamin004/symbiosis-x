@@ -161,3 +161,90 @@ const campaignGround = (() => {
 
   return {issuer, downlink, holdReasons, issue, status, job, receiveDecision, report, cleared};
 })();
+function bindExerciseInspector({find, runId, clock, session}) {
+  const panel = find("exercise-preview");
+  const refresh = find("exercise-preview-refresh");
+  const commit = find("exercise-preview-commit");
+  const status = find("exercise-preview-status");
+  let plan, busy = false, eligible = false, pending;
+  const path = "/api/v1/runs/"+encodeURIComponent(runId);
+  const number = (value,digits) => value.toFixed(digits);
+
+  async function request(suffix, body) {
+    const {crew} = await session();
+    const headers = {Authorization:"Bearer "+crew};
+    if (body) headers["Content-Type"] = "application/json";
+    return fetch(path+suffix,{method:body ? "POST" : "GET",headers,cache:"no-store",
+      body:body ? JSON.stringify(body) : undefined});
+  }
+
+  function paint() {
+    panel.hidden = !eligible || !plan;
+    if (panel.hidden) return;
+    find("exercise-preview-basis").textContent = "Basis v"+plan.decision_rev+" · T+"+clock(plan.mission_s)
+      +" · horizon "+plan.horizon_s+" s · CO₂ limit "+plan.co2_limit_ppm+" ppm · minimum headroom "
+      +number(plan.minimum_headroom_kw,2)+" kW";
+    find("exercise-preview-options").replaceChildren(...plan.options.map(option=>{
+      const row = document.createElement("li");
+      const action = option.candidate_id === "keep_exercise" ? "Keep exercise" : "Defer exercise";
+      const power = option.reason_code === "POWER_LIMIT" ? " · Held · power limit"
+        : option.reason_code === "CO2_PEAK_LIMIT" ? " · Held · CO₂ limit" : " · Eligible";
+      const standby = option.standby;
+      row.textContent = action+power+" · projected "+number(option.projected_co2_ppm,2)+" ppm CO₂ · peak "
+        +number(option.peak_co2_ppm,2)+" ppm · "+number(option.headroom_kw,2)+" kW headroom"
+        +" · Standby "+standby.outcome+" ("+number(standby.required_kw,2)+" kW required, "
+        +number(standby.available_kw,2)+" kW available)";
+      return row;
+    }));
+    const {decision,outcome} = plan;
+    find("exercise-preview-outcome").textContent = decision
+      ? "Deferred at T+"+clock(decision.decided_at_s)+" · predicted "+number(decision.projected_co2_ppm,2)+" ppm CO₂"
+        + (outcome ? " · observed "+number(outcome.co2_ppm,2)+" ppm CO₂ at T+"+clock(outcome.observed_at_s)
+          +" · "+number(outcome.headroom_kw,2)+" kW headroom" : " · awaiting outcome")
+      : outcome ? "Exercise kept · observed "+number(outcome.co2_ppm,2)+" ppm CO₂" : "";
+    commit.hidden = !plan.can_commit;
+    commit.disabled = busy || !plan.options.some(option=>option.candidate_id === "defer_exercise" && option.result === "feasible");
+    refresh.disabled = busy;
+  }
+
+  async function load() {
+    const response = await request("/crew/exercise-preview");
+    if (response.status === 404) { plan = null; return; }
+    if (!response.ok) throw new Error("Exercise preview unavailable.");
+    const next = await response.json();
+    if (next.run_id !== runId) throw new Error("Exercise preview is for a different run.");
+    plan = next;
+  }
+
+  async function refreshPlan() {
+    if (busy || !eligible) return;
+    busy = true;
+    paint();
+    try { await load(); status.textContent = ""; }
+    catch (error) { status.textContent = error.message; }
+    finally { busy = false; paint(); }
+  }
+
+  refresh.addEventListener("click",refreshPlan);
+  commit.addEventListener("click",async ()=>{
+    if (busy || !plan?.can_commit) return;
+    if (pending?.basis_decision_rev !== plan.decision_rev) pending = {
+      operation_id:"exercise-"+crypto.randomUUID(),candidate_id:"defer_exercise",
+      basis_decision_rev:plan.decision_rev,basis_snapshot_id:plan.basis_snapshot_id,expires_at_s:plan.outcome_at_s,
+    };
+    busy = true;
+    paint();
+    try {
+      const response = await request("/actions",pending);
+      if (!response.ok) throw new Error("Exercise decision could not be confirmed.");
+      const receipt = await response.json();
+      pending = null;
+      await load();
+      status.textContent = receipt.applied ? "Exercise deferral accepted."
+        : "Decision held · "+receipt.reason_code.toLowerCase().replaceAll("_"," ")+".";
+    } catch (error) { status.textContent = error.message; }
+    finally { busy = false; paint(); }
+  });
+
+  return {open(replay) { eligible = Boolean(replay && runId); paint(); if (eligible) refreshPlan(); }};
+}

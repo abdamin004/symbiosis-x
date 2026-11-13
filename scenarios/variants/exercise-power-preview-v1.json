@@ -1,0 +1,19 @@
+{
+  "scenario_id": "exercise-power-preview",
+  "scenario_version": "1",
+  "seed": 4242,
+  "synthetic": true,
+  "exercise_at_s": 120,
+  "power_drop_at_s": 150,
+  "outcome_at_s": 210,
+  "co2_at_exercise_ppm": 2350,
+  "cabin_volume_m3": 100,
+  "removal_m3_h": 12,
+  "rest_generation_m3_h": 0.04,
+  "exercise_generation_m3_h": 0.10,
+  "exercise_load_kw": 0.35,
+  "initial_headroom_kw": 0.60,
+  "reduced_headroom_kw": 0.20,
+  "minimum_headroom_kw": 0.0,
+  "co2_limit_ppm": 3200
+}

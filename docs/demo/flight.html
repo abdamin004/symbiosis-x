@@ -1301,6 +1301,15 @@ __HUD_ICONS__
   <button id="process-verify" type="button" hidden>Verify safe return</button>
   <button id="process-comm-check" type="button" hidden>Toggle suit link fault</button>
   <p id="process-config" role="status"></p>
+  <section id="exercise-preview" hidden aria-labelledby="exercise-preview-title">
+    <h3 id="exercise-preview-title">Exercise schedule · synthetic</h3>
+    <p id="exercise-preview-basis"></p>
+    <ul id="exercise-preview-options"></ul>
+    <p id="exercise-preview-outcome"></p>
+    <p id="exercise-preview-status" role="status"></p>
+    <button id="exercise-preview-refresh" type="button">Refresh schedule evidence</button>
+    <button id="exercise-preview-commit" type="button" hidden>Commander · Defer exercise</button>
+  </section>
   <section id="process-trace" aria-label="Process event log">
     <h3>Process event log</h3>
     <p id="process-summary"></p>
@@ -3622,7 +3631,9 @@ choices("process-list",Object.entries(flightProcedures).map(([id,process])=>[id,
   setChoices("process-list",id);
   loadProcessSettings();
 });
+const exerciseInspector = bindExerciseInspector({find:element, runId:flightHealthRun, clock, session:crewWearableSession});
 function openProcesses(mode) {
+  exerciseInspector.open(mode === "replay");
   processMode = mode;
   if (mode === "pad") selectedProcess = "checkout";
   loadProcessSettings();
