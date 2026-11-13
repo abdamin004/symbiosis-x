@@ -370,6 +370,33 @@ button[aria-pressed=true]{background:#3d315e}
 #launch-jobs .checkout-job-status{font-size:.72rem}
 #orbit-track{width:100%;background:#0b1427;border-radius:7px}
 #orbit-status{color:var(--blue)}
+.hud,.launch-hud{position:fixed;inset:0 0 auto;z-index:10;pointer-events:none;background:linear-gradient(180deg,#080c1bde,transparent);box-shadow:none}
+.hud button,.hud a,.launch-hud button,.launch-hud a{pointer-events:auto}
+.ribbon{gap:.35rem .65rem;text-shadow:0 1px 8px #090b19}
+.ribbon button{background:#121b3590}
+.ribbon button:hover{background:#2c3457}
+.launch-ribbon{background:transparent;border:0}
+.launch-field{height:100svh}
+.launch-board{margin-top:calc(var(--launch-clearance,110px) + .5rem);max-height:calc(100svh - var(--launch-clearance,110px) - 1.5rem)}
+.pad-transport{justify-content:flex-end;margin-right:.75rem;padding:.15rem .25rem;background:none;text-shadow:0 1px 6px #080d17}
+#pad-light{margin-left:0}
+.pad-transport button{background:#111a32a8}
+.viewport{padding-top:max(var(--control-clearance,110px),6vh)}
+.play-area{min-height:100dvh}
+.device-links{display:flex;flex-wrap:wrap;gap:.3rem;margin:.35rem 0}
+.device-links button{font-size:.74rem;background:#193444}
+.twin-camera,.twin-peer{margin:.55rem 0;padding:.45rem .55rem;background:#131f37;border-radius:6px}
+.twin-camera strong,.twin-peer strong{display:block;font-size:.78rem;color:var(--blue)}
+.twin-camera output,.twin-peer output{display:block;font-size:.75rem;color:var(--muted)}
+.twin-peer button{margin:.35rem 0;font-size:.76rem}
+.deck-camera{position:absolute;z-index:2;padding:.16rem .24rem;background:#111c30a6;color:#a0dedf;transform:translate(-50%,-50%)}
+.deck-camera[data-tracking=true]{color:#d2fff3;box-shadow:0 0 12px #8cf5c156}
+.deck-camera .icon{display:block;width:.8rem;height:.8rem}
+@media(max-width:660px){
+  .launch-field{height:auto}
+  .launch-visual{position:sticky;top:0;height:min(43svh,430px)}
+  .launch-board{max-height:none;margin-top:.7rem}
+}
 </style>
 </head>
 <body>
@@ -393,6 +420,7 @@ __HUD_ICONS__
     <button id="play" type="button" aria-label="Play" title="Play or pause"><svg class="icon" aria-hidden="true"><use id="play-icon" href="#hud-play"/></svg></button>
     <button id="speed-cycle" type="button" aria-label="Cycle speed" title="Cycle 1×, 2×, and 4×">1×</button>
     <button id="step" type="button" aria-label="Skip one mission hour" title="Skip one mission hour"><svg class="icon" aria-hidden="true"><use href="#hud-skip-forward"/></svg></button>
+    <output class="clock" id="hud-clock" aria-label="Flight clock"></output>
   </div></div>
   <div id="widget-shelf" hidden><span>Parked widgets</span></div><span id="widget-notice" role="status"></span></div>
   <div class="play-area">
@@ -521,7 +549,17 @@ __HUD_ICONS__
             <strong id="region-reading"></strong><p id="region-detail"></p><small id="region-time"></small>
           </div>
         </div>
+        <div class="device-links" aria-label="Crew wearable shortcuts">
+          <button id="inspect-wristband" type="button">Wristband · left wrist</button>
+          <button id="inspect-back-pod" type="button">Back pod · upper back</button>
+        </div>
         <div class="choices" id="body-regions" role="group" aria-label="Select body region"></div>
+        <div class="twin-camera"><strong>Onboard camera tracking · simulated</strong><output id="crew-camera"></output><output id="crew-cabin"></output></div>
+        <div class="twin-peer" id="peer-check">
+          <strong>Crew observation</strong>
+          <button id="request-peer-check" type="button">Request crewmate check</button>
+          <output id="peer-check-status" aria-live="polite"></output>
+        </div>
       </div>
     </div>
     <div class="profile-cards" id="personnel-data" hidden></div>
@@ -596,6 +634,7 @@ __HUD_ICONS__
   <div id="orbit-dialog-content"></div>
 </dialog>
 <section id="launch-page" class="launch-page" aria-label="SYMBIOSIS X flight game" hidden>
+  <div class="launch-hud">
   <nav class="ribbon launch-ribbon" aria-label="Flight navigation">
     <strong>SYMBIOSIS X</strong>
     <div class="launch-nav-actions">
@@ -608,8 +647,10 @@ __HUD_ICONS__
   <div id="pad-transport" class="pad-transport" role="group" aria-label="Launch time controls" hidden>
     <button id="pad-play" type="button"><svg class="icon" aria-hidden="true"><use id="pad-play-icon" href="#hud-play"/></svg><span id="pad-play-label">Play</span></button>
     <button id="pad-speed" type="button" aria-label="Cycle launch speed">1×</button>
+    <button id="pad-step" type="button" aria-label="Advance one launch tick" title="Advance one launch tick"><svg class="icon" aria-hidden="true"><use href="#hud-skip-forward"/></svg></button>
     <output id="pad-clock" aria-label="Launch clock">0:00</output>
     <span id="pad-light"></span>
+  </div>
   </div>
   <div class="launch-field" id="launch-field" data-view="menu">
     <div class="launch-visual"><canvas class="launch-scene" id="launch-scene" role="img" aria-label="Asteria on a concrete launchpad in front of a mountain range"></canvas></div>
@@ -771,6 +812,8 @@ const stationDuties = [
 ];
 function station(duty, member) {
   const time = Math.floor(missionTime);
+  const check = peerWork(member,time);
+  if (check) return [check.room, time < check.arrival ? "Heading to a crew check" : "Checking in with " + characters[check.member].short];
   const task = activeTask(member, time);
   if (task && time >= task.assigned) {
     const asset = equipment.get(task.asset);
@@ -842,6 +885,7 @@ let timer = null;
 let speed = 1;
 let compressed = false;
 element("speed-cycle").addEventListener("click", () => {
+  if (connectedFlight) { launchMission.cycleSpeed(); return; }
   speed = speed === 4 ? 1 : speed * 2;
   compressed = false;
   render();
@@ -1065,6 +1109,21 @@ const anatomyFigure = element("body-map").querySelector(".anatomy-figure");
 const suitFigure = element("body-map").querySelector("[data-anatomy-suit]");
 const suitId = suitFigure.querySelector("[data-twin-suit-id]");
 const bodyButtons = [];
+const peerChecks = [];
+const cameraRooms = Object.keys(zones).filter(room => room !== "habitat-01" && room !== "medical-01");
+const deckCameras = new Map();
+const cameraMotion = {move:"Moving",rest:"Resting",work:"At work",idle:"At station"};
+const crewMode = () => connectedFlight ? "asteria" : "replay";
+function peerWork(member,time) {
+  return peerChecks.find(check => check.mode === crewMode() && check.observer === member &&
+    check.requested <= time && time < check.due);
+}
+function availableObserver(member, time) {
+  const order = [characters[member].link, ...duties.keys()];
+  const groundJob = flightWorkflow.job(currentFrame());
+  return order.find(observer => observer !== member && !activeTask(observer,time) && !peerWork(observer,time) &&
+    !(observer === 2 && (groundInspection(currentFrame()) || groundJob?.state === "Offered")));
+}
 const anatomyLabels = {
   anatomy:"Body regions · simulated crew",
   skeleton:"Skeleton · anatomy illustration",
@@ -1108,6 +1167,28 @@ function setupBodyMap() {
     twinView = button.dataset.twinView;
     render();
   });
+  for (const [id,region] of [["inspect-wristband","wrist"],["inspect-back-pod","torso"]]) {
+    element(id).addEventListener("click",()=>{
+      activeLayer = "sensors";
+      selectedRegion = region;
+      render();
+    });
+  }
+  element("request-peer-check").addEventListener("click",()=>{
+    if (element("request-peer-check").disabled) return;
+    const member = profileMembers.get("personnel");
+    const requested = Math.floor(missionTime);
+    const observer = availableObserver(member,requested);
+    const [room] = station(duties[member],member);
+    const arrival = nextTick(requested) + TICK_SECONDS;
+    for (let i = peerChecks.length-1; i >= 0; i--) {
+      if (peerChecks[i].mode === crewMode() && peerChecks[i].requested > requested) peerChecks.splice(i,1);
+    }
+    peerChecks.push({mode:crewMode(),member,observer,region:selectedRegion,requested,arrival,
+      due:arrival + TICK_SECONDS,origin:crewPositions.get(pawns.get(observer)),room});
+    if (connectedFlight) launchMission.refreshCrewWork();
+    render();
+  });
 }
 function renderAnatomyLayer() {
   const suit = activeLayer === "suit";
@@ -1131,7 +1212,7 @@ function renderAnatomyLayer() {
   element("twin-layer-label").textContent = anatomyLabels[activeLayer];
 }
 function regionTelemetry(sample) {
-  const unobserved = ["No measurement", "Unobserved", "No sensor sample is available for this region.", false];
+  const unobserved = ["No measurement", "Unobserved", "No onboard sensor measures this region directly.", false];
   if (activeLayer === "suit") return ["Equipment illustration", "Suit status unavailable", "This replay carries no suit sensor readings.", false];
   if (activeLayer === "skeleton") return ["Anatomical reference", "Unobserved", "The replay carries no bone or joint assessment.", false];
   if (activeLayer === "muscles") {
@@ -1140,15 +1221,18 @@ function regionTelemetry(sample) {
   }
   if (activeLayer === "cardiorespiratory") {
     if (selectedRegion !== "torso" && selectedRegion !== "wrist") return unobserved;
-    return ["Simulated optical watch", sample.heart_rate + " bpm", "Heart rate is sampled at the left wrist. Breathing rate and blood oxygen are unavailable in this replay.", true];
+    return ["Simulated optical wristband", sample.heart_rate + " bpm", "Heart rate is sampled at the left wrist. Breathing rate and blood oxygen are unavailable.", true];
   }
+  if (activeLayer === "sensors" && selectedRegion === "torso") return ["Simulated back pod",
+    sample.pitch + "° pitch · " + sample.roll + "° roll",
+    sample.emg + " mV RMS synthetic EMG · " + sample.speed + " m/s motion estimate.", true];
   if (selectedRegion === "torso") return ["Simulated back-pod IMU", sample.pitch + "° pitch · " + sample.roll + "° roll",
     "Trunk orientation from the back pod.", true];
-  if (selectedRegion === "wrist") return ["Simulated optical watch", sample.heart_rate + " bpm",
+  if (selectedRegion === "wrist") return ["Simulated optical wristband", sample.heart_rate + " bpm",
     "Whole-person heart rate sampled at the left wrist.", true];
   return unobserved;
 }
-function updateBodyMap(sample, member) {
+function updateBodyMap(sample, member, frame) {
   const map = element("body-map");
   const state = activeLayer + ":" + selectedRegion;
   if (map.dataset.view !== state) {
@@ -1162,7 +1246,46 @@ function updateBodyMap(sample, member) {
   element("region-source").textContent = source;
   element("region-reading").textContent = reading;
   element("region-detail").textContent = detail;
-  element("region-time").textContent = observed ? "Observed T+" + clock(sample.time) + " · replay" : "";
+  element("region-time").textContent = observed ? "Observed T+" + clock(sample.time) +
+    (connectedFlight ? " · synthetic phase reference" : " · synthetic replay sample") : "";
+  const tracked = trackingRoom(member);
+  const camera = tracked ? roomById.get(tracked).name + " · " + cameraMotion[paintedPositions.get(member).activity] +
+    " · T+" + clock(frame.time) : "Outside camera coverage · no observation";
+  element("crew-camera").textContent = camera;
+  element("crew-cabin").textContent = "Cabin CO₂ " + frame.co2.toFixed(0) + " ppm · spacecraft twin";
+  const check = peerChecks.findLast(check=>check.mode === crewMode() && check.member === member &&
+    check.region === selectedRegion && check.requested <= frame.time);
+  const pending = check && frame.time < check.due;
+  const request = element("request-peer-check");
+  element("peer-check").hidden = observed && !check;
+  const observer = pending ? check.observer : availableObserver(member,frame.time);
+  const timeAvailable = connectedFlight ? connectedFlight.advance || connectedFlight.canWaitForCrew
+    : nextTick(frame.time) + 2 * TICK_SECONDS <= endTime;
+  request.disabled = Boolean(pending || observer === undefined || !timeAvailable);
+  request.hidden = Boolean(check || observed);
+  let status = timeAvailable ? observer === undefined ? "No crewmate is free for this check."
+    : characters[observer].short + " can make a visual check and ask about symptoms." : "Checks are unavailable during this phase.";
+  if (check) {
+    const name = characters[check.observer].short;
+    const outcome = check.completed
+      ? "recorded a visual check and asked about symptoms. Internal condition remains unobserved."
+      : "could not complete the check because the astronaut changed stations.";
+    status = pending ? name + (frame.time < check.arrival ? " is heading to " + roomById.get(check.room).name
+      : " is checking in with " + characters[member].short) + " · due T+" + clock(check.due)
+      : name + " " + outcome + " · T+" + clock(check.due);
+    request.hidden = pending || observed || outcome.startsWith("recorded");
+  }
+  const report = element("peer-check-status");
+  if (report.textContent !== status) report.textContent = status;
+}
+
+function trackingRoom(member) {
+  const position = paintedPositions.get(member);
+  if (!position) return undefined;
+  return cameraRooms.find(room => {
+    const {x,y,w,h} = zones[room];
+    return position.x >= x && position.x < x+w && position.y >= y && position.y < y+h;
+  });
 }
 const profileWindows = new Map();
 const checkIns = new Map();
@@ -1242,7 +1365,7 @@ function renderProfiles(frame) {
       element("personnel-data").hidden = twinView === "body";
       for (const button of document.querySelectorAll("[data-twin-view]"))
         button.setAttribute("aria-pressed",String(button.dataset.twinView===twinView));
-      if (twinView === "body") updateBodyMap(row,member);
+      if (twinView === "body") updateBodyMap(row,member,frame);
       rows = twinView === "social" ? [
         ["Crew relationship",characters[persona.link].name + " · " + persona.bond,"users"],
         ["Shared mission beat",crewBeat(frame,member),"radio"],
@@ -1416,7 +1539,7 @@ function inspect(frame) {
     assign.textContent = asset.task;
     const crew = assetCrew;
     setChoices("asset-crew",crew);
-    const memberBusy = activeTask(crew, frame.time) ||
+    const memberBusy = activeTask(crew, frame.time) || peerWork(crew,frame.time) ||
       (crew === 2 && groundInspection(frame)) || (asset.id === "scrubber" && groundInspection(frame));
     assign.disabled = Boolean(active || memberBusy || frame.habitat.beds && ["bed","wc"].includes(asset.id)
       || nextTick(missionTime) + TICK_SECONDS + WORK_SECONDS > endTime);
@@ -1466,6 +1589,11 @@ let lastRenderedSecond = -1;
 
 function render() {
   const frame = currentFrame();
+  for (const check of peerChecks) {
+    if (check.mode === crewMode() && frame.time >= check.due && check.completed === undefined) {
+      check.completed = station(duties[check.member],check.member)[0] === check.room;
+    }
+  }
   lastRenderedSecond = frame.time;
   element("workflow-state").textContent = flightWorkflow.status(frame, clock);
   element("monitor-state").textContent = frame.removal != null && frame.removal < 20
@@ -1487,11 +1615,10 @@ function render() {
   element("hold-order").hidden = !flightWorkflow.canDecide(frame);
   element("complete-order").hidden = !flightWorkflow.canComplete(frame);
   element("clock").textContent = clock(frame.time);
+  element("hud-clock").textContent = "T+" + clock(frame.time);
   element("phase").textContent = frame.phase + " · " + frame.label;
   element("timeline").hidden = Boolean(connectedFlight);
   element("one-hour").hidden = Boolean(connectedFlight);
-  element("step").hidden = Boolean(connectedFlight);
-  element("speed-cycle").hidden = Boolean(connectedFlight);
   element("next-event").textContent = connectedFlight ? "Advance 15 s" : "Next event";
   element("stage").dataset.asteria = Boolean(connectedFlight);
   element("stage").dataset.vehicle = connectedFlight?.visual ?? "";
@@ -1516,11 +1643,15 @@ function render() {
   element("play").disabled = Boolean(connectedFlight && !connectedFlight.advance);
   element("play").setAttribute("aria-label", playing ? "Pause" : "Play");
   element("play-icon").setAttribute("href", playing ? "#hud-pause" : "#hud-play");
-  element("step").disabled = missionTime >= endTime;
+  const skipLabel = connectedFlight ? "Advance one mission tick" : "Skip one mission hour";
+  element("step").setAttribute("aria-label",skipLabel);
+  element("step").title = skipLabel;
+  element("step").disabled = connectedFlight ? !connectedFlight.advance : missionTime >= endTime;
   element("next-event").disabled = connectedFlight ? !connectedFlight.advance : missionTime >= endTime;
-  element("speed-cycle").textContent = compressed ? "1 h" : speed + "×";
-  element("speed-cycle").title = compressed ? "One-hour pacing active. Click for normal speeds."
-    : (4 * speed) + " mission seconds per real second. Click to change speed.";
+  const displayedSpeed = connectedFlight?.speed ?? speed;
+  element("speed-cycle").textContent = !connectedFlight && compressed ? "1 h" : displayedSpeed + "×";
+  element("speed-cycle").title = !connectedFlight && compressed ? "One-hour pacing active. Click for normal speeds."
+    : (4 * displayedSpeed) + " mission seconds per real second. Click to change speed.";
   element("one-hour").setAttribute("aria-pressed", compressed);
   for (const [roomId, button] of roomButtons) {
     button.setAttribute("aria-pressed", selection.room === roomId);
@@ -1528,18 +1659,19 @@ function render() {
   duties.forEach((duty, i) => {
     const [roomId, task] = station(duty,i);
     const button = pawns.get(i);
+    const crewCheck = peerWork(i,frame.time);
     const work = activeTask(i, frame.time) || (i === 2 && groundInspection(frame));
     const asset = work && frame.time >= work.assigned ? equipment.get(work.asset) : null;
     const travelling = asset && frame.time < work.arrival;
     const sharedWork = !asset && ["Docked","Station research","Recovery"].includes(frame.phase);
-    const statusIcon = travelling ? "map" : asset?.icon ?? (sharedWork ? "users" : roomIcons[roomId]);
+    const statusIcon = travelling ? "map" : asset?.icon ?? (crewCheck || sharedWork ? "users" : roomIcons[roomId]);
     const marker = button.querySelector(".action-marker");
     const badge = portraits.get(i).querySelector(".crew-status");
     if (badge.dataset.icon !== statusIcon) {
       setIcon(marker,statusIcon,""); setIcon(badge,statusIcon,"");
       badge.dataset.icon = statusIcon;
     }
-    marker.hidden = !asset && !sharedWork;
+    marker.hidden = !asset && !sharedWork && !crewCheck;
     marker.style.color = travelling || sharedWork ? "#bed6ff" : "";
     button.setAttribute("aria-label", characters[i].name + " " + duty.role + " · " + task);
     button.title = "Open digital twin · " + task;
@@ -1599,6 +1731,9 @@ function pointAlong(points,progress) {
 function crewMotion(member, frame) {
   const duty = duties[member];
   const [room] = station(duty,member);
+  const check = peerWork(member,frame.time);
+  if (check) return {origin:check.origin,destination:stationPoint(room,member),
+    start:check.arrival - TICK_SECONDS,end:check.arrival,activity:frame.time < check.arrival ? "move" : "work"};
   const task = activeTask(member,frame.time) || (member === 2 && groundInspection(frame));
   if (task && frame.time >= task.assigned) {
     const asset = equipment.get(task.asset);
@@ -1625,22 +1760,24 @@ function paintFlight(frame, sceneTime = missionTime) {
   for (const [member,button] of pawns) {
     const motion = crewMotion(member,frame);
     const route = pathBetween(motion.origin,motion.destination);
-    const progress = motion.activity !== "move" ? 1 : reducedMotion.matches ? 0
+    const progress = motion.activity !== "move" ? 1
       : Math.min(1,Math.max(0,(sceneTime-motion.start)/(motion.end-motion.start)));
     const [x,y] = pointAlong(route,progress);
     const facing = pointAlong(route,Math.min(1,progress+.02))[0] < x ? -1 : 1;
     const pose = reducedMotion.matches ? 0 : Math.sin(sceneTime*(motion.activity==="move" ? 2.5 : 1.3));
-    place(button,x,y);
+    place(button,...(motion.activity === "move" && reducedMotion.matches ? route[0] : [x,y]));
     button.dataset.pose = motion.activity;
     button.style.setProperty("--stride",pose.toFixed(2));
     button.style.setProperty("--facing",facing);
-    crewPositions.set(button,{room:motion.destination.room,x,y});
+    crewPositions.set(button,{room:progress < .5 ? motion.origin.room : motion.destination.room,x,y});
     paintedPositions.set(member,{x,y,activity:motion.activity});
     if (!element("map-deck").hidden) {
       miniCrew.get(member).setAttribute("cx",x);
       miniCrew.get(member).setAttribute("cy",y);
     }
   }
+  const occupiedCameras = new Set(duties.map((_,member)=>trackingRoom(member)));
+  for (const [room,camera] of deckCameras) camera.dataset.tracking = occupiedCameras.has(room);
   element("stage").style.setProperty("--star-offset",reducedMotion.matches ? "0px" : -(sceneTime%388)/4+"px");
   drawShip(frame);
   drawSelectedRoute(frame);
@@ -1818,6 +1955,21 @@ for (const asset of fixtures) {
   equipmentButtons.set(asset.id, button);
   element("ship").append(button);
 }
+for (const room of cameraRooms) {
+  const camera = document.createElement("button");
+  camera.type = "button";
+  camera.className = "deck-camera";
+  camera.setAttribute("aria-label",roomById.get(room).name + " camera");
+  setIcon(camera,"video","");
+  const {x,y,w} = zones[room];
+  place(camera,x+w-16,y+13);
+  camera.addEventListener("click",()=>{
+    const member = duties.findIndex((_,i)=>trackingRoom(i) === room);
+    if (member >= 0) openDigitalTwin(member,camera);
+  });
+  deckCameras.set(room,camera);
+  element("ship").append(camera);
+}
 choices("asset-crew", characters.map((persona, i)=>[i,persona.short,persona.name + " · " + duties[i].role]),
   value=>{assetCrew = value;});
 element("assign-asset").addEventListener("click", () => {
@@ -1853,6 +2005,7 @@ element("play").addEventListener("click", () => {
   render();
 });
 element("step").addEventListener("click", () => {
+  if (connectedFlight) { launchMission.advance(); return; }
   stop();
   setMissionTime(missionTime + 3600);
   render();
@@ -1865,6 +2018,7 @@ element("next-event").addEventListener("click", () => {
 });
 element("reset").addEventListener("click", () => {
   if (connectedFlight) { launchMission.reset(); return; }
+  for (let i = peerChecks.length-1; i >= 0; i--) if (peerChecks[i].mode === "replay") peerChecks.splice(i,1);
   stop(); setMissionTime(0); speed = 1; compressed = false; reduced.clear(); checkIns.clear(); tasks.length = 0; flightWorkflow.reset(); render();
 });
 element("activity").addEventListener("click", () => {
@@ -1920,10 +2074,14 @@ const controller = document.querySelector(".flight-controls");
 const playArea = document.querySelector(".play-area");
 const shelf = element("widget-shelf");
 const widgets = createFlightWidgets(overlay,shelf,element("widget-notice"));
+const launchHud = document.querySelector(".launch-hud");
+new ResizeObserver(() => {
+  element("launch-field").style.setProperty("--launch-clearance", launchHud.offsetHeight + "px");
+}).observe(launchHud);
 const hudSize = new ResizeObserver(() => {
   const portraitsBottom = element("crew-strip").getBoundingClientRect().bottom;
   const clearance = Math.max(controller.getBoundingClientRect().bottom, portraitsBottom, shelf.getBoundingClientRect().bottom)
-    - playArea.getBoundingClientRect().top + 8;
+    + 8;
   playArea.style.setProperty("--control-clearance", Math.max(0, clearance) + "px");
 });
 hudSize.observe(controller);
@@ -1964,6 +2122,7 @@ let replayTime = 0;
 const launchMission = bindLaunchCheckout(data.launch,{
   crew: characters.map((character,index)=>({name:character.name,role:duties[index].role,portrait:()=>crewFace(index)})),
   pauseReplay:stop,
+  hasCrewWork(time) { return peerChecks.some(check => check.mode === "asteria" && time < check.due); },
   onCanvas(flight) {
     if (!connectedFlight && flight) {
       replayTime = missionTime;
@@ -1989,7 +2148,7 @@ const launchMission = bindLaunchCheckout(data.launch,{
     if (playing) {
       canvasTickStarted = performance.now();
       function animate(now) {
-        const elapsed = Math.min(TICK_SECONDS, (now-canvasTickStarted)*.004);
+        const elapsed = Math.min(TICK_SECONDS, (now-canvasTickStarted)*.004*(connectedFlight?.speed ?? 1));
         if (!reducedMotion.matches && now-lastPaintAt >= 32) {
           paintFlight(currentFrame(),missionTime+elapsed);
           lastPaintAt = now;
@@ -2001,6 +2160,7 @@ const launchMission = bindLaunchCheckout(data.launch,{
     render();
   },
   resetCrew() {
+    for (let i = peerChecks.length-1; i >= 0; i--) if (peerChecks[i].mode === "asteria") peerChecks.splice(i,1);
     tasks.length = 0;
     checkIns.clear();
     reduced.clear();
