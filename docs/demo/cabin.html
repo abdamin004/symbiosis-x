@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cabin Systems · SYMBIOSIS X</title>
+<style>
+:root{color-scheme:dark;--bg:#0b121a;--panel:#121e2a;--border:#304657;--ink:#edf5fa;--muted:#a8beca;--teal:#88f1d7;--amber:#ffc481}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:2rem clamp(1rem,4vw,3rem)}
+a{color:var(--teal);text-underline-offset:.22em}
+h1{font-size:clamp(2.5rem,7vw,4.6rem);line-height:1.05;letter-spacing:-.045em;margin:.8rem 0 .35rem}
+h2{font-size:1.25rem;margin:0 0 .55rem}
+p{margin:.35rem 0 .85rem;color:var(--muted)}
+header{margin-bottom:1.5rem}
+.layout{display:grid;grid-template-columns:minmax(0,2.3fr) minmax(14rem,1fr);gap:1rem}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:1rem;min-width:0}
+canvas{display:block;width:100%;height:auto;background:#0a1722;border:1px solid #254051;border-radius:8px}
+.controls[hidden]{display:none}.controls{display:flex;flex-wrap:wrap;gap:.45rem;margin-bottom:1rem}
+button{font:inherit;color:inherit;background:#162b38;border:1px solid #496677;border-radius:7px;padding:.44rem .75rem;cursor:pointer}
+button[aria-pressed=true]{background:#1d453f;border-color:var(--teal);color:var(--teal)}
+button:focus-visible,a:focus-visible{outline:2px solid var(--teal);outline-offset:3px}
+dl{margin:0}dt{color:var(--muted)}dd{margin:0 0 .8rem;font-size:1.38rem;font-variant-numeric:tabular-nums}
+#detail{border-top:1px solid var(--border);padding-top:.8rem;min-height:5rem}
+#assets{margin:1rem 0 0}
+@media(max-width:760px){.layout{grid-template-columns:1fr}}
+</style>
+</head>
+<body><main>
+<header><h1>Cabin systems</h1><p>Simulated atmosphere in a 100 m³ cabin</p></header>
+<div class="controls" role="group" aria-label="Viewpoint">
+<button type="button" data-view="crew">Crew model</button><button type="button" data-view="ground">Ground fixture</button>
+</div>
+<div class="controls" id="timeline" role="group" aria-label="Crew checkpoints"></div>
+<section class="panel" id="activity" aria-labelledby="activity-title" style="margin-bottom:1rem">
+<h2 id="activity-title"></h2>
+<p id="activity-help">Plan reduced activity at 06:00, then confirm it to change the subsequent cabin readings.</p>
+<div class="controls">
+<button type="button" id="plan">Plan reduced activity</button>
+<button type="button" id="confirm">Confirm activity</button>
+<button type="button" id="reset">Reset replay</button>
+</div>
+<p id="activity-status" role="status"></p>
+</section>
+<div class="layout">
+<section class="panel" aria-label="Spacecraft canvas">
+<canvas id="deck" width="720" height="320" role="img" aria-label="Spacecraft schematic showing power, cabin and primary scrubber">Spacecraft schematic. Use the component buttons to inspect the power bus, cabin and scrubber.</canvas>
+<div class="controls" id="assets" role="group" aria-label="Inspect a component">
+<button type="button" data-asset="cabin">Cabin</button><button type="button" data-asset="scrubber">Primary scrubber</button><button type="button" data-asset="power">Power bus</button>
+</div>
+</section>
+<section class="panel" aria-labelledby="phase">
+<h2 id="phase"></h2><p id="provenance"></p>
+<dl><dt>Cabin CO₂</dt><dd id="co2"></dd><dt>Effective scrubber flow</dt><dd id="removal"></dd><dt>Power headroom</dt><dd id="power"></dd></dl>
+<p id="detail"></p>
+</section>
+</div>
+</main>
+<script type="application/json" id="replay-data">__REPLAY_DATA__</script>
+<script>
+const data = JSON.parse(document.getElementById("replay-data").textContent);
+const byId = id => document.getElementById(id);
+const deck = byId("deck");
+const ctx = deck.getContext("2d");
+const components = [
+  {id:"power", x:55, width:160, label:"POWER BUS"},
+  {id:"cabin", x:250, width:220, label:"CABIN"},
+  {id:"scrubber", x:505, width:160, label:"PRIMARY SCRUBBER"},
+];
+const describe = {
+  cabin: "One well-mixed zone. The model balances crew CO₂ generation against effective scrubber removal.",
+  scrubber: "The scripted degradation reduces effective flow from 20 to 4 m³/h at 01:00.",
+  power: "The scenario drops headroom at 10:00. The power bus here shows authored scenario values.",
+};
+let view = "crew", selected = "cabin", checkpoint = 0, activity = "baseline";
+const activityStart = data.reduced.findIndex(frame => frame.time === data.activity_s);
+byId("activity-title").textContent = "Astronaut activity · " + data.crew_id;
+
+byId("plan").addEventListener("click", () => {
+  activity = "planned";
+  checkpoint = activityStart;
+  render();
+});
+byId("confirm").addEventListener("click", () => {
+  activity = "confirmed";
+  render();
+});
+byId("reset").addEventListener("click", () => {
+  activity = "baseline";
+  checkpoint = 0;
+  render();
+});
+const clock = seconds => [Math.floor(seconds / 60), seconds % 60].map(value => String(value).padStart(2, "0")).join(":");
+function render() {
+  const ground = view === "ground";
+  const packet = data.ground;
+  const frame = ground ? {
+    time: packet.mission_s, label: "Delivered " + packet.snapshot_id,
+    co2: packet.equipment.co2.value,
+    removal: packet.equipment.scrubber_removal.value,
+    power: packet.equipment.power_headroom.value,
+  } : (activity === "confirmed" ? data.reduced : data.crew)[checkpoint];
+  byId("activity").hidden = ground;
+  byId("plan").disabled = activity !== "baseline";
+  byId("confirm").disabled = activity !== "planned";
+  byId("activity-status").textContent = {
+    baseline: "Baseline activity · " + data.crew[0].generation.toFixed(2) + " m³/h CO₂ generation",
+    planned: "Planned at 06:00 · Cabin input unchanged",
+    confirmed: "Confirmed at 06:00 · " + data.reduced[activityStart].generation.toFixed(2) + " m³/h CO₂ generation from that point",
+  }[activity];
+  const values = {cabin: frame.co2.toFixed(2) + " ppm", scrubber: frame.removal.toFixed(1) + " m³/h", power: frame.power.toFixed(2) + " kW"};
+  byId("phase").textContent = frame.label;
+  byId("provenance").textContent = ground
+    ? "Observed " + clock(packet.delivery.observed_at_s) + " · received " + clock(packet.delivery.received_at_s) + " · age " + clock(packet.delivery.age_s)
+    : "Mission " + clock(frame.time) + " · CO₂ from the Python model";
+  byId("co2").textContent = values.cabin;
+  byId("removal").textContent = values.scrubber;
+  byId("power").textContent = values.power;
+  byId("detail").textContent = describe[selected];
+  byId("timeline").hidden = ground;
+  document.querySelectorAll("[data-view]").forEach(button => button.setAttribute("aria-pressed", button.dataset.view === view));
+  document.querySelectorAll("[data-asset]").forEach(button => button.setAttribute("aria-pressed", button.dataset.asset === selected));
+  [...byId("timeline").children].forEach((button, index) => button.setAttribute("aria-pressed", index === checkpoint));
+
+  ctx.clearRect(0, 0, deck.width, deck.height);
+  ctx.strokeStyle = "#172e3e"; ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let x = 0; x < 720; x += 24) { ctx.moveTo(x, 0); ctx.lineTo(x, 320); }
+  for (let y = 0; y < 320; y += 24) { ctx.moveTo(0, y); ctx.lineTo(720, y); }
+  ctx.stroke();
+  ctx.beginPath(); ctx.roundRect(25, 73, 670, 171, 53);
+  ctx.fillStyle = "#102331"; ctx.fill(); ctx.strokeStyle = "#587786"; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(215, 160); ctx.lineTo(505, 160);
+  ctx.lineWidth = 3; ctx.strokeStyle = "#63828d"; ctx.stroke();
+  ctx.textAlign = "center";
+  for (const {id, x, width, label} of components) {
+    ctx.beginPath(); ctx.roundRect(x, 105, width, 108, 9);
+    ctx.fillStyle = "#142f3e"; ctx.fill();
+    ctx.strokeStyle = id === selected ? "#88f1d7" : "#4d707f"; ctx.stroke();
+    ctx.font = "600 13px ui-monospace, monospace"; ctx.fillStyle = "#b5ced8";
+    ctx.fillText(label, x + width/2, 140);
+    ctx.font = "600 22px ui-monospace, monospace";
+    ctx.fillStyle = (id === "scrubber" && frame.removal < 20) || (id === "power" && frame.power < 0.40) ? "#ffc481" : "#88f1d7";
+    ctx.fillText(values[id], x + width/2, 178);
+  }
+}
+data.crew.forEach((frame, index) => {
+  const button = document.createElement("button");
+  button.type = "button"; button.textContent = clock(frame.time) + " " + frame.label;
+  button.addEventListener("click", () => { checkpoint = index; render(); });
+  byId("timeline").append(button);
+});
+document.querySelectorAll("[data-view]").forEach(button => button.addEventListener("click", () => { view = button.dataset.view; render(); }));
+document.querySelectorAll("[data-asset]").forEach(button => button.addEventListener("click", () => { selected = button.dataset.asset; render(); }));
+deck.addEventListener("click", event => {
+  const bounds = deck.getBoundingClientRect();
+  const x = (event.clientX - bounds.left) * deck.width / bounds.width;
+  const y = (event.clientY - bounds.top) * deck.height / bounds.height;
+  const part = components.find(asset => x >= asset.x && x <= asset.x + asset.width && y >= 105 && y <= 213);
+  if (part) { selected = part.id; render(); }
+});
+render();
+</script>
+</body></html>
