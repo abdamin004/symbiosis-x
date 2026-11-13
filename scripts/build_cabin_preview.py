@@ -15,6 +15,7 @@ from symbiosis_x.crew.activity import (
     generation_m3_h,
 )
 from symbiosis_x.simulation.spacecraft.atmosphere import advance_co2_ppm
+from symbiosis_x.telemetry.sampling import CabinCO2Sensor
 
 ACTIVITY_S = 360
 CHECKPOINTS = (
@@ -69,12 +70,24 @@ def main() -> None:
     crew = roster["crew"]
     crew_ids = [member["crew_id"] for member in crew]
     ground = json.loads((ROOT / "contracts/examples/ground-v102.json").read_text())
+    catalog_path = ROOT / "catalogs/sx01"
+    components = json.loads((catalog_path / "components.json").read_text())["components"]
+    registrations = json.loads((catalog_path / "sensors.json").read_text())["sensors"]
+    sensor = CabinCO2Sensor(**next(item for item in registrations if item["source_id"] == "sim.cabin.co2"))
     replays = {
         ",".join(selected): replay(crew, set(selected))
         for size in range(len(crew_ids) + 1)
         for selected in combinations(crew_ids, size)
     }
+    for frames in replays.values():
+        for frame in frames:
+            frame["co2_sample"] = sensor.sample(
+                frame.pop("co2"), run_id=ground["run_id"],
+                mission_s=frame["time"], model_version="cabin-1",
+            )
     data = {
+        "components": components,
+        "sensor": vars(sensor),
         "crew_ids": crew_ids,
         "replays": replays,
         "ground": ground,
