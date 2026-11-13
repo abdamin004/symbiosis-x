@@ -163,7 +163,7 @@ Generate `flight.html` alongside the generated mission canvas.
 python3 scripts/build_flight_canvas.py /tmp/flight.html
 ```
 
-With the local backend running, open [Flight](http://127.0.0.1:8766/flight). A new Asteria run starts on the launchpad. Assign the three crew checks, advance until they are verified, arm the countdown, advance one tick, and commit liftoff. Flight resumes saved Asteria progress on reload. **Restart at launchpad** starts a fresh run.
+With the local backend running, open [Flight](http://127.0.0.1:8766/flight). A new Asteria run starts on the launchpad. Assign the three crew checks, advance until they are verified, arm the countdown, advance one tick, and commit liftoff. After liftoff, the ascent automatically opens the animated crew cutaway in orbit. Use **Flight command** for phasing, capture, hatch checks, station research, and return. Use **Play** or **Advance 15 s** on the mission overview when a phase needs time to pass. Flight resumes saved mission milestones on reload. **Restart at launchpad** starts a fresh run.
 
 Choose **Missions → Open Flight replay** or open the [ISS Research Replay](http://127.0.0.1:8766/flight?view=replay) directly. Fly or scrub the replay, select rooms and crew, and confirm reduced activity to change the cabin readings after the activity checkpoint. Use [Mission control](http://127.0.0.1:8766/mission) for live nominal commands and Crew and Ground verification.
 

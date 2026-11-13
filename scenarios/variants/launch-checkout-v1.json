@@ -140,9 +140,29 @@
         "planned_s": 180
       },
       {
+        "id": "research",
+        "label": "Complete station research",
+        "planned_s": 210
+      },
+      {
+        "id": "departure",
+        "label": "Board the return capsule and depart",
+        "planned_s": 210
+      },
+      {
+        "id": "deorbit",
+        "label": "Commit deorbit",
+        "planned_s": 210
+      },
+      {
+        "id": "landing",
+        "label": "Land the return capsule",
+        "planned_s": 270
+      },
+      {
         "id": "return",
-        "label": "Complete return and recovery",
-        "planned_s": null
+        "label": "Confirm Earth recovery",
+        "planned_s": 270
       }
     ]
   },
@@ -150,5 +170,11 @@
     "evidence_valid_s": 30,
     "seal": "Verified",
     "pressure": "Matched"
+  },
+  "return": {
+    "research_s": 30,
+    "entry_s": 30,
+    "descent_s": 30,
+    "reserve_cost": 12
   }
 }
