@@ -175,6 +175,11 @@ export default function RadiationContext({ series = archiveSeries }) {
       <p className="mt-2 text-sm text-slate-600">
         ISS instrument archive for mission context; separate from the fictional astronaut health readings.
       </p>
+      <aside className="mt-3 rounded-lg border border-amber-400 bg-amber-950/30 p-3" data-testid="radiation-neutron-caveat">
+        <h3 className="text-sm font-semibold">Radiation measurement limits · neutron exposure</h3>
+        <p className="mt-1 text-sm">This archive displays its reported instrument quantity only. It is not an astronaut's complete personal radiation dose or a direct neutron reading. The Canadian Space Agency explains that neutron exposure on the ISS requires specialized monitoring such as CANS.</p>
+        <a className="mt-2 inline-block text-sm font-semibold underline" href="https://www.asc-csa.gc.ca/eng/news/articles/2026/2026-02-26-monitoring-radiation-astronaut-health.asp" target="_blank" rel="noreferrer">CSA · Monitoring radiation for astronaut health (2026)</a>
+      </aside>
       <p className="mt-1 text-sm text-slate-600" data-testid="radlab-gap-summary">
         {gapCount === 0
           ? "No missing readings in this selected archive slice."
