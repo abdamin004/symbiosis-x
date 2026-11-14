@@ -69,10 +69,10 @@ function RunProjection({ role, runId, crewId }) {
       {role === "crew" ? <>
         <Link className="mt-4 inline-block text-sm font-semibold text-selection underline"
           to={"/runs/" + encodeURIComponent(runId) + "/crew/medical" + subjectQuery}>Open Medical</Link>
-        <HazardExplorer />
         <CrewHealthDashboard profile={view.health_profile} assessment={view.health_assessment} metrics={HEALTH_METRICS}
           measureHref={"/runs/" + encodeURIComponent(runId) + "/crew/measure" + subjectQuery}
           emergencyHref={"/runs/" + encodeURIComponent(runId) + "/crew/emergency"} />
+        <HazardExplorer />
         <HealthReminders runId={runId} followup={view.health_followup}
           measureHref={"/runs/" + encodeURIComponent(runId) + "/crew/measure" + subjectQuery}
           emergencyHref={"/runs/" + encodeURIComponent(runId) + "/crew/emergency"}
