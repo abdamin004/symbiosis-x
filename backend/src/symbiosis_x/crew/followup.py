@@ -30,12 +30,22 @@ DESIGNATED_ROLE = {"role": "crew_medical_officer", "crew_id": "SIM-02"}
 
 # Synthetic personal monitoring schedules. The cadence is compressed so a demo
 # run crosses due times within minutes; it is not a clinical schedule.
-SCHEDULES: dict[str, tuple[dict, ...]] = {
-    "SIM-01": (
-        {"metric": "heart_rate", "label": "Resting heart rate", "every_s": 300, "context": {"activity": "rest"}},
-        {"metric": "blood_pressure", "label": "Blood pressure", "every_s": 300,
-         "context": {"method": "automatic_upper_arm_cuff", "posture": "seated_rested"}},
-    ),
+QUICK_CHECKS = (
+    {"metric": "heart_rate", "label": "Resting heart rate", "every_s": 300, "context": {"activity": "rest"}},
+    {"metric": "blood_pressure", "label": "Blood pressure", "every_s": 300,
+     "context": {"method": "automatic_upper_arm_cuff", "posture": "seated_rested"}},
+)
+DAILY_CHECKS = (
+    {"metric": "glucose", "label": "Blood glucose", "context": {"meal_context": "fasting"}},
+    {"metric": "temperature", "label": "Body temperature", "context": {"site": "oral"}},
+    {"metric": "sleep", "label": "Sleep duration", "context": {}},
+    {"metric": "sleep_quality", "label": "Sleep quality", "context": {}},
+    {"metric": "mood", "label": "Mood self-report", "context": {}},
+    {"metric": "symptoms", "label": "Symptom check-in", "context": {}},
+)
+SCHEDULES = {
+    crew_id: (*QUICK_CHECKS, *(dict(check, every_s=86400) for check in DAILY_CHECKS))
+    for crew_id in ("SIM-01", "SIM-02", "SIM-03", "SIM-04")
 }
 
 Status = Literal["scheduled", "due", "overdue", "acknowledged"]

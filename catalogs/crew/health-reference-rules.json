@@ -117,6 +117,10 @@
       "note": "Mood is a project-defined self-report and is shown as context only. It is never turned into a mental-state score."
     },
     {
+      "metric": "sleep_quality",
+      "note": "Sleep quality is a synthetic self-report used for daily context."
+    },
+    {
       "metric": "symptoms",
       "note": "Symptoms are self-reported context, not a diagnosis. Private text stays in the Crew projection."
     }

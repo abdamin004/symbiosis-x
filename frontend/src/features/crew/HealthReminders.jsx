@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, createSearchParams } from "react-router-dom";
 import { acknowledgeReminder } from "../../api/client.js";
 
 const STATUS = {
@@ -16,6 +16,13 @@ const ACTIONS = {
 
 function time(seconds) {
   return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
+function measurementLink(href, metric) {
+  const [path, search] = href.split("?");
+  const params = createSearchParams(search);
+  params.set("metric", metric);
+  return path + "?" + params;
 }
 
 /**
@@ -88,7 +95,7 @@ export default function HealthReminders({ runId, followup, measureHref, emergenc
               ) : (
                 <div className="mt-2 flex flex-wrap gap-2">
                   {measureHref && (
-                    <Link className="rounded border border-current px-3 py-1 text-xs font-semibold" to={measureHref}>
+                    <Link className="rounded border border-current px-3 py-1 text-xs font-semibold" to={measurementLink(measureHref, reminder.metric)}>
                       Take measurement
                     </Link>
                   )}

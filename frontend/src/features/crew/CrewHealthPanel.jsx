@@ -134,6 +134,7 @@ const COMPARISON_LABELS = {
 };
 
 function readingText(evidence) {
+  if (evidence?.quality === "unavailable") return "Unavailable";
   if (evidence?.systolic != null) return `${evidence.systolic}/${evidence.diastolic} ${evidence.unit ?? "mmHg"}`;
   if (evidence?.value != null) return `${formatValue(evidence.value)} ${evidence.unit ?? ""}`.trim();
   if (evidence?.duration_min != null) return `${evidence.duration_min} min`;
@@ -187,7 +188,8 @@ export function CrewHealthDashboard({ profile, assessment, metrics, measureHref,
         </div>
         <span data-testid="crew-health-flag" className={`rounded-full px-3 py-1 text-sm font-semibold ${
           flagged ? "bg-amber-100 text-amber-900" : "bg-slate-100 text-slate-700"}`}>
-          {!assessment ? "No reading yet" : flagged ? "Flagged for review" : "Not flagged"}
+          {!assessment ? "No reading yet" : flagged ? "Flagged for review"
+            : assessment.evidence?.quality === "unavailable" ? "Reading unavailable" : "Not flagged"}
         </span>
       </header>
 

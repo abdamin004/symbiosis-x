@@ -4,6 +4,8 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 import { HEALTH_GUIDE_DISCLAIMER, HEALTH_GUIDES, HEALTH_METRICS } from "../../api/healthCatalog.js";
 import MetricGuide from "./MetricGuide.jsx";
 
+const MEASUREMENT_CHOICES = [...HEALTH_METRICS, {id:"sleep_quality",label:"Sleep quality",unit:"score"}];
+
 const EMPTY = {
   observed_at_s: "0", source_id: "synthetic.manual.sim-01", quality: "valid",
   value: "", systolic: "", diastolic: "", method: "assigned_device",
@@ -32,6 +34,7 @@ export function buildMeasurement(metric, values) {
     case "temperature": return { ...common, metric, value: number(values.value), unit: "°C", method: values.method, site: values.site };
     case "sleep": return values.duration_min.trim() !== "" ? { ...common, metric, duration_min: Number(values.duration_min) } : { ...common, metric, start_mission_s: Number(values.start_mission_s), end_mission_s: Number(values.end_mission_s) };
     case "mood": return { ...common, metric, score: Number(values.score), scale_id: "mood-1-to-5-v1", unit: "score" };
+    case "sleep_quality": return { ...common, metric, score: Number(values.score), scale_id: "sleep-quality-1-to-5-v1", unit: "score" };
     case "symptoms": return { ...common, metric, symptoms: values.symptoms.split(",").map((x) => x.trim()).filter(Boolean), private_text: values.private_text.trim() || null };
     default: throw new Error("UNKNOWN_METRIC");
   }
@@ -42,8 +45,9 @@ function validate(metric, m) {
   if (metric === "blood_pressure" && (!(m.systolic > 0) || !(m.diastolic > 0))) return "Enter both blood pressure values greater than zero.";
   if (metric === "sleep" && ("duration_min" in m ? !Number.isInteger(m.duration_min) || m.duration_min < 0 : !Number.isInteger(m.start_mission_s) || !Number.isInteger(m.end_mission_s) || m.start_mission_s < 0 || m.end_mission_s <= m.start_mission_s)) return "Enter a valid sleep duration or a start/end interval.";
   if (metric === "mood" && (!Number.isInteger(m.score) || m.score < 1 || m.score > 5)) return "Mood score must be between 1 and 5.";
+  if (metric === "sleep_quality" && (!Number.isInteger(m.score) || m.score < 1 || m.score > 5)) return "Sleep quality must be between 1 and 5.";
   if (metric === "symptoms" && !m.symptoms.length) return "Enter at least one symptom.";
-  if (!["blood_pressure", "sleep", "mood", "symptoms"].includes(metric) && (!Number.isFinite(m.value) || m.value < 0)) return "Enter a valid non-negative measurement.";
+  if (!["blood_pressure", "sleep", "mood", "sleep_quality", "symptoms"].includes(metric) && (!Number.isFinite(m.value) || m.value < 0)) return "Enter a valid non-negative measurement.";
   return "";
 }
 
@@ -51,14 +55,16 @@ export default function MeasurementPage() {
   const { runId } = useParams();
   const [query] = useSearchParams();
   const selectedCrew = query.get("crew_id");
-  return <MeasurementForm key={runId + ":" + (selectedCrew ?? "SIM-01")} runId={runId} selectedCrew={selectedCrew} />;
+  const requestedMetric = query.get("metric");
+  const initialMetric = MEASUREMENT_CHOICES.some(item => item.id === requestedMetric) ? requestedMetric : "heart_rate";
+  return <MeasurementForm key={JSON.stringify([runId, selectedCrew, initialMetric])} runId={runId} selectedCrew={selectedCrew} initialMetric={initialMetric} />;
 }
 
-function MeasurementForm({ runId, selectedCrew }) {
+function MeasurementForm({ runId, selectedCrew, initialMetric }) {
   const crewId = selectedCrew ?? "SIM-01";
   const [subject, setSubject] = useState(null);
   const [subjectError, setSubjectError] = useState("");
-  const [metric, setMetric] = useState("heart_rate");
+  const [metric, setMetric] = useState(initialMetric);
   const [values, setValues] = useState({...EMPTY, source_id:"synthetic.manual." + crewId.toLowerCase()});
   const [error, setError] = useState("");
   const [preview, setPreview] = useState(null);
@@ -77,7 +83,7 @@ function MeasurementForm({ runId, selectedCrew }) {
     return () => { active = false; };
   }, [runId, selectedCrew]);
   const guide = useMemo(() => HEALTH_GUIDES.get(metric), [metric]);
-  const selected = HEALTH_METRICS.find((item) => item.id === metric);
+  const selected = MEASUREMENT_CHOICES.find((item) => item.id === metric);
   const update = (key) => (value) => setValues((old) => ({ ...old, [key]: value }));
   function changeMetric(value) {
     setMetric(value);
@@ -121,7 +127,7 @@ function MeasurementForm({ runId, selectedCrew }) {
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <section className="rounded-lg border border-slate-200 bg-white p-4">
           <Field id="metric-picker" label="Indicator">
-            <Select id="metric-picker" value={metric} onChange={changeMetric}>{HEALTH_METRICS.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</Select>
+            <Select id="metric-picker" value={metric} onChange={changeMetric}>{MEASUREMENT_CHOICES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</Select>
           </Field>
           <form className="mt-5 space-y-4" onSubmit={submit} noValidate>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -152,6 +158,7 @@ function MeasurementForm({ runId, selectedCrew }) {
               </div>
             </> : null}
             {metric === "mood" ? <Field id="score" label="Mood score (1–5)"><Input id="score" type="number" min="1" max="5" step="1" value={values.score} onChange={update("score")} /></Field> : null}
+            {metric === "sleep_quality" ? <Field id="score" label="Sleep quality (1–5)" hint="1 means very poor. 5 means very good. Synthetic self-report."><Input id="score" type="number" min="1" max="5" step="1" value={values.score} onChange={update("score")} /></Field> : null}
             {metric === "symptoms" ? <>
               <Field id="symptoms" label="Symptoms (comma separated)"><Input id="symptoms" value={values.symptoms} onChange={update("symptoms")} /></Field>
               <Field id="private_text" label="Private note (optional)"><textarea id="private_text" value={values.private_text} onChange={(event) => update("private_text")(event.target.value)} rows="3" className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2" /></Field>
@@ -169,7 +176,7 @@ function MeasurementForm({ runId, selectedCrew }) {
           {saveError && <p role="alert" className="mt-3 rounded bg-red-50 p-3 text-sm text-red-800">{saveError}</p>}
           {saved && <p role="status" data-testid="measurement-saved" className="mt-3 rounded border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">Saved privately for {saved.crew_id} at mission time {saved.received_at_s}s. <Link className="font-semibold underline" to={`/runs/${encodeURIComponent(runId)}/crew` + (selectedCrew ? "?crew_id=" + encodeURIComponent(selectedCrew) : "")}>See the assessment in Crew Health</Link></p>}
         </section>
-        <MetricGuide guide={guide} />
+        {guide ? <MetricGuide guide={guide} /> : <section className="rounded-lg border border-slate-200 bg-white p-4"><h2 className="font-semibold">Sleep quality guide</h2><p className="mt-2 text-sm text-slate-700">Rate the last sleep period on the project’s synthetic 1–5 scale. This records how well the astronaut reports sleeping. The duration has its own entry.</p></section>}
       </div>
     </main>
   );
