@@ -32,6 +32,7 @@ function measurementLink(href, metric) {
  */
 export default function HealthReminders({ runId, followup, measureHref, emergencyHref, onChange }) {
   const [busy, setBusy] = useState("");
+  const [showAll, setShowAll] = useState(false);
   const [error, setError] = useState("");
   if (!followup) return null;
   const emergency = followup.precedence === "emergency" ? followup.emergency : null;
@@ -68,7 +69,7 @@ export default function HealthReminders({ runId, followup, measureHref, emergenc
       )}
 
       <ul className="mt-3 grid gap-3">
-        {followup.reminders.map((reminder) => {
+        {(showAll ? followup.reminders : followup.reminders.slice(0,2)).map((reminder) => {
           const status = STATUS[reminder.status] ?? STATUS.scheduled;
           return (
             <li key={reminder.reminder_id} data-testid={"reminder-" + reminder.metric} data-status={reminder.status}
@@ -110,6 +111,7 @@ export default function HealthReminders({ runId, followup, measureHref, emergenc
           );
         })}
       </ul>
+      {followup.reminders.length > 2 && <button type="button" className="mt-3 rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold" aria-expanded={showAll} onClick={() => setShowAll(v => !v)}>{showAll ? "Show next two" : `See all (${followup.reminders.length})`}</button>}
       {error && <p role="alert" className="mt-3 rounded bg-red-50 p-2 text-sm text-red-800">{error}</p>}
     </section>
   );
