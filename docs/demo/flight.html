@@ -1100,6 +1100,8 @@ ul.tutorial-startup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));g
 #sx-body-cases select{width:100%;min-height:38px;background:#0b1833;color:#f5f9ff;border:1px solid #7195cd;border-radius:7px;padding:5px}
 #sx-body-cases small{font-size:12px;color:#bcccec}
 #sx-left-hand-marker[hidden]{display:none!important}
+#flight-audio{display:inline-flex;align-items:center;min-height:40px;border:1px solid #657dc4;background:#17234a;color:#dcefff;font-size:13px;font-weight:700}
+#flight-audio[aria-pressed=true]{border-color:#72eacb;background:#123e4a;color:#c5fff1}
 </style>
 </head>
 <body>
@@ -1118,7 +1120,7 @@ __HUD_ICONS__
     <button type="button" id="show-command" hidden>Flight command</button>
     <button type="button" id="show-flight-emergency" hidden>Emergency Assist</button>
     <button type="button" id="show-missions"></button>
-    <button type="button" id="flight-audio" aria-pressed="true" hidden>Mission audio</button>
+    <button type="button" id="flight-audio" aria-label="Enable mission sound effects" aria-pressed="false" title="Optional cinematic sound effects · synthesized, not captured in vacuum">🔇 Sound off</button>
     <button type="button" id="end-mission" class="end-mission"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg>End mission</button>
     <a href="/mission">Mission control</a>
   </div>
@@ -2087,6 +2089,84 @@ __FLIGHT_PROCESSES__
 const element = id => document.getElementById(id);
 const flightHealthRun = new URLSearchParams(location.search).get("run_id");
 const data = JSON.parse(element("flight-data").textContent);
+/* Original procedurally synthesized cinematic effects; silence by default.
+   The sounds are narrative UI cues, not real recordings from vacuum. */
+const flightSfx = (() => {
+  let ctx = null, enabled = false, lastPhase = "", lastTime = -1, lastAlert = false;
+  const button = element("flight-audio");
+  const context = () => {
+    if (!ctx) {
+      const AudioCtor = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtor) return null;
+      ctx = new AudioCtor();
+    }
+    return ctx;
+  };
+  const tone = (hz,duration,type="sine",vol=.035,endHz=null) => {
+    if (!enabled) return;
+    const audio=context(); if (!audio) return;
+    const now=audio.currentTime, oscillator=audio.createOscillator(), gain=audio.createGain();
+    oscillator.type=type;
+    oscillator.frequency.setValueAtTime(hz,now);
+    if (endHz) oscillator.frequency.exponentialRampToValueAtTime(Math.max(20,endHz),now+duration);
+    gain.gain.setValueAtTime(.0001,now);
+    gain.gain.exponentialRampToValueAtTime(Math.max(.0002,vol),now+.02);
+    gain.gain.exponentialRampToValueAtTime(.0001,now+duration);
+    oscillator.connect(gain).connect(audio.destination);
+    oscillator.start(now); oscillator.stop(now+duration+.01);
+  };
+  const rumble = (duration=.85) => {
+    if (!enabled) return;
+    const audio=context(); if (!audio) return;
+    const frames=Math.floor(audio.sampleRate*duration), buffer=audio.createBuffer(1,frames,audio.sampleRate);
+    const channel=buffer.getChannelData(0);
+    let smooth=0;
+    for (let i=0;i<frames;i++) {
+      smooth=.95*smooth+.05*(Math.random()*2-1);
+      const envelope=Math.sin(Math.PI*i/frames);
+      channel[i]=smooth*envelope*.34;
+    }
+    const source=audio.createBufferSource(), low=audio.createBiquadFilter();
+    low.type="lowpass";low.frequency.value=260;
+    source.buffer=buffer;source.connect(low).connect(audio.destination);source.start();
+    tone(75,duration,"sawtooth",.015,37);
+  };
+  const effect = kind => {
+    if (kind==="launch") {rumble(1.8);tone(160,.8,"sawtooth",.025,65);}
+    if (kind==="dock") {tone(390,.16,"sine");tone(585,.28,"sine");}
+    if (kind==="alert") {tone(760,.16,"triangle",.035,450);}
+    if (kind==="recovery") {tone(350,.35,"triangle");tone(525,.5,"sine");}
+    if (kind==="ui") tone(440,.11,"sine",.015,660);
+  };
+  button?.addEventListener("click",async()=>{
+    enabled=!enabled;
+    button.setAttribute("aria-pressed",String(enabled));
+    button.setAttribute("aria-label",enabled?"Mute mission sound effects":"Enable mission sound effects");
+    button.textContent=enabled?"🔊 Sound on":"🔇 Sound off";
+    if (enabled) {
+      try { await context()?.resume(); } catch {}
+      effect("ui");
+    }
+  });
+  return {
+    effect,
+    observe(frame) {
+      if (!enabled) return;
+      // Ignore seeks and rewinds; effects only accompany advancing playback.
+      const advanced=frame.time>lastTime && frame.time-lastTime<=360;
+      const phase=String(frame.phase ?? "");
+      if (advanced && lastPhase && phase!==lastPhase) {
+        if (/launch|ascent|departure|burn/i.test(phase)) effect("launch");
+        else if (/dock|station/i.test(phase)) effect("dock");
+        else if (/recover|return|landing/i.test(phase)) effect("recovery");
+      }
+      const alert=Boolean(frame.healthDrill?.exposureRisk);
+      if (advanced && alert && !lastAlert) effect("alert");
+      lastPhase=phase; lastTime=frame.time; lastAlert=alert;
+    }
+  };
+})();
+
 const clock = seconds => {
   const whole = Math.floor(seconds);
   const parts = [Math.floor(whole / 3600), Math.floor(whole / 60) % 60, whole % 60];
@@ -3665,6 +3745,7 @@ function releaseInspection(procedure="shift") {
 }
 function render() {
   const frame = currentFrame();
+  flightSfx.observe(frame);
   const evidence = element("demo-evidence");
   const scenario = element("demo-scenario");
   const eva = activeEva(frame.time);
@@ -4377,6 +4458,7 @@ element("timeline").addEventListener("input", event => {
   render();
 });
 element("play").addEventListener("click", () => {
+  flightSfx.effect("ui");
   if (connectedFlight) { launchMission.togglePlayback(); return; }
   if (timer !== null) stop();
   else {
