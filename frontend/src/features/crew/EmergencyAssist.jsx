@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { acknowledgeEmergencyCase, createOperationId, openEmergencyCase, shareEmergencyCase } from "../../api/client.js";
 import drills from "../../../../scenarios/variants/health-emergency-drills.json";
@@ -18,6 +18,8 @@ export default function EmergencyAssist() {
   const [busy, setBusy] = useState(false);
   const operationId = useRef(null);
   const shareId = useRef(null);
+  const activeCaseRef = useRef(null);
+  useEffect(() => { if (caseData) activeCaseRef.current?.scrollIntoView({behavior:"smooth",block:"start"}); }, [caseData?.case_id]);
   const [share, setShare] = useState(null);
   const selected = DRILLS.find(drill => drill.drill_id === drillId);
   const procedure = caseData?.procedure?.questions?.length ? caseData.procedure : selected.procedure;
@@ -65,6 +67,31 @@ export default function EmergencyAssist() {
       <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-amber-800">Synthetic training simulation only</p>
       <h1 className="mt-1 text-2xl font-semibold">Emergency Assist</h1>
       <p className="mt-2 text-sm text-slate-600">The drill raises a local onboard alert. It does not wait for vital readings or Ground connectivity.</p>
+      {caseData && <section ref={activeCaseRef} className="mt-6 rounded-lg border-2 border-red-400 bg-red-950 p-5" role="status" data-testid="emergency-case">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-semibold text-amber-950">Local alert · {caseData.status}</h2>
+          <span className="rounded-full bg-amber-200 px-3 py-1 text-xs font-semibold" data-testid="emergency-ground-link">
+            {caseData.ground_link === "not_required" ? "Ground link not required" : "Ground link: " + String(caseData.ground_link ?? "unknown").replaceAll("_", " ")}
+          </span>
+        </div>
+        <p className="mt-2 text-sm">{caseData.report}</p>
+        <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
+          <dt>Case reference</dt><dd><details><summary>Show reference</summary>{caseData.case_id}</details></dd>
+          <dt>Opened</dt><dd>T+{String(Math.floor(caseData.opened_at_s/60)).padStart(2,"0")}:{String(caseData.opened_at_s%60).padStart(2,"0")}</dd>
+          <dt>Assigned responder</dt><dd data-testid="emergency-responder" data-crew-id={caseData.owner}>{crewNames.get(caseData.owner) ?? caseData.owner}</dd>
+          <dt>Heart-rate data</dt><dd>{caseData.vitals.heart_rate}</dd>
+          <dt>Responsiveness</dt><dd>{caseData.responsiveness ?? "Not applicable"}</dd>
+          <dt>Escalation</dt><dd>{caseData.escalation.level}</dd>
+        </dl>
+        {caseData.status === "open" ? <button disabled={busy} onClick={acknowledge} className="mt-4 rounded-md bg-selection px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Acknowledge local response</button> : <p className="mt-3 text-sm font-semibold text-emerald-800">Local responder acknowledged at T+{String(Math.floor((caseData.acknowledgment?.acknowledged_at_s ?? 0)/60)).padStart(2,"0")}:{String((caseData.acknowledgment?.acknowledged_at_s ?? 0)%60).padStart(2,"0")}.</p>}
+        <div className="mt-4 border-t border-amber-300 pt-3">
+          <button type="button" disabled={busy} onClick={shareWithGround} className="rounded-md border border-slate-400 bg-white px-4 py-2 text-sm font-semibold disabled:opacity-50">Share case status with Ground</button>
+          <p className="mt-1 text-xs text-slate-600">Optional. Ground receives only an opaque alias, a review priority and the status, after the relay delay. Local response never waits for it.</p>
+          {share && <p className="mt-2 rounded bg-white p-2 text-sm" data-testid="emergency-share-receipt">
+            Queued for Ground as <strong>{share.case_alias}</strong> · {share.status} · due at Ground {share.deliver_at_s}s mission time.
+          </p>}
+        </div>
+      </section>}
       <form className="mt-6 rounded-lg border border-slate-200 bg-white p-4" onSubmit={trigger}>
         <button type="submit" disabled={busy || !!caseData} className="mb-5 w-full rounded-xl border-2 border-red-400 bg-red-800 px-5 py-4 text-lg font-bold text-white disabled:opacity-50">{busy ? "Opening…" : "🚨 Raise local drill alert"}</button>
         <label htmlFor="emergency-drill" className="block text-sm font-semibold">Choose scripted drill</label>
@@ -87,38 +114,12 @@ export default function EmergencyAssist() {
           {steps.map(step => <li key={step}>{step}</li>)}
         </ol>
         <p className="mt-2 text-xs text-slate-600">{procedure.label}</p>
-        <ul className="mt-2 flex flex-wrap gap-2 text-xs text-slate-600">
-          {procedure.sources.map(source => <li key={source.url}><a className="underline" href={source.url} target="_blank" rel="noreferrer">{source.title}</a></li>)}
-        </ul>
+        <details className="mt-3 text-sm"><summary>Reference sources ({procedure.sources.length})</summary><ul className="mt-2 flex flex-wrap gap-2 text-xs text-slate-600">{procedure.sources.map(source => <li key={source.url}><a className="underline" href={source.url} target="_blank" rel="noreferrer">{source.title}</a></li>)}</ul></details>
         <p className="mt-3 text-xs text-slate-500">Reporter {crewNames.get(selected.reported_by)} · Subject {crewNames.get(selected.subject_crew_id)} · Local responder {crewNames.get(selected.responder_crew_id)}</p>
 
       </form>
       {error && <p role="alert" className="mt-4 rounded bg-red-50 p-3 text-sm text-red-800">{error}</p>}
-      {caseData && <section className="mt-6 rounded-lg border-2 border-amber-400 bg-amber-50 p-4" role="status" data-testid="emergency-case">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold text-amber-950">Local alert · {caseData.status}</h2>
-          <span className="rounded-full bg-amber-200 px-3 py-1 text-xs font-semibold" data-testid="emergency-ground-link">
-            {caseData.ground_link === "not_required" ? "Ground link not required" : "Ground link: " + String(caseData.ground_link ?? "unknown").replaceAll("_", " ")}
-          </span>
-        </div>
-        <p className="mt-2 text-sm">{caseData.report}</p>
-        <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
-          <dt>Case</dt><dd>{caseData.case_id}</dd>
-          <dt>Opened</dt><dd>{caseData.opened_at_s}s mission time</dd>
-          <dt>Assigned responder</dt><dd data-testid="emergency-responder" data-crew-id={caseData.owner}>{crewNames.get(caseData.owner) ?? caseData.owner}</dd>
-          <dt>Heart-rate data</dt><dd>{caseData.vitals.heart_rate}</dd>
-          <dt>Responsiveness</dt><dd>{caseData.responsiveness ?? "Not applicable"}</dd>
-          <dt>Escalation</dt><dd>{caseData.escalation.level}</dd>
-        </dl>
-        {caseData.status === "open" ? <button disabled={busy} onClick={acknowledge} className="mt-4 rounded-md bg-selection px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Acknowledge local response</button> : <p className="mt-3 text-sm font-semibold text-emerald-800">Local responder acknowledged at {caseData.acknowledgment?.acknowledged_at_s}s.</p>}
-        <div className="mt-4 border-t border-amber-300 pt-3">
-          <button type="button" disabled={busy} onClick={shareWithGround} className="rounded-md border border-slate-400 bg-white px-4 py-2 text-sm font-semibold disabled:opacity-50">Share case status with Ground</button>
-          <p className="mt-1 text-xs text-slate-600">Optional. Ground receives only an opaque alias, a review priority and the status, after the relay delay. Local response never waits for it.</p>
-          {share && <p className="mt-2 rounded bg-white p-2 text-sm" data-testid="emergency-share-receipt">
-            Queued for Ground as <strong>{share.case_alias}</strong> · {share.status} · due at Ground {share.deliver_at_s}s mission time.
-          </p>}
-        </div>
-      </section>}
+
     </main>
   );
 }
