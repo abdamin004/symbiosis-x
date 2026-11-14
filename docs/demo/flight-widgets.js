@@ -8,6 +8,42 @@ function createFlightWidgets(overlay, shelf, notice, fixedControls = []) {
   const clamp = (value, max) => Math.max(0, Math.min(value, max));
   const rect = entry => ({...entry.position,w:entry.panel.offsetWidth,h:entry.panel.offsetHeight});
   let focused = null;
+  const ribbonPopupIds = new Set(["show-inspector", "show-crew", "show-workflow"]);
+  const isRibbonPopup = entry => Boolean(entry.toggle && ribbonPopupIds.has(entry.toggle.id));
+  // Position menu popups in viewport coordinates, directly below their ribbon
+  // triggers. The flight overlay has a 100px top clearance, so ordinary
+  // overlay-relative positioning makes a "dropdown" appear far away.
+  const placeRibbonPopup = entry => {
+    const trigger = entry.toggle.getBoundingClientRect();
+    const panel = entry.panel;
+    const viewportWidth = document.documentElement.clientWidth;
+    const viewportHeight = document.documentElement.clientHeight;
+    panel.style.position = "fixed";
+    panel.style.maxWidth = "calc(100vw - 20px)";
+    panel.style.maxHeight = Math.max(140, viewportHeight - trigger.bottom - 20) + "px";
+    const width = panel.offsetWidth || 320;
+    const x = Math.max(gap,Math.min(trigger.left,viewportWidth-width-gap));
+    const y = trigger.bottom + 8;
+    Object.assign(panel.style,{left:x+"px",top:y+"px"});
+    entry.position = null;
+  };
+  const dismissRibbon = () => {
+    let changed = false;
+    for (const entry of entries) {
+      if (!isRibbonPopup(entry) || !entry.wanted || entry.panel.hidden) continue;
+      entry.wanted = false;
+      entry.panel.hidden = true;
+      changed = true;
+    }
+    if (changed) { focused = null; layout(); }
+  };
+  document.addEventListener("keydown",event=>{
+    if (event.key === "Escape") dismissRibbon();
+  });
+  document.addEventListener("pointerdown",event=>{
+    if (event.target.closest(".ribbon,#widget-shelf") || entries.some(entry=>isRibbonPopup(entry) && entry.panel.contains(event.target))) return;
+    dismissRibbon();
+  });
 
   function reserveControls(occupied) {
     const bounds = overlay.getBoundingClientRect();
@@ -53,7 +89,8 @@ function createFlightWidgets(overlay, shelf, notice, fixedControls = []) {
     for (const entry of ordered) {
       const hadFocus = entry.panel.contains(document.activeElement);
       entry.panel.hidden = false;
-      entry.panel.style.maxHeight = "";
+      if (!isRibbonPopup(entry)) entry.panel.style.maxHeight = "";
+      if (isRibbonPopup(entry)) placeRibbonPopup(entry);
       if (getComputedStyle(entry.panel).position === "fixed") {
         const bounds = overlay.getBoundingClientRect();
         const panel = entry.panel.getBoundingClientRect();
@@ -87,6 +124,8 @@ function createFlightWidgets(overlay, shelf, notice, fixedControls = []) {
   }
   const sizes = new ResizeObserver(entries=>{ if (entries.some(e=>!e.target.hidden)) schedule(); });
   sizes.observe(overlay);
+  window.addEventListener("resize",schedule);
+  window.addEventListener("scroll",schedule,true);
 
   function register(panel, toggle, preferred, {persistent=false,lock=null,compactPriority=false} = {}) {
     const handle = panel.querySelector(".move-widget"), bar = panel.querySelector(".widget-bar");
@@ -103,6 +142,14 @@ function createFlightWidgets(overlay, shelf, notice, fixedControls = []) {
     toggle?.setAttribute("aria-controls",panel.id);
 
     function open(trigger) {
+      if (isRibbonPopup(entry)) {
+        for (const other of entries) {
+          if (other === entry || !isRibbonPopup(other)) continue;
+          other.wanted = false;
+          other.panel.hidden = true;
+        }
+        entry.position = null;
+      }
       entry.wanted = true;
       entry.trigger = trigger ?? toggle ?? entry.trigger;
       focused = entry;
