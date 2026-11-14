@@ -41,7 +41,7 @@ function MedicalRecord({runId, crewId}) {
   const timeline = response?.medical_timeline;
   const entry = timeline?.cases.find(item => item.id === scenario) ?? timeline?.cases[0];
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8">
+    <main className="sx-shell mx-auto max-w-3xl px-4 py-8">
       <Link to={crewPath + "?crew_id=" + encodeURIComponent(crewId)} className="text-sm text-selection underline">Back to Crew console</Link>
       <header className="mt-4 flex flex-wrap items-start justify-between gap-3">
         <div>
