@@ -3,8 +3,7 @@
 Two scripted drills exist: chest pain, reported directly by the affected crew
 member, and collapse, reported by a bystander with a responsiveness field. An
 authorized Crew request opens one case per drill per run, assigns the scripted
-local responder, surfaces the procedure reference (a clearly labelled training
-placeholder in this prototype) and raises a local alert. Escalation never
+local responder, surfaces source-backed training guidance and raises a local alert. Escalation never
 depends on vital readings or the Ground relay: opening a case reads no relay
 messages and writes nothing for Ground, so it works during a blackout. Unknown
 responsiveness stays visible and never blocks the alert. Training scope only.
@@ -50,16 +49,33 @@ class OpenEmergencyRequest(Contract):
     reported_by: Identifier
     synthetic: StrictBool
     responsiveness: Responsiveness | None = None
+    breathing: Literal["normal", "abnormal", "unknown"] | None = None
+    pain_ongoing: Literal["yes", "no", "unknown"] | None = None
 
 
 class AcknowledgeEmergencyRequest(Contract):
     acknowledged_by: Identifier
 
 
+class GuidanceQuestion(Contract):
+    id: Literal["responsive", "breathing", "pain_ongoing"]
+    label: str
+
+
+class GuidanceSource(Contract):
+    title: str
+    url: str
+    version: str
+    accessed_on: str
+
+
 class Procedure(Contract):
-    kind: Literal["approved_reference", "training_placeholder"]
+    kind: Literal["approved_reference", "training_placeholder", "training_guidance"]
     ref: Identifier
     label: str
+    questions: list[GuidanceQuestion] = Field(default_factory=list)
+    guidance: dict[str, list[str]] = Field(default_factory=dict)
+    sources: list[GuidanceSource] = Field(default_factory=list)
 
 
 class Escalation(Contract):
@@ -92,6 +108,7 @@ class EmergencyCase(Contract):
     report_kind: Literal["direct_symptom_report", "bystander_report"]
     report: str
     responsiveness: Responsiveness | None
+    assessment: dict[str, Literal["yes", "no", "unknown"]] | None = None
     procedure: Procedure
     escalation: Escalation
     vitals: VitalsStatus
@@ -121,7 +138,9 @@ def _roster_ids() -> frozenset[str]:
 
 
 def _digest(command: OpenEmergencyRequest) -> str:
-    return sha256(command.model_dump_json().encode()).hexdigest()
+    # Preserve the digest of previously stored requests and their retries.
+    return sha256(command.model_dump_json(exclude={"breathing", "pain_ongoing"}
+        if command.breathing is None and command.pain_ongoing is None else None).encode()).hexdigest()
 
 
 def _vitals(db: Connection, run_id: str, crew_id: str) -> VitalsStatus:
@@ -158,8 +177,10 @@ def open_emergency(
         raise EmergencyRejected("REPORTER_NOT_ON_ROSTER")
     if command.reported_by != drill["reported_by"]:
         raise EmergencyRejected("REPORTER_NOT_IN_DRILL_SCRIPT")
-    if drill["kind"] == "chest_pain" and command.responsiveness is not None:
+    if drill["kind"] == "chest_pain" and command.responsiveness is not None and command.breathing is None:
         raise EmergencyRejected("RESPONSIVENESS_NOT_USED_FOR_CHEST_PAIN")
+    if drill["kind"] == "collapse" and command.pain_ongoing is not None:
+        raise EmergencyRejected("PAIN_QUESTION_NOT_USED_FOR_COLLAPSE")
 
     digest = _digest(command)
     with repository.write() as db:
@@ -190,6 +211,14 @@ def open_emergency(
 
         opened_at_s = run["mission_s"]
         collapse = drill["kind"] == "collapse"
+        assessment = None
+        if command.breathing is not None:
+            assessment = {
+                "responsive": {"responsive": "yes", "unresponsive": "no"}.get(command.responsiveness, "unknown"),
+                "breathing": {"normal": "yes", "abnormal": "no"}.get(command.breathing, "unknown"),
+            }
+            if not collapse:
+                assessment["pain_ongoing"] = command.pain_ongoing or "unknown"
         case = EmergencyCase(
             case_id=case_id, run_id=run_id, drill_id=drill["drill_id"], kind=drill["kind"],
             status="open", opened_at_s=opened_at_s, owner=drill["responder_crew_id"],
@@ -197,6 +226,7 @@ def open_emergency(
             report_kind=drill["report_kind"],
             report=drill["bystander_report"] if collapse else drill["symptom_report"],
             responsiveness=(command.responsiveness or drill["default_responsiveness"]) if collapse else None,
+            assessment=assessment,
             procedure=Procedure.model_validate(drill["procedure"]),
             escalation=Escalation(level="local_alert", raised_at_s=opened_at_s,
                                   depends_on_vitals=False, depends_on_relay=False),

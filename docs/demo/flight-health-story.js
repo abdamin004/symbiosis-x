@@ -30,6 +30,8 @@ function bindFlightHealthStory({find, clock, metrics, openTwin, onUpdate}) {
       emergency:"Chest-pain training drill",
       unobserved:"Unobserved",
     }[state];
+    const emergencyButton = find("show-flight-emergency");
+    emergencyButton.hidden = !story && !new URLSearchParams(location.search).get("run_id");
     button.hidden = !story;
     const buttonText = story ? "Mara · " + title : "";
     if (button.textContent !== buttonText) button.textContent = buttonText;

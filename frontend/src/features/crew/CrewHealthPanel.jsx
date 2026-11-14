@@ -199,12 +199,21 @@ export function CrewHealthDashboard({ profile, assessment, metrics, measureHref,
             <li key={metric.id} data-testid={"indicator-" + metric.id} aria-current={isSelected ? "true" : undefined}
               className={`rounded-md border p-2 text-sm ${isSelected ? "border-selection bg-sky-50" : "border-slate-200"}`}>
               <p className="font-medium text-slate-900">{metric.label}</p>
-              <p className="text-xs text-slate-600">{baseline ? `Baseline ${formatValue(baseline.value)} ${baseline.unit}` : "No personal baseline"}</p>
+              <p className="text-xs text-slate-600">{baseline
+                ? `Baseline ${formatValue(baseline.value)}${baseline.diastolic == null ? "" : "/" + formatValue(baseline.diastolic)} ${baseline.unit}`
+                : "No personal baseline"}</p>
               {isSelected && <p className="mt-1 text-xs font-semibold text-selection">Latest reading</p>}
             </li>
           );
         })}
       </ul>
+      {profile?.history?.entries?.length > 0 && <details className="mt-3 rounded-md border border-slate-200 p-3 text-sm">
+        <summary className="cursor-pointer font-semibold">Fictional medical history</summary>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-700">
+          {profile.history.entries.map((entry,index) =>
+            <li key={entry.date + entry.category + index}><time dateTime={entry.date}>{entry.date}</time> · {entry.note}</li>)}
+        </ul>
+      </details>}
 
       {assessment ? <div className="mt-4" data-testid="crew-health-assessment">
         <p className="text-sm text-slate-800">

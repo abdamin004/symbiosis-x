@@ -19,16 +19,16 @@ def test_profile_is_crew_only(tmp_path):
         profile = crew_response.json()["health_profile"]
         assert profile["crew_id"] == "SIM-01"
         assert profile["simulated"] is True
-        assert profile["history"] == {"status": "unknown", "entries": []}
-        assert profile["baselines"] == [
-            {
-                "metric": "heart_rate",
-                "value": 72,
-                "unit": "bpm",
-                "context": "Synthetic resting value during quiet seated activity",
-                "source_id": "synthetic.sim-01-health-baseline-v1",
-            }
-        ]
+        assert profile["display_name"] == "Mara Vale"
+        assert profile["history"]["status"] == "recorded"
+        assert all(entry["fictional"] is True for entry in profile["history"]["entries"])
+        metrics = {"heart_rate", "blood_pressure", "glucose", "temperature",
+                   "sleep", "sleep_quality", "mood", "symptoms"}
+        for crew_id in ("SIM-01", "SIM-02", "SIM-03", "SIM-04"):
+            member = client.get(url + "/crew", params={"crew_id": crew_id}).json()["health_profile"]
+            assert {baseline["metric"] for baseline in member["baselines"]} == metrics
+            assert all(baseline["source_id"].startswith("synthetic.") for baseline in member["baselines"])
+        assert profile["baselines"][0]["value"] == 72
 
         authenticate(client, "ground")
         ground_response = client.get(url + "/ground")
@@ -39,6 +39,7 @@ def test_profile_is_crew_only(tmp_path):
         assert "history" not in ground_text
         assert "baselines" not in ground_text
         assert "synthetic.sim-01-health-baseline-v1" not in ground_text
+        assert profile["history"]["entries"][0]["note"] not in ground_text
 
 
 def test_selected_crew_health_is_isolated_by_run_and_person(tmp_path):
@@ -68,7 +69,7 @@ def test_selected_crew_health_is_isolated_by_run_and_person(tmp_path):
         assert sana["health_assessment"]["evidence"]["value"] == 73
         assert ivo["health_profile"]["baselines"][0]["value"] == 76
         assert ivo["health_assessment"] is None
-        assert view(first, "SIM-04")["health_profile"]["baselines"] == []
+        assert view(first, "SIM-04")["health_profile"]["baselines"][0]["value"] == 71
         assert view(second, "SIM-02")["health_assessment"] is None
         assert client.get(f"/api/v1/runs/{first}/crew?crew_id=unknown").status_code == 404
         authenticate(client, "ground")
