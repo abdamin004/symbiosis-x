@@ -1086,6 +1086,14 @@ ul.tutorial-startup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));g
   .stage .crew-strip{left:8px;right:auto;top:calc(100% + 82px);transform:none}
   .stage .flight-controls{right:8px}
 }
+
+/* Separate navigation, playback, and the clickable astronaut dock. */
+.stage .crew-strip{right:12px;left:auto;top:calc(100% + 70px);transform:none;z-index:12}
+.stage .flight-controls{z-index:14}
+@media(max-width:700px){
+ .stage .crew-strip{left:8px;right:auto;top:calc(100% + 90px);transform:none}
+ .stage .crew-strip .crew-portrait{width:clamp(53px,18vw,68px)}
+}
 </style>
 </head>
 <body>
