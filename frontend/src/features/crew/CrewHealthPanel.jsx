@@ -199,12 +199,17 @@ export function CrewHealthDashboard({ profile, assessment, metrics, measureHref,
           const isSelected = metric.id === assessment?.metric;
           return (
             <li key={metric.id} data-testid={"indicator-" + metric.id} aria-current={isSelected ? "true" : undefined}
-              className={`rounded-md border p-2 text-sm ${isSelected ? "border-selection bg-sky-50" : "border-slate-200"}`}>
+              className={`rounded-md border p-3 text-sm ${isSelected ? "border-selection bg-sky-50" : "border-slate-200"}`}>
               <p className="font-medium text-slate-900">{metric.label}</p>
-              <p className="text-xs text-slate-600">{baseline
-                ? `Baseline ${formatValue(baseline.value)}${baseline.diastolic == null ? "" : "/" + formatValue(baseline.diastolic)} ${baseline.unit}`
-                : "No personal baseline"}</p>
-              {isSelected && <p className="mt-1 text-xs font-semibold text-selection">Latest reading</p>}
+              {isSelected ? <>
+                <p className="mt-2 text-xl font-bold text-telemetry" data-testid={"indicator-value-" + metric.id}>{readingText(assessment.evidence)}</p>
+                <p className="mt-1 text-xs font-semibold text-amber-700">{flagged ? "● Review" : "● Latest accepted / assessed"}</p>
+              </> : <>
+                <p className="mt-2 text-xl font-semibold text-slate-900">{baseline
+                  ? `${formatValue(baseline.value)}${baseline.diastolic == null ? "" : "/" + formatValue(baseline.diastolic)}`
+                  : "—"}</p>
+                <p className="mt-1 text-xs text-slate-600">{baseline ? baseline.unit : "Unavailable"} · personal baseline, not live</p>
+              </>}
             </li>
           );
         })}
