@@ -2625,6 +2625,10 @@ const trainingBodyConcerns = Object.freeze({
 });
 let activeTrainingConcern = "hand";
 function selectedBodyConcern(member) {
+  // An actual Crew emergency report takes priority over the authored selector.
+  const live = typeof flightHealthStory !== "undefined"
+    ? flightHealthStory?.issueFor?.(data.crew[member]) : null;
+  if (live) return live;
   const concern = trainingBodyConcerns[activeTrainingConcern];
   return concern?.crew === member ? concern : null;
 }
@@ -2634,7 +2638,8 @@ function renderTrainingConcern(concern, member) {
     "sx-issue-title":concern.title,
     "sx-issue-astronaut":characters[member].name,
     "sx-issue-region":bodyRegions[concern.region].label,
-    "sx-issue-status":"Review · authored simulation example",
+    "sx-issue-status":concern.source === "onboard emergency case"
+      ? "Active local emergency · reported by Crew" : "Review · authored simulation example",
     "sx-issue-symptoms":concern.symptoms,
     "sx-issue-evidence":concern.evidence,
     "sx-issue-action":concern.action,
@@ -3028,9 +3033,9 @@ function updateBodyMap(sample, member, frame) {
     const [x,y]=bodyRegions[concern.region][activeLayer === "suit" ? "suit" : "body"];
     issueMarker.style.left=x+"%";
     issueMarker.style.top=y+"%";
-    issueMarker.setAttribute("aria-label",activeTrainingConcern === "hand"
+    issueMarker.setAttribute("aria-label",activeTrainingConcern === "hand" && concern === trainingBodyConcerns.hand
       ? "Review synthetic left hand concern for Sana Kepler"
-      : "Review synthetic "+concern.title+" for "+characters[member].name);
+      : "Review reported "+concern.title+" for "+characters[member].name);
     issueMarker.title=concern.title;
     issueMarker.dataset.region=concern.region;
     issueMarker.style.borderColor="#ff4d72";
