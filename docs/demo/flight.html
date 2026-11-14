@@ -987,6 +987,34 @@ ul.tutorial-startup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));g
   #personnel-widget #twin-layer .region-card{order:-1;padding:.4rem .5rem}
   #personnel-widget #twin-layer .body-map{width:128px;max-width:128px;aspect-ratio:2/3}
 }
+
+/* Flight UI polish: palette, navigation and popup affordance only.
+   Scene geometry, animations, ship drawing and mission playback are unchanged. */
+:root {
+  --bg:#080d1c;
+  --ink:#f0f6ff;
+  --muted:#acbed5;
+  --blue:#8bd8f8;
+  --violet:#bcb0ff;
+  --edge:#6ba8d04d;
+}
+.hud { background:linear-gradient(110deg,#101b33,#0b1326); border-bottom:1px solid #4c688a6e; }
+.ribbon { gap:.5rem; padding:.7rem 1rem; font-size:.875rem; }
+.ribbon button { min-height:42px; border:1px solid #43567591; background:#15223b; padding:.55rem .85rem; font-weight:600; }
+.ribbon button:hover { background:#243a57; border-color:#7aaee0; }
+.ribbon button[aria-pressed="true"] { background:#284466; border-color:#88d5fb; box-shadow:inset 0 -2px #88d5fb; }
+.ribbon #show-flight-emergency:not([hidden]) { background:#703042; border-color:#f48c9b; color:#ffe8ed; font-weight:750; }
+.ribbon #show-flight-emergency:hover { background:#8f3a50; }
+.overlays .panel { background:linear-gradient(150deg,#192940f5,#101a2df5); border:1px solid #5c83ae88; border-radius:14px; box-shadow:0 20px 56px #000a,0 1px 0 #ffffff17 inset; }
+.overlays .panel h2 { color:#f4f9ff; }
+.overlays .panel .widget-bar { border-bottom:1px solid #54709055; padding-bottom:.45rem; margin-bottom:.65rem; }
+.overlays .panel button { min-height:36px; }
+#crew-widget, #workflow-widget, #inspector-widget { z-index:9; }
+@media(max-width:680px) {
+  .ribbon { gap:.35rem; }
+  .ribbon button { min-height:44px; }
+  .overlays .panel { width:min(340px,calc(100vw - 20px)); }
+}
 </style>
 </head>
 <body>
