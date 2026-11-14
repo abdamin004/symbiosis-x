@@ -28,12 +28,12 @@ from symbiosis_x.workflows.eva import build_eva_rehearsal
 
 
 def build(output: Path) -> None:
-    crew = json.loads((ROOT / "catalogs/crew/synthetic-roster.json").read_text())["crew"]
+    crew = json.loads((ROOT / "catalogs/crew/synthetic-roster.json").read_text(encoding="utf-8"))["crew"]
     crew_ids = [member["crew_id"] for member in crew]
-    rooms = json.loads((ROOT / "catalogs/sx01/rooms.json").read_text())["rooms"]
+    rooms = json.loads((ROOT / "catalogs/sx01/rooms.json").read_text(encoding="utf-8"))["rooms"]
     missions = []
     for preset in ("launch-checkout-v1", "orbital-systems-checkout-v1"):
-        mission = json.loads((ROOT / f"scenarios/variants/{preset}.json").read_text())
+        mission = json.loads((ROOT / f"scenarios/variants/{preset}.json").read_text(encoding="utf-8"))
         mission["propulsion_budget"] = propulsion_envelope(mission)
         mission["ascent"] = launch_envelope(mission)
         mission["navigation"] = navigation_reference(mission["ascent"], mission["propulsion"]["rcs_pulses"])
@@ -41,15 +41,15 @@ def build(output: Path) -> None:
             mission["rendezvous"] = rendezvous_envelope(mission)
         missions.append(mission)
     scenario, frames = build_replays(crew)
-    ground = json.loads((ROOT / "contracts/examples/ground-v102.json").read_text())
-    eva = json.loads((ROOT / "scenarios/variants/eva-antenna-service-v1.json").read_text())
+    ground = json.loads((ROOT / "contracts/examples/ground-v102.json").read_text(encoding="utf-8"))
+    eva = json.loads((ROOT / "scenarios/variants/eva-antenna-service-v1.json").read_text(encoding="utf-8"))
     data = json.dumps({
         "provisions": flight_rules(),
         "health30_cabin": submission_cabin(),
         "health30_profiles": crew,
-        "health30_sensors": json.loads((ROOT / "catalogs/sx01/sensors.json").read_text())["sensors"],
-        "research_context": json.loads((ROOT / "catalogs/crew/spaceflight-research.json").read_text()),
-        "metrics": json.loads((ROOT / "catalogs/crew/health-metrics.json").read_text())["metrics"],
+        "health30_sensors": json.loads((ROOT / "catalogs/sx01/sensors.json").read_text(encoding="utf-8"))["sensors"],
+        "research_context": json.loads((ROOT / "catalogs/crew/spaceflight-research.json").read_text(encoding="utf-8")),
+        "metrics": json.loads((ROOT / "catalogs/crew/health-metrics.json").read_text(encoding="utf-8"))["metrics"],
         "emergency_drills": list(load_drills().values()),
         "health_profiles": {crew_id: profile_for_crew(crew_id).model_dump(mode="json") for crew_id in crew_ids},
         "rooms": rooms, "crew": crew_ids, "activity_s": ACTIVITY_S, "missions": missions,
