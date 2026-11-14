@@ -987,6 +987,50 @@ ul.tutorial-startup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));g
   #personnel-widget #twin-layer .region-card{order:-1;padding:.4rem .5rem}
   #personnel-widget #twin-layer .body-map{width:128px;max-width:128px;aspect-ratio:2/3}
 }
+
+/* Keep all four interactive astronaut portraits visible, but dock them away
+   from the left-side Crew / Orders popovers and the ship's centerline. */
+.stage .crew-strip {
+  left:auto;
+  right:clamp(156px,13vw,232px);
+  transform:none;
+  top:calc(100% + 12px);
+  padding:6px;
+  gap:6px;
+  background:#0a1022d9;
+  border:1px solid #8a99d333;
+  border-radius:12px;
+  box-shadow:0 8px 26px #0006;
+  max-width:calc(100vw - 20px);
+  z-index:12;
+}
+.stage .crew-strip .crew-portrait {
+  width:clamp(59px,4.4vw,72px);
+  min-height:85px;
+  padding:5px 3px;
+}
+.stage .crew-strip .crew-face { width:32px; height:32px; }
+.stage .crew-strip .crew-name { font-size:12px; }
+@media (max-width:1050px) {
+  .stage .crew-strip {
+    right:10px;
+    top:calc(100% + 70px);
+    gap:4px;
+  }
+}
+@media (max-width:520px) {
+  .stage .crew-strip {
+    top:calc(100% + 12px);
+    left:8px;
+    right:8px;
+    justify-content:center;
+    gap:4px;
+    width:max-content;
+    max-width:calc(100vw - 16px);
+    margin-inline:auto;
+  }
+  .stage .crew-strip .crew-portrait { width:clamp(56px,20vw,72px); }
+}
 </style>
 </head>
 <body>
