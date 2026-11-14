@@ -2,6 +2,7 @@ import { Link, useParams } from "react-router-dom";
 import { fixtureFor } from "../../api/fixtures.js";
 import { CREW_HEALTH_FIXTURE } from "../../api/crewHealthFixture.js";
 import CrewHealthPanel from "../crew/CrewHealthPanel.jsx";
+import HazardExplorer from "../crew/HazardExplorer.jsx";
 import CheckInForm from "../crew/CheckInForm.jsx";
 import RadiationContext from "../crew/RadiationContext.jsx";
 import GroundHealthStatus from "../ground/GroundHealthStatus.jsx";
@@ -78,6 +79,7 @@ export default function MissionConsole({ role }) {
         Synthetic fixture · scenario {snapshot.scenario_id} · seed {snapshot.seed}
       </p>
 
+      {role === "crew" && <HazardExplorer />}
       {role === "crew" && <CrewHealthPanel health={CREW_HEALTH_FIXTURE} cabin={equipment.co2} />}
       {role === "ground" && <GroundSnapshot packet={packetFromGroundFixture(snapshot)} missionS={snapshot.mission_s} />}
       <details className="mt-6 rounded-lg border border-slate-200 bg-white p-4"><summary className="font-semibold">Ship systems and cabin equipment</summary>
