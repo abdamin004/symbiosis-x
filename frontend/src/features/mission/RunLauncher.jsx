@@ -19,7 +19,7 @@ export default function RunLauncher({ run: fixtureRun }) {
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12">
+    <main className="sx-shell mx-auto max-w-3xl px-4 py-12">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-medium uppercase tracking-wide text-slate-500">SYMBIOSIS X</p>
         <ServiceStatus />
