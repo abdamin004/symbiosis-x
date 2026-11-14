@@ -67,7 +67,7 @@ function bindHealth30({host,data,zones,hull,query}) {
       <footer>Synthetic rehearsal values · review rule, not diagnosis</footer>`;
     asText(panel.querySelector("h2"),profile.display_name);
     asText(panel.querySelector(".health30-medical-history"),profile.history.entries.map(entry=>entry.note).join(" "));
-    panel.querySelector("polyline").setAttribute("points",history.map((item,i)=>i*80+","+ (36-(item-64)*1.8)).join(" "));
+    panel.querySelector("polyline").setAttribute("points",history.map((item,i)=>i*80+","+ (40-(item-68)*1.1)).join(" "));
     for (const [id,name,value,unit] of readings) {
       const entry = baselines.get(id);
       const baseline = id === "symptoms" ? "None reported"
@@ -119,7 +119,7 @@ function bindHealth30({host,data,zones,hull,query}) {
 
   function paintAir(time,repair) {
     const stageTime = repair ? cabin.repair_s + (cabin.samples.at(-1).time_s - cabin.repair_s) * Math.min(1,(time - 19)/3)
-      : 4200 + (cabin.repair_s - 4200) * Math.min(1,(time - 11)/3.5);
+      : 4200 + (cabin.repair_s - 4200) * Math.min(1,Math.max(0,(time - 7)/4));
     const latest = sampleAt(stageTime);
     panel.querySelector(".health30-hero-value").textContent = ppm(latest.ppm) + " ppm";
     const points = cabin.samples.filter(sample => sample.time_s <= latest.time_s).map(sample =>
@@ -204,7 +204,7 @@ function bindHealth30({host,data,zones,hull,query}) {
       host.dataset.liftoff = String(time < 1.5);
     }
     if (beat === "relay") {
-      const progress = Math.min(1,(time - 22)/3);
+      const progress = Math.max(0,Math.min(1,(time - 18)/3));
       panel.style.setProperty("--packet-progress", (progress*100) + "%");
       panel.querySelector(".health30-relay-status").textContent = progress === 1
         ? "Delivered to Ground" : "In transit · " + Math.ceil((1-progress)*300) + " s";
