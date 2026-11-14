@@ -1073,6 +1073,19 @@ ul.tutorial-startup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));g
   #map-widget .map-views button{font-size:12px}
 }
 @media(prefers-reduced-motion:reduce){#personnel-widget .sx-health-marker{animation:none}}
+
+/* Keep the portrait dock clear of the Flight playback controls.
+   This fixes the browser regression where portraits intercepted Next tick. */
+.stage .crew-strip{right:clamp(285px,27vw,470px);z-index:11}
+.stage .crew-strip .crew-portrait{position:relative}
+.stage .flight-controls{z-index:14}
+@media(max-width:1050px){
+  .stage .crew-strip{right:clamp(210px,27vw,320px);top:calc(100% + 12px)}
+}
+@media(max-width:680px){
+  .stage .crew-strip{left:8px;right:auto;top:calc(100% + 82px);transform:none}
+  .stage .flight-controls{right:8px}
+}
 </style>
 </head>
 <body>
