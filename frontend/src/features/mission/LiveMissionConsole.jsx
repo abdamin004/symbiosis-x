@@ -7,6 +7,7 @@ import CheckInForm from "../crew/CheckInForm.jsx";
 import { CrewHealthDashboard } from "../crew/CrewHealthPanel.jsx";
 import HealthReminders from "../crew/HealthReminders.jsx";
 import HealthTrend from "../crew/HealthTrend.jsx";
+import HazardExplorer from "../crew/HazardExplorer.jsx";
 import GroundHealthStatus from "../ground/GroundHealthStatus.jsx";
 import RadiationContext from "../crew/RadiationContext.jsx";
 import { HEALTH_METRICS } from "../../api/healthCatalog.js";
@@ -68,6 +69,7 @@ function RunProjection({ role, runId, crewId }) {
       {role === "crew" ? <>
         <Link className="mt-4 inline-block text-sm font-semibold text-selection underline"
           to={"/runs/" + encodeURIComponent(runId) + "/crew/medical" + subjectQuery}>Open Medical</Link>
+        <HazardExplorer />
         <CrewHealthDashboard profile={view.health_profile} assessment={view.health_assessment} metrics={HEALTH_METRICS}
           measureHref={"/runs/" + encodeURIComponent(runId) + "/crew/measure" + subjectQuery}
           emergencyHref={"/runs/" + encodeURIComponent(runId) + "/crew/emergency"} />
