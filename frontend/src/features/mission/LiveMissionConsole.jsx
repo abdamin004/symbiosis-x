@@ -63,7 +63,7 @@ function RunProjection({ role, runId, crewId }) {
         <p className="mt-2 text-sm">Run <strong data-testid="console-run-id">{view.run_id}</strong> · Mission time {time(view.mission_s)} · {view.scenario_id} v{view.scenario_version}</p>
       </header>
 
-      <nav className="sx-page-nav" aria-label="Mission sections"><Link to="/">Mission</Link><Link to={"/runs/" + encodeURIComponent(runId) + "/crew" + subjectQuery}>Health</Link><Link to={"/runs/" + encodeURIComponent(runId) + "/crew/measure" + subjectQuery}>Measure</Link><Link to={"/runs/" + encodeURIComponent(runId) + "/crew/emergency"}>Emergency</Link><Link to={"/runs/" + encodeURIComponent(runId) + "/ground"}>Ground</Link></nav>
+      <nav className="sx-page-nav" aria-label="Mission sections"><Link to="/">Mission</Link>{role === "crew" ? <><Link to={"/runs/" + encodeURIComponent(runId) + "/crew" + subjectQuery}>Health</Link><Link to={"/runs/" + encodeURIComponent(runId) + "/crew/measure" + subjectQuery}>Measure</Link><Link to={"/runs/" + encodeURIComponent(runId) + "/crew/emergency"}>Emergency</Link><Link to={"/runs/" + encodeURIComponent(runId) + "/crew/medical" + subjectQuery}>Medical</Link></> : <span className="rounded-lg border border-sky-400 px-4 py-2 text-sm">Ground · delayed operational view</span>}</nav>
       {view.status === "closed" && <p role="status" data-testid="console-run-ended" className="mt-4 rounded bg-slate-100 p-3 text-sm text-slate-700">Mission ended at {time(view.mission_s)}. This view is read only.</p>}
       {role === "crew" ? <>
         <Link className="mt-4 inline-block text-sm font-semibold text-selection underline"
