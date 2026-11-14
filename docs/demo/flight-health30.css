@@ -13,6 +13,7 @@ body.health30-active>main{visibility:hidden}
 [data-beat=astronaut] .health30-crew [data-crew=SIM-02],[data-beat=fault] .health30-crew [data-crew=SIM-02]{border-color:#ffc18f;color:#ffc18f}
 .health30-hull{position:absolute;width:min(69vw,1150px);left:-1.5%;top:29%;opacity:.82;filter:drop-shadow(0 10px 35px #6472e862)}
 .health30-hull img{display:block;width:100%}
+.health30-room-tag{position:absolute;left:var(--x);top:var(--y);translate:-50% -50%;white-space:nowrap;padding:3px 7px;border:1px solid #9cebd088;border-radius:6px;background:#090e22f5;color:#9cebd0;font-size:14px;font-weight:700;animation:health30-reveal .23s var(--reveal) both}
 .health30-launch,.health30-docking,.health30-recovery{position:absolute;width:100%;height:100%;inset:0;display:none}
 .health30-docking{height:auto;top:12%;width:min(90vw,1440px);left:5%}
 [data-beat=launch] .health30-launch,[data-beat=dock] .health30-docking,[data-beat=land] .health30-recovery{display:block}
@@ -41,6 +42,7 @@ body.health30-active>main{visibility:hidden}
 .health30-hero-value{font:700 61px/1.08 ui-monospace,monospace;color:#9bdcff}
 .health30-panel[data-alert=true]{border-color:#ff9d9c}
 .health30-panel[data-alert=true] .health30-hero-value{color:#ff9d9c}
+.health30-panel[data-alert=true] .health30-exposure{padding:8px;border-left:4px solid #ff9d9c;background:#712f4155;color:#ffd0d0}
 .health30-plot{position:relative}
 .health30-plot span{position:absolute;right:6px;top:3px;color:#ffc18f;background:#090e22;padding:0 4px;font-size:16px}
 .health30-plot svg{width:100%;height:auto;display:block;margin-top:7px}
@@ -69,6 +71,6 @@ body.health30-active>main{visibility:hidden}
 .health30-recovery #return-sea-backdrop{display:block}
 .health30-recovery #return-art{position:absolute;left:38%;top:23%;width:24%;z-index:1}
 @media(max-width:900px){.health30-panel{width:min(490px,90%);min-width:0;top:23%;padding:12px}.health30-hull{width:100%;opacity:.45;left:0}.health30-crew{top:12%}.health30-caption{bottom:5%;padding:8px}}
-@media(prefers-reduced-motion:reduce){.health30-deck>div{animation:none}}
+@media(prefers-reduced-motion:reduce){.health30-deck>div,.health30-room-tag{animation:none}}
 [data-beat=launch][data-liftoff=false] .health30-launch{display:none}
 [data-beat=launch][data-liftoff=false] .health30-hull{display:block;left:14%;top:24%;width:72%;opacity:1}

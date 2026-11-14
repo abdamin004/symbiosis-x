@@ -141,6 +141,20 @@ def test_health_story_clear_review_emergency_and_private_ground_delivery(mission
                 assert cases[0]["ground_ack"] == checkpoint["ground_ack"]
 
 
+def test_submission_cabin_exposure_is_private_and_recovers(mission):
+    from symbiosis_x.crew.submission_cabin import REPAIR_S, RECOVERY_S
+
+    request, run, _ = mission
+    assert advance(request, run, 0, REPAIR_S).status_code == 200
+    report = twin(request, run, "SIM-02")["cabin_exposure"]
+    assert report["observed_at_s"] == REPAIR_S
+    assert "elevated_co2" in report["reasons"]
+    snapshot = request("GET", run + "/ground", role="ground").json()
+    assert "cabin_exposure" not in snapshot
+    assert advance(request, run, 1, RECOVERY_S).status_code == 200
+    assert twin(request, run, "SIM-02")["cabin_exposure"]["reasons"] == []
+
+
 def test_medical_cases_hide_future_evidence_and_stay_onboard(mission):
     request, run, _ = mission
     initial = twin(request, run)["medical_timeline"]

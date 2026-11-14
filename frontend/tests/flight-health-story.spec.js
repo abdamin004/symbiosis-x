@@ -46,8 +46,9 @@ test("Mara's live Flight twin explains review and shares only a delayed case sta
   const story = page.getByRole("region",{name:"Mara’s private health story"});
   const state = story.locator("#health-story-state");
   const advance = seconds => page.clock.runFor(seconds * 1000);
-  await advance(30);
+  // Let the initial real API response resolve before advancing the mocked clock.
   await expect(show).toHaveText("Mara · Baseline within personal range");
+  await advance(30);
   await show.click();
   await expect(story).toBeVisible();
   await expect(state).toHaveText("Baseline within personal range");

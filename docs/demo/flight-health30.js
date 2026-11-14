@@ -97,6 +97,15 @@ function bindHealth30({host,data,zones,hull,query}) {
         asText(document.createElement("span"),sensor.display_name),asText(document.createElement("strong"),sensor.presentation_sample + " " + sensor.unit),
         asText(document.createElement("small"),"Age 0 s"));
       panel.querySelector(".health30-deck").append(row);
+      if (zones[id]) {
+        const room = zones[id];
+        const tag = asText(document.createElement("span"),sensor.presentation_sample + " " + sensor.unit);
+        tag.className = "health30-room-tag";
+        tag.style.setProperty("--x",(room.x + room.w / 2)/11 + "%");
+        tag.style.setProperty("--y",(room.y + room.h / 2)/4.75 + "%");
+        tag.style.setProperty("--reveal",(index - 1) * 190 + "ms");
+        ship.append(tag);
+      }
     }
   }
 
@@ -105,7 +114,7 @@ function bindHealth30({host,data,zones,hull,query}) {
       <strong class="health30-hero-value"></strong>
       <div class="health30-plot"><span>Demo limit 3,200 ppm</span><svg viewBox="0 0 430 110" role="img" aria-label="Modeled cabin CO₂ history and the 3,200 ppm demo limit"><line x1="0" x2="430" y1="29" y2="29" stroke="#ffc18f" stroke-dasharray="6 5"/><polyline fill="none" stroke="#9bdcff" stroke-width="4"/></svg></div>
       <p class="health30-air-status"></p>
-      <p>${repair ? "Crew order · Ivo Reyes · Scrubber repair verified" : "Sana · Suspected cabin exposure. Request an onboard check."}</p>
+      <p class="health30-exposure">${repair ? "Crew order · Ivo Reyes · Scrubber repair verified" : "Sana · Cabin exposure watch. Check the modeled limit."}</p>
       <footer>Simulated cabin model · mission time compressed · <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11357997/">Inspiration4 CO₂ and HRV research · Jones et al., 2024</a></footer>`;
     if (!repair) {
       const source = data.research_context.physiology;
@@ -123,6 +132,9 @@ function bindHealth30({host,data,zones,hull,query}) {
     panel.querySelector("polyline").setAttribute("points",points.join(" "));
     panel.querySelector(".health30-air-status").textContent = repair ? "↓ Falling after repair · 20 m³/h" : "↑ Rising · scrubber offline · 0 m³/h";
     panel.dataset.alert = !repair && latest.ppm >= cabin.limit_ppm ? "true" : "false";
+    if (!repair && latest.ppm >= cabin.limit_ppm) {
+      panel.querySelector(".health30-exposure").textContent = "Sana · Suspected cabin exposure. Request an onboard check.";
+    }
   }
 
   function emergency() {
@@ -153,6 +165,7 @@ function bindHealth30({host,data,zones,hull,query}) {
     panel.dataset.alert = "false";
     panel.hidden = ["launch","dock","land","end"].includes(beat);
     panel.replaceChildren();
+    ship.querySelectorAll(".health30-room-tag").forEach(tag=>tag.remove());
     if (beat === "launch") {
       launcher.show({phase:"pad",elapsed:0,ship:"Horizon",separated:false,burning:false},false);
       launcher.show({phase:"ascent",elapsed:0,ship:"Horizon",separated:false,burning:true},true);
@@ -163,7 +176,7 @@ function bindHealth30({host,data,zones,hull,query}) {
     else if (beat === "relay") relay();
     else if (beat === "eva" || beat === "research") {
       panel.innerHTML = beat === "eva"
-        ? "<small>EXTERIOR WORK</small><h2>Suit twin</h2><p>Antenna inspection · tether and suit telemetry</p>"
+        ? "<small>EXTERIOR WORK</small><h2>Suit twin</h2><p>Antenna inspection · tether and suit telemetry</p><strong class='health30-hero-value'>EVA</strong>"
         : "<small>ISS OPERATIONS</small><h2>Station research</h2><p>Paired motion samples logged by Sana</p>";
     } else if (beat === "dock") docking.show({phase:"captured",range:0,ship:"Horizon",caption:"ISS docking"});
     else if (beat === "land") {
