@@ -71,6 +71,18 @@ export default function GroundSnapshot({ packet, missionS }) {
         </p>
       </div>
 
+      <div className="mt-4 grid gap-3 sm:grid-cols-2" aria-label="Delayed Ground versus onboard comparison">
+        <div className="rounded-xl border border-amber-400 bg-amber-950/30 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-amber-300">What Ground sees · delivered</p>
+          <p className="mt-2 text-2xl font-bold text-amber-200">{ageS == null ? "Age unavailable" : formatMissionTime(ageS) + " old"}</p>
+          <p className="mt-1 text-sm">Last approved operational snapshot</p>
+        </div>
+        <div className="rounded-xl border border-slate-500 bg-slate-800/60 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">Onboard now · live</p>
+          <p className="mt-2 text-lg font-semibold">Not available in Ground role</p>
+          <p className="mt-1 text-sm text-slate-300">No simulated live telemetry or private crew health is exposed here.</p>
+        </div>
+      </div>
       <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-4">
         <dt className="text-slate-500">Observed</dt>
         <dd data-testid="ground-observed">{formatMissionTime(delivery.observed_at_s)}</dd>
