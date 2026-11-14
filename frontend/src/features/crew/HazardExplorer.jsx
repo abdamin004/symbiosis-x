@@ -39,6 +39,16 @@ export default function HazardExplorer() {
         {hazard.extra && <a className="font-bold text-cyan-200 underline" href={hazard.extra} rel="noreferrer" target="_blank">CSA neutron monitoring</a>}
       </div>
     </div>
+    <details className="mt-4 rounded-lg border border-slate-500 bg-slate-800 p-4">
+      <summary className="cursor-pointer font-bold">NASA and CSA research behind the demo</summary>
+      <ul className="mt-3 grid gap-3 text-sm">
+        <li><strong>ARCHeR · Artemis II</strong> — astronaut movement, sleep, cognition and well-being. <a className="text-cyan-200 underline" href="https://www.nasa.gov/general/artemis-ii-crew-both-subjects-and-scientists-in-nasa-deep-space-research/" target="_blank" rel="noreferrer">NASA study overview</a></li>
+        <li><strong>Artemis II Standard Measures</strong> — comparable physiological observations across multiple human systems. <a className="text-cyan-200 underline" href="https://www.nasa.gov/reference/artemis-ii-standard-measures/" target="_blank" rel="noreferrer">NASA study</a></li>
+        <li><strong>Tempus Pro</strong> — a historical NASA investigation of telemedicine devices in space, relevant to remote medical support, not a device integrated in our demo. <a className="text-cyan-200 underline" href="https://www.nasa.gov/hrp/ongoing-hrp-research/" target="_blank" rel="noreferrer">NASA HRP research catalog</a></li>
+        <li><strong>CSA: Science in space</strong> — communication delays and medical independence, plus applications for people on Earth. <a className="text-cyan-200 underline" href="https://www.csa-asc.gc.ca/eng/iss/science/why-do-we-conduct-science-experiments-in-space.asp" target="_blank" rel="noreferrer">CSA research context</a></li>
+      </ul>
+      <p className="mt-3 text-xs text-slate-300">References motivate our design; no NASA clinical protocol, hardware integration or endorsement is claimed.</p>
+    </details>
     <p className="mt-3 text-xs text-slate-300">Synthetic training product · environmental hazards and health findings are distinct. No live personal diagnosis or neutron data is claimed.</p>
   </section>;
 }
