@@ -20,7 +20,7 @@ test("synthetic hand concern is clickable and stays private to the Flight twin",
   await page.goto("/flight?view=replay");
   await page.getByRole("button",{name:/^Inspect Sana Kepler/}).dispatchEvent("click");
   await page.locator("#sx-body-case-select").selectOption("hand");
-  const marker = page.getByRole("button",{name:"Review Left-hand discomfort for Sana Kepler"});
+  const marker = page.locator("#sx-left-hand-marker");
   await expect(marker).toBeVisible();
   await marker.click();
   await expect(page.locator("#sx-issue-detail")).toBeVisible();
