@@ -12,7 +12,7 @@ Each entry lists the link, source date, data type, coverage and units where they
 | --- | --- | --- | --- | --- | --- |
 | S1 | NASA ExMC, [*Exploration Medical Capability Clinical Decision Support System Concept of Operations*](https://ntrs.nasa.gov/citations/20220017856), NTRS 20220017856 (Ames Research Center; Krihak, Russell, Shetye, Shaw) | Published 2021-03-01; added to NTRS 2022-12-01 | HRP project document (concept of operations). No dataset. | It describes a proposed onboard decision-support concept, not a flight-certified system or treatment protocols. | **Emergency Assist** (`/runs/:runId/crew/emergency`): a case opens, gets a local responder and is acknowledged onboard without Ground (SX-25A). Also the **Crew Health** explained assessment (SX-23D). The document says deep-space crews face delayed or no communication and must be more self-reliant than in low Earth orbit. |
 | S2 | NASA HRP, [*5 Hazards of Human Spaceflight*](https://www.nasa.gov/hrp/hazards/) | Page last updated 2026-06-12 | Program overview web page | General public overview with no quantitative limits. | **Emergency Assist** and the **Ground** delayed view: the "Distance from Earth" hazard says medical care becomes harder to receive from Earth and self-sufficiency is key, which is why the local alert never waits for Ground. |
-| S3 | NASA HRP, [*Human Research Program*](https://www.nasa.gov/hrp/) and [*Risks of Human Spaceflight*](https://www.nasa.gov/hrp/risks/) | Viewed 2026-11-13 (no page date shown) | Program overview web pages | The current HRP page lists elements such as Space Radiation and Human Health Countermeasures, but not ExMC by name. ExMC is cited through S1, which identifies itself as an HRP project document. | Context for the **Crew Health** page as a whole: HRP studies how spaceflight hazards, including radiation, isolation and distance, affect crew health. |
+| S3 | NASA HRP, [*Human Research Program*](https://www.nasa.gov/hrp/) and [*Risks of Human Spaceflight*](https://www.nasa.gov/hrp/risks/) | Viewed 2026-11-13. The risks page shows "Page Last Updated: Jul 21, 2026". | Program overview web pages | The current HRP page lists elements such as Space Radiation and Human Health Countermeasures, but not ExMC by name. ExMC is cited through S1, which identifies itself as an HRP project document. | Context for the **Crew Health** page as a whole: HRP studies how spaceflight hazards, including radiation, isolation and distance, affect crew health. |
 
 ### B. Environmental context (RadLab, radiation and cabin atmosphere)
 
@@ -52,6 +52,20 @@ These are Earth-based references applied only to fictional crew readings. They l
 | M3 | Fixture | Synthetic only. | **Yes**, labelled as synthetic. |
 
 **Result:** every entry supports its stated use within the listed limitations. No source is used for a clinical decision.
+
+### Challenge resources
+
+The challenge page lists five resources. Each was opened on 2026-11-14. None of them offers a downloadable dataset. They are overview pages, so the product cites them as context and takes its real data from NASA OSDR (RadLab DosTel1 and the Inspiration4 studies above).
+
+| Challenge resource | What it supports | Product feature | Data |
+| --- | --- | --- | --- |
+| [NASA HRP 5 Hazards](https://www.nasa.gov/hrp/hazards/) and the [Distance from Earth hazard](https://www.nasa.gov/hrp/hazard-distance-from-earth/) | Crews far from Earth must be self-sufficient. NASA analog missions practice communication delays of up to five minutes each way. The hazards page also names hostile, closed environments. | Emergency Assist opens and acknowledges a case onboard without Ground. Ground sees a delayed view. The 300-second relay delay is a demo choice inside that five-minute practice range. The cabin twin shows the closed-environment CO₂ case. | Descriptive only |
+| [NASA HRP Risks of Human Spaceflight](https://www.nasa.gov/hrp/risks/) | Named risks, including cardiovascular adaptation, sleep loss, behavioral health and altered immune response. | Indicator choice on Take Measurement and Crew Health: heart rate and blood pressure, sleep, mood, symptoms. The risk pages give context, not thresholds. Thresholds come from the sourced Earth-based references and the labelled demo rules. | Descriptive only |
+| [NASA Ongoing HRP Research](https://www.nasa.gov/hrp/ongoing-hrp-research/) | Standard Measures, ARCHeR (Artemis II well-being, activity and sleep) and the Tempus Pro telemedicine study, where a crew medical officer works a simulated medical scenario because of communication delays. | Repeated self-measurement with personal baselines, and the onboard responder in the emergency drills. Standard Measures is also cited in the gravity and research sections later in this file. | Descriptive only. Real study data is in OSDR. |
+| [CSA, Monitoring Radiation for Astronaut Health](https://www.asc-csa.gc.ca/eng/news/articles/2026/2026-02-26-monitoring-radiation-astronaut-health.asp) | Agencies monitor station radiation with dedicated instruments. CSA's CANS spectrometer measures neutrons, which the article puts at about 30% of ISS radiation. | The Archived radiation context panel. Its data is NASA RadLab DosTel1, not CSA data. | Descriptive only |
+| [CSA, Why Do We Conduct Science Experiments in Space?](https://www.asc-csa.gc.ca/eng/iss/science/why-do-we-conduct-science-experiments-in-space.asp) | Exploration crews face longer communication delays and less ability to rely on Earth for emergency medical assistance. | Local-first emergency response, and the delayed, allowlisted Ground view. | Descriptive only |
+
+The challenge also asks for guidance on improving health. Today the product gives labelled training steps and next-check reminders, not treatment advice. The HRP risk pages list countermeasures such as exercise, sleep scheduling and light cycles. Linking them as general NASA context is open work.
 
 ### Trace the RadLab chart
 
