@@ -6,3 +6,57 @@
   --color-telemetry: oklch(0.55 0.15 250);
   --color-degraded: oklch(0.7 0.16 70);
 }
+
+/* Unified astronaut/ship visual system. Presentation-only overrides. */
+.sx-shell {
+  --sx-bg: #080f20;
+  --sx-card: #14213a;
+  --sx-edge: #31425b;
+  --sx-muted: #a6bad1;
+  min-height: 100vh;
+  max-width: none;
+  background: radial-gradient(ellipse at 85% 0%, #162a48 0%, #080f20 55%);
+  color: #edf5ff;
+  font-family: Inter, "Segoe UI", system-ui, sans-serif;
+  padding: clamp(20px, 3vw, 44px) max(20px, calc((100vw - 1152px)/2));
+}
+.sx-shell h1 { color: #f4f8ff !important; letter-spacing: -.025em; font-size: clamp(28px,3vw,38px); }
+.sx-shell h2, .sx-shell h3 { color: #eef5ff !important; }
+.sx-shell a { color: #99d7ff; }
+.sx-shell a:hover { color: #fff; }
+.sx-shell :is(.bg-white,.bg-slate-50,.bg-sky-50,.bg-slate-100) {
+  background-color: var(--sx-card) !important;
+}
+.sx-shell :is(.border-slate-200,.border-sky-200) { border-color: var(--sx-edge) !important; }
+.sx-shell :is(.text-slate-900,.text-slate-800,.text-slate-700) { color: #e8f1fd !important; }
+.sx-shell :is(.text-slate-600,.text-slate-500) { color: var(--sx-muted) !important; }
+.sx-shell :is(.text-telemetry,.text-selection) { color: #8fd5fa !important; }
+.sx-shell [data-testid="crew-health-dashboard"],
+.sx-shell [data-testid="crew-health-panel"] {
+  border: 1px solid #50a7dd !important;
+  box-shadow: 0 0 0 1px #50a7dd24, 0 14px 40px #0004;
+}
+.sx-shell [data-testid="crew-health-dashboard"] [data-testid^="indicator-"] {
+  padding: 14px;
+  min-height: 94px;
+}
+.sx-shell [data-testid="crew-health-dashboard"] [data-testid="crew-health-reading"] {
+  font-size: 1.4rem; font-weight: 700;
+}
+.sx-shell :is(button,summary,a) { outline-offset: 3px; }
+.sx-shell button { min-height: 44px; }
+.sx-shell :is(input,select,textarea) {
+  background: #0b172a; color: #eff7ff; border-color: #4a607d;
+}
+.sx-shell :is(.bg-amber-50,.bg-amber-100) { background-color: #443219 !important; }
+.sx-shell :is(.text-amber-900,.text-amber-800) { color: #ffdd9e !important; }
+.sx-shell :is(.bg-red-50,.bg-red-100) { background-color: #4a2029 !important; }
+.sx-shell :is(.text-red-700,.text-red-800) { color: #ffb4b4 !important; }
+.sx-shell p,.sx-shell li,.sx-shell dd,.sx-shell dt { line-height: 1.55; }
+.sx-shell .text-xs { font-size: 12px; }
+.sx-shell .text-sm { font-size: 14px; }
+.sx-shell [data-testid="console-shell"] { max-width: none; }
+@media (max-width: 600px) {
+  .sx-shell { padding: 16px; }
+  .sx-shell [data-testid="crew-health-dashboard"] ul { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}

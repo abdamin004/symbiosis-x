@@ -50,7 +50,7 @@ export default function MissionConsole({ role }) {
   const { equipment } = snapshot;
   return (
     <main
-      className="mx-auto max-w-4xl px-4 py-8"
+      className="sx-shell mx-auto max-w-4xl px-4 py-8"
       data-testid="console-shell"
       data-role={role}
       data-run-id={snapshot.run_id}
@@ -73,7 +73,7 @@ export default function MissionConsole({ role }) {
         </dl>
       </header>
 
-      <DeckMap role={role} equipment={equipment} />
+      {role === "ground" && <DeckMap role={role} equipment={equipment} />}
       <p className="mt-3 text-xs text-slate-500">
         Synthetic fixture · scenario {snapshot.scenario_id} · seed {snapshot.seed}
       </p>
@@ -96,6 +96,7 @@ export default function MissionConsole({ role }) {
       {role === "crew" && (
         <>
           <CrewHealthPanel health={CREW_HEALTH_FIXTURE} cabin={equipment.co2} />
+          <details className="mt-6 rounded-lg border border-slate-200 bg-white p-4"><summary className="cursor-pointer font-semibold">Ship twin · supporting cabin context</summary><DeckMap role={role} equipment={equipment} /></details>
           <CheckInForm runId={runId} />
           <p className="mt-3">
             <Link className="text-sm font-semibold text-selection underline" to={`/runs/${encodeURIComponent(runId)}/crew/measure`}>

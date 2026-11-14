@@ -19,12 +19,12 @@ export default function RunLauncher({ run: fixtureRun }) {
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12">
+    <main className="sx-shell mx-auto max-w-3xl px-4 py-12">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-medium uppercase tracking-wide text-slate-500">SYMBIOSIS X</p>
         <ServiceStatus />
       </div>
-      <h1 className="mt-1 text-3xl font-semibold text-slate-900">Run launcher</h1>
+      <h1 className="mt-1 text-3xl font-semibold text-slate-900">Mission health overview</h1>
 
       <FacilitatorControls run={run} onRunChange={handleRunChange} />
 

@@ -56,7 +56,7 @@ function RunProjection({ role, runId, crewId }) {
   if (!view) return <main className="mx-auto max-w-4xl px-4 py-12" role="status">Loading live run…</main>;
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8" data-testid="console-shell" data-role={role} data-run-id={view.run_id}>
+    <main className="sx-shell mx-auto max-w-4xl px-4 py-8" data-testid="console-shell" data-role={role} data-run-id={view.run_id}>
       <header className="border-b border-slate-200 pb-4">
         <Link className="text-sm text-slate-500 underline" to="/">SYMBIOSIS X</Link>
         <h1 className="mt-2 text-2xl font-semibold">{role === "crew" ? "Crew console" : "Ground console"}</h1>
