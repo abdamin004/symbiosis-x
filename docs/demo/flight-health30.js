@@ -139,7 +139,7 @@ function bindHealth30({host,data,zones,hull,query}) {
 
   function emergency() {
     panel.innerHTML = `<small>ASTRONAUT TWIN · EMERGENCY ASSIST</small><h2>Separate chest-pain drill</h2>
-      <div class="health30-callout"><b>Mara Vale · Onboard responder</b><strong>Sana Kepler</strong><span>Acknowledged · T+06:00</span></div>
+      <div class="health30-callout"><b>Case: Mara Vale · Onboard responder</b><strong>Sana Kepler</strong><span>Acknowledged · T+06:00</span></div>
       <p>Responsive · breathing · pain ongoing</p>
       <ol id="health30-guidance"></ol>
       <footer>Simulated training · mission-approved procedures govern flight response</footer>`;
@@ -155,7 +155,8 @@ function bindHealth30({host,data,zones,hull,query}) {
     panel.innerHTML = `<small>GROUND TWIN · DELAYED OPERATIONAL VIEW</small><h2>Approved case status</h2>
       <div class="health30-link"><b>Horizon</b><span><i>●</i></span><b>Ground</b></div>
       <strong class="health30-relay-status"></strong><p class="health30-relay-time"></p>
-      <p class="health30-delivered" hidden><b>Delivered</b> · Urgent case · Acknowledged · Cabin CO₂ ${ppm(cabin.samples.at(-1).ppm)} ppm</p>
+      <p class="health30-delivered" hidden><b>Delivered</b> · Case A · Urgent · Acknowledged</p>
+      <p class="health30-delivered" hidden>Separate cabin recovery sample: CO₂ ${ppm(cabin.samples.at(-1).ppm)} ppm</p>
       <p><b>Withheld onboard</b></p>
       <div class="health30-chips"><span>Heart rate</span><span>Wearable samples</span><span>Check-in notes</span><span>Medical history</span></div>`;
   }
@@ -215,7 +216,7 @@ function bindHealth30({host,data,zones,hull,query}) {
       panel.querySelector(".health30-relay-time").textContent = progress === 1
         ? "Sent T+06:00 · Received T+11:00 · 300 s mission delay"
         : "Sent T+06:00 · Expected T+11:00";
-      panel.querySelector(".health30-delivered").hidden = progress < 1;
+      for (const line of panel.querySelectorAll(".health30-delivered")) line.hidden = progress < 1;
     }
     host.dataset.elapsed = time.toFixed(2);
     if (time < 30) requestAnimationFrame(tick);
