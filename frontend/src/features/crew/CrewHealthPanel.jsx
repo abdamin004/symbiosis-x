@@ -166,6 +166,27 @@ function Comparison({ title, comparison, testId }) {
   );
 }
 
+const FOLLOWUP = {
+  heart_rate:"Repeat the reading after an appropriate rest period; record activity context, and request review if concerns persist.",
+  blood_pressure:"Recheck with the assigned device and documented posture; share concerning symptoms with the designated onboard responder.",
+  sleep:"Complete the sleep log, review scheduling and fatigue with the crew medical officer.",
+  sleep_quality:"Record sleep quality and context; discuss ongoing sleep disruption with the onboard responder.",
+  mood:"Use the private check-in and discuss concerns with the designated onboard support role.",
+  glucose:"Check the measurement method and meal context; request assessment rather than inferring a diagnosis from one value.",
+  temperature:"Repeat a measurement using the appropriate device/site and document symptoms or environmental context.",
+  symptoms:"Describe location, onset and severity clearly; use the approved onboard emergency procedure when required.",
+};
+function HealthNextStep({ assessment, flagged }) {
+  const text = FOLLOWUP[assessment.metric] ?? "Review the accepted observation, source quality and personal comparison with the onboard responder.";
+  return <aside className={"mt-4 rounded-lg border p-4 " + (flagged ? "border-amber-300 bg-amber-950/20" : "border-slate-500 bg-slate-800/50")}
+    data-testid="health-next-step">
+    <h3 className="font-bold">What to do next</h3>
+    <p className="mt-2 text-sm">{text}</p>
+    <p className="mt-2 text-xs">General monitoring guidance only; not a diagnosis or substitute for the mission-approved medical protocol.</p>
+    <a className="mt-2 inline-block text-sm font-semibold underline" href="https://www.nasa.gov/hrp/risks/" target="_blank" rel="noreferrer">NASA Human Spaceflight Risks · research context</a>
+  </aside>;
+}
+
 /**
  * SX-24B: Crew Health as the first thing on the live Crew console. Shows the
  * fictional profile, all seven indicators with any personal baseline, and the
@@ -232,6 +253,7 @@ export function CrewHealthDashboard({ profile, assessment, metrics, measureHref,
           <Comparison title="Sourced reference" comparison={assessment.reference} testId="comparison-reference" />
         </div>
         <p className="mt-2 text-xs text-slate-500">The two comparisons are evaluated separately and never merged into one verdict. Rules {assessment.rules_version}.</p>
+        <HealthNextStep assessment={assessment} flagged={flagged} />
       </div> : <p className="mt-4 text-sm text-slate-600">No reading has been saved in this run. Take a measurement to see an assessment.</p>}
 
       <div className="mt-4 flex flex-wrap gap-4">
