@@ -64,7 +64,7 @@ export default function GroundSnapshot({ packet, missionS }) {
     <section aria-labelledby="ground-snapshot-heading" data-testid="ground-snapshot" data-state="delivered"
       className="mt-6 rounded-lg border border-degraded/60 bg-white p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 id="ground-snapshot-heading" className="text-lg font-semibold">Delivered snapshot</h2>
+        <div><p className="text-xs font-semibold uppercase tracking-wide text-amber-600">Ground receives approved operational snapshots</p><h2 id="ground-snapshot-heading" className="text-lg font-semibold">Delivered snapshot · What Ground sees</h2><p className="text-sm text-slate-600">Last received observation — not live onboard telemetry</p></div>
         <p className="text-sm text-slate-700">
           Basis <strong data-testid="ground-basis-snapshot">{packet.snapshot_id}</strong>
           {" · "}revision <strong data-testid="ground-basis-revision">v{packet.decision_rev}</strong>

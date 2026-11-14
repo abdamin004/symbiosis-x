@@ -46,7 +46,7 @@ export default function BackupReplay({ frames = storyboard.frames }) {
 
   const { crew, ground } = frame;
   return (
-    <main className="mx-auto max-w-5xl px-4 py-8" data-testid="backup-replay" data-beat={frame.beat_id}>
+    <main className="sx-shell mx-auto max-w-5xl px-4 py-8" data-testid="backup-replay" data-beat={frame.beat_id}>
       <header className="border-b border-slate-200 pb-4">
         <Link className="text-sm text-slate-500 underline" to="/">SYMBIOSIS X</Link>
         <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-amber-700">Offline backup · saved frames · no live service</p>

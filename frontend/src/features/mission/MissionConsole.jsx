@@ -50,7 +50,7 @@ export default function MissionConsole({ role }) {
   const { equipment } = snapshot;
   return (
     <main
-      className="mx-auto max-w-4xl px-4 py-8"
+      className="sx-shell mx-auto max-w-4xl px-4 py-8"
       data-testid="console-shell"
       data-role={role}
       data-run-id={snapshot.run_id}
@@ -73,11 +73,15 @@ export default function MissionConsole({ role }) {
         </dl>
       </header>
 
-      <DeckMap role={role} equipment={equipment} />
+      <nav className="sx-page-nav" aria-label="Mission sections"><Link to="/">Mission</Link><Link to={`/runs/${encodeURIComponent(runId)}/crew`}>Health</Link><Link to={`/runs/${encodeURIComponent(runId)}/crew/measure`}>Measure</Link><Link to={`/runs/${encodeURIComponent(runId)}/crew/emergency`}>Emergency</Link><Link to={`/runs/${encodeURIComponent(runId)}/ground`}>Ground</Link></nav>
       <p className="mt-3 text-xs text-slate-500">
         Synthetic fixture · scenario {snapshot.scenario_id} · seed {snapshot.seed}
       </p>
 
+      {role === "crew" && <CrewHealthPanel health={CREW_HEALTH_FIXTURE} cabin={equipment.co2} />}
+      {role === "ground" && <GroundSnapshot packet={packetFromGroundFixture(snapshot)} missionS={snapshot.mission_s} />}
+      <details className="mt-6 rounded-lg border border-slate-200 bg-white p-4"><summary className="font-semibold">Ship systems and cabin equipment</summary>
+      <DeckMap role={role} equipment={equipment} />
       <section aria-labelledby="equipment-heading" className="mt-6">
         <h2 id="equipment-heading" className="text-lg font-semibold">
           Cabin equipment
@@ -93,9 +97,9 @@ export default function MissionConsole({ role }) {
         </ul>
       </section>
 
+      </details>
       {role === "crew" && (
         <>
-          <CrewHealthPanel health={CREW_HEALTH_FIXTURE} cabin={equipment.co2} />
           <CheckInForm runId={runId} />
           <p className="mt-3">
             <Link className="text-sm font-semibold text-selection underline" to={`/runs/${encodeURIComponent(runId)}/crew/measure`}>
@@ -111,7 +115,6 @@ export default function MissionConsole({ role }) {
 
       {role === "ground" && (
         <>
-          <GroundSnapshot packet={packetFromGroundFixture(snapshot)} missionS={snapshot.mission_s} />
           <AdvisoryForm runId={runId} packet={packetFromGroundFixture(snapshot)} />
         </>
       )}

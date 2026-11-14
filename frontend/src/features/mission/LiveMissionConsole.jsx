@@ -56,13 +56,14 @@ function RunProjection({ role, runId, crewId }) {
   if (!view) return <main className="mx-auto max-w-4xl px-4 py-12" role="status">Loading live run…</main>;
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8" data-testid="console-shell" data-role={role} data-run-id={view.run_id}>
+    <main className="sx-shell mx-auto max-w-4xl px-4 py-8" data-testid="console-shell" data-role={role} data-run-id={view.run_id}>
       <header className="border-b border-slate-200 pb-4">
         <Link className="text-sm text-slate-500 underline" to="/">SYMBIOSIS X</Link>
         <h1 className="mt-2 text-2xl font-semibold">{role === "crew" ? "Crew console" : "Ground console"}</h1>
         <p className="mt-2 text-sm">Run <strong data-testid="console-run-id">{view.run_id}</strong> · Mission time {time(view.mission_s)} · {view.scenario_id} v{view.scenario_version}</p>
       </header>
-      <DeckMap role={role} equipment={role === "ground" ? view.packet : (view.equipment ?? null)} />
+
+      <nav className="sx-page-nav" aria-label="Mission sections"><Link to="/">Mission</Link><Link to={"/runs/" + encodeURIComponent(runId) + "/crew" + subjectQuery}>Health</Link><Link to={"/runs/" + encodeURIComponent(runId) + "/crew/measure" + subjectQuery}>Measure</Link><Link to={"/runs/" + encodeURIComponent(runId) + "/crew/emergency"}>Emergency</Link><Link to={"/runs/" + encodeURIComponent(runId) + "/ground"}>Ground</Link></nav>
       {view.status === "closed" && <p role="status" data-testid="console-run-ended" className="mt-4 rounded bg-slate-100 p-3 text-sm text-slate-700">Mission ended at {time(view.mission_s)}. This view is read only.</p>}
       {role === "crew" ? <>
         <Link className="mt-4 inline-block text-sm font-semibold text-selection underline"
@@ -87,6 +88,7 @@ function RunProjection({ role, runId, crewId }) {
         <CheckInForm runId={runId} crewId={view.health_profile?.crew_id ?? "SIM-01"} />
         <details className="mt-6 rounded-lg border border-slate-200 bg-white p-4" data-testid="supporting-context">
           <summary className="cursor-pointer font-semibold">Supporting context: ship systems and archived radiation data</summary>
+          <DeckMap role={role} equipment={view.equipment ?? null} />
           <section className="mt-3 rounded-md border border-slate-200 p-3" data-testid="supporting-ship-systems">
             <h3 className="text-sm font-semibold">Ship systems</h3>
             <p className="mt-1 text-sm text-slate-700">Mission control lists ship systems by room and plays the cabin replay.</p>
@@ -97,6 +99,7 @@ function RunProjection({ role, runId, crewId }) {
         </details>
       </> : <>
         <GroundSnapshot packet={view.packet} missionS={view.mission_s} />
+        <details className="mt-5 rounded-lg border border-slate-200 bg-white p-4"><summary className="font-semibold">Ship systems · delivered operational view</summary><DeckMap role={role} equipment={view.packet} /></details>
         <AdvisoryForm runId={runId} packet={view.packet} closed={view.status === "closed"} />
         <GroundHealthStatus cases={view.health_cases ?? []} busyAlias={busyAlias}
           onAcknowledge={async (alias) => {
