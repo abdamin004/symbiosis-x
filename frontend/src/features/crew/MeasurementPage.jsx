@@ -90,7 +90,7 @@ function MeasurementForm({ runId, selectedCrew, initialMetric }) {
     setValues({...EMPTY, observed_at_s:String(subject?.mission_s ?? 0), source_id:"synthetic.manual." + crewId.toLowerCase()});
     setError(""); setPreview(null); setSaved(null); setSaveError(""); measurementId.current = null;
   }
-  function submit(event) {
+  async function submit(event) {
     event.preventDefault();
     const measurement = buildMeasurement(metric, values);
     const message = validate(metric, measurement);
@@ -101,6 +101,19 @@ function MeasurementForm({ runId, selectedCrew, initialMetric }) {
     setSaved(null);
     setSaveError("");
     measurementId.current = null;
+    if (!message && event.nativeEvent?.submitter?.value === "save") {
+      if (selectedCrew && (!subject || subject.status === "closed")) return;
+      setSaving(true);
+      measurementId.current = createOperationId("measurement");
+      try {
+        const receipt = await saveCrewMeasurement(runId, {
+          measurement_id:measurementId.current,crew_id:crewId,synthetic:true,measurement,context,
+        });
+        setSaved(receipt);
+        measurementId.current = null;
+      } catch (e) { setSaveError(e.message); }
+      finally { setSaving(false); }
+    }
   }
   async function saveMeasurement() {
     if (!preview || (selectedCrew && (!subject || subject.status === "closed"))) return;
@@ -126,14 +139,24 @@ function MeasurementForm({ runId, selectedCrew, initialMetric }) {
       <p className="mt-4 text-sm text-slate-600">{HEALTH_GUIDE_DISCLAIMER}</p>
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <section className="rounded-lg border border-slate-200 bg-white p-4">
+          <div className="mb-4">
+            <p className="mb-2 text-sm font-semibold">Select a health indicator</p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" role="group" aria-label="Health indicators">
+              {MEASUREMENT_CHOICES.map(item => <button key={item.id} type="button"
+                className={metric === item.id ? "rounded-lg border border-cyan-300 bg-sky-900 p-3 text-left text-sm font-semibold text-white" : "rounded-lg border border-slate-300 bg-slate-800 p-3 text-left text-sm font-semibold text-white"}
+                aria-pressed={metric === item.id} onClick={() => changeMetric(item.id)}>{item.label}</button>)}
+            </div>
+          </div>
+          <details className="rounded-lg border border-slate-300 p-3"><summary className="text-sm font-semibold">Alternative indicator selector</summary>
           <Field id="metric-picker" label="Indicator">
             <Select id="metric-picker" value={metric} onChange={changeMetric}>{MEASUREMENT_CHOICES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</Select>
-          </Field>
+          </Field></details>
           <form className="mt-5 space-y-4" onSubmit={submit} noValidate>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <details className="rounded-md border border-slate-300 p-3"><summary className="text-sm font-semibold">Advanced · source and observed time</summary>
+            <div className="mt-3 grid gap-4 sm:grid-cols-2">
               <Field id="observed_at_s" label="Observed at (mission seconds)"><Input id="observed_at_s" type="number" min="0" step="1" value={values.observed_at_s} onChange={update("observed_at_s")} /></Field>
               <Field id="source_id" label="Source ID"><Input id="source_id" value={values.source_id} onChange={update("source_id")} /></Field>
-            </div>
+            </div></details>
             {metric === "blood_pressure" ? <div className="grid grid-cols-2 gap-3">
               <Field id="systolic" label="Systolic (mmHg)"><Input id="systolic" type="number" min="1" value={values.systolic} onChange={update("systolic")} /></Field>
               <Field id="diastolic" label="Diastolic (mmHg)"><Input id="diastolic" type="number" min="1" value={values.diastolic} onChange={update("diastolic")} /></Field>
@@ -163,9 +186,12 @@ function MeasurementForm({ runId, selectedCrew, initialMetric }) {
               <Field id="symptoms" label="Symptoms (comma separated)"><Input id="symptoms" value={values.symptoms} onChange={update("symptoms")} /></Field>
               <Field id="private_text" label="Private note (optional)"><textarea id="private_text" value={values.private_text} onChange={(event) => update("private_text")(event.target.value)} rows="3" className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2" /></Field>
             </> : null}
-            <Field id="quality" label="Reading quality"><Select id="quality" value={values.quality} onChange={update("quality")}><option value="valid">Valid</option><option value="suspect">Suspect</option><option value="unavailable">Unavailable</option></Select></Field>
+            <details className="rounded-md border border-slate-300 p-3"><summary className="text-sm font-semibold">Advanced · reading quality</summary><Field id="quality" label="Reading quality"><Select id="quality" value={values.quality} onChange={update("quality")}><option value="valid">Valid</option><option value="suspect">Suspect</option><option value="unavailable">Unavailable</option></Select></Field></details>
             {error && <p role="alert" data-testid="measurement-error" className="rounded-md bg-red-50 p-3 text-sm text-red-800">{error}</p>}
-            <button className="rounded-md bg-selection px-4 py-2 text-sm font-semibold text-white disabled:opacity-50" type="submit" disabled={Boolean(selectedCrew && !subject)}>Validate measurement</button>
+            <div className="flex flex-wrap gap-3">
+              <button className="rounded-md bg-selection px-5 py-3 text-sm font-semibold text-white disabled:opacity-50" type="submit" value="save" disabled={saving || Boolean(selectedCrew && !subject)}>{saving ? "Saving..." : "Validate & save measurement"}</button>
+              <button className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold" type="submit" value="preview">Validate only</button>
+            </div>
           </form>
           {preview && <section role="status" data-testid="measurement-preview" className="mt-5 rounded-md border border-emerald-200 bg-emerald-50 p-3">
             <h2 className="font-semibold">Measurement validated · local preview</h2>
