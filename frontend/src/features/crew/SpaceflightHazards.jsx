@@ -16,7 +16,7 @@ const HAZARDS = [
     name:"Distance from Earth",risk:"Delayed medical support",
     monitor:"Onboard emergency response, private Crew assessment, delayed Ground relay",
     relation:"Crew can initiate a local response without waiting for delayed communications with Earth.",
-    links:[["NASA · Five hazards","https://www.nasa.gov/hrp/hazards/"]],
+    links:[["NASA · Five hazards","https://www.nasa.gov/hrp/hazards/"],["NASA · Tempus Pro (simulated medical scenario)","https://www.nasa.gov/reference/tempus-pro/"],["CSA · Communications and emergency care","https://www.asc-csa.gc.ca/eng/iss/science/why-do-we-conduct-science-experiments-in-space.asp"]],
   },
   {
     name:"Altered gravity",risk:"Cardiovascular and sensorimotor adaptation",
@@ -53,6 +53,7 @@ export default function SpaceflightHazards() {
           </div>
         </details>)}
       </div>
+      <p className="mt-3 text-xs text-slate-300">Earth impact: the CSA notes that space health studies can inform research on osteoporosis, cardiovascular disorders, diabetes and access to care. <a className="underline text-cyan-200" href="https://www.asc-csa.gc.ca/eng/iss/science/why-do-we-conduct-science-experiments-in-space.asp" target="_blank" rel="noreferrer">CSA explanation</a>.</p>
       <p className="mt-3 text-xs text-slate-300">Research context: <a className="underline text-cyan-200" href="https://www.nasa.gov/reference/standard-measures/" target="_blank" rel="noreferrer">NASA Standard Measures</a> collects sleep reports and wrist-sensor activity; <a href="https://www.nasa.gov/reference/archer/" target="_blank" rel="noreferrer" className="underline text-cyan-200">ARCHeR</a> investigates activity, sleep and well-being.</p>
     </section>
   );
