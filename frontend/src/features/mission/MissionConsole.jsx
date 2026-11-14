@@ -95,7 +95,8 @@ export default function MissionConsole({ role }) {
 
       {role === "crew" && (
         <>
-          <CrewHealthPanel health={CREW_HEALTH_FIXTURE} cabin={equipment.co2} />\n          <details className="mt-6 rounded-lg border border-slate-200 bg-white p-4"><summary className="cursor-pointer font-semibold">Ship twin · supporting cabin context</summary><DeckMap role={role} equipment={equipment} /></details>
+          <CrewHealthPanel health={CREW_HEALTH_FIXTURE} cabin={equipment.co2} />
+          <details className="mt-6 rounded-lg border border-slate-200 bg-white p-4"><summary className="cursor-pointer font-semibold">Ship twin · supporting cabin context</summary><DeckMap role={role} equipment={equipment} /></details>
           <CheckInForm runId={runId} />
           <p className="mt-3">
             <Link className="text-sm font-semibold text-selection underline" to={`/runs/${encodeURIComponent(runId)}/crew/measure`}>
