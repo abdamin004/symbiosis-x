@@ -166,6 +166,22 @@ function Comparison({ title, comparison, testId }) {
   );
 }
 
+// Conservative training prompts, not clinical treatment recommendations.
+const NEXT_STEPS = {
+  heart_rate:"Repeat the measurement at rest using the assigned device. Record the activity context; share persistent concerns with the crew medical officer.",
+  blood_pressure:"Repeat using the approved cuff technique and note posture. Ask the crew medical officer to review persistent differences.",
+  glucose:"Confirm meter method and meal timing, then repeat or review only as directed by the approved onboard medical plan.",
+  temperature:"Confirm measurement site and device quality. Log symptoms and seek onboard review if the reading remains concerning.",
+  sleep:"Review sleep schedule and environmental conditions; record the next sleep period and discuss persistent changes with the medical officer.",
+  mood:"Offer a private check-in, appropriate support and a follow-up self-report. An isolated score is not a mental-health diagnosis.",
+  symptoms:"Record the symptom description, location and onset. Ask the designated medical officer to evaluate it using approved procedures.",
+};
+function nextStepFor(assessment) {
+  if (!assessment) return "Take a measurement when due and record the quality and context.";
+  if (assessment.evidence?.quality !== "valid") return "Check the sensor or reporting method and obtain a valid follow-up measurement.";
+  return NEXT_STEPS[assessment.metric] ?? "Review the reading and documented context with the crew medical officer.";
+}
+
 /**
  * SX-24B: Crew Health as the first thing on the live Crew console. Shows the
  * fictional profile, all seven indicators with any personal baseline, and the
@@ -234,6 +250,12 @@ export function CrewHealthDashboard({ profile, assessment, metrics, measureHref,
         <p className="mt-2 text-xs text-slate-500">The two comparisons are evaluated separately and never merged into one verdict. Rules {assessment.rules_version}.</p>
       </div> : <p className="mt-4 text-sm text-slate-600">No reading has been saved in this run. Take a measurement to see an assessment.</p>}
 
+      <section className="mt-4 rounded-lg border border-cyan-300 bg-sky-950/40 p-4" data-testid="health-next-step">
+        <h3 className="text-lg font-bold">What to do next</h3>
+        <p className="mt-2 text-sm">{nextStepFor(assessment)}</p>
+        <p className="mt-2 text-xs">Crew-facing training prompt only · no automated diagnosis or treatment. Urgent symptoms require the mission's approved emergency procedure.</p>
+        <a className="mt-2 inline-block text-sm font-semibold underline" href="https://www.nasa.gov/hrp/risks/" target="_blank" rel="noreferrer">NASA HRP · Human spaceflight risks</a>
+      </section>
       <div className="mt-4 flex flex-wrap gap-4">
         <Link className="text-sm font-semibold text-selection underline" to={measureHref}>Take a measurement</Link>
         <Link className="text-sm font-semibold text-red-700 underline" to={emergencyHref}>Open Emergency Assist</Link>
