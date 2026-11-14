@@ -59,6 +59,19 @@ export default function HealthReminders({ runId, followup, measureHref, emergenc
         <p className="text-xs text-slate-500">Private · {followup.schedule_version} · synthetic demo cadence</p>
       </div>
 
+      <div className="mt-3 rounded-lg border border-cyan-400/50 bg-slate-800 p-3" data-testid="health-routine-progress">
+        <div className="flex items-center justify-between gap-2">
+          <strong className="text-sm">Daily monitoring progress</strong>
+          <span className="text-sm font-bold" data-testid="routine-count">
+            {followup.reminders.filter(r => r.status === "acknowledged").length}/{followup.reminders.length} acknowledged
+          </span>
+        </div>
+        <progress className="mt-2 h-3 w-full accent-cyan-400"
+          max={Math.max(1,followup.reminders.length)}
+          value={followup.reminders.filter(r => r.status === "acknowledged").length}
+          aria-label="Acknowledged monitoring reminders" />
+        <p className="mt-1 text-xs text-slate-300">Only completed reminder actions count. No points for a particular medical result, no invented streak.</p>
+      </div>
       {emergency && (
         <div role="alert" data-testid="reminders-emergency"
           className="mt-3 rounded-md border-2 border-red-500 bg-red-50 p-3 text-sm text-red-900">
