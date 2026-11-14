@@ -2,43 +2,53 @@
 // their contents and can be recalled without stacking on the active panels.
 function createFlightWidgets(overlay, shelf, notice, fixedControls = []) {
   const gap = 10;
+  const stage = overlay.closest(".stage");
   const entries = [];
   const overlaps = (a, b) => a.x < b.x+b.w+gap && a.x+a.w+gap > b.x
     && a.y < b.y+b.h+gap && a.y+a.h+gap > b.y;
   const clamp = (value, max) => Math.max(0, Math.min(value, max));
-  const rect = entry => ({...entry.position,w:entry.panel.offsetWidth,h:entry.panel.offsetHeight});
+  const rect = (node, bounds) => {
+    const box = node.getBoundingClientRect();
+    return {x:box.left-bounds.left,y:box.top-bounds.top,w:box.width,h:box.height};
+  };
   let focused = null;
   const ribbonPopupIds = new Set(["show-inspector", "show-crew", "show-workflow"]);
   const isRibbonPopup = entry => Boolean(entry.toggle && ribbonPopupIds.has(entry.toggle.id));
   // Position menu popups in viewport coordinates, directly below their ribbon
   // triggers. The flight overlay has a 100px top clearance, so ordinary
   // overlay-relative positioning makes a "dropdown" appear far away.
-  const placeRibbonPopup = entry => {
+  const placeRibbonPopup = (entry, occupied, overlayBounds) => {
     const trigger = entry.toggle.getBoundingClientRect();
     const panel = entry.panel;
     const viewportWidth = document.documentElement.clientWidth;
     const viewportHeight = document.documentElement.clientHeight;
     panel.style.position = "fixed";
     panel.style.maxWidth = "calc(100vw - 20px)";
-    panel.style.maxHeight = Math.max(140, viewportHeight - trigger.bottom - 20) + "px";
-    const width = panel.offsetWidth || 320;
-    let x = Math.max(gap,Math.min(trigger.left,viewportWidth-width-gap));
-    let y = trigger.bottom + 8;
-    // Keep the crew portrait dock visible; adapt the popup rather than hiding it.
-    const crewStrip = document.getElementById("crew-strip");
-    if (crewStrip && !crewStrip.hidden) {
-      const crew = crewStrip.getBoundingClientRect();
-      const overlapsDock = x < crew.right + 8 && x + width > crew.left - 8 &&
-        y < crew.bottom + 8 && y + Math.min(panel.offsetHeight,viewportHeight-y-12) > crew.top - 8;
-      if (overlapsDock) {
-        const leftOfDock = crew.left - width - 12;
-        if (leftOfDock >= gap) x = Math.min(x,leftOfDock);
-        else y = Math.min(viewportHeight - 140,crew.bottom + 12);
+    if (entry.toggle.id !== "show-crew" || stage.hasAttribute("data-timed-demo")) {
+      const dock = document.getElementById("crew-strip").getBoundingClientRect();
+      const panelWidth = panel.offsetWidth;
+      let x = Math.max(gap,Math.min(trigger.left,viewportWidth-panelWidth-gap));
+      let y = trigger.bottom + 8;
+      panel.style.maxHeight = Math.max(140,viewportHeight-y-20)+"px";
+      if (x < dock.right+8 && x+panelWidth > dock.left-8 && y < dock.bottom+8 && y+panel.offsetHeight > dock.top-8) {
+        const xLeft = dock.left-panelWidth-12;
+        if (xLeft >= gap) x = Math.min(x,xLeft);
+        else y = Math.min(viewportHeight-140,dock.bottom+12);
       }
+      panel.style.maxHeight = Math.max(100,viewportHeight-y-12)+"px";
+      Object.assign(panel.style,{left:x+"px",top:y+"px"});
+      entry.position = null;
+      return true;
     }
-    panel.style.maxHeight = Math.max(100,viewportHeight-y-12)+"px";
-    Object.assign(panel.style,{left:x+"px",top:y+"px"});
+    const top = trigger.bottom + gap;
+    const width = viewportWidth - 2*gap;
+    const height = viewportHeight - top - gap;
+    const preferred = {x:trigger.left-gap,y:0};
+    const obstacles = occupied.map(box=>({...box,x:box.x+overlayBounds.left-gap,y:box.y+overlayBounds.top-top}));
+    const result = fitPanel(panel,preferred,obstacles,width,height,true);
     entry.position = null;
+    if (result) Object.assign(panel.style,{left:(result.x+gap)+"px",top:(result.y+top)+"px"});
+    return Boolean(result);
   };
   const dismissRibbon = () => {
     let changed = false;
@@ -54,28 +64,46 @@ function createFlightWidgets(overlay, shelf, notice, fixedControls = []) {
     if (event.key === "Escape") dismissRibbon();
   });
   document.addEventListener("pointerdown",event=>{
-    if (event.target.closest(".ribbon,#widget-shelf") || entries.some(entry=>isRibbonPopup(entry) && entry.panel.contains(event.target))) return;
+    if (event.target.closest(".ribbon,#widget-shelf,#crew-strip,#flight-playback") || entries.some(entry=>entry.panel.contains(event.target))) return;
     dismissRibbon();
   });
 
-  function reserveControls(occupied) {
-    const bounds = overlay.getBoundingClientRect();
+  function reserveControls(occupied, bounds) {
     for (const control of fixedControls) {
-      if (control.hidden) continue;
-      const fixed = control.getBoundingClientRect();
-      occupied.push({x:fixed.left-bounds.left,y:fixed.top-bounds.top,w:fixed.width,h:fixed.height});
+      if (stage.hasAttribute("data-timed-demo") && control.closest(".hud")) continue;
+      if (!control.hidden && control.offsetWidth && control.offsetHeight) occupied.push(rect(control,bounds));
     }
   }
 
-  function place(entry, preferred, occupied) {
-    const {w,h} = rect(entry);
-    const width = overlay.clientWidth, height = overlay.clientHeight;
-    if (!w || !h || w > width || h > height) return false;
+  function findPlacement(w, h, preferred, occupied, width, height) {
+    if (!w || !h || w > width || h > height) return null;
     const xs = [preferred.x, gap, width-w-gap, ...occupied.flatMap(r=>[r.x+r.w+gap,r.x-w-gap])];
     const ys = [preferred.y, gap, height-h-gap, ...occupied.flatMap(r=>[r.y+r.h+gap,r.y-h-gap])];
     const points = xs.flatMap(x=>ys.map(y=>({x:clamp(x,width-w),y:clamp(y,height-h),w,h})));
     points.sort((a,b)=>Math.hypot(a.x-preferred.x,a.y-preferred.y)-Math.hypot(b.x-preferred.x,b.y-preferred.y));
-    const result = points.find(p=>!occupied.some(r=>overlaps(p,r)));
+    return points.find(p=>!occupied.some(r=>overlaps(p,r)));
+  }
+
+  function fitPanel(panel, preferred, occupied, width, height, compact) {
+    panel.style.maxHeight = "";
+    let result = findPlacement(panel.offsetWidth,panel.offsetHeight,preferred,occupied,width,height);
+    if (result || !compact) return result;
+
+    // Use the full-size panel when it fits, then shrink it to run alongside
+    // another panel or fit in the remaining space on a small screen.
+    const originalHeight = Math.min(panel.offsetHeight,height);
+    for (const fraction of [1,.85,.7,.55,.4,.35,.3,.25]) {
+      const cap = Math.floor(originalHeight*fraction);
+      if (cap < 90) break;
+      panel.style.maxHeight = cap+"px";
+      result = findPlacement(panel.offsetWidth,panel.offsetHeight,preferred,occupied,width,height);
+      if (result) break;
+    }
+    return result;
+  }
+
+  function place(entry, preferred, occupied, height, compact) {
+    const result = fitPanel(entry.panel,preferred,occupied,overlay.clientWidth,height,compact);
     if (!result) return false;
     entry.position = {x:result.x,y:result.y};
     Object.assign(entry.panel.style,{left:result.x+"px",top:result.y+"px"});
@@ -93,34 +121,35 @@ function createFlightWidgets(overlay, shelf, notice, fixedControls = []) {
   function layout() {
     const active = entries.filter(entry=>entry.wanted);
     const pinned = active.filter(entry=>entry.persistent);
-    const prioritizeFocus = focused?.compactPriority && (overlay.clientWidth < 700 || fixedControls.some(control=>!control.hidden));
+    const ribbonPopups = active.filter(isRibbonPopup);
+    const prioritizeFocus = focused?.compactPriority && !isRibbonPopup(focused);
+    const profileBeforeRoster = prioritizeFocus && overlay.clientWidth < 700 && focused.panel.id === "personnel-widget" &&
+      ribbonPopups.some(entry=>entry.toggle.id === "show-crew");
     const ordered = [...(prioritizeFocus ? [focused,...pinned] : [...pinned,focused]),
       ...active.filter(entry=>entry!==focused && !entry.persistent)]
       .filter((entry,index,list)=>entry?.wanted && list.indexOf(entry)===index);
+    const bounds = overlay.getBoundingClientRect();
+    const timed = stage.hasAttribute("data-timed-demo");
+    const height = Math.min(overlay.clientHeight,document.documentElement.clientHeight-bounds.top-gap);
     const occupied = [];
-    reserveControls(occupied);
-    for (const entry of ordered) {
+    reserveControls(occupied,bounds);
+    // The narrow timed demo deliberately anchors the evidence card onscreen.
+    // Reserve it before moving any other widget into the available space.
+    const fixedEntries = active.filter(entry=>!isRibbonPopup(entry) && getComputedStyle(entry.panel).position === "fixed");
+    for (const entry of fixedEntries) {
+      entry.panel.hidden = false;
+      occupied.push(rect(entry.panel,bounds));
+    }
+    const floating = ordered.filter(entry=>!isRibbonPopup(entry) && !fixedEntries.includes(entry));
+    const layoutOrder = profileBeforeRoster ? [...floating,...ribbonPopups] : [...ribbonPopups,...floating];
+    for (const entry of layoutOrder) {
       const hadFocus = entry.panel.contains(document.activeElement);
       entry.panel.hidden = false;
-      if (!isRibbonPopup(entry)) entry.panel.style.maxHeight = "";
-      if (isRibbonPopup(entry)) placeRibbonPopup(entry);
-      if (getComputedStyle(entry.panel).position === "fixed") {
-        const bounds = overlay.getBoundingClientRect();
-        const panel = entry.panel.getBoundingClientRect();
-        occupied.push({x:panel.left-bounds.left,y:panel.top-bounds.top,w:panel.width,h:panel.height});
-        continue;
-      }
       const preferred = entry.position ?? entry.preferred();
-      let placed = place(entry,preferred,occupied);
-      if (!placed && entry.compactPriority) {
-        // Keep scrollable panels usable when fixed controls reduce the available space.
-        const originalHeight = entry.panel.offsetHeight;
-        for (const fraction of [.85,.7,.55,.4]) {
-          entry.panel.style.maxHeight = Math.floor(originalHeight*fraction)+"px";
-          if (place(entry,preferred,occupied)) { placed = true; break; }
-        }
-      }
-      if (placed) occupied.push(rect(entry));
+      const placed = isRibbonPopup(entry) ? placeRibbonPopup(entry,occupied,bounds)
+        : place(entry,preferred,occupied,entry.panel.classList.contains("profile-window") && !timed ? height : overlay.clientHeight,
+          entry.compactPriority);
+      if (placed) occupied.push(rect(entry.panel,bounds));
       else {
         entry.panel.hidden = true;
         if (hadFocus) { entry.recall.hidden = false; shelf.hidden = false; entry.recall.focus(); }
@@ -138,10 +167,11 @@ function createFlightWidgets(overlay, shelf, notice, fixedControls = []) {
   const sizes = new ResizeObserver(entries=>{ if (entries.some(e=>!e.target.hidden)) schedule(); });
   sizes.observe(overlay);
   window.addEventListener("resize",schedule);
-  window.addEventListener("scroll",schedule,true);
+  window.addEventListener("scroll",schedule);
 
   function register(panel, toggle, preferred, {persistent=false,lock=null,compactPriority=false} = {}) {
     const handle = panel.querySelector(".move-widget"), bar = panel.querySelector(".widget-bar");
+    if (!panel.hasAttribute("tabindex")) panel.tabIndex = 0;
     const recall = document.createElement("button");
     recall.type = "button";
     recall.textContent = panel.querySelector("h2")?.textContent || "Inspector";
@@ -181,9 +211,15 @@ function createFlightWidgets(overlay, shelf, notice, fixedControls = []) {
       (target ?? toggle ?? document.getElementById("show-inspector"))?.focus();
     }
     function move(x,y) {
-      const occupied = entries.filter(other=>other!==entry && !other.panel.hidden).map(rect);
-      reserveControls(occupied);
-      place(entry,{x,y},occupied);
+      const bounds = overlay.getBoundingClientRect();
+      const height = Math.min(overlay.clientHeight,document.documentElement.clientHeight-bounds.top-gap);
+      const occupied = entries.filter(other=>other!==entry && !other.panel.hidden).map(other=>rect(other.panel,bounds));
+      reserveControls(occupied,bounds);
+      const result = findPlacement(panel.offsetWidth,panel.offsetHeight,{x,y},occupied,overlay.clientWidth,height);
+      if (result) {
+        entry.position = {x:result.x,y:result.y};
+        Object.assign(panel.style,{left:result.x+"px",top:result.y+"px"});
+      }
     }
 
     recall.addEventListener("click",()=>{open();if (!panel.hidden) handle.focus();});
