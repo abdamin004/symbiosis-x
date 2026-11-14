@@ -22,8 +22,21 @@ function createFlightWidgets(overlay, shelf, notice, fixedControls = []) {
     panel.style.maxWidth = "calc(100vw - 20px)";
     panel.style.maxHeight = Math.max(140, viewportHeight - trigger.bottom - 20) + "px";
     const width = panel.offsetWidth || 320;
-    const x = Math.max(gap,Math.min(trigger.left,viewportWidth-width-gap));
-    const y = trigger.bottom + 8;
+    let x = Math.max(gap,Math.min(trigger.left,viewportWidth-width-gap));
+    let y = trigger.bottom + 8;
+    // Keep the crew portrait dock visible; adapt the popup rather than hiding it.
+    const crewStrip = document.getElementById("crew-strip");
+    if (crewStrip && !crewStrip.hidden) {
+      const crew = crewStrip.getBoundingClientRect();
+      const overlapsDock = x < crew.right + 8 && x + width > crew.left - 8 &&
+        y < crew.bottom + 8 && y + Math.min(panel.offsetHeight,viewportHeight-y-12) > crew.top - 8;
+      if (overlapsDock) {
+        const leftOfDock = crew.left - width - 12;
+        if (leftOfDock >= gap) x = Math.min(x,leftOfDock);
+        else y = Math.min(viewportHeight - 140,crew.bottom + 12);
+      }
+    }
+    panel.style.maxHeight = Math.max(100,viewportHeight-y-12)+"px";
     Object.assign(panel.style,{left:x+"px",top:y+"px"});
     entry.position = null;
   };
