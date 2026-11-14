@@ -45,6 +45,8 @@ def build(output: Path) -> None:
         "provisions": flight_rules(),
         "health30_cabin": submission_cabin(),
         "health30_profiles": crew,
+        "health30_sensors": json.loads((ROOT / "catalogs/sx01/sensors.json").read_text())["sensors"],
+        "research_context": json.loads((ROOT / "catalogs/crew/spaceflight-research.json").read_text()),
         "metrics": json.loads((ROOT / "catalogs/crew/health-metrics.json").read_text())["metrics"],
         "rooms": rooms, "crew": crew_ids, "activity_s": ACTIVITY_S, "missions": missions,
         "airlock": build_airlock_rehearsal(),

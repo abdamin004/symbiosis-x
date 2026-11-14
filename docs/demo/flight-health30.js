@@ -58,15 +58,8 @@ function bindHealth30({host,data,zones,hull,query}) {
     ["Mood","4","/5","4/5"],
     ["Symptoms","None","","None reported"],
   ];
-  const assets = [
-    ["command-01","Mission clock","00:00"],
-    ["habitat-01","Bunks · potable water","2 occupied · 24 L"],
-    ["life-support-01","Scrubber · cabin CO₂","20 m³/h · 2,000 ppm"],
-    ["medical-01","Measurement kit","3 instruments ready"],
-    ["engineering-01","Power bus","0.60 kW headroom"],
-    ["comms-01","Relay queue","Link online"],
-    ["cargo-01","Airlock and hatches","101.3 kPa · sealed"],
-  ];
+  const instruments = data.health30_sensors.filter(sensor=>sensor.room_id && sensor.visibility === "operational");
+  const deckSensors = new Map(data.rooms.map(room=>[room.room_id,instruments.filter(sensor=>sensor.room_id === room.room_id)]));
 
   function astronaut() {
     panel.innerHTML = `<small>ASTRONAUT TWIN · PRIVATE CREW</small><h2>Sana Kepler</h2>
@@ -84,16 +77,18 @@ function bindHealth30({host,data,zones,hull,query}) {
 
   function deck() {
     panel.innerHTML = '<small>SHIP TWIN</small><h2>Horizon equipment</h2><p>Instrumented equipment · simulated sensors</p><div class="health30-deck"></div>';
-    assets.forEach(([id,name,value],index) => {
-      const area = Object.create(null);
-      area.name = data.rooms.find(room => room.room_id === id)?.name ?? id;
+    let index = 0;
+    for (const [id,sensors] of deckSensors) {
+      if (!sensors.length) continue;
+      const [sensor] = sensors;
+      const name = data.rooms.find(room => room.room_id === id).name;
       const row = document.createElement("div");
-      row.style.setProperty("--reveal", index * 190 + "ms");
-      row.append(asText(document.createElement("b"),area.name),
-        asText(document.createElement("span"),name),asText(document.createElement("strong"),value),
+      row.style.setProperty("--reveal", index++ * 190 + "ms");
+      row.append(asText(document.createElement("b"),name),
+        asText(document.createElement("span"),sensor.display_name),asText(document.createElement("strong"),sensor.presentation_sample + " " + sensor.unit),
         asText(document.createElement("small"),"Age 0 s"));
       panel.querySelector(".health30-deck").append(row);
-    });
+    }
   }
 
   function air(repair) {
@@ -103,6 +98,10 @@ function bindHealth30({host,data,zones,hull,query}) {
       <p class="health30-air-status"></p>
       <p>${repair ? "Crew order · Ivo Reyes · Scrubber repair verified" : "Sana · Suspected cabin exposure. Request an onboard check."}</p>
       <footer>Simulated cabin model · mission time compressed · <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11357997/">Inspiration4 CO₂ and HRV research · Jones et al., 2024</a></footer>`;
+    if (!repair) {
+      const source = data.research_context.physiology;
+      panel.querySelector("footer").append(asText(document.createElement("span")," · " + source.co2_hrv));
+    }
   }
 
   function paintAir(time,repair) {
