@@ -1,0 +1,39 @@
+{
+  "mission": "Inspiration4 · four crew · three days in low Earth orbit",
+  "context_label": "Research context · Fictional crew readings and demo limits",
+  "datasets": [
+    {
+      "id": "OSD-569",
+      "url": "https://osdr.nasa.gov/bio/repo/data/studies/OSD-569",
+      "sample": "Whole blood",
+      "assays": "Blood count, RNA sequencing, whole-genome and targeted sequencing",
+      "timepoints": "L−92, L−44, L−3 · R+1, R+45, R+82, R+194"
+    },
+    {
+      "id": "OSD-571",
+      "url": "https://osdr.nasa.gov/bio/repo/data/studies/OSD-571",
+      "sample": "Plasma",
+      "assays": "Proteomics, extracellular vesicles and particles, metabolomics, cell-free DNA and RNA sequencing",
+      "timepoints": "L−92, L−44, L−3 · R+1, R+45, R+82, R+194"
+    },
+    {
+      "id": "OSD-575 v3",
+      "url": "https://osdr.nasa.gov/bio/repo/data/studies/OSD-575",
+      "sample": "Serum",
+      "assays": "Comprehensive metabolic panel and multiplex immune and cardiac protein assays",
+      "timepoints": "L−92, L−44, L−3 · R+1, R+45, R+82. The metabolic panel also includes R+194."
+    }
+  ],
+  "time_basis": "L and R count days relative to launch and return. Schedules vary by assay.",
+  "physiology": {
+    "citation": "Jones et al., Nature 2024",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11357997/",
+    "co2_hrv": "Inspiration4 found higher cabin CO₂ was associated with higher heart rate variability in 3 of 4 crew members.",
+    "sleep": "The crew reported sleep timing, sleep quality, mood and symptoms in an alertness and mood survey."
+  },
+  "standard_measures": {
+    "citation": "NASA Spaceflight Standard Measures",
+    "url": "https://www.nasa.gov/directorates/smd/space-life-physical-sciences-research-applications-division/human-research-program/spaceflight-standard-measures-characterizing-how-humans-adapt-in-space/",
+    "scope": "NASA combines wrist actigraphy with sleep and mood questionnaires. Its preflight and postflight sensorimotor tests include heart rate and blood pressure."
+  }
+}

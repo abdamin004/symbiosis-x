@@ -126,6 +126,7 @@ def test_all_metrics_have_sourced_guides():
     guide_ids = [guide["metric_id"] for guide in guides["guides"]]
     assert len(metric_ids) == 7
     assert sorted(guide_ids) == sorted(metric_ids)
+
     assert len(set(guide_ids)) == len(guide_ids)
 
     by_id = {guide["metric_id"]: guide for guide in guides["guides"]}
@@ -159,3 +160,17 @@ def test_all_metrics_have_sourced_guides():
     assert "site" in notes["temperature"]
     assert "sleep period" in notes["sleep"]
     assert "self-report" in notes["mood"] and "self-report" in notes["symptoms"]
+
+
+def test_submission_equipment_catalog_has_operational_units_for_each_room():
+    catalog = CONTRACTS.parent / "catalogs/sx01"
+    assets = json.loads((catalog / "components.json").read_text())["components"]
+    sensors = json.loads((catalog / "sensors.json").read_text())["sensors"]
+    rooms = json.loads((catalog / "rooms.json").read_text())["rooms"]
+    asset_ids = {asset["entity_id"] for asset in assets}
+    for sensor in sensors:
+        assert sensor["entity_id"] in asset_ids and sensor["component_id"] in asset_ids
+        assert sensor["unit"] and sensor["sample_period_s"] > 0
+    assert {room["room_id"] for room in rooms} == {
+        sensor["room_id"] for sensor in sensors if sensor.get("room_id") and sensor["visibility"] == "operational"
+    }

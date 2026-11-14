@@ -10,7 +10,13 @@
     "glucose": ["method", "meal_context"],
     "temperature": ["method", "site"],
     "sleep": [],
-    "mood": ["scale_id"]
+    "mood": ["scale_id"],
+    "sleep_quality": ["scale_id"],
+    "symptoms": []
+  },
+  "daily": {
+    "window_s": 345600,
+    "minimum_change": {"heart_rate": 8, "blood_pressure": 12, "glucose": 12, "temperature": 0.6, "sleep": 60, "sleep_quality": 2, "mood": 2, "symptoms": 2}
   },
   "disclaimer": "Descriptive synthetic trend for onboard review. Not a diagnosis or medical advice."
 }

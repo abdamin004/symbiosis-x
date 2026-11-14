@@ -141,6 +141,20 @@ def test_health_story_clear_review_emergency_and_private_ground_delivery(mission
                 assert cases[0]["ground_ack"] == checkpoint["ground_ack"]
 
 
+def test_submission_cabin_exposure_is_private_and_recovers(mission):
+    from symbiosis_x.crew.submission_cabin import REPAIR_S, RECOVERY_S
+
+    request, run, _ = mission
+    assert advance(request, run, 0, REPAIR_S).status_code == 200
+    report = twin(request, run, "SIM-02")["cabin_exposure"]
+    assert report["observed_at_s"] == REPAIR_S
+    assert "elevated_co2" in report["reasons"]
+    snapshot = request("GET", run + "/ground", role="ground").json()
+    assert "cabin_exposure" not in snapshot
+    assert advance(request, run, 1, RECOVERY_S).status_code == 200
+    assert twin(request, run, "SIM-02")["cabin_exposure"]["reasons"] == []
+
+
 def test_medical_cases_hide_future_evidence_and_stay_onboard(mission):
     request, run, _ = mission
     initial = twin(request, run)["medical_timeline"]
@@ -159,6 +173,20 @@ def test_medical_cases_hide_future_evidence_and_stay_onboard(mission):
     ground = request("GET", run + "/ground", role="ground")
     assert all(marker not in ground.text for marker in ("medical_timeline", "allergy_note", "swelling", "genetics_note"))
     assert request("GET", run + "/crew/health-twin", role="ground", params={"crew_id": "SIM-01"}).status_code == 403
+
+
+def test_sleep_archive_filters_the_selected_subject_at_the_crew_boundary(mission):
+    request, run, _ = mission
+    fixture = json.loads((ROOT / "scenarios/mission-30d-v1.json").read_text(encoding="utf-8"))
+    for crew_id in ("SIM-01", "SIM-02"):
+        expected = [
+            {key: value for key, value in row.items() if key != "crew_id"}
+            for row in fixture["sleep_phase_summary"] if row["crew_id"] == crew_id
+        ]
+        assert {row["phase"] for row in expected} == {"preflight", "inflight", "postflight"}
+        assert twin(request, run, crew_id)["sleep_archive"] == expected
+
+    assert "sleep_archive" not in request("GET", run + "/ground", role="ground").json()
 
 
 def test_gravity_context_follows_phase_boundaries_and_stays_onboard(mission):

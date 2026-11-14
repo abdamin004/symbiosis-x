@@ -6,6 +6,7 @@ from sqlite3 import Connection, Row
 
 from symbiosis_x.application.runs import RunNotFound
 from symbiosis_x.crew.profile import profile_for_crew
+from symbiosis_x.crew.submission_cabin import cabin_exposure, RECOVERY_S
 from symbiosis_x.crew.followup import compute_followup
 from symbiosis_x.crew.measurements import latest_crew_assessment
 from symbiosis_x.crew.trends import TrendSample, evaluate_trend
@@ -40,37 +41,54 @@ def read_run(db: Connection, run_id: str) -> Row:
     return run
 
 
-def latest_crew_trend(db: Connection, run_id: str, crew_id: str) -> dict | None:
-    """Describe the comparable trend of the crew member's latest scalar metric (Crew-only)."""
+def latest_crew_trend(db: Connection, run_id: str, crew_id: str, metric: str | None = None) -> dict | None:
+    """Describe a comparable trend in the private Crew series."""
     latest = db.execute(
         """SELECT h.metric FROM health_observations h
            JOIN events e ON e.run_id = h.run_id AND e.event_id = h.event_id
            WHERE h.run_id = ? AND h.crew_id = ? AND e.event_type = 'crew.health_measurement'
+             AND e.visibility = 'crew'
            ORDER BY h.observed_at_s DESC, h.received_at_s DESC, h.event_id DESC LIMIT 1""",
         (run_id, crew_id),
     ).fetchone()
-    if latest is None:
+    if latest is None and metric is None:
         return None
     rows = db.execute(
         """SELECT h.event_id, h.metric, h.numeric_value, h.unit, h.observed_at_s, h.quality,
-                  h.source_id, h.context_json
+                  h.source_id, h.context_json, e.payload_json
            FROM health_observations h
            JOIN events e ON e.run_id = h.run_id AND e.event_id = h.event_id
-           WHERE h.run_id = ? AND h.crew_id = ? AND h.metric = ? AND h.unit IS NOT NULL
-             AND e.event_type = 'crew.health_measurement'""",
-        (run_id, crew_id, latest["metric"]),
+           WHERE h.run_id = ? AND h.crew_id = ? AND h.metric = ?
+             AND e.event_type = 'crew.health_measurement' AND e.visibility = 'crew'""",
+        (run_id, crew_id, metric if metric is not None else latest["metric"]),
     ).fetchall()
-    if not rows:
-        return None  # Structured metrics (for example blood pressure) have no scalar trend here.
-    samples = [
-        TrendSample(
-            sample_id=row["event_id"], crew_id=crew_id, metric=row["metric"], value=row["numeric_value"],
-            unit=row["unit"], observed_at_s=row["observed_at_s"], quality=row["quality"],
-            source_id=row["source_id"], context=json.loads(row["context_json"]),
-        )
-        for row in rows
-    ]
-    return asdict(evaluate_trend(samples))
+    samples = []
+    for row in rows:
+        measurement = json.loads(row["payload_json"])["receipt"]["measurement"]
+        context = json.loads(row["context_json"])
+        for key in ("method", "meal_context", "site", "scale_id"):
+            if key in measurement:
+                context[key] = measurement[key]
+        value, unit = row["numeric_value"], measurement.get("unit")
+        if row["metric"] == "blood_pressure":
+            value, unit = measurement.get("systolic"), "mmHg"
+        elif row["metric"] == "symptoms":
+            # The reporting form supplies symptom labels, with 'none' reserved for no symptoms.
+            value = len({item.strip().casefold() for item in measurement["symptoms"]} - {"", "none"})
+            unit = "reported symptoms"
+        elif row["metric"] == "sleep":
+            value = measurement.get("duration_min")
+            if value is None:
+                value = (measurement["end_mission_s"] - measurement["start_mission_s"]) / 60
+            unit = "min"
+        elif row["metric"] in ("mood", "sleep_quality"):
+            value = measurement.get("score")
+        samples.append(TrendSample(
+            sample_id=row["event_id"], crew_id=crew_id, metric=row["metric"], value=value,
+            unit=unit, observed_at_s=row["observed_at_s"], quality=row["quality"],
+            source_id=row["source_id"], context=context,
+        ))
+    return asdict(evaluate_trend(samples)) if samples else None
 
 
 def read_crew(db: Connection, run_id: str, crew_id: str = "SIM-01") -> CurrentCrewView:
@@ -87,6 +105,7 @@ def read_crew(db: Connection, run_id: str, crew_id: str = "SIM-01") -> CurrentCr
         (run_id, run["mission_s"]),
     ).fetchone()
     assessment = latest_crew_assessment(db, run_id, profile)
+    exposure = cabin_exposure(crew_id, min(run["mission_s"], RECOVERY_S)) if run["scenario_id"] == "health-story" else None
     return CurrentCrewView(
         **dict(run),
         co2=AcceptedCO2(**dict(co2)) if co2 else None,
@@ -94,6 +113,7 @@ def read_crew(db: Connection, run_id: str, crew_id: str = "SIM-01") -> CurrentCr
         health_assessment=assessment,
         health_followup=compute_followup(db, run_id, crew_id, run["mission_s"], assessment),
         health_trend=latest_crew_trend(db, run_id, crew_id),
+        cabin_exposure=exposure,
         trace=read_trace(db, run_id, run["mission_s"]),
     )
 

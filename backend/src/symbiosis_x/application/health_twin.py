@@ -9,6 +9,7 @@ from symbiosis_x.contracts.projections import RunView
 from symbiosis_x.crew.emergency import EmergencyCase
 from symbiosis_x.crew.gravity_context import GravityContext, project_gravity_context
 from symbiosis_x.crew.medical_timeline import MedicalTimeline, read_medical_timeline
+from symbiosis_x.crew.sleep_archive import SleepPhaseSummary, sleep_archive_for
 from symbiosis_x.simulation.scenario import HEALTH_STORY_SCENARIO, load_health_story_manifest
 from symbiosis_x.workflows.relay import read_case_delivery
 
@@ -34,7 +35,9 @@ class CrewHealthTwin(RunView):
     emergency: EmergencyCase | None
     ground_delivery: CaseDelivery | None
     gravity_context: GravityContext | None
+    cabin_exposure: dict | None = None
     medical_timeline: MedicalTimeline | None
+    sleep_archive: tuple[SleepPhaseSummary, ...]
 
 
 def _story_state(assessment: dict | None, trend: dict | None, emergency: EmergencyCase | None) -> StoryState:
@@ -75,9 +78,11 @@ def read_health_twin(db: Connection, run_id: str, crew_id: str) -> CrewHealthTwi
             )
 
     gravity = medical_timeline = None
+    sleep_archive = ()
     if (crew.scenario_id, crew.scenario_version) == HEALTH_STORY_SCENARIO:
         gravity = project_gravity_context(load_health_story_manifest(), crew_id, crew.mission_s)
         medical_timeline = read_medical_timeline(crew_id, crew.mission_s)
+        sleep_archive = sleep_archive_for(crew_id)
 
     return CrewHealthTwin(
         run_id=run_id, scenario_id=crew.scenario_id, scenario_version=crew.scenario_version,
@@ -86,5 +91,7 @@ def read_health_twin(db: Connection, run_id: str, crew_id: str) -> CrewHealthTwi
         health_assessment=crew.health_assessment, health_trend=crew.health_trend,
         health_followup=crew.health_followup, emergency=emergency, ground_delivery=delivery,
         gravity_context=gravity,
+        cabin_exposure=crew.cabin_exposure,
         medical_timeline=medical_timeline,
+        sleep_archive=sleep_archive,
     )

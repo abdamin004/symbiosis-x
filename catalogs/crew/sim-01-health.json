@@ -2,11 +2,24 @@
   "schema_version": 1,
   "profile_id": "sim-01-health-v1",
   "crew_id": "SIM-01",
-  "display_name": "SIM-01 (fictional)",
+  "display_name": "Mara Vale",
   "simulated": true,
   "history": {
-    "status": "unknown",
-    "entries": []
+    "status": "recorded",
+    "entries": [
+      {
+        "date": "2026-11-01",
+        "category": "medical_history",
+        "note": "Wrist soreness noted after a preflight equipment exercise.",
+        "fictional": true
+      },
+      {
+        "date": "2026-11-07",
+        "category": "preflight_followup",
+        "note": "Seat and wristband fit checked before launch.",
+        "fictional": true
+      }
+    ]
   },
   "baselines": [
     {
@@ -14,6 +27,56 @@
       "value": 72,
       "unit": "bpm",
       "context": "Synthetic resting value during quiet seated activity",
+      "source_id": "synthetic.sim-01-health-baseline-v1"
+    },
+    {
+      "metric": "blood_pressure",
+      "value": 112,
+      "unit": "mmHg",
+      "context": "Synthetic automatic upper-arm cuff reading after seated rest",
+      "source_id": "synthetic.sim-01-health-baseline-v1",
+      "diastolic": 72
+    },
+    {
+      "metric": "glucose",
+      "value": 89,
+      "unit": "mg/dL",
+      "context": "Synthetic fasting laboratory plasma reading",
+      "source_id": "synthetic.sim-01-health-baseline-v1"
+    },
+    {
+      "metric": "temperature",
+      "value": 36.7,
+      "unit": "°C",
+      "context": "Synthetic oral temperature at rest",
+      "source_id": "synthetic.sim-01-health-baseline-v1"
+    },
+    {
+      "metric": "sleep",
+      "value": 450,
+      "unit": "min",
+      "context": "Fictional preflight nightly sleep log",
+      "source_id": "synthetic.sim-01-health-baseline-v1"
+    },
+    {
+      "metric": "sleep_quality",
+      "value": 4,
+      "unit": "score",
+      "context": "Fictional preflight self-report, 1–5 scale",
+      "source_id": "synthetic.sim-01-health-baseline-v1"
+    },
+    {
+      "metric": "mood",
+      "value": 4,
+      "unit": "score",
+      "context": "Fictional preflight self-report, 1–5 scale",
+      "source_id": "synthetic.sim-01-health-baseline-v1"
+    },
+    {
+      "metric": "symptoms",
+      "value": 0,
+      "unit": "count",
+      "context": "Fictional routine symptom check-in, count reported",
       "source_id": "synthetic.sim-01-health-baseline-v1"
     }
   ]

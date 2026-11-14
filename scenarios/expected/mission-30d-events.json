@@ -1,0 +1,858 @@
+{
+  "schema_version": 1,
+  "synthetic": true,
+  "events": [
+    {
+      "id": "abnormal_reading-SIM-01-02",
+      "kind": "abnormal_reading",
+      "crew_id": "SIM-01",
+      "mission_day": 2,
+      "metric": "heart_rate",
+      "measurement_ids": [
+        "30d-SIM-01-02-heart_rate"
+      ]
+    },
+    {
+      "id": "abnormal_reading-SIM-01-07",
+      "kind": "abnormal_reading",
+      "crew_id": "SIM-01",
+      "mission_day": 7,
+      "metric": "heart_rate",
+      "measurement_ids": [
+        "30d-SIM-01-07-heart_rate"
+      ]
+    },
+    {
+      "id": "abnormal_reading-SIM-01-22",
+      "kind": "abnormal_reading",
+      "crew_id": "SIM-01",
+      "mission_day": 22,
+      "metric": "heart_rate",
+      "measurement_ids": [
+        "30d-SIM-01-22-heart_rate"
+      ]
+    },
+    {
+      "id": "slow_trend-SIM-01-07",
+      "kind": "slow_trend",
+      "crew_id": "SIM-01",
+      "mission_day": 7,
+      "metric": "blood_pressure",
+      "measurement_ids": [
+        "30d-SIM-01-04-blood_pressure",
+        "30d-SIM-01-05-blood_pressure",
+        "30d-SIM-01-06-blood_pressure",
+        "30d-SIM-01-07-blood_pressure"
+      ],
+      "window_start_day": 4
+    },
+    {
+      "id": "slow_trend-SIM-01-16",
+      "kind": "slow_trend",
+      "crew_id": "SIM-01",
+      "mission_day": 16,
+      "metric": "blood_pressure",
+      "measurement_ids": [
+        "30d-SIM-01-13-blood_pressure",
+        "30d-SIM-01-14-blood_pressure",
+        "30d-SIM-01-15-blood_pressure",
+        "30d-SIM-01-16-blood_pressure"
+      ],
+      "window_start_day": 13
+    },
+    {
+      "id": "slow_trend-SIM-01-25",
+      "kind": "slow_trend",
+      "crew_id": "SIM-01",
+      "mission_day": 25,
+      "metric": "blood_pressure",
+      "measurement_ids": [
+        "30d-SIM-01-22-blood_pressure",
+        "30d-SIM-01-23-blood_pressure",
+        "30d-SIM-01-24-blood_pressure",
+        "30d-SIM-01-25-blood_pressure"
+      ],
+      "window_start_day": 22
+    },
+    {
+      "id": "sensor_artifact-SIM-01-04",
+      "kind": "sensor_artifact",
+      "crew_id": "SIM-01",
+      "mission_day": 4,
+      "metric": "temperature",
+      "measurement_ids": [
+        "30d-SIM-01-04-temperature"
+      ]
+    },
+    {
+      "id": "sensor_artifact-SIM-01-13",
+      "kind": "sensor_artifact",
+      "crew_id": "SIM-01",
+      "mission_day": 13,
+      "metric": "temperature",
+      "measurement_ids": [
+        "30d-SIM-01-13-temperature"
+      ]
+    },
+    {
+      "id": "sensor_artifact-SIM-01-23",
+      "kind": "sensor_artifact",
+      "crew_id": "SIM-01",
+      "mission_day": 23,
+      "metric": "temperature",
+      "measurement_ids": [
+        "30d-SIM-01-23-temperature"
+      ]
+    },
+    {
+      "id": "missing_run-SIM-01-06",
+      "kind": "missing_run",
+      "crew_id": "SIM-01",
+      "mission_day": 6,
+      "metric": "glucose",
+      "measurement_ids": [
+        "30d-SIM-01-04-glucose",
+        "30d-SIM-01-05-glucose",
+        "30d-SIM-01-06-glucose"
+      ]
+    },
+    {
+      "id": "missing_run-SIM-01-15",
+      "kind": "missing_run",
+      "crew_id": "SIM-01",
+      "mission_day": 15,
+      "metric": "glucose",
+      "measurement_ids": [
+        "30d-SIM-01-13-glucose",
+        "30d-SIM-01-14-glucose",
+        "30d-SIM-01-15-glucose"
+      ]
+    },
+    {
+      "id": "missing_run-SIM-01-24",
+      "kind": "missing_run",
+      "crew_id": "SIM-01",
+      "mission_day": 24,
+      "metric": "glucose",
+      "measurement_ids": [
+        "30d-SIM-01-22-glucose",
+        "30d-SIM-01-23-glucose",
+        "30d-SIM-01-24-glucose"
+      ]
+    },
+    {
+      "id": "late_packet-SIM-01-08",
+      "kind": "late_packet",
+      "crew_id": "SIM-01",
+      "mission_day": 8,
+      "metric": "sleep_quality",
+      "measurement_ids": [
+        "30d-SIM-01-08-sleep_quality"
+      ]
+    },
+    {
+      "id": "late_packet-SIM-01-17",
+      "kind": "late_packet",
+      "crew_id": "SIM-01",
+      "mission_day": 17,
+      "metric": "sleep_quality",
+      "measurement_ids": [
+        "30d-SIM-01-17-sleep_quality"
+      ]
+    },
+    {
+      "id": "late_packet-SIM-01-26",
+      "kind": "late_packet",
+      "crew_id": "SIM-01",
+      "mission_day": 26,
+      "metric": "sleep_quality",
+      "measurement_ids": [
+        "30d-SIM-01-26-sleep_quality"
+      ]
+    },
+    {
+      "id": "duplicate_retry-SIM-01-09",
+      "kind": "duplicate_retry",
+      "crew_id": "SIM-01",
+      "mission_day": 9,
+      "metric": "mood",
+      "measurement_ids": [
+        "30d-SIM-01-09-mood"
+      ]
+    },
+    {
+      "id": "duplicate_retry-SIM-01-18",
+      "kind": "duplicate_retry",
+      "crew_id": "SIM-01",
+      "mission_day": 18,
+      "metric": "mood",
+      "measurement_ids": [
+        "30d-SIM-01-18-mood"
+      ]
+    },
+    {
+      "id": "duplicate_retry-SIM-01-27",
+      "kind": "duplicate_retry",
+      "crew_id": "SIM-01",
+      "mission_day": 27,
+      "metric": "mood",
+      "measurement_ids": [
+        "30d-SIM-01-27-mood"
+      ]
+    },
+    {
+      "id": "abnormal_reading-SIM-02-02",
+      "kind": "abnormal_reading",
+      "crew_id": "SIM-02",
+      "mission_day": 2,
+      "metric": "heart_rate",
+      "measurement_ids": [
+        "30d-SIM-02-02-heart_rate"
+      ]
+    },
+    {
+      "id": "abnormal_reading-SIM-02-07",
+      "kind": "abnormal_reading",
+      "crew_id": "SIM-02",
+      "mission_day": 7,
+      "metric": "heart_rate",
+      "measurement_ids": [
+        "30d-SIM-02-07-heart_rate"
+      ]
+    },
+    {
+      "id": "abnormal_reading-SIM-02-22",
+      "kind": "abnormal_reading",
+      "crew_id": "SIM-02",
+      "mission_day": 22,
+      "metric": "heart_rate",
+      "measurement_ids": [
+        "30d-SIM-02-22-heart_rate"
+      ]
+    },
+    {
+      "id": "slow_trend-SIM-02-07",
+      "kind": "slow_trend",
+      "crew_id": "SIM-02",
+      "mission_day": 7,
+      "metric": "blood_pressure",
+      "measurement_ids": [
+        "30d-SIM-02-04-blood_pressure",
+        "30d-SIM-02-05-blood_pressure",
+        "30d-SIM-02-06-blood_pressure",
+        "30d-SIM-02-07-blood_pressure"
+      ],
+      "window_start_day": 4
+    },
+    {
+      "id": "slow_trend-SIM-02-16",
+      "kind": "slow_trend",
+      "crew_id": "SIM-02",
+      "mission_day": 16,
+      "metric": "blood_pressure",
+      "measurement_ids": [
+        "30d-SIM-02-13-blood_pressure",
+        "30d-SIM-02-14-blood_pressure",
+        "30d-SIM-02-15-blood_pressure",
+        "30d-SIM-02-16-blood_pressure"
+      ],
+      "window_start_day": 13
+    },
+    {
+      "id": "slow_trend-SIM-02-25",
+      "kind": "slow_trend",
+      "crew_id": "SIM-02",
+      "mission_day": 25,
+      "metric": "blood_pressure",
+      "measurement_ids": [
+        "30d-SIM-02-22-blood_pressure",
+        "30d-SIM-02-23-blood_pressure",
+        "30d-SIM-02-24-blood_pressure",
+        "30d-SIM-02-25-blood_pressure"
+      ],
+      "window_start_day": 22
+    },
+    {
+      "id": "sensor_artifact-SIM-02-04",
+      "kind": "sensor_artifact",
+      "crew_id": "SIM-02",
+      "mission_day": 4,
+      "metric": "temperature",
+      "measurement_ids": [
+        "30d-SIM-02-04-temperature"
+      ]
+    },
+    {
+      "id": "sensor_artifact-SIM-02-13",
+      "kind": "sensor_artifact",
+      "crew_id": "SIM-02",
+      "mission_day": 13,
+      "metric": "temperature",
+      "measurement_ids": [
+        "30d-SIM-02-13-temperature"
+      ]
+    },
+    {
+      "id": "sensor_artifact-SIM-02-23",
+      "kind": "sensor_artifact",
+      "crew_id": "SIM-02",
+      "mission_day": 23,
+      "metric": "temperature",
+      "measurement_ids": [
+        "30d-SIM-02-23-temperature"
+      ]
+    },
+    {
+      "id": "missing_run-SIM-02-06",
+      "kind": "missing_run",
+      "crew_id": "SIM-02",
+      "mission_day": 6,
+      "metric": "glucose",
+      "measurement_ids": [
+        "30d-SIM-02-04-glucose",
+        "30d-SIM-02-05-glucose",
+        "30d-SIM-02-06-glucose"
+      ]
+    },
+    {
+      "id": "missing_run-SIM-02-15",
+      "kind": "missing_run",
+      "crew_id": "SIM-02",
+      "mission_day": 15,
+      "metric": "glucose",
+      "measurement_ids": [
+        "30d-SIM-02-13-glucose",
+        "30d-SIM-02-14-glucose",
+        "30d-SIM-02-15-glucose"
+      ]
+    },
+    {
+      "id": "missing_run-SIM-02-24",
+      "kind": "missing_run",
+      "crew_id": "SIM-02",
+      "mission_day": 24,
+      "metric": "glucose",
+      "measurement_ids": [
+        "30d-SIM-02-22-glucose",
+        "30d-SIM-02-23-glucose",
+        "30d-SIM-02-24-glucose"
+      ]
+    },
+    {
+      "id": "late_packet-SIM-02-08",
+      "kind": "late_packet",
+      "crew_id": "SIM-02",
+      "mission_day": 8,
+      "metric": "sleep_quality",
+      "measurement_ids": [
+        "30d-SIM-02-08-sleep_quality"
+      ]
+    },
+    {
+      "id": "late_packet-SIM-02-17",
+      "kind": "late_packet",
+      "crew_id": "SIM-02",
+      "mission_day": 17,
+      "metric": "sleep_quality",
+      "measurement_ids": [
+        "30d-SIM-02-17-sleep_quality"
+      ]
+    },
+    {
+      "id": "late_packet-SIM-02-26",
+      "kind": "late_packet",
+      "crew_id": "SIM-02",
+      "mission_day": 26,
+      "metric": "sleep_quality",
+      "measurement_ids": [
+        "30d-SIM-02-26-sleep_quality"
+      ]
+    },
+    {
+      "id": "duplicate_retry-SIM-02-09",
+      "kind": "duplicate_retry",
+      "crew_id": "SIM-02",
+      "mission_day": 9,
+      "metric": "mood",
+      "measurement_ids": [
+        "30d-SIM-02-09-mood"
+      ]
+    },
+    {
+      "id": "duplicate_retry-SIM-02-18",
+      "kind": "duplicate_retry",
+      "crew_id": "SIM-02",
+      "mission_day": 18,
+      "metric": "mood",
+      "measurement_ids": [
+        "30d-SIM-02-18-mood"
+      ]
+    },
+    {
+      "id": "duplicate_retry-SIM-02-27",
+      "kind": "duplicate_retry",
+      "crew_id": "SIM-02",
+      "mission_day": 27,
+      "metric": "mood",
+      "measurement_ids": [
+        "30d-SIM-02-27-mood"
+      ]
+    },
+    {
+      "id": "abnormal_reading-SIM-03-02",
+      "kind": "abnormal_reading",
+      "crew_id": "SIM-03",
+      "mission_day": 2,
+      "metric": "heart_rate",
+      "measurement_ids": [
+        "30d-SIM-03-02-heart_rate"
+      ]
+    },
+    {
+      "id": "abnormal_reading-SIM-03-07",
+      "kind": "abnormal_reading",
+      "crew_id": "SIM-03",
+      "mission_day": 7,
+      "metric": "heart_rate",
+      "measurement_ids": [
+        "30d-SIM-03-07-heart_rate"
+      ]
+    },
+    {
+      "id": "abnormal_reading-SIM-03-22",
+      "kind": "abnormal_reading",
+      "crew_id": "SIM-03",
+      "mission_day": 22,
+      "metric": "heart_rate",
+      "measurement_ids": [
+        "30d-SIM-03-22-heart_rate"
+      ]
+    },
+    {
+      "id": "slow_trend-SIM-03-07",
+      "kind": "slow_trend",
+      "crew_id": "SIM-03",
+      "mission_day": 7,
+      "metric": "blood_pressure",
+      "measurement_ids": [
+        "30d-SIM-03-04-blood_pressure",
+        "30d-SIM-03-05-blood_pressure",
+        "30d-SIM-03-06-blood_pressure",
+        "30d-SIM-03-07-blood_pressure"
+      ],
+      "window_start_day": 4
+    },
+    {
+      "id": "slow_trend-SIM-03-16",
+      "kind": "slow_trend",
+      "crew_id": "SIM-03",
+      "mission_day": 16,
+      "metric": "blood_pressure",
+      "measurement_ids": [
+        "30d-SIM-03-13-blood_pressure",
+        "30d-SIM-03-14-blood_pressure",
+        "30d-SIM-03-15-blood_pressure",
+        "30d-SIM-03-16-blood_pressure"
+      ],
+      "window_start_day": 13
+    },
+    {
+      "id": "slow_trend-SIM-03-25",
+      "kind": "slow_trend",
+      "crew_id": "SIM-03",
+      "mission_day": 25,
+      "metric": "blood_pressure",
+      "measurement_ids": [
+        "30d-SIM-03-22-blood_pressure",
+        "30d-SIM-03-23-blood_pressure",
+        "30d-SIM-03-24-blood_pressure",
+        "30d-SIM-03-25-blood_pressure"
+      ],
+      "window_start_day": 22
+    },
+    {
+      "id": "sensor_artifact-SIM-03-04",
+      "kind": "sensor_artifact",
+      "crew_id": "SIM-03",
+      "mission_day": 4,
+      "metric": "temperature",
+      "measurement_ids": [
+        "30d-SIM-03-04-temperature"
+      ]
+    },
+    {
+      "id": "sensor_artifact-SIM-03-13",
+      "kind": "sensor_artifact",
+      "crew_id": "SIM-03",
+      "mission_day": 13,
+      "metric": "temperature",
+      "measurement_ids": [
+        "30d-SIM-03-13-temperature"
+      ]
+    },
+    {
+      "id": "sensor_artifact-SIM-03-23",
+      "kind": "sensor_artifact",
+      "crew_id": "SIM-03",
+      "mission_day": 23,
+      "metric": "temperature",
+      "measurement_ids": [
+        "30d-SIM-03-23-temperature"
+      ]
+    },
+    {
+      "id": "missing_run-SIM-03-06",
+      "kind": "missing_run",
+      "crew_id": "SIM-03",
+      "mission_day": 6,
+      "metric": "glucose",
+      "measurement_ids": [
+        "30d-SIM-03-04-glucose",
+        "30d-SIM-03-05-glucose",
+        "30d-SIM-03-06-glucose"
+      ]
+    },
+    {
+      "id": "missing_run-SIM-03-15",
+      "kind": "missing_run",
+      "crew_id": "SIM-03",
+      "mission_day": 15,
+      "metric": "glucose",
+      "measurement_ids": [
+        "30d-SIM-03-13-glucose",
+        "30d-SIM-03-14-glucose",
+        "30d-SIM-03-15-glucose"
+      ]
+    },
+    {
+      "id": "missing_run-SIM-03-24",
+      "kind": "missing_run",
+      "crew_id": "SIM-03",
+      "mission_day": 24,
+      "metric": "glucose",
+      "measurement_ids": [
+        "30d-SIM-03-22-glucose",
+        "30d-SIM-03-23-glucose",
+        "30d-SIM-03-24-glucose"
+      ]
+    },
+    {
+      "id": "late_packet-SIM-03-08",
+      "kind": "late_packet",
+      "crew_id": "SIM-03",
+      "mission_day": 8,
+      "metric": "sleep_quality",
+      "measurement_ids": [
+        "30d-SIM-03-08-sleep_quality"
+      ]
+    },
+    {
+      "id": "late_packet-SIM-03-17",
+      "kind": "late_packet",
+      "crew_id": "SIM-03",
+      "mission_day": 17,
+      "metric": "sleep_quality",
+      "measurement_ids": [
+        "30d-SIM-03-17-sleep_quality"
+      ]
+    },
+    {
+      "id": "late_packet-SIM-03-26",
+      "kind": "late_packet",
+      "crew_id": "SIM-03",
+      "mission_day": 26,
+      "metric": "sleep_quality",
+      "measurement_ids": [
+        "30d-SIM-03-26-sleep_quality"
+      ]
+    },
+    {
+      "id": "duplicate_retry-SIM-03-09",
+      "kind": "duplicate_retry",
+      "crew_id": "SIM-03",
+      "mission_day": 9,
+      "metric": "mood",
+      "measurement_ids": [
+        "30d-SIM-03-09-mood"
+      ]
+    },
+    {
+      "id": "duplicate_retry-SIM-03-18",
+      "kind": "duplicate_retry",
+      "crew_id": "SIM-03",
+      "mission_day": 18,
+      "metric": "mood",
+      "measurement_ids": [
+        "30d-SIM-03-18-mood"
+      ]
+    },
+    {
+      "id": "duplicate_retry-SIM-03-27",
+      "kind": "duplicate_retry",
+      "crew_id": "SIM-03",
+      "mission_day": 27,
+      "metric": "mood",
+      "measurement_ids": [
+        "30d-SIM-03-27-mood"
+      ]
+    },
+    {
+      "id": "abnormal_reading-SIM-04-02",
+      "kind": "abnormal_reading",
+      "crew_id": "SIM-04",
+      "mission_day": 2,
+      "metric": "heart_rate",
+      "measurement_ids": [
+        "30d-SIM-04-02-heart_rate"
+      ]
+    },
+    {
+      "id": "abnormal_reading-SIM-04-07",
+      "kind": "abnormal_reading",
+      "crew_id": "SIM-04",
+      "mission_day": 7,
+      "metric": "heart_rate",
+      "measurement_ids": [
+        "30d-SIM-04-07-heart_rate"
+      ]
+    },
+    {
+      "id": "abnormal_reading-SIM-04-22",
+      "kind": "abnormal_reading",
+      "crew_id": "SIM-04",
+      "mission_day": 22,
+      "metric": "heart_rate",
+      "measurement_ids": [
+        "30d-SIM-04-22-heart_rate"
+      ]
+    },
+    {
+      "id": "slow_trend-SIM-04-07",
+      "kind": "slow_trend",
+      "crew_id": "SIM-04",
+      "mission_day": 7,
+      "metric": "blood_pressure",
+      "measurement_ids": [
+        "30d-SIM-04-04-blood_pressure",
+        "30d-SIM-04-05-blood_pressure",
+        "30d-SIM-04-06-blood_pressure",
+        "30d-SIM-04-07-blood_pressure"
+      ],
+      "window_start_day": 4
+    },
+    {
+      "id": "slow_trend-SIM-04-16",
+      "kind": "slow_trend",
+      "crew_id": "SIM-04",
+      "mission_day": 16,
+      "metric": "blood_pressure",
+      "measurement_ids": [
+        "30d-SIM-04-13-blood_pressure",
+        "30d-SIM-04-14-blood_pressure",
+        "30d-SIM-04-15-blood_pressure",
+        "30d-SIM-04-16-blood_pressure"
+      ],
+      "window_start_day": 13
+    },
+    {
+      "id": "slow_trend-SIM-04-25",
+      "kind": "slow_trend",
+      "crew_id": "SIM-04",
+      "mission_day": 25,
+      "metric": "blood_pressure",
+      "measurement_ids": [
+        "30d-SIM-04-22-blood_pressure",
+        "30d-SIM-04-23-blood_pressure",
+        "30d-SIM-04-24-blood_pressure",
+        "30d-SIM-04-25-blood_pressure"
+      ],
+      "window_start_day": 22
+    },
+    {
+      "id": "sensor_artifact-SIM-04-04",
+      "kind": "sensor_artifact",
+      "crew_id": "SIM-04",
+      "mission_day": 4,
+      "metric": "temperature",
+      "measurement_ids": [
+        "30d-SIM-04-04-temperature"
+      ]
+    },
+    {
+      "id": "sensor_artifact-SIM-04-13",
+      "kind": "sensor_artifact",
+      "crew_id": "SIM-04",
+      "mission_day": 13,
+      "metric": "temperature",
+      "measurement_ids": [
+        "30d-SIM-04-13-temperature"
+      ]
+    },
+    {
+      "id": "sensor_artifact-SIM-04-23",
+      "kind": "sensor_artifact",
+      "crew_id": "SIM-04",
+      "mission_day": 23,
+      "metric": "temperature",
+      "measurement_ids": [
+        "30d-SIM-04-23-temperature"
+      ]
+    },
+    {
+      "id": "missing_run-SIM-04-06",
+      "kind": "missing_run",
+      "crew_id": "SIM-04",
+      "mission_day": 6,
+      "metric": "glucose",
+      "measurement_ids": [
+        "30d-SIM-04-04-glucose",
+        "30d-SIM-04-05-glucose",
+        "30d-SIM-04-06-glucose"
+      ]
+    },
+    {
+      "id": "missing_run-SIM-04-15",
+      "kind": "missing_run",
+      "crew_id": "SIM-04",
+      "mission_day": 15,
+      "metric": "glucose",
+      "measurement_ids": [
+        "30d-SIM-04-13-glucose",
+        "30d-SIM-04-14-glucose",
+        "30d-SIM-04-15-glucose"
+      ]
+    },
+    {
+      "id": "missing_run-SIM-04-24",
+      "kind": "missing_run",
+      "crew_id": "SIM-04",
+      "mission_day": 24,
+      "metric": "glucose",
+      "measurement_ids": [
+        "30d-SIM-04-22-glucose",
+        "30d-SIM-04-23-glucose",
+        "30d-SIM-04-24-glucose"
+      ]
+    },
+    {
+      "id": "late_packet-SIM-04-08",
+      "kind": "late_packet",
+      "crew_id": "SIM-04",
+      "mission_day": 8,
+      "metric": "sleep_quality",
+      "measurement_ids": [
+        "30d-SIM-04-08-sleep_quality"
+      ]
+    },
+    {
+      "id": "late_packet-SIM-04-17",
+      "kind": "late_packet",
+      "crew_id": "SIM-04",
+      "mission_day": 17,
+      "metric": "sleep_quality",
+      "measurement_ids": [
+        "30d-SIM-04-17-sleep_quality"
+      ]
+    },
+    {
+      "id": "late_packet-SIM-04-26",
+      "kind": "late_packet",
+      "crew_id": "SIM-04",
+      "mission_day": 26,
+      "metric": "sleep_quality",
+      "measurement_ids": [
+        "30d-SIM-04-26-sleep_quality"
+      ]
+    },
+    {
+      "id": "duplicate_retry-SIM-04-09",
+      "kind": "duplicate_retry",
+      "crew_id": "SIM-04",
+      "mission_day": 9,
+      "metric": "mood",
+      "measurement_ids": [
+        "30d-SIM-04-09-mood"
+      ]
+    },
+    {
+      "id": "duplicate_retry-SIM-04-18",
+      "kind": "duplicate_retry",
+      "crew_id": "SIM-04",
+      "mission_day": 18,
+      "metric": "mood",
+      "measurement_ids": [
+        "30d-SIM-04-18-mood"
+      ]
+    },
+    {
+      "id": "duplicate_retry-SIM-04-27",
+      "kind": "duplicate_retry",
+      "crew_id": "SIM-04",
+      "mission_day": 27,
+      "metric": "mood",
+      "measurement_ids": [
+        "30d-SIM-04-27-mood"
+      ]
+    },
+    {
+      "id": "emergency_trigger-SIM-01-08",
+      "kind": "emergency_trigger",
+      "crew_id": "SIM-01",
+      "mission_day": 8,
+      "metric": null,
+      "measurement_ids": [],
+      "drill_id": "drill-chest-pain-v1",
+      "reported_by": "SIM-01"
+    },
+    {
+      "id": "emergency_trigger-SIM-01-17",
+      "kind": "emergency_trigger",
+      "crew_id": "SIM-01",
+      "mission_day": 17,
+      "metric": null,
+      "measurement_ids": [],
+      "drill_id": "drill-chest-pain-v1",
+      "reported_by": "SIM-01"
+    },
+    {
+      "id": "emergency_trigger-SIM-01-26",
+      "kind": "emergency_trigger",
+      "crew_id": "SIM-01",
+      "mission_day": 26,
+      "metric": null,
+      "measurement_ids": [],
+      "drill_id": "drill-chest-pain-v1",
+      "reported_by": "SIM-01"
+    },
+    {
+      "id": "emergency_trigger-SIM-03-08",
+      "kind": "emergency_trigger",
+      "crew_id": "SIM-03",
+      "mission_day": 8,
+      "metric": null,
+      "measurement_ids": [],
+      "drill_id": "drill-collapse-v1",
+      "reported_by": "SIM-04"
+    },
+    {
+      "id": "emergency_trigger-SIM-03-17",
+      "kind": "emergency_trigger",
+      "crew_id": "SIM-03",
+      "mission_day": 17,
+      "metric": null,
+      "measurement_ids": [],
+      "drill_id": "drill-collapse-v1",
+      "reported_by": "SIM-04"
+    },
+    {
+      "id": "emergency_trigger-SIM-03-26",
+      "kind": "emergency_trigger",
+      "crew_id": "SIM-03",
+      "mission_day": 26,
+      "metric": null,
+      "measurement_ids": [],
+      "drill_id": "drill-collapse-v1",
+      "reported_by": "SIM-04"
+    }
+  ]
+}

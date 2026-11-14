@@ -87,8 +87,11 @@ def test_emergency_cases_route_without_ground(tmp_path, monkeypatch, kind):
         # Missing vitals are reported, and the alert is raised anyway.
         assert case["vitals"] == {"heart_rate": "unavailable", "last_valid_observed_at_s": None}
         assert case["ground_link"] == "not_required"
-        assert case["procedure"]["kind"] == "training_placeholder"
-        assert "TRAINING PLACEHOLDER" in case["procedure"]["label"]
+        assert case["procedure"]["kind"] == "training_guidance"
+        assert "Simulated training only" in case["procedure"]["label"]
+        assert all(source["url"].startswith("https://www.redcross.org/") for source in case["procedure"]["sources"])
+        assert {question["id"] for question in case["procedure"]["questions"]} >= {"responsive", "breathing"}
+        assert case["procedure"]["guidance"]["unresponsive_not_breathing"]
         if kind == "collapse":
             assert case["responsiveness"] == "unknown"
         else:

@@ -1,6 +1,7 @@
 """Load and validate fictional Crew health profiles."""
 
 import json
+from datetime import date
 from pathlib import Path
 from typing import Literal
 
@@ -9,23 +10,43 @@ from pydantic import Field, model_validator
 from symbiosis_x.contracts.events import Contract, Identifier, NonnegativeNumber
 
 
+class HistoryEntry(Contract):
+    date: date
+    category: Literal["medical_history", "allergy_note", "preflight_followup"]
+    note: Identifier
+    fictional: Literal[True]
+
+
 class HealthHistory(Contract):
-    status: Literal["unknown"]
-    entries: list[dict] = Field(default_factory=list)
+    status: Literal["unknown", "recorded"]
+    entries: list[HistoryEntry] = Field(default_factory=list)
 
     @model_validator(mode="after")
-    def unknown_history_has_no_entries(self):
-        if self.entries:
-            raise ValueError("unknown history cannot contain entries")
+    def history_matches_status(self):
+        if bool(self.entries) != (self.status == "recorded"):
+            raise ValueError("recorded history requires entries and unknown history has none")
         return self
 
 
 class PersonalBaseline(Contract):
-    metric: Literal["heart_rate"]
+    metric: Literal["heart_rate", "blood_pressure", "glucose", "temperature",
+                    "sleep", "sleep_quality", "mood", "symptoms"]
     value: NonnegativeNumber
-    unit: Literal["bpm"]
+    unit: Literal["bpm", "mmHg", "mg/dL", "°C", "min", "score", "count"]
     context: Identifier
     source_id: Identifier
+    diastolic: NonnegativeNumber | None = None
+
+    @model_validator(mode="after")
+    def units_and_shape(self):
+        units = {"heart_rate": "bpm", "blood_pressure": "mmHg", "glucose": "mg/dL",
+                 "temperature": "°C", "sleep": "min", "sleep_quality": "score",
+                 "mood": "score", "symptoms": "count"}
+        if self.unit != units[self.metric] or (self.diastolic is not None) != (self.metric == "blood_pressure"):
+            raise ValueError("baseline unit or shape does not match its metric")
+        if self.diastolic is not None and not 0 < self.diastolic < self.value:
+            raise ValueError("blood pressure baseline requires systolic above diastolic")
+        return self
 
 
 class AstronautHealthProfile(Contract):
@@ -49,8 +70,7 @@ DEFAULT_PROFILE_PATH = (
 def load_profile(path: str | Path | None = None) -> AstronautHealthProfile:
     """Read the JSON fixture and return a validated profile."""
     profile_path = Path(path) if path is not None else DEFAULT_PROFILE_PATH
-    payload = json.loads(profile_path.read_text(encoding="utf-8"))
-    return AstronautHealthProfile.model_validate(payload)
+    return AstronautHealthProfile.model_validate_json(profile_path.read_text(encoding="utf-8"))
 
 
 def profile_for_crew(crew_id: str) -> AstronautHealthProfile | None:
@@ -62,8 +82,9 @@ def profile_for_crew(crew_id: str) -> AstronautHealthProfile | None:
     if member is None:
         return None
     profiles = json.loads((catalog / "selected-crew-health.json").read_text(encoding="utf-8"))
-    return AstronautHealthProfile(
-        schema_version=1, profile_id=f"{crew_id.lower()}-health-v1", crew_id=crew_id,
-        display_name=member["display_name"], simulated=True, history=HealthHistory(status="unknown"),
-        baselines=[PersonalBaseline.model_validate(baseline) for baseline in profiles.get(crew_id, [])],
-    )
+    payload = profiles.get(crew_id, {})
+    return AstronautHealthProfile.model_validate_json(json.dumps({
+        "schema_version": 1, "profile_id": f"{crew_id.lower()}-health-v1", "crew_id": crew_id,
+        "display_name": member["display_name"], "simulated": True,
+        "history": payload.get("history", {"status": "unknown"}), "baselines": payload.get("baselines", []),
+    }))

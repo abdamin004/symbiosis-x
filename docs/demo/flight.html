@@ -446,6 +446,11 @@ button[aria-pressed=true]{background:#3d315e}
 .health-story-actions{display:flex;flex-wrap:wrap;gap:.3rem}
 #health-story-error{color:#ffd0d0}
 #ground-health-story{padding:.35rem .5rem;border-left:2px solid var(--blue);font-size:.74rem}
+#flight-emergency{width:min(580px,calc(100vw - 30px));font-size:1rem}
+#flight-emergency [data-emergency=questions]{display:grid;gap:.55rem;margin:1rem 0}
+#flight-emergency [data-emergency=questions] label{display:flex;align-items:center;justify-content:space-between;gap:1rem}
+#flight-emergency [data-emergency=source]{display:flex;flex-wrap:wrap;gap:.5rem;font-size:.75rem}
+#flight-emergency [data-emergency=source] a{color:var(--blue)}
 #eva-tether{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
 #return-scene{position:relative;display:grid;justify-items:center;max-width:660px;margin:0 auto;color:#deefff;pointer-events:none}
 #return-art{width:min(100%,570px);height:min(48dvh,370px);overflow:visible}
@@ -998,6 +1003,7 @@ __HUD_ICONS__
     <button type="button" id="show-orbit" hidden>Orbit map</button>
     <button type="button" id="show-briefing">Briefing</button>
     <button type="button" id="show-command" hidden>Flight command</button>
+    <button type="button" id="show-flight-emergency" hidden>Emergency Assist</button>
     <button type="button" id="show-missions"></button>
     <button type="button" id="flight-audio" aria-pressed="true" hidden>Mission audio</button>
     <button type="button" id="end-mission" class="end-mission"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg>End mission</button>
@@ -1539,6 +1545,24 @@ __HUD_ICONS__
   </div>
   <p id="food-exposure-status" role="status"></p>
 </dialog>
+<dialog id="flight-emergency" class="mission-dialog" aria-labelledby="flight-emergency-title">
+  <div class="dialog-top">
+    <h2 id="flight-emergency-title">Emergency Assist</h2>
+    <form method="dialog"><button>Close</button></form>
+  </div>
+  <p>Onboard response · Ground link optional</p>
+  <label>Choose scripted drill <select data-emergency="drill"></select></label>
+  <div data-emergency="questions"></div>
+  <ol data-emergency="guidance" aria-label="Onboard training steps"></ol>
+  <p data-emergency="source"></p>
+  <small>Simulated training only · follow the approved onboard medical procedure.</small>
+  <p data-emergency="status" role="status"></p>
+  <p data-emergency="error" role="alert"></p>
+  <div class="choices">
+    <button type="button" data-emergency="alert">Raise local drill alert</button>
+    <button type="button" data-emergency="acknowledge" hidden>Acknowledge local response</button>
+  </div>
+</dialog>
 <dialog id="replace-campaign" class="mission-dialog" aria-labelledby="replace-campaign-title">
   <div class="dialog-top"><h2 id="replace-campaign-title">Start a new run?</h2></div>
   <p id="replace-campaign-text"></p>
@@ -1902,6 +1926,8 @@ __HUD_ICONS__
   </div>
 </section>
 </main>
+<style>__HEALTH30_STYLE__</style>
+<section id="health30" aria-label="30-second astronaut health demonstration" hidden></section>
 <script type="application/json" id="flight-data">__FLIGHT_DATA__</script>
 <script>
 __FLIGHT_WORKFLOW__
@@ -1912,6 +1938,8 @@ __LAUNCH_SCENE__
 __FLIGHT_MISSIONS__
 __FLIGHT_DEMO__
 __FLIGHT_HEALTH_STORY__
+__FLIGHT_HEALTH30__
+__FLIGHT_EMERGENCY__
 __LAUNCH_CHECKOUT__
 __FLIGHT_CREW__
 __FLIGHT_GALLEY__
@@ -4616,6 +4644,14 @@ const flightHealthStory = bindFlightHealthStory({
     openDigitalTwin(member,trigger);
   },
 });
+const flightEmergency = bindFlightEmergency({
+  host:element("flight-emergency"), drills:data.emergency_drills,
+  crewNames:Object.fromEntries(data.crew.map((id,index) => [id,characters[index].name])),
+  getRunId:() => flightHealthStory.runId() || flightHealthRun,
+  session:crewWearableSession, clock,
+});
+element("show-flight-emergency").addEventListener("click",flightEmergency.show);
+element("show-flight-emergency").hidden = !flightHealthRun;
 const launchMission = bindLaunchCheckout(data.missions,data.replay_version,{
   crew: characters.map((character,index)=>({name:character.name,role:duties[index].role,portrait:()=>crewFace(index)})),
   pauseReplay:stop,
@@ -4810,6 +4846,10 @@ element("end-mission-menu").addEventListener("click", () => {
 });
 widgets.layout();
 render();
+const submissionQuery = new URLSearchParams(location.search);
+if (submissionQuery.get("demo") === "health30") bindHealth30({
+  host:element("health30"), data, zones, hull:element("hull"), query:submissionQuery,
+});
 </script>
 </body>
 </html>
