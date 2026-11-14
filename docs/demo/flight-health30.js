@@ -1,16 +1,12 @@
 const health30Cues = [
-  [0, "launch", "SYMBIOSIS X · A digital twin of the astronaut and the ship"],
-  [3, "astronaut", "Astronaut twin · Sana’s readings alongside her personal baselines"],
-  [7, "deck", "Ship twin · Simulated sensors report from every room"],
-  [11, "fault", "Scrubber fails, CO₂ rises, and Sana’s twin flags exposure"],
-  [15, "emergency", "Emergency guidance onboard. No Ground link needed."],
-  [19, "repair", "Ivo restores scrubber flow. The cabin CO₂ trend turns downward."],
-  [22, "relay", "Ground twin · An approved update arrives after a delay"],
-  [26, "eva", "The same twins follow the whole mission"],
-  [26.5, "dock", "The same twins follow the whole mission"],
-  [27, "research", "The same twins follow the whole mission"],
-  [27.5, "land", "The same twins follow the whole mission"],
-  [28, "end", ""],
+  [0, "astronaut", "ASTRONAUT HEALTH · Sana's synthetic resting pulse needs review"],
+  [6, "fault", "CABIN CONTEXT · A scrubber fault increases modeled CO₂"],
+  [11, "emergency", "ONBOARD ACTION · Crew opens a local medical drill without Ground"],
+  [16, "relay", "DELAYED GROUND · Only approved status crosses the communications link"],
+  [21, "repair", "RECOVERY · Crew restores the scrubber and cabin CO₂ trends down"],
+  [25, "deck", "SHIP TWIN · Real-time onboard operational context"],
+  [27, "launch", "MISSION CONTEXT · The same twin follows the launch and flight"],
+  [29, "end", ""],
 ];
 
 function bindHealth30({host,data,zones,hull,query}) {
@@ -50,7 +46,7 @@ function bindHealth30({host,data,zones,hull,query}) {
   const profile = data.health_profiles["SIM-02"];
   const baselines = new Map(profile.baselines.map(item=>[item.metric,item]));
   const readings = [
-    ["heart_rate","Heart rate","76","bpm"],
+    ["heart_rate","Heart rate","96","bpm"],
     ["blood_pressure","Blood pressure","112/74","mmHg"],
     ["glucose","Blood glucose","91","mg/dL"],
     ["temperature","Temperature","36.7","°C"],
@@ -59,20 +55,20 @@ function bindHealth30({host,data,zones,hull,query}) {
     ["mood","Mood","4","/5"],
     ["symptoms","Symptoms","None",""],
   ];
-  const history = [68,70,69,76];
+  const history = [68,93,94,96];
   const instruments = data.health30_sensors.filter(sensor=>sensor.room_id && sensor.visibility === "operational");
   const deckSensors = new Map(data.rooms.map(room=>[room.room_id,instruments.filter(sensor=>sensor.room_id === room.room_id)]));
 
   function astronaut() {
     panel.innerHTML = `<small>ASTRONAUT TWIN · PRIVATE CREW</small><h2></h2>
       <div class="health30-readings"></div>
-      <div class="health30-history"><span>Resting pulse history</span><svg viewBox="0 0 240 46" role="img" aria-label="Synthetic heart-rate history in the shaded personal band"><rect y="5" width="240" height="34" fill="#70c9ba32"/><polyline fill="none" stroke="#9cebd0" stroke-width="3"/></svg></div>
+      <div class="health30-history"><span>Resting pulse history · review trend</span><svg viewBox="0 0 240 46" role="img" aria-label="Synthetic heart-rate history in the shaded personal band"><rect y="5" width="240" height="34" fill="#70c9ba32"/><polyline fill="none" stroke="#9cebd0" stroke-width="3"/></svg></div>
       <p><b>Fictional history</b> · <span class="health30-medical-history"></span></p>
-      <p><b>Next check</b> · Repeat wrist reading on the next watch</p>
-      <footer>Synthetic rehearsal values · observed T+00:00 · accepted</footer>`;
+      <p><b>Next check</b> · Repeat a resting reading and request crew review</p>
+      <footer>Synthetic authored demo readings · educational review, not diagnosis</footer>`;
     asText(panel.querySelector("h2"),profile.display_name);
     asText(panel.querySelector(".health30-medical-history"),profile.history.entries.map(entry=>entry.note).join(" "));
-    panel.querySelector("polyline").setAttribute("points",history.map((item,i)=>i*80+","+ (36-(item-64)*1.8)).join(" "));
+    panel.querySelector("polyline").setAttribute("points",history.map((item,i)=>i*80+","+ (40-(item-68)*.9)).join(" "));
     for (const [id,name,value,unit] of readings) {
       const entry = baselines.get(id);
       const baseline = id === "symptoms" ? "None reported"
@@ -123,8 +119,8 @@ function bindHealth30({host,data,zones,hull,query}) {
   }
 
   function paintAir(time,repair) {
-    const stageTime = repair ? cabin.repair_s + (cabin.samples.at(-1).time_s - cabin.repair_s) * Math.min(1,(time - 19)/3)
-      : 4200 + (cabin.repair_s - 4200) * Math.min(1,(time - 11)/3.5);
+    const stageTime = repair ? cabin.repair_s + (cabin.samples.at(-1).time_s - cabin.repair_s) * Math.min(1,(time - 21)/3)
+      : 4200 + (cabin.repair_s - 4200) * Math.min(1,(time - 6)/4);
     const latest = sampleAt(stageTime);
     panel.querySelector(".health30-hero-value").textContent = ppm(latest.ppm) + " ppm";
     const points = cabin.samples.filter(sample => sample.time_s <= latest.time_s).map(sample =>
@@ -209,7 +205,7 @@ function bindHealth30({host,data,zones,hull,query}) {
       host.dataset.liftoff = String(time < 1.5);
     }
     if (beat === "relay") {
-      const progress = Math.min(1,(time - 22)/3);
+      const progress = Math.min(1,(time - 16)/3);
       panel.style.setProperty("--packet-progress", (progress*100) + "%");
       panel.querySelector(".health30-relay-status").textContent = progress === 1
         ? "Delivered to Ground" : "In transit · " + Math.ceil((1-progress)*300) + " s";

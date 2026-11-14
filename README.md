@@ -4,6 +4,20 @@ SYMBIOSIS X is a software-only prototype for astronaut self-assessment in a simu
 
 Use the [Jira board](https://crewsync-1794569647227.atlassian.net/jira/software/projects/KAN/boards/2) for ticket status and the [build plan](SYMBIOSIS%20X%20Feature%20Backlog%20and%20Build%20Plan.html) for dependencies and acceptance checks. The [technical architecture](SYMBIOSIS%20X%20Technical%20Architecture.html) describes the role boundaries and the five planned screens.
 
+## Submission status and transparency
+
+**Health-first judging path:** The dedicated 30-second health demo leads with an astronaut's simulated vital signs, followed by cabin exposure context, onboard response, delayed Ground visibility and recovery. Flight scenes remain available separately.
+
+**AI/SI use disclosure (review before submission):** This software was developed with AI-assisted coding tools, including OpenAI Codex agents and Claude Code, for implementation support, test generation, debugging, design iterations and documentation drafts. The project concept, feature decisions, scientific-source selection, safety constraints and final review are the team's responsibility. All astronaut subjects and clinical readings are synthetic training examples. Team members must confirm the list of tools and whether any portraits, illustrations, voiceovers, images or video frames were generated using AI; each synthetic image/video asset must be visibly marked **SI-generated** where required. Do **not** claim that every visual was human-made or that NASA medically validated the simulation.
+
+**Licences and attribution:** React (MIT), React DOM (MIT), React Router (MIT), Vite (MIT), Tailwind CSS (MIT), FastAPI (MIT), Uvicorn (BSD-3-Clause), Playwright (Apache-2.0), Lucide icons (ISC). See the upstream licence files for exact notices. The product uses NASA and CSA research as attributed information, not as NASA endorsement. Medical interpretation references include MedlinePlus (US National Library of Medicine), American Heart Association (AHA), American Diabetes Association (ADA), ISO/PROMIS materials where cited in the metric catalog, and Red Cross first-aid resources in the emergency training guides. External text, imagery, fonts and video/audio assets must be confirmed against actual use before final submission; original procedural Flight sounds are software-generated.
+
+**Product limitations:** Not a clinical decision system. NASA RadLab is archived environmental instrumentation, not personal crew dosimetry. The scenario's relay delay and threshold choices are synthetic demo parameters, not universal NASA values. The Ground projection is permission-filtered and intentionally delayed.
+
+**Potential Earth applications:** NASA and CSA research can inform studies of osteoporosis, cardiovascular conditions and diabetes; self-monitoring and delayed-support interfaces may also be useful in remote healthcare, subject to separate clinical validation.
+
+**Submission links to add before publishing:** public repository URL; publicly hosted playable demo; 30-second video; Cairo project description PDF; official NASA Space Apps project page. A repository URL alone is not a live application.
+
 ## Project description
 
 **Challenge:** [2026 NASA Space Apps Challenge, *Create Health Monitoring Software for Astronauts on Space Missions*](https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/).
@@ -52,7 +66,7 @@ The SX-11B rehearsal refreshed this section. Update it at the next tagged releas
 
 ## Start on your laptop
 
-Clone the private repository with your GitHub account and run the contract checks from the repository root. If you already have a clone, run `git fetch origin` before switching to your member branch.
+Clone the repository with your GitHub account and run the contract checks from the repository root. If you already have a clone, run `git fetch origin` before switching to your member branch.
 
 ```sh
 git clone https://github.com/abdamin004/symbiosis-x.git

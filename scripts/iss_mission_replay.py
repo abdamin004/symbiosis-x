@@ -12,7 +12,7 @@ from symbiosis_x.simulation.spacecraft.atmosphere import advance_co2_ppm
 
 
 def build_replays(crew: list[dict]) -> tuple[dict, dict]:
-    scenario = json.loads((ROOT / "scenarios/variants/iss-research-pilot-v1.json").read_text())
+    scenario = json.loads((ROOT / "scenarios/variants/iss-research-pilot-v1.json").read_text(encoding="utf-8"))
     crew_ids = [member["crew_id"] for member in crew]
     runs = {}
     for count in range(len(crew_ids) + 1):
