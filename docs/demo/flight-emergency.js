@@ -44,6 +44,7 @@ function bindFlightEmergency({host, drills, getRunId, crewNames, session, clock}
   function reset() {
     caseData = null;
     operationId = undefined;
+    find("error").textContent = "";
     const procedure = activeDrill().procedure;
     controls.replaceChildren(...procedure.questions.map(question => {
       const label = document.createElement("label");

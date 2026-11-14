@@ -75,7 +75,7 @@ export default function EmergencyAssist() {
         </select>
         {procedure.questions.map(question => <label key={question.id} className="mt-3 block text-sm font-medium">
           {question.label}
-          <select value={answers[question.id] ?? "unknown"} disabled={busy || Boolean(caseData?.assessment)} onChange={event => {
+          <select id={question.id === "responsive" ? "responsiveness" : "emergency-" + question.id} value={answers[question.id] ?? "unknown"} disabled={busy || Boolean(caseData?.assessment)} onChange={event => {
             setAnswers({...answers,[question.id]:event.target.value});
             if (!caseData) operationId.current = null;
           }} className="mt-1 block w-full rounded-md border border-slate-300 p-2">
@@ -104,7 +104,7 @@ export default function EmergencyAssist() {
         <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
           <dt>Case</dt><dd>{caseData.case_id}</dd>
           <dt>Opened</dt><dd>{caseData.opened_at_s}s mission time</dd>
-          <dt>Assigned responder</dt><dd>{crewNames.get(caseData.owner) ?? caseData.owner}</dd>
+          <dt>Assigned responder</dt><dd data-testid="emergency-responder" data-crew-id={caseData.owner}>{crewNames.get(caseData.owner) ?? caseData.owner}</dd>
           <dt>Heart-rate data</dt><dd>{caseData.vitals.heart_rate}</dd>
           <dt>Responsiveness</dt><dd>{caseData.responsiveness ?? "Not applicable"}</dd>
           <dt>Escalation</dt><dd>{caseData.escalation.level}</dd>
