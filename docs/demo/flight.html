@@ -482,7 +482,22 @@ button[aria-pressed=true]{background:#3d315e}
 .launch-field[data-view=launch] .pad-checkout{padding-bottom:calc(clamp(116px,16vw,168px)*.6 + 2.8rem)}
 .launch-field[data-view=launch] .pad-checkout .launch-board{max-height:calc(100svh - var(--launch-clearance,100px) - clamp(116px,16vw,168px)*.6 - 3rem)}
 @media(max-width:850px){.launch-field[data-view=launch] .pad-checkout .launch-board{max-height:none}}
-#orbit-dialog{width:min(680px,calc(100% - 1.5rem))}
+#orbit-dialog{width:min(730px,calc(100% - 1.5rem))}
+.orbit-tabs{display:flex;gap:.35rem;margin:.65rem 0;padding:.28rem;background:#101a30;border-radius:7px}
+.orbit-tabs button{flex:1;min-height:34px;color:#bdc9e5;font-weight:650}
+.orbit-tabs [aria-selected=true]{background:#283962;color:#e7f3ff;box-shadow:inset 0 -2px #9bdcff}
+.orbit-panel{display:grid;gap:.55rem}
+.orbit-panel[hidden]{display:none}
+#orbit-dialog #navigation-track{width:100%;height:min(34dvh,300px);object-fit:contain;background:#0b1528}
+.orbit-legend{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:.3rem .75rem;margin:0;font-size:.74rem;color:#aebbd9}
+#orbit-dialog .orbit-telemetry{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.35rem;margin:0}
+#orbit-dialog .orbit-telemetry>div{display:grid;gap:.16rem;min-width:0;padding:.4rem .5rem;background:#192640}
+#orbit-dialog .orbit-telemetry :is(dt,dd){margin:0;overflow-wrap:anywhere}
+#orbit-dialog .orbit-telemetry dd{color:#b6e6ff;font-size:.94rem;font-variant-numeric:tabular-nums}
+.orbit-attitude{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.35rem .7rem;margin-top:.65rem;padding-top:.55rem;border-top:1px solid #6f86b34d}
+.orbit-attitude .choices{margin:0}.orbit-attitude-readout{display:grid;gap:.14rem;color:#aebbd9;font-size:.76rem}
+.orbit-attitude-readout output{color:#d8e6ff;font-weight:630}
+@media(max-width:530px){#orbit-dialog #navigation-track{height:min(31dvh,215px)}#orbit-dialog .orbit-telemetry{grid-template-columns:repeat(2,minmax(0,1fr))}}
 #process-dialog{width:min(670px,calc(100% - 1.5rem))}
 #process-dialog[data-demo-dock]{position:fixed;inset:auto auto max(.65rem,env(safe-area-inset-bottom)) max(.65rem,env(safe-area-inset-left));width:min(345px,calc(100vw - 1.3rem));max-height:43dvh;margin:0;z-index:11}
 #process-dialog[data-demo-dock] :is(#process-settings,#process-release,#process-recall,#process-verify,#process-comm-check,#process-list){display:none}
@@ -706,8 +721,9 @@ ul.tutorial-startup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));g
 .stage[data-asteria=true] .ribbon .resource{position:absolute;clip-path:inset(50%);width:1px;height:1px;overflow:hidden}
 #mission-command-widget .command-status{display:none}
 .command-resource{grid-column:1/-1;min-width:0}
-.mission-resources .command-resource{display:grid;grid-template-columns:3rem minmax(0,1fr)}
-.command-resource strong{font-weight:600;color:#aebde1}
+.mission-resources .command-resource{display:grid;grid-template-columns:4.6rem minmax(0,1fr);align-items:baseline;gap:.35rem}
+.command-resource strong{display:inline-flex;align-items:center;gap:.3rem;font-weight:600;color:#aebde1}
+.command-resource strong .icon{flex:none;align-self:center}
 .stage[data-asteria=true] .mission-resources{width:max-content;max-width:min(19rem,calc(100vw - 1.3rem));grid-template-columns:repeat(2,minmax(0,max-content))}
 #checkpoint-control{position:relative}
 #step:has(#flight-step-label:not([hidden])){display:flex;align-items:center;gap:.25rem}
@@ -819,7 +835,7 @@ ul.tutorial-startup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));g
   .stage[data-demo-crew] #personnel-widget #region-reading{display:block;line-height:1.15}
   .stage[data-demo-crew] #personnel-widget :is(#twin-layer-label,#region-source){display:none}
   .stage[data-asteria=true] .mission-resources{font-size:.61rem;gap:.08rem .3rem}
-  .mission-resources .command-resource{grid-template-columns:2.55rem minmax(0,1fr)}
+  .mission-resources .command-resource{grid-template-columns:4.15rem minmax(0,1fr)}
   #flight-playback:has(#checkpoint-control:not([hidden])){max-width:calc(100vw - 1.2rem)}
   #flight-playback:has(#checkpoint-control:not([hidden])) .control-deck{gap:.25rem}
   #flight-playback:has(#checkpoint-control:not([hidden])) .control-deck button{padding-inline:.32rem}
@@ -927,6 +943,17 @@ ul.tutorial-startup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));g
   border:1px solid var(--mark);border-radius:50%;background:#131e35;color:var(--mark)}
 .plan-mark .icon{width:.77rem;height:.77rem}
 .plan-milestones [data-step=current] .plan-mark{background:#342953;box-shadow:0 0 0 2px #c6b0ff3b}
+.route-summary{display:flex;align-items:center;justify-content:space-between;gap:.18rem .5rem;flex-wrap:wrap;
+  margin-top:.32rem;color:#b5c9e9;font-size:.68rem;line-height:1.25}
+.route-summary strong{font-weight:700;color:#e8deff}
+#map-route .plan-milestones{margin-top:.36rem;padding:.38rem .22rem .2rem;background:linear-gradient(#172641a8,#17264122);border-radius:6px}
+.plan-milestones li + li::before{height:2px;background:#40577c}
+.plan-milestones [data-step=complete] + li::before{background:#83d1b9}
+.plan-milestones [aria-current=step] .plan-milestone-label{font-weight:750}
+.plan-milestones [aria-current=step] .plan-mark{outline:1px solid currentColor;outline-offset:2px}
+#map-route .route-map text{fill:#c8d7f7;font-weight:650}
+#map-route .route-map .route-path{stroke:#8198c9;stroke-width:1.5;stroke-dasharray:4 3}
+#map-route .route-map .route-stop{fill:#8fa9d1;stroke:#172640}
 #mission-objectives{width:min(800px,calc(100vw - 24px))}
 #mission-objective-ship{font-size:.78rem;color:#cbbaff}
 #mission-objective-list{list-style:none;padding:0;margin:.85rem 0 0;display:grid;
@@ -1111,7 +1138,7 @@ __HUD_ICONS__
     <strong id="flight-mission-name" class="flight-mission-name"></strong>
     <span class="resource"><svg class="icon" aria-hidden="true"><use href="#hud-map"/></svg><output id="resource-phase"></output></span>
     <button type="button" id="show-inspector" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#hud-activity"/></svg>Inspector</button>
-    <button type="button" id="show-crew" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#hud-users"/></svg>Crew</button>
+    <button type="button" id="show-crew" aria-pressed="false" aria-controls="crew-widget"><svg class="icon" aria-hidden="true"><use href="#hud-users"/></svg>Crew roster</button>
     <button type="button" id="show-workflow" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#hud-clipboard-list"/></svg>Orders</button>
     <button type="button" id="show-processes"><svg class="icon" aria-hidden="true"><use href="#hud-clipboard-list"/></svg>Workflows</button>
     <button type="button" id="show-orbit" hidden>Orbit map</button>
@@ -1130,9 +1157,9 @@ __HUD_ICONS__
     <span><svg class="icon" aria-hidden="true"><use href="#hud-users"/></svg><output id="resource-crew"></output></span>
     <span><svg class="icon" aria-hidden="true"><use href="#hud-package"/></svg><output id="resource-meals"></output></span>
     <span><svg class="icon" aria-hidden="true"><use href="#hud-droplets"/></svg><output id="resource-water"></output><button id="show-provisions" type="button" hidden>Provisions</button></span>
-    <span class="command-resource" id="command-phase-readout" hidden><strong>Phase</strong><output id="command-phase" aria-label="Flight phase"></output></span>
-    <span class="command-resource" id="command-next-readout" hidden><strong>Next</strong><output id="command-next" aria-label="Next action"></output></span>
-    <span class="command-resource" id="command-reserve-readout" hidden><strong>Reserve</strong><output id="command-reserve" aria-label="Maneuver reserve"></output></span>
+    <span class="command-resource" id="command-phase-readout" hidden><strong><svg class="icon" aria-hidden="true"><use href="#hud-map"/></svg>Phase</strong><output id="command-phase" aria-label="Flight phase"></output></span>
+    <span class="command-resource" id="command-next-readout" hidden><strong><svg class="icon" aria-hidden="true"><use href="#hud-skip-forward"/></svg>Next</strong><output id="command-next" aria-label="Next action"></output></span>
+    <span class="command-resource" id="command-reserve-readout" hidden><strong><svg class="icon" aria-hidden="true"><use href="#hud-reserve-gauge"/></svg>Reserve</strong><output id="command-reserve" aria-label="Maneuver reserve"></output></span>
   </div>
   <nav class="crew-strip" id="crew-strip" aria-label="Astronaut portraits"></nav>
   <div class="flight-controls" id="flight-playback"><div class="control-deck" role="group" aria-label="Flight playback">
@@ -1474,11 +1501,12 @@ __HUD_ICONS__
   </div>
   <div class="minimap-screen">
     <div id="map-route">
+      <p class="route-summary" id="map-route-summary" hidden><strong id="map-route-stage"></strong><span id="map-route-progress"></span></p>
       <ol id="map-milestones" class="plan-milestones" aria-label="Mission phases"></ol>
       <div id="map-replay-route" hidden>
         <svg class="route-map" viewBox="0 0 260 58" aria-hidden="true">
-          <path d="M18 35 Q75 -4 130 17 Q190 -4 242 35" stroke="#8385bd" fill="none"/>
-          <circle cx="18" cy="35" r="4"/><circle cx="130" cy="17" r="4"/><circle cx="242" cy="35" r="4"/>
+          <path class="route-path" d="M18 35 Q75 -4 130 17 Q190 -4 242 35" fill="none"/>
+          <circle class="route-stop" cx="18" cy="35" r="4"/><circle class="route-stop" cx="130" cy="17" r="4"/><circle class="route-stop" cx="242" cy="35" r="4"/>
           <circle id="ship-position" cx="18" cy="35" r="5"/>
           <g fill="#bac5e7" font-size="10"><text x="3" y="55">Earth</text><text x="122" y="39">ISS</text><text x="218" y="55">Return</text></g>
         </svg>
@@ -1726,6 +1754,9 @@ __HUD_ICONS__
   </div>
 </dialog>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="hud-reserve-gauge" viewBox="0 0 24 24">
+    <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4.5 18a8.5 8.5 0 1 1 15 0M8 18h8m-4-3 4-4"/>
+  </symbol>
   <symbol id="hud-tutorial-launch" viewBox="0 0 24 24">
     <path d="M12 2c3 3 4 6 4 10v5H8v-5c0-4 1-7 4-10Z M8 12l-4 5v3l4-2m8-6 4 5v3l-4-2m-6 2-1 2m3-2v2m2-2 1 2"/>
     <circle cx="12" cy="10" r="1.4"/>
@@ -1778,25 +1809,38 @@ __HUD_ICONS__
 </dialog>
 <dialog id="orbit-dialog" class="mission-dialog" aria-labelledby="orbit-title">
   <div class="dialog-top"><h2 id="orbit-title">Orbit map</h2><form method="dialog"><button>Close</button></form></div>
-  <canvas id="navigation-track" width="560" height="300" role="img" aria-label="Earth, spacecraft trajectory and station orbit"></canvas>
-  <p><span id="navigation-ship-key" style="color:#fff0bf">▲ Ship</span><span id="navigation-station-key" style="color:#a6bcff"> · ● ISS reference</span></p>
-  <p id="navigation-basis"></p>
-  <dl class="launch-readouts">
-    <div><dt>Apoapsis</dt><dd id="navigation-ap"></dd></div>
-    <div><dt>Periapsis</dt><dd id="navigation-pe"></dd></div>
-    <div><dt>Altitude</dt><dd id="navigation-altitude"></dd></div>
-    <div><dt>Speed</dt><dd id="navigation-speed"></dd></div>
-    <div><dt>Period</dt><dd id="navigation-period"></dd></div>
-    <div><dt>Next decision</dt><dd id="navigation-target"></dd></div>
-    <div><dt>Relative navigation</dt><dd id="navigation-approach"></dd></div>
-    <div><dt>Navigation watch</dt><dd id="navigation-owner"></dd></div>
-    <div><dt>Propulsion</dt><dd id="navigation-stage"></dd></div>
-    <div><dt>Attitude</dt><dd id="navigation-attitude"></dd></div>
-    <div><dt>RCS reserve</dt><dd id="navigation-reserve"></dd></div>
-  </dl>
-  <div class="choices" aria-label="Commander attitude control">
-    <button type="button" data-attitude="-15">Rotate −15°</button>
-    <button type="button" data-attitude="15">Rotate +15°</button>
+  <div class="orbit-tabs" role="tablist" aria-label="Orbit map views">
+    <button type="button" role="tab" id="orbit-trajectory-tab" aria-controls="orbit-trajectory-panel" aria-selected="true">Trajectory</button>
+    <button type="button" role="tab" id="orbit-guidance-tab" aria-controls="orbit-guidance-panel" aria-selected="false" tabindex="-1">Guidance</button>
+  </div>
+  <section class="orbit-panel" id="orbit-trajectory-panel" role="tabpanel" aria-labelledby="orbit-trajectory-tab">
+    <canvas id="navigation-track" width="560" height="300" role="img" aria-label="Earth, spacecraft trajectory and station orbit"></canvas>
+    <p class="orbit-legend"><span><span id="navigation-ship-key" style="color:#fff0bf">▲ Ship</span><span id="navigation-station-key" style="color:#a6bcff"> · ● ISS reference</span></span><span id="navigation-basis"></span></p>
+    <dl class="launch-readouts orbit-telemetry">
+      <div><dt>Apoapsis</dt><dd id="navigation-ap"></dd></div>
+      <div><dt>Periapsis</dt><dd id="navigation-pe"></dd></div>
+      <div><dt>Altitude</dt><dd id="navigation-altitude"></dd></div>
+      <div><dt>Speed</dt><dd id="navigation-speed"></dd></div>
+      <div><dt>Period</dt><dd id="navigation-period"></dd></div>
+      <div><dt>Relative navigation</dt><dd id="navigation-approach"></dd></div>
+    </dl>
+  </section>
+  <section class="orbit-panel" id="orbit-guidance-panel" role="tabpanel" aria-labelledby="orbit-guidance-tab" hidden>
+    <dl class="launch-readouts orbit-telemetry">
+      <div><dt>Next decision</dt><dd id="navigation-target"></dd></div>
+      <div><dt>Navigation watch</dt><dd id="navigation-owner"></dd></div>
+      <div><dt>Propulsion</dt><dd id="navigation-stage"></dd></div>
+    </dl>
+  </section>
+  <div class="orbit-attitude">
+    <div class="orbit-attitude-readout">
+      <output id="navigation-attitude" aria-label="Spacecraft attitude"></output>
+      <output id="navigation-reserve" aria-label="RCS reserve"></output>
+    </div>
+    <div class="choices" aria-label="Commander attitude control">
+      <button type="button" data-attitude="-15">Rotate −15°</button>
+      <button type="button" data-attitude="15">Rotate +15°</button>
+    </div>
   </div>
 </dialog>
 <section id="flight-instrument" aria-label="Flight attitude instrument" hidden>
