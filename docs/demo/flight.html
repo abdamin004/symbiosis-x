@@ -1812,6 +1812,7 @@ __HUD_ICONS__
   <div class="orbit-tabs" role="tablist" aria-label="Orbit map views">
     <button type="button" role="tab" id="orbit-trajectory-tab" aria-controls="orbit-trajectory-panel" aria-selected="true">Trajectory</button>
     <button type="button" role="tab" id="orbit-guidance-tab" aria-controls="orbit-guidance-panel" aria-selected="false" tabindex="-1">Guidance</button>
+    <button type="button" role="tab" id="orbit-mission-tab" aria-controls="orbit-mission-panel" aria-selected="false" tabindex="-1">Mission</button>
   </div>
   <section class="orbit-panel" id="orbit-trajectory-panel" role="tabpanel" aria-labelledby="orbit-trajectory-tab">
     <canvas id="navigation-track" width="560" height="300" role="img" aria-label="Earth, spacecraft trajectory and station orbit"></canvas>
@@ -1830,6 +1831,13 @@ __HUD_ICONS__
       <div><dt>Next decision</dt><dd id="navigation-target"></dd></div>
       <div><dt>Navigation watch</dt><dd id="navigation-owner"></dd></div>
       <div><dt>Propulsion</dt><dd id="navigation-stage"></dd></div>
+    </dl>
+  </section>
+  <section class="orbit-panel" id="orbit-mission-panel" role="tabpanel" aria-labelledby="orbit-mission-tab" hidden>
+    <dl class="launch-readouts orbit-telemetry">
+      <div><dt>Mission stage</dt><dd id="orbit-mission-stage"></dd></div>
+      <div><dt>Current objective</dt><dd id="orbit-mission-objective"></dd></div>
+      <div><dt>Mission progress</dt><dd id="orbit-mission-progress"></dd></div>
     </dl>
   </section>
   <div class="orbit-attitude">
