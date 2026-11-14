@@ -34,6 +34,7 @@ class CrewHealthTwin(RunView):
     emergency: EmergencyCase | None
     ground_delivery: CaseDelivery | None
     gravity_context: GravityContext | None
+    cabin_exposure: dict | None = None
     medical_timeline: MedicalTimeline | None
 
 
@@ -86,5 +87,6 @@ def read_health_twin(db: Connection, run_id: str, crew_id: str) -> CrewHealthTwi
         health_assessment=crew.health_assessment, health_trend=crew.health_trend,
         health_followup=crew.health_followup, emergency=emergency, ground_delivery=delivery,
         gravity_context=gravity,
+        cabin_exposure=crew.cabin_exposure,
         medical_timeline=medical_timeline,
     )

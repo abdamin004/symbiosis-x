@@ -6,6 +6,7 @@ from sqlite3 import Connection, Row
 
 from symbiosis_x.application.runs import RunNotFound
 from symbiosis_x.crew.profile import profile_for_crew
+from symbiosis_x.crew.submission_cabin import cabin_exposure, RECOVERY_S
 from symbiosis_x.crew.followup import compute_followup
 from symbiosis_x.crew.measurements import latest_crew_assessment
 from symbiosis_x.crew.trends import TrendSample, evaluate_trend
@@ -87,6 +88,7 @@ def read_crew(db: Connection, run_id: str, crew_id: str = "SIM-01") -> CurrentCr
         (run_id, run["mission_s"]),
     ).fetchone()
     assessment = latest_crew_assessment(db, run_id, profile)
+    exposure = cabin_exposure(crew_id, min(run["mission_s"], RECOVERY_S)) if run["scenario_id"] == "health-story" else None
     return CurrentCrewView(
         **dict(run),
         co2=AcceptedCO2(**dict(co2)) if co2 else None,
@@ -94,6 +96,7 @@ def read_crew(db: Connection, run_id: str, crew_id: str = "SIM-01") -> CurrentCr
         health_assessment=assessment,
         health_followup=compute_followup(db, run_id, crew_id, run["mission_s"], assessment),
         health_trend=latest_crew_trend(db, run_id, crew_id),
+        cabin_exposure=exposure,
         trace=read_trace(db, run_id, run["mission_s"]),
     )
 

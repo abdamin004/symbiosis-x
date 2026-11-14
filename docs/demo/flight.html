@@ -1902,6 +1902,8 @@ __HUD_ICONS__
   </div>
 </section>
 </main>
+<style>__HEALTH30_STYLE__</style>
+<section id="health30" aria-label="30-second astronaut health demonstration" hidden></section>
 <script type="application/json" id="flight-data">__FLIGHT_DATA__</script>
 <script>
 __FLIGHT_WORKFLOW__
@@ -1912,6 +1914,7 @@ __LAUNCH_SCENE__
 __FLIGHT_MISSIONS__
 __FLIGHT_DEMO__
 __FLIGHT_HEALTH_STORY__
+__FLIGHT_HEALTH30__
 __LAUNCH_CHECKOUT__
 __FLIGHT_CREW__
 __FLIGHT_GALLEY__
@@ -4810,6 +4813,10 @@ element("end-mission-menu").addEventListener("click", () => {
 });
 widgets.layout();
 render();
+const submissionQuery = new URLSearchParams(location.search);
+if (submissionQuery.get("demo") === "health30") bindHealth30({
+  host:element("health30"), data, zones, hull:element("hull"), query:submissionQuery,
+});
 </script>
 </body>
 </html>

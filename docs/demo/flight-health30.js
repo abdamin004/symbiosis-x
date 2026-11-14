@@ -1,0 +1,203 @@
+const health30Cues = [
+  [0, "launch", "SYMBIOSIS X · A digital twin of the astronaut and the ship"],
+  [3, "astronaut", "Astronaut twin · Sana’s readings alongside her personal baselines"],
+  [7, "deck", "Ship twin · Simulated sensors report from every room"],
+  [11, "fault", "Scrubber fails, CO₂ rises, and Sana’s twin flags exposure"],
+  [15, "emergency", "Emergency guidance onboard. No Ground link needed."],
+  [19, "repair", "Ivo restores scrubber flow. The cabin CO₂ trend turns downward."],
+  [22, "relay", "Ground twin · An approved update arrives after a delay"],
+  [26, "eva", "The same twins follow the whole mission"],
+  [26.5, "dock", "The same twins follow the whole mission"],
+  [27, "research", "The same twins follow the whole mission"],
+  [27.5, "land", "The same twins follow the whole mission"],
+  [28, "end", ""],
+];
+
+function bindHealth30({host,data,zones,hull,query}) {
+  host.innerHTML = `
+    <canvas class="health30-launch" aria-label="Horizon launch"></canvas>
+    <div class="health30-brand"><span>CREWSYNC</span><strong>SYMBIOSIS X</strong></div>
+    <div class="health30-crew"></div>
+    <div class="health30-hull"></div>
+    <canvas class="health30-docking" width="760" height="320" aria-label="ISS docking"></canvas>
+    <p class="health30-docking-caption" hidden></p>
+    <article class="health30-panel"></article>
+    <div class="health30-end"><span>CREWSYNC</span><h1>SYMBIOSIS X</h1><p>A digital twin of the astronaut and the ship,<br>delivered to Ground.</p><small>NASA Inspiration4 · Spaceflight Standard Measures</small></div>
+    <p class="health30-caption" aria-live="off"></p>
+    <p class="health30-synthetic">Synthetic crew data · simulation</p>`;
+  const find = selector => host.querySelector(selector);
+  const crew = find(".health30-crew");
+  for (const member of data.health30_profiles) {
+    const name = document.createElement("span");
+    name.textContent = member.display_name;
+    name.dataset.crew = member.crew_id;
+    crew.append(name);
+  }
+  const ship = find(".health30-hull");
+  const shipImage = document.createElement("img");
+  shipImage.alt = "Horizon’s instrumented spacecraft cutaway";
+  shipImage.src = hull.toDataURL();
+  ship.append(shipImage);
+  const launcher = createLaunchScene(find(".health30-launch"));
+  const docking = createDockingScene(find(".health30-docking"),find(".health30-docking-caption"));
+  const panel = find(".health30-panel");
+  const cabin = data.health30_cabin;
+  const summary = new Intl.NumberFormat("en-US");
+  const ppm = number => summary.format(number);
+  const sampleAt = time => cabin.samples[Math.min(cabin.samples.length - 1,Math.floor(time/cabin.sample_s))];
+  const timeLabel = seconds => "T+" + String(Math.floor(seconds / 60)).padStart(2,"0") + ":" + String(seconds % 60).padStart(2,"0");
+  const asText = (node,text) => {node.textContent = text; return node;};
+
+  const readings = [
+    ["Heart rate","76","bpm","72 bpm"],
+    ["Blood pressure","112/74","mmHg","110/72 mmHg"],
+    ["Blood glucose","91","mg/dL","89 mg/dL"],
+    ["Temperature","36.7","°C","36.6 °C"],
+    ["Sleep duration","7.4","hr","7.5 hr"],
+    ["Sleep quality","4","/5","4/5"],
+    ["Mood","4","/5","4/5"],
+    ["Symptoms","None","","None reported"],
+  ];
+  const assets = [
+    ["command-01","Mission clock","00:00"],
+    ["habitat-01","Bunks · potable water","2 occupied · 24 L"],
+    ["life-support-01","Scrubber · cabin CO₂","20 m³/h · 2,000 ppm"],
+    ["medical-01","Measurement kit","3 instruments ready"],
+    ["engineering-01","Power bus","0.60 kW headroom"],
+    ["comms-01","Relay queue","Link online"],
+    ["cargo-01","Airlock and hatches","101.3 kPa · sealed"],
+  ];
+
+  function astronaut() {
+    panel.innerHTML = `<small>ASTRONAUT TWIN · PRIVATE CREW</small><h2>Sana Kepler</h2>
+      <div class="health30-readings"></div>
+      <div class="health30-history"><span>Heart-rate history</span><svg viewBox="0 0 240 46" role="img" aria-label="Synthetic heart-rate history in the shaded personal band"><rect y="5" width="240" height="34" fill="#70c9ba32"/><path d="M0 30L80 19L160 27L240 16" fill="none" stroke="#9cebd0" stroke-width="3"/></svg></div>
+      <p><b>Fictional history</b> · Preflight equipment check recorded · prior adhesive sensitivity reported</p>
+      <p><b>Next check</b> · Repeat wrist reading on the next watch</p>
+      <footer>Synthetic rehearsal values · observed T+00:00 · accepted</footer>`;
+    for (const [name,value,unit,baseline] of readings) {
+      const row = document.createElement("div");
+      row.innerHTML = `<span>${name}</span><strong>${value} <small>${unit}</small></strong><span>Baseline ${baseline}</span>`;
+      panel.querySelector(".health30-readings").append(row);
+    }
+  }
+
+  function deck() {
+    panel.innerHTML = '<small>SHIP TWIN</small><h2>Horizon equipment</h2><p>Instrumented equipment · simulated sensors</p><div class="health30-deck"></div>';
+    assets.forEach(([id,name,value],index) => {
+      const area = Object.create(null);
+      area.name = data.rooms.find(room => room.room_id === id)?.name ?? id;
+      const row = document.createElement("div");
+      row.style.setProperty("--reveal", index * 190 + "ms");
+      row.append(asText(document.createElement("b"),area.name),
+        asText(document.createElement("span"),name),asText(document.createElement("strong"),value),
+        asText(document.createElement("small"),"Age 0 s"));
+      panel.querySelector(".health30-deck").append(row);
+    });
+  }
+
+  function air(repair) {
+    panel.innerHTML = `<small>SHIP TWIN · LIFE SUPPORT</small><h2>Cabin CO₂</h2>
+      <strong class="health30-hero-value"></strong>
+      <div class="health30-plot"><span>Demo limit 3,200 ppm</span><svg viewBox="0 0 430 110" role="img" aria-label="Modeled cabin CO₂ history and the 3,200 ppm demo limit"><line x1="0" x2="430" y1="29" y2="29" stroke="#ffc18f" stroke-dasharray="6 5"/><polyline fill="none" stroke="#9bdcff" stroke-width="4"/></svg></div>
+      <p class="health30-air-status"></p>
+      <p>${repair ? "Crew order · Ivo Reyes · Scrubber repair verified" : "Sana · Suspected cabin exposure. Request an onboard check."}</p>
+      <footer>Simulated cabin model · mission time compressed · <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11357997/">Inspiration4 CO₂ and HRV research · Jones et al., 2024</a></footer>`;
+  }
+
+  function paintAir(time,repair) {
+    const stageTime = repair ? cabin.repair_s + (cabin.samples.at(-1).time_s - cabin.repair_s) * Math.min(1,(time - 19)/3)
+      : 4200 + (cabin.repair_s - 4200) * Math.min(1,(time - 11)/3.5);
+    const latest = sampleAt(stageTime);
+    panel.querySelector(".health30-hero-value").textContent = ppm(latest.ppm) + " ppm";
+    const points = cabin.samples.filter(sample => sample.time_s <= latest.time_s).map(sample =>
+      (430 * sample.time_s / cabin.samples.at(-1).time_s).toFixed(1) + "," + (100 - (sample.ppm - 1950) * 71/1250).toFixed(1));
+    panel.querySelector("polyline").setAttribute("points",points.join(" "));
+    panel.querySelector(".health30-air-status").textContent = repair ? "↓ Falling after repair · 20 m³/h" : "↑ Rising · scrubber offline · 0 m³/h";
+    panel.dataset.alert = !repair && latest.ppm >= cabin.limit_ppm ? "true" : "false";
+  }
+
+  function emergency() {
+    panel.innerHTML = `<small>ASTRONAUT TWIN · EMERGENCY ASSIST</small><h2>Separate chest-pain drill</h2>
+      <div class="health30-callout"><b>Mara Vale · Onboard responder</b><strong>Sana Kepler</strong><span>Acknowledged · T+06:00</span></div>
+      <p>Responsive · breathing · pain ongoing</p>
+      <ol id="health30-guidance"></ol>
+      <footer>Simulated training · mission-approved procedures govern flight response</footer>`;
+    const drill = data.emergency_drills?.find(item => item.kind === "chest_pain");
+    const steps = drill && typeof resolveEmergencyGuidance === "function"
+      ? resolveEmergencyGuidance(drill.procedure,{responsive:"yes",breathing:"yes",pain_ongoing:"yes"}) : [
+        "Open the local training alert.", "Assign a crew responder and record acknowledgment.",
+      ];
+    for (const step of steps) panel.querySelector("ol").append(asText(document.createElement("li"),step));
+  }
+
+  function relay() {
+    panel.innerHTML = `<small>GROUND TWIN · DELAYED OPERATIONAL VIEW</small><h2>Approved case status</h2>
+      <div class="health30-link"><b>Horizon</b><span><i>●</i></span><b>Ground</b></div>
+      <strong class="health30-relay-status"></strong><p class="health30-relay-time"></p>
+      <p><b>Delivered</b> · Training case · Urgent · Acknowledged · Cabin CO₂ ${ppm(cabin.samples.at(-1).ppm)} ppm</p>
+      <p><b>Withheld onboard</b></p>
+      <div class="health30-chips"><span>Heart rate</span><span>Wearable samples</span><span>Check-in notes</span><span>Medical history</span></div>`;
+  }
+
+  function showBeat(beat) {
+    host.dataset.beat = beat;
+    panel.dataset.alert = "false";
+    panel.hidden = ["launch","dock","land","end"].includes(beat);
+    panel.replaceChildren();
+    if (beat === "launch") {
+      launcher.show({phase:"pad",elapsed:0,ship:"Horizon",separated:false,burning:false},false);
+      launcher.show({phase:"ascent",elapsed:0,ship:"Horizon",separated:false,burning:true},true);
+    } else if (beat === "astronaut") astronaut();
+    else if (beat === "deck") deck();
+    else if (beat === "fault" || beat === "repair") air(beat === "repair");
+    else if (beat === "emergency") emergency();
+    else if (beat === "relay") relay();
+    else if (beat === "eva" || beat === "research") {
+      panel.innerHTML = beat === "eva"
+        ? "<small>EXTERIOR WORK</small><h2>Suit twin</h2><p>Antenna inspection · tether and suit telemetry</p>"
+        : "<small>ISS OPERATIONS</small><h2>Station research</h2><p>Paired motion samples logged by Sana</p>";
+    } else if (beat === "dock") docking.show({phase:"captured",range:0,ship:"Horizon",caption:"ISS docking"});
+    else if (beat === "land") {
+      const recovery = document.getElementById("return-scene").cloneNode(true);
+      recovery.removeAttribute("id");
+      recovery.classList.add("health30-recovery");
+      recovery.dataset.phase = "splashdown";
+      recovery.hidden = false;
+      host.append(recovery);
+    }
+    if (beat === "end") host.querySelector(".health30-recovery")?.remove();
+  }
+
+  const initial = Math.min(30,Math.max(0,Number(query.get("t")) || 0));
+  let previous;
+  const started = performance.now();
+  host.hidden = false;
+  document.body.classList.add("health30-active");
+  function tick(now) {
+    const time = Math.min(30,initial + (now - started)/1000);
+    const [,beat,caption] = health30Cues.findLast(([at]) => at <= time);
+    if (previous !== beat) {
+      showBeat(beat);
+      find(".health30-caption").textContent = caption;
+      previous = beat;
+    }
+    if (beat === "fault" || beat === "repair") paintAir(time,beat === "repair");
+    if (beat === "launch") {
+      host.dataset.liftoff = String(time < 1.5);
+    }
+    if (beat === "relay") {
+      const progress = Math.min(1,(time - 22)/3);
+      panel.style.setProperty("--packet-progress", (progress*100) + "%");
+      panel.querySelector(".health30-relay-status").textContent = progress === 1
+        ? "Delivered to Ground" : "In transit · " + Math.ceil((1-progress)*300) + " s";
+      panel.querySelector(".health30-relay-time").textContent = progress === 1
+        ? "Sent T+06:00 · Received T+11:00 · 300 s mission delay"
+        : "Sent T+06:00 · Expected T+11:00";
+    }
+    host.dataset.elapsed = time.toFixed(2);
+    if (time < 30) requestAnimationFrame(tick);
+    else host.dataset.complete = "true";
+  }
+  tick(started);
+}

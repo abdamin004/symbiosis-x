@@ -21,6 +21,7 @@ else:
 
 
 from symbiosis_x.simulation.spacecraft.provisions import flight_rules
+from symbiosis_x.crew.submission_cabin import submission_cabin
 from symbiosis_x.workflows.eva import build_eva_rehearsal
 
 
@@ -42,6 +43,8 @@ def build(output: Path) -> None:
     eva = json.loads((ROOT / "scenarios/variants/eva-antenna-service-v1.json").read_text())
     data = json.dumps({
         "provisions": flight_rules(),
+        "health30_cabin": submission_cabin(),
+        "health30_profiles": crew,
         "metrics": json.loads((ROOT / "catalogs/crew/health-metrics.json").read_text())["metrics"],
         "rooms": rooms, "crew": crew_ids, "activity_s": ACTIVITY_S, "missions": missions,
         "airlock": build_airlock_rehearsal(),
@@ -65,6 +68,8 @@ def build(output: Path) -> None:
     checkout = (ROOT / "docs/demo/launch-checkout.js").read_text(encoding="utf-8")
     timed_demo = (ROOT / "docs/demo/flight-demo.js").read_text(encoding="utf-8")
     health_story = (ROOT / "docs/demo/flight-health-story.js").read_text(encoding="utf-8")
+    health30 = (ROOT / "docs/demo/flight-health30.js").read_text(encoding="utf-8")
+    health30_style = (ROOT / "docs/demo/flight-health30.css").read_text(encoding="utf-8")
     anatomy = (ROOT / "docs/demo/flight-anatomy.html").read_text(encoding="utf-8")
     crew_routines = (ROOT / "docs/demo/flight-crew.js").read_text(encoding="utf-8")
     galley = (ROOT / "docs/demo/flight-galley.js").read_text(encoding="utf-8")
@@ -79,7 +84,8 @@ def build(output: Path) -> None:
         .replace("__FLIGHT_STATIONS__", stations).replace("__LAUNCH_SCENE__", launch_scene)
         .replace("__FLIGHT_MISSIONS__", missions_ui)
         .replace("__FLIGHT_DEMO__", timed_demo).replace("__LAUNCH_CHECKOUT__", checkout).replace("__HUD_ICONS__", icons)
-        .replace("__FLIGHT_HEALTH_STORY__", health_story)
+        .replace("__FLIGHT_HEALTH_STORY__", health_story).replace("__FLIGHT_HEALTH30__", health30)
+        .replace("__HEALTH30_STYLE__", health30_style)
         .replace("__FLIGHT_ANATOMY__", anatomy).replace("__FLIGHT_CREW__", crew_routines)
         .replace("__FLIGHT_GALLEY__", galley)
         .replace("__DOCKING_SCENE__", docking_scene).replace("__FLIGHT_NAVIGATION__", navigation)
