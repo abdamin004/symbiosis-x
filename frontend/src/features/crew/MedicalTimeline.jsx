@@ -2,6 +2,7 @@ import {useEffect, useState} from "react";
 import {Link, useParams, useSearchParams} from "react-router-dom";
 import {readCrewHealthTwin} from "../../api/client.js";
 import SpaceflightEvidence from "./SpaceflightEvidence.jsx";
+import SleepPhaseArchive from "./SleepPhaseArchive.jsx";
 
 function missionTime(seconds) {
   return Math.floor(seconds / 60) + ":" + String(seconds % 60).padStart(2, "0");
@@ -68,6 +69,7 @@ function MedicalRecord({runId, crewId}) {
           </li>)}</ol> : <p className="mt-2 text-sm">Awaiting the first observation.</p>}
       </section>}
       {timeline?.genetics_note && <SpaceflightEvidence note={timeline.genetics_note} />}
+      {Boolean(response?.sleep_archive?.length) && <SleepPhaseArchive phases={response.sleep_archive} />}
       {response && <section className="mt-5 rounded-lg border border-slate-200 bg-white p-4" aria-labelledby="medical-emergency-title">
         <h2 id="medical-emergency-title" className="font-semibold">Emergency training</h2>
         {response.emergency && <p className="mt-2 text-sm">Current case · {response.emergency.status} · Responder {response.emergency.owner}</p>}

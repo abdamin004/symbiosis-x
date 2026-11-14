@@ -150,6 +150,12 @@ test("Mara's live Flight twin explains review and shares only a delayed case sta
   await page.getByText("Genetics and spaceflight research", {exact:true}).click();
   await expect(page.getByText("The training record has no gene expression assay result", {exact:false})).toBeVisible();
   await expect(page.getByRole("link", {name:/OSD-575 v3/})).toHaveAttribute("href", /\/OSD-575$/);
+  const sleep = page.getByRole("region", {name:"Sleep before, during and after flight"});
+  await expect(sleep).toBeVisible();
+  for (const phase of ["Before flight", "During flight", "After flight"]) {
+    await expect(sleep.getByRole("region", {name:phase})).toContainText("Mean duration");
+    await expect(sleep.getByRole("region", {name:phase})).toContainText("Mean quality");
+  }
   await page.getByRole("link",{name:"Open collapse drill"}).click();
   await expect(page.getByLabel("Choose scripted drill")).toHaveValue("drill-collapse-v1");
   expect(errors).toEqual([]);

@@ -210,6 +210,8 @@ Checked 2026-11-14. The [data intake log](data/intake.md#inspiration4-research-e
 | [NASA Spaceflight Standard Measures](https://www.nasa.gov/directorates/smd/space-life-physical-sciences-research-applications-division/human-research-program/spaceflight-standard-measures-characterizing-how-humans-adapt-in-space/) | The actigraphy and questionnaire entries describe complementary objective and self-reported sleep measures and mood. The sensorimotor entry describes preflight and postflight heart-rate and blood-pressure measures. | Choice of indicators and separation of duration from reported quality in the Crew twin. |
 | [NASA Flight Crew Physiological Data for Crew State Monitoring](https://catalog.data.gov/dataset/flight-crew-physiological-data-for-crew-state-monitoring) | An aviation pilot/copilot simulator study with attentive-state labels. Reviewed for scope and excluded from detection validation. | The validation report uses the synthetic astronaut dataset. This comparator supports no product claim. |
 
+Medical’s sleep archive reads each selected astronaut’s before-, during- and after-flight summary from `scenarios/mission-30d-v1.json`. The Crew route serves only phase means and sample counts for that subject. The archive labels duration and self-reported quality separately and displays unavailable observations as unobserved. It stays independent of the current mission clock.
+
 ## Mission brief verification for the judging demo
 
 | Challenge requirement | Live verification |

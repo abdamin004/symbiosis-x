@@ -161,6 +161,20 @@ def test_medical_cases_hide_future_evidence_and_stay_onboard(mission):
     assert request("GET", run + "/crew/health-twin", role="ground", params={"crew_id": "SIM-01"}).status_code == 403
 
 
+def test_sleep_archive_filters_the_selected_subject_at_the_crew_boundary(mission):
+    request, run, _ = mission
+    fixture = json.loads((ROOT / "scenarios/mission-30d-v1.json").read_text(encoding="utf-8"))
+    for crew_id in ("SIM-01", "SIM-02"):
+        expected = [
+            {key: value for key, value in row.items() if key != "crew_id"}
+            for row in fixture["sleep_phase_summary"] if row["crew_id"] == crew_id
+        ]
+        assert {row["phase"] for row in expected} == {"preflight", "inflight", "postflight"}
+        assert twin(request, run, crew_id)["sleep_archive"] == expected
+
+    assert "sleep_archive" not in request("GET", run + "/ground", role="ground").json()
+
+
 def test_gravity_context_follows_phase_boundaries_and_stays_onboard(mission):
     request, run, _ = mission
     assert twin(request, run, "SIM-02")["gravity_context"] is None
