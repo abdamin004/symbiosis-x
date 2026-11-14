@@ -60,12 +60,13 @@ export default function EmergencyAssist() {
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8" data-testid="emergency-assist">
+    <main className="sx-shell mx-auto max-w-3xl px-4 py-8" data-testid="emergency-assist">
       <Link className="text-sm text-slate-500 underline" to={"/runs/" + encodeURIComponent(runId) + "/crew"}>Back to Crew Health</Link>
       <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-amber-800">Synthetic training simulation only</p>
       <h1 className="mt-1 text-2xl font-semibold">Emergency Assist</h1>
       <p className="mt-2 text-sm text-slate-600">The drill raises a local onboard alert. It does not wait for vital readings or Ground connectivity.</p>
       <form className="mt-6 rounded-lg border border-slate-200 bg-white p-4" onSubmit={trigger}>
+        <button type="submit" disabled={busy || !!caseData} className="mb-5 w-full rounded-xl border-2 border-red-400 bg-red-800 px-5 py-4 text-lg font-bold text-white disabled:opacity-50">{busy ? "Opening…" : "🚨 Raise local drill alert"}</button>
         <label htmlFor="emergency-drill" className="block text-sm font-semibold">Choose scripted drill</label>
         <select id="emergency-drill" value={drillId} disabled={busy} onChange={(event) => {
           setDrillId(event.target.value); setCaseData(null); setShare(null); setAnswers({}); setError("");
@@ -90,7 +91,7 @@ export default function EmergencyAssist() {
           {procedure.sources.map(source => <li key={source.url}><a className="underline" href={source.url} target="_blank" rel="noreferrer">{source.title}</a></li>)}
         </ul>
         <p className="mt-3 text-xs text-slate-500">Reporter {crewNames.get(selected.reported_by)} · Subject {crewNames.get(selected.subject_crew_id)} · Local responder {crewNames.get(selected.responder_crew_id)}</p>
-        <button type="submit" disabled={busy || !!caseData} className="mt-4 rounded-md bg-red-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{busy ? "Opening…" : "Raise local drill alert"}</button>
+
       </form>
       {error && <p role="alert" className="mt-4 rounded bg-red-50 p-3 text-sm text-red-800">{error}</p>}
       {caseData && <section className="mt-6 rounded-lg border-2 border-amber-400 bg-amber-50 p-4" role="status" data-testid="emergency-case">
