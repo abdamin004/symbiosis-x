@@ -120,6 +120,19 @@ function bindFlightEmergency({host, drills, getRunId, crewNames, session, clock}
   });
 
   return {
+    issueFor(subjectId) {
+      if (!caseData || caseData.subject_crew_id !== subjectId) return null;
+      // Only a known localization or the explicit chest-pain drill maps to a body marker.
+      const region = caseData.body_region || (caseData.kind === "chest_pain" ? "torso" : null);
+      if (!["head","torso","right-arm","left-arm","wrist","right-leg","left-leg"].includes(region)) return null;
+      return {
+        region, title:"Reported "+caseData.kind.replaceAll("_"," ")+" · local case",
+        symptoms:caseData.report ?? "Crew-reported concern",
+        evidence:"Reported Crew case, not an inferred diagnosis",
+        action:"Follow the approved mission medical procedure and assigned onboard responder",
+        missionTime:caseData.opened_at_s, source:"onboard emergency case",
+      };
+    },
     show() {
       if (!getRunId() || host.open) return;
       reset();

@@ -36,6 +36,8 @@ export default function HealthReminders({ runId, followup, measureHref, emergenc
   const [error, setError] = useState("");
   if (!followup) return null;
   const emergency = followup.precedence === "emergency" ? followup.emergency : null;
+  const completed = followup.reminders.filter(reminder => reminder.status === "acknowledged").length;
+  const total = followup.reminders.length;
 
   async function acknowledge(reminder) {
     setBusy(reminder.reminder_id); setError("");
@@ -59,6 +61,14 @@ export default function HealthReminders({ runId, followup, measureHref, emergenc
         <p className="text-xs text-slate-500">Private · {followup.schedule_version} · synthetic demo cadence</p>
       </div>
 
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-cyan-500/50 bg-slate-800 p-3" data-testid="health-routine-progress">
+        <div>
+          <p className="text-sm font-semibold">Crew health routine · acknowledgment progress</p>
+          <p className="text-xs">Acknowledged follow-ups: {completed} of {total}. Completing a checklist is not proof of medical fitness.</p>
+        </div>
+        <span className="rounded-full border border-cyan-300 px-3 py-2 text-sm font-bold">{total ? Math.round(100*completed/total) : 0}%</span>
+        <progress max={Math.max(total,1)} value={completed} className="h-2 w-full" aria-label="Follow-ups acknowledged" />
+      </div>
       {emergency && (
         <div role="alert" data-testid="reminders-emergency"
           className="mt-3 rounded-md border-2 border-red-500 bg-red-50 p-3 text-sm text-red-900">

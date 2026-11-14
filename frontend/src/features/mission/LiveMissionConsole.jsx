@@ -5,6 +5,7 @@ import ApprovalPanel from "../crew/ApprovalPanel.jsx";
 import CandidateList from "../crew/CandidateList.jsx";
 import CheckInForm from "../crew/CheckInForm.jsx";
 import { CrewHealthDashboard } from "../crew/CrewHealthPanel.jsx";
+import SpaceflightHazards from "../crew/SpaceflightHazards.jsx";
 import HealthReminders from "../crew/HealthReminders.jsx";
 import HealthTrend from "../crew/HealthTrend.jsx";
 import GroundHealthStatus from "../ground/GroundHealthStatus.jsx";
@@ -71,6 +72,7 @@ function RunProjection({ role, runId, crewId }) {
         <CrewHealthDashboard profile={view.health_profile} assessment={view.health_assessment} metrics={HEALTH_METRICS}
           measureHref={"/runs/" + encodeURIComponent(runId) + "/crew/measure" + subjectQuery}
           emergencyHref={"/runs/" + encodeURIComponent(runId) + "/crew/emergency"} />
+        <SpaceflightHazards />
         <HealthReminders runId={runId} followup={view.health_followup}
           measureHref={"/runs/" + encodeURIComponent(runId) + "/crew/measure" + subjectQuery}
           emergencyHref={"/runs/" + encodeURIComponent(runId) + "/crew/emergency"}

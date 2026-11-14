@@ -225,6 +225,20 @@ function bindFlightHealthStory({find, clock, metrics, openTwin, onUpdate}) {
   return {
     start, stop, update,
     runId() { return session?.view?.run_id; },
+    // Only a reported localized case is mapped to an anatomical hotspot.
+    // No unsupported localization for collapse, general exposure or sensor changes.
+    issueFor(subjectId) {
+      const reported=session?.view?.emergency;
+      if (!reported || reported.kind !== "chest_pain" ||
+          (reported.subject_crew_id ?? crewId) !== subjectId) return null;
+      return {
+        region:"torso", title:"Reported chest pain · local emergency",
+        symptoms:reported.report ?? "Chest-pain emergency drill reported by Crew",
+        evidence:"Reported symptom only; not a diagnosis or inferred heart condition",
+        action:"Follow the approved onboard emergency procedure and contact the responder",
+        missionTime:reported.opened_at_s, source:"onboard emergency case",
+      };
+    },
     visibleFor(id, timed) { return Boolean(timed && id === crewId && session?.view); },
   };
 }
