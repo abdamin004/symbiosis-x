@@ -171,6 +171,11 @@ export default function RadiationContext({ series = archiveSeries }) {
       </p>
 
       <RadiationChart series={series} />
+      <aside className="mt-3 rounded-md border border-amber-400 bg-slate-800 p-3 text-sm" data-testid="neutron-context-note">
+        <strong>Neutron radiation requires a separate detector.</strong> This archived chart is not a neutron-specific measurement or an individual astronaut dose.
+        The Canadian Space Agency describes CANS as an autonomous neutron monitor.
+        {" "}<a className="underline" href="https://www.asc-csa.gc.ca/eng/news/articles/2026/2026-02-26-monitoring-radiation-astronaut-health.asp" rel="noreferrer" target="_blank">CSA research source</a>.
+      </aside>
 
       <p className="mt-2 text-sm text-slate-600">
         ISS instrument archive for mission context; separate from the fictional astronaut health readings.
