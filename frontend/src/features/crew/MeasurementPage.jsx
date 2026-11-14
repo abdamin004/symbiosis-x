@@ -115,7 +115,7 @@ function MeasurementForm({ runId, selectedCrew, initialMetric }) {
     finally { setSaving(false); }
   }
   return (
-    <main className="mx-auto max-w-5xl px-4 py-8" data-testid="measurement-page">
+    <main className="sx-shell mx-auto max-w-5xl px-4 py-8" data-testid="measurement-page">
       <header className="border-b border-slate-200 pb-4">
         <Link className="text-sm text-slate-500 underline" to={`/runs/${encodeURIComponent(runId)}/crew` + (selectedCrew ? "?crew_id=" + encodeURIComponent(selectedCrew) : "")}>Back to Crew Health</Link>
         <h1 className="mt-2 text-2xl font-semibold">Take a measurement</h1>
