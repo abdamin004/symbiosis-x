@@ -8,6 +8,34 @@ function createFlightWidgets(overlay, shelf, notice, fixedControls = []) {
   const clamp = (value, max) => Math.max(0, Math.min(value, max));
   const rect = entry => ({...entry.position,w:entry.panel.offsetWidth,h:entry.panel.offsetHeight});
   let focused = null;
+  const ribbonPopupIds = new Set(["show-inspector", "show-crew", "show-workflow"]);
+  const isRibbonPopup = entry => Boolean(entry.toggle && ribbonPopupIds.has(entry.toggle.id));
+  const ribbonAnchor = entry => {
+    const trigger = entry.toggle.getBoundingClientRect();
+    const bounds = overlay.getBoundingClientRect();
+    const width = entry.panel.offsetWidth || 320;
+    return {
+      x: Math.max(gap,Math.min(trigger.left-bounds.left,overlay.clientWidth-width-gap)),
+      y: gap,
+    };
+  };
+  const dismissRibbon = () => {
+    let changed = false;
+    for (const entry of entries) {
+      if (!isRibbonPopup(entry) || !entry.wanted || entry.panel.hidden) continue;
+      entry.wanted = false;
+      entry.panel.hidden = true;
+      changed = true;
+    }
+    if (changed) { focused = null; layout(); }
+  };
+  document.addEventListener("keydown",event=>{
+    if (event.key === "Escape") dismissRibbon();
+  });
+  document.addEventListener("pointerdown",event=>{
+    if (event.target.closest(".ribbon,.panel,#widget-shelf")) return;
+    dismissRibbon();
+  });
 
   function reserveControls(occupied) {
     const bounds = overlay.getBoundingClientRect();
@@ -60,7 +88,7 @@ function createFlightWidgets(overlay, shelf, notice, fixedControls = []) {
         occupied.push({x:panel.left-bounds.left,y:panel.top-bounds.top,w:panel.width,h:panel.height});
         continue;
       }
-      const preferred = entry.position ?? entry.preferred();
+      const preferred = entry.position ?? (isRibbonPopup(entry) ? ribbonAnchor(entry) : entry.preferred());
       let placed = place(entry,preferred,occupied);
       if (!placed && entry.compactPriority) {
         // Keep scrollable panels usable when fixed controls reduce the available space.
@@ -103,6 +131,14 @@ function createFlightWidgets(overlay, shelf, notice, fixedControls = []) {
     toggle?.setAttribute("aria-controls",panel.id);
 
     function open(trigger) {
+      if (isRibbonPopup(entry)) {
+        for (const other of entries) {
+          if (other === entry || !isRibbonPopup(other)) continue;
+          other.wanted = false;
+          other.panel.hidden = true;
+        }
+        entry.position = null;
+      }
       entry.wanted = true;
       entry.trigger = trigger ?? toggle ?? entry.trigger;
       focused = entry;
