@@ -83,7 +83,7 @@ export default function EmergencyAssist() {
           <dt>Responsiveness</dt><dd>{caseData.responsiveness ?? "Not applicable"}</dd>
           <dt>Escalation</dt><dd>{caseData.escalation.level}</dd>
         </dl>
-        {caseData.status === "open" ? <button disabled={busy} onClick={acknowledge} className="mt-4 rounded-md bg-selection px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Acknowledge local response</button> : <p className="mt-3 text-sm font-semibold text-emerald-800">Local responder acknowledged at T+{String(Math.floor((caseData.acknowledgment?.acknowledged_at_s ?? 0)/60)).padStart(2,"0")}:{String((caseData.acknowledgment?.acknowledged_at_s ?? 0)%60).padStart(2,"0")}.</p>}
+        {caseData.status === "open" ? <button disabled={busy} onClick={acknowledge} className="mt-4 rounded-md bg-selection px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Acknowledge local response</button> : <p className="mt-3 text-sm font-semibold text-emerald-800">Local responder acknowledged at T+{String(Math.floor((caseData.acknowledgment?.acknowledged_at_s ?? 0)/60)).padStart(2,"0")}:{String((caseData.acknowledgment?.acknowledged_at_s ?? 0)%60).padStart(2,"0")}. <span className="sr-only">Local responder acknowledged at {caseData.acknowledgment?.acknowledged_at_s}s.</span></p>}
         <div className="mt-4 border-t border-amber-300 pt-3">
           <button type="button" disabled={busy} onClick={shareWithGround} className="rounded-md border border-slate-400 bg-white px-4 py-2 text-sm font-semibold disabled:opacity-50">Share case status with Ground</button>
           <p className="mt-1 text-xs text-slate-600">Optional. Ground receives only an opaque alias, a review priority and the status, after the relay delay. Local response never waits for it.</p>
@@ -93,7 +93,7 @@ export default function EmergencyAssist() {
         </div>
       </section>}
       <form className="mt-6 rounded-lg border border-slate-200 bg-white p-4" onSubmit={trigger}>
-        <button type="submit" disabled={busy || !!caseData} className="mb-5 w-full rounded-xl border-2 border-red-400 bg-red-800 px-5 py-4 text-lg font-bold text-white disabled:opacity-50">{busy ? "Opening…" : "🚨 Raise local drill alert"}</button>
+        <button type="submit" disabled={busy || !!caseData} aria-label="Raise local drill alert" className="mb-5 w-full rounded-xl border-2 border-red-400 bg-red-800 px-5 py-4 text-lg font-bold text-white disabled:opacity-50">{busy ? "Opening…" : "🚨 Raise local drill alert"}</button>
         <label htmlFor="emergency-drill" className="block text-sm font-semibold">Choose scripted drill</label>
         <select id="emergency-drill" value={drillId} disabled={busy} onChange={(event) => {
           setDrillId(event.target.value); setCaseData(null); setShare(null); setAnswers({}); setError("");
