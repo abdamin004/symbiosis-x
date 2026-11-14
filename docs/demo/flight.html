@@ -1094,6 +1094,12 @@ ul.tutorial-startup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));g
  .stage .crew-strip{left:8px;right:auto;top:calc(100% + 90px);transform:none}
  .stage .crew-strip .crew-portrait{width:clamp(53px,18vw,68px)}
 }
+
+#sx-body-cases{display:grid;gap:6px;margin:10px 0;padding:10px;border:1px solid #5071a5;border-radius:10px;background:#14223d}
+#sx-body-cases label{font-size:13px;font-weight:700}
+#sx-body-cases select{width:100%;min-height:38px;background:#0b1833;color:#f5f9ff;border:1px solid #7195cd;border-radius:7px;padding:5px}
+#sx-body-cases small{font-size:12px;color:#bcccec}
+#sx-left-hand-marker[hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -1358,7 +1364,29 @@ __HUD_ICONS__
             <strong id="region-reading"></strong><p id="region-detail"></p><small id="region-time"></small>
           </div>
         </div>
-        <section id="sx-issue-detail" aria-label="Selected body concern" hidden><h3>Left-hand concern · training example</h3><dl><dt>Astronaut</dt><dd>Sana Kepler</dd><dt>Body region</dt><dd>Left wrist / hand</dd><dt>Status</dt><dd>Needs crew review · fictional drill</dd><dt>Symptoms</dt><dd>Hand discomfort and reduced grip — authored example, not an observed sensor result</dd><dt>Evidence</dt><dd>No local injury sensor; request an onboard assessment</dd><dt>Next action</dt><dd>Check with onboard responder; record symptoms and any relevant measurements</dd><dt>Ground</dt><dd>Private until separately approved for relay</dd></dl><p>Synthetic interaction demonstration. This is not a diagnosis, actual patient report, or medical advice.</p></section>
+        <section id="sx-body-cases" aria-label="Training body concerns">
+  <label for="sx-body-case-select">Explore symptom location (synthetic training cases)</label>
+  <select id="sx-body-case-select">
+    <option value="auto">Contextual: live simulated signals</option>
+    <option value="hand">Hand discomfort</option>
+    <option value="head">Headache</option>
+    <option value="chest">Chest discomfort</option>
+    <option value="leg">Knee discomfort</option>
+  </select>
+  <small>No medical symptoms are inferred from wearable or cabin sensors.</small>
+</section>
+<section id="sx-issue-detail" aria-label="Selected body concern" hidden>
+  <h3 id="sx-issue-title"></h3>
+  <dl>
+    <dt>Astronaut</dt><dd id="sx-issue-astronaut"></dd>
+    <dt>Body region</dt><dd id="sx-issue-region"></dd>
+    <dt>Status</dt><dd id="sx-issue-status"></dd>
+    <dt>Evidence</dt><dd id="sx-issue-evidence"></dd>
+    <dt>Next step</dt><dd id="sx-issue-action"></dd>
+    <dt>Ground</dt><dd>Private Crew demonstration; no automatic Ground sharing.</dd>
+  </dl>
+  <p>Training scenario / synthetic data. No diagnosis or medical treatment is supplied.</p>
+</section>
         <div class="device-links" aria-label="Crew wearable shortcuts">
           <button id="inspect-wristband" type="button">Wristband · left wrist</button>
           <button id="inspect-back-pod" type="button">Back pod · upper back</button>
@@ -2542,6 +2570,8 @@ const bodyRegions = {
   wrist:{label:"Left wrist",body:[80,54],suit:[86,71]},
   "right-leg":{label:"Right leg",body:[39,74],suit:[37,86]},
   "left-leg":{label:"Left leg",body:[61,74],suit:[63,86]},
+  "left-hand":{label:"Left hand",body:[81,60],suit:[88,76]},
+  "left-knee":{label:"Left knee",body:[61,80],suit:[63,88]},
 };
 const anatomyTabs = [...element("twin-body").querySelectorAll("[role=tab]")];
 const anatomyArt = [...element("body-map").querySelectorAll("[data-anatomy-art]")];
@@ -2593,12 +2623,28 @@ function setupBodyMap() {
   issueMarker.type = "button";
   issueMarker.className = "sx-health-marker";
   issueMarker.id = "sx-left-hand-marker";
-  issueMarker.setAttribute("aria-label","Review synthetic left hand concern for Sana Kepler");
-  issueMarker.title = "Training example: left-hand discomfort";
+  issueMarker.setAttribute("aria-label","Review current synthetic body concern");
+  issueMarker.title = "Select body concern for details";
   issueMarker.hidden = true;
   issueMarker.addEventListener("click",()=>{
-    selectedRegion = "wrist";
+    const frame = currentFrame();
+    const member = profileMembers.get("personnel");
+    const concern = currentBodyConcern(member,frame);
+    if (!concern) return;
+    selectedRegion = concern.region;
+    for (const [id,value] of Object.entries({
+      "sx-issue-title":concern.title,
+      "sx-issue-astronaut":characters[member].name,
+      "sx-issue-region":bodyRegions[concern.region].label,
+      "sx-issue-status":concern.status,
+      "sx-issue-evidence":concern.evidence,
+      "sx-issue-action":concern.action,
+    })) element(id).textContent = value;
     element("sx-issue-detail").hidden = false;
+    render();
+  });
+  element("sx-body-case-select").addEventListener("change",()=>{
+    element("sx-issue-detail").hidden = true;
     render();
   });
   map.append(issueMarker);
@@ -2932,6 +2978,29 @@ function drawWearableHistory(channel, missionTime) {
   ).join(" · ") : "No readings for this signal");
 }
 
+const authoredBodyCases = {
+  hand:{region:"left-hand",title:"Left-hand discomfort",status:"Review · crew-reported training case",evidence:"Scripted symptom report: discomfort and reduced grip. No injury sensor data.",action:"Request an onboard symptom review and document follow-up."},
+  head:{region:"head",title:"Headache",status:"Review · crew-reported training case",evidence:"Scripted headache report; environmental context does not establish a diagnosis.",action:"Document reported symptoms and consult the approved onboard procedure."},
+  chest:{region:"torso",title:"Chest discomfort",status:"Urgent · local training alert",evidence:"Scripted chest discomfort scenario; no cardiovascular diagnosis is inferred.",action:"Raise a local training alert and follow the mission-approved medical protocol."},
+  leg:{region:"left-knee",title:"Left-knee discomfort",status:"Review · crew-reported training case",evidence:"Scripted knee discomfort after activity. No direct joint sensor reading.",action:"Record symptoms, activity context and request a trained crewmate assessment."},
+};
+function currentBodyConcern(member,frame) {
+  const scenario = element("sx-body-case-select").value;
+  if (authoredBodyCases[scenario]) return authoredBodyCases[scenario];
+  // Flight sensor and cabin context may generate a *review marker*, never a diagnosis.
+  if (frame.healthDrill?.exposureRisk) return {
+    region:"torso",title:"Cabin air exposure review",status:"Review · synthetic environment alert",
+    evidence:"CO₂ "+frame.co2.toFixed(0)+" ppm; cabin reading only, not measured lung injury.",
+    action:"Check onboard crew guidance and repeat the relevant health measurements.",
+  };
+  const wrist = missionWearables.get(data.crew[member])?.channels?.wristband?.reading;
+  if (wrist && (wrist.status === "suspect" || wrist.quality === "suspect")) return {
+    region:"wrist",title:"Wristband reading needs recheck",status:"Review · sensor quality",
+    evidence:"Suspect wristband data. This does not imply a wrist injury.",
+    action:"Repeat wristband measurement using the existing recheck workflow.",
+  };
+  return null;
+}
 function updateBodyMap(sample, member, frame) {
   const map = element("body-map");
   const state = activeLayer + ":" + selectedRegion;
@@ -2939,12 +3008,17 @@ function updateBodyMap(sample, member, frame) {
     map.dataset.view = state;
     renderAnatomyLayer();
   }
-  // The marker is a clearly labelled authored UI drill, not a live diagnosis.
+  const concern = currentBodyConcern(member,frame);
   const issueMarker = element("sx-left-hand-marker");
-  issueMarker.hidden = member !== 1 || activeLayer === "suit";
-  issueMarker.style.left = (bodyRegions.wrist[activeLayer === "suit" ? "suit" : "body"][0])+"%";
-  issueMarker.style.top = (bodyRegions.wrist[activeLayer === "suit" ? "suit" : "body"][1])+"%";
-  if (member !== 1) element("sx-issue-detail").hidden = true;
+  issueMarker.hidden = !concern;
+  if (concern) {
+    const [x,y] = bodyRegions[concern.region][activeLayer === "suit" ? "suit" : "body"];
+    issueMarker.style.left = x + "%";
+    issueMarker.style.top = y + "%";
+    issueMarker.setAttribute("aria-label","Review "+concern.title+" for "+characters[member].name);
+    issueMarker.title = concern.title+" · "+concern.status;
+  }
+  if (!concern) element("sx-issue-detail").hidden = true;
   map.style.setProperty("--profile-accent",duties[member].color);
   suitId.textContent = data.crew[member];
   const channel = activeLayer === "sensors" && selectedRegion === "torso" ? "back_pod"
@@ -4142,6 +4216,7 @@ function showSystemReading(id,current,unit,precision,status,values,attention) {
 function openDigitalTwin(member, trigger, channel) {
   selection = {crew:member};
   element("sx-issue-detail").hidden = true;
+  element("sx-body-case-select").value = "auto";
   twinView = "body";
   activeLayer = channel ? "sensors" : activeEva(Math.floor(missionTime))?.member === member ? "suit" : "anatomy";
   selectedRegion = channel === "wristband" ? "wrist" : "torso";
