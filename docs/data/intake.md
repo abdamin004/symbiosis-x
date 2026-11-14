@@ -49,3 +49,23 @@ missing-value count changed.
 1. Record the OSDR data-use terms for RadLab exports. Owner: Mohamed (SX-12).
 2. Confirm the unit and the timezone of `absorbed_dose_rate` from NASA documentation, and cite the page here.
 3. Until items 1 and 2 are closed, SX-12B must not treat this series as an approved sample.
+
+## Inspiration4 research evidence
+
+Opened and checked on 2026-11-14. The official NASA mission collection links OSD-569 whole blood, OSD-571 plasma and OSD-575 serum. It describes four private astronauts on a three-day flight and outlines the controlled-access process for raw sensitive materials. The prototype uses public study metadata and aggregate published findings for research context. Crew readings, histories, baselines and demo limits are synthetic. [NASA Inspiration4 datasets](https://www.nasa.gov/osdr-latest-news-i4-mission-datasets/) · [OSDR mission index](https://osdr.nasa.gov/bio/repo/data/missions/SpaceX%20Inspiration4)
+
+The public investigation, study and assay (ISA) ZIPs were fetched from the OSDR file inventory. The bytes were hashed directly and each ZIP passed archive integrity checks. Verification extracted only distinct mission-relative time labels and assay labels from the metadata. Archive bytes and participant-level rows were excluded from the repository.
+
+| Source and file inventory | Public ISA archive | Bytes | SHA-256 | Supports this visible feature |
+|---|---|---:|---|---|
+| [OSD-569](https://osdr.nasa.gov/bio/repo/data/studies/OSD-569) · [File inventory](https://osdr.nasa.gov/osdr/data/osd/files/569) | `OSD-569_metadata_OSD-569-ISA.zip` | 123512 | `5b3c19c5079816b283125caf4009db8e39d48377d92763e9e61e86e3e1b4c159` | Whole-blood row in the NASA research card |
+| [OSD-571](https://osdr.nasa.gov/bio/repo/data/studies/OSD-571) · [File inventory](https://osdr.nasa.gov/osdr/data/osd/files/571) | `OSD-571_metadata_OSD-571-ISA.zip` | 172450 | `75ea258ef5b0157adf5697e1ce60396c22a66fb373e5ee1cca6eae03662c32aa` | Plasma row in the NASA research card |
+| [OSD-575 v3](https://osdr.nasa.gov/bio/repo/data/studies/OSD-575) · [File inventory](https://osdr.nasa.gov/osdr/data/osd/files/575) | `OSD-575_metadata_OSD-575-ISA.zip` | 71702 | `a1d3e49e2b61ab427a8760d0c98e0324a53272d0e1314632290266b014476f1d` | Serum row and laboratory assay units in the NASA research card |
+
+The metadata lists L−92, L−44, L−3, R+1, R+45, R+82 and R+194 across each study’s assay collection, with L and R in days relative to launch and return. Each schedule varies by assay. The OSD-575 study description lists the first six timepoints. Its public submitted comprehensive metabolic panel CSV also contains R+194, consistent with the ISA sample table. The display labels that extra point for the metabolic panel specifically.
+
+| Other source opened 2026-11-14 | Evidence reviewed | Supports this visible feature |
+|---|---|---|
+| [Jones et al., *Nature* 632, 1155–1164, 2024](https://pmc.ncbi.nlm.nih.gov/articles/PMC11357997/) · DOI `10.1038/s41586-024-07648-x` | Cardiovascular results and Fig. 5f describe a positive association between higher cabin CO₂ and higher HRV for 3 of 4 crew members in flight. Extended Data Fig. 10 and the survey methods specify self-reported sleep timing, sleep quality and behavioral ratings. | Context for pairing ship CO₂ with crew observations. The fictional heart-rate reading uses bpm, while the paper’s HRV measure uses ms. The association supplies neither a cause for the demo alert nor a threshold. |
+| [NASA Spaceflight Standard Measures](https://www.nasa.gov/directorates/smd/space-life-physical-sciences-research-applications-division/human-research-program/spaceflight-standard-measures-characterizing-how-humans-adapt-in-space/) | The actigraphy, sleep quality and team questionnaire, and sensorimotor bullets describe physical activity and sleep tracking, self-reported sleep and mood, and preflight and postflight heart rate and blood pressure. | Measurement context labels and the distinction between sleep duration and reported quality in the astronaut twin |
+| [NASA Flight Crew Physiological Data for Crew State Monitoring](https://catalog.data.gov/dataset/flight-crew-physiological-data-for-crew-state-monitoring) | The description identifies pilot and copilot pairs in controlled sessions and an aviation flight simulator. | Reviewed as a potential aviation comparator. The prototype and validation report use synthetic training data. |
