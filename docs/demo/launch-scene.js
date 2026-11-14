@@ -338,6 +338,7 @@ function createLaunchScene(canvas) {
     const changed=phase!==next.phase || elapsed!==next.elapsed || separated!==next.separated;
     const lift=phase==="pad" && next.phase==="ascent" && next.elapsed===0;
     const staging=!separated && next.separated && next.phase==="upper";
+    if (lift && animate) document.dispatchEvent(new Event("sx-flight-liftoff"));
     phase=next.phase;
     ship=next.ship;
     lightStack=next.lightStack;
