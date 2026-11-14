@@ -1031,6 +1031,61 @@ ul.tutorial-startup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));g
   }
   .stage .crew-strip .crew-portrait { width:clamp(56px,20vw,72px); }
 }
+
+/* Judge-facing clarity upgrades; existing scenes and simulation stay intact. */
+#mission-resources{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;
+  width:min(318px,calc(100vw - 20px));max-width:min(318px,calc(100vw - 20px));
+  background:#0b1330ed;border:1px solid #5e7bf27d;border-radius:14px;
+  padding:10px;box-shadow:0 12px 32px #0009,0 0 20px #684bff20;
+  font:600 12px/1.35 system-ui,sans-serif;
+}
+#mission-resources>span:not(.command-resource){min-width:0;background:#1b2b50;border:1px solid #4e669b80;border-radius:9px;padding:8px;display:flex;flex-wrap:wrap;gap:4px}
+#mission-resources>span:not(.command-resource) output{font:700 13px/1.3 ui-monospace,monospace;overflow-wrap:anywhere;color:#b9f6ff}
+#mission-resources .icon{color:#68eaff;width:15px;height:15px}
+#mission-resources #show-airlock,#mission-resources #show-provisions{min-height:28px;font-size:12px;border:1px solid #5777bd}
+#map-widget{border:1px solid #6d83c489;background:linear-gradient(155deg,#1d2d53f5,#0c1531f5);box-shadow:0 15px 42px #0009}
+#map-widget .map-views{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin:10px 0}
+#map-widget .map-views button{font-size:12px;min-height:34px;padding:6px 3px}
+#map-widget .map-views button[aria-pressed=true]{background:#664cbd;border:1px solid #baa8ff;box-shadow:0 0 13px #865aff5e}
+#map-widget .overview-time button{min-height:36px}
+#map-widget #map-replay-controls{border-top:1px solid #53668a65;padding-top:9px}
+#map-widget #clock{font-size:14px}
+#map-widget #map-location{font-size:13px}
+#map-widget #one-hour{font-size:12px;min-height:34px}
+#personnel-widget .body-map .sx-health-marker{
+  position:absolute;left:80%;top:54%;transform:translate(-50%,-50%);
+  width:27px;height:27px;padding:0;min-height:27px;border-radius:50%;
+  border:3px solid #ff4d72;background:#ff295b66;
+  box-shadow:0 0 0 5px #ff28572b,0 0 18px #ff4269;
+  z-index:8;cursor:pointer;animation:sx-issue-pulse 2s ease-in-out infinite;
+}
+#personnel-widget .body-map .sx-health-marker:focus-visible{outline:3px solid white;outline-offset:5px}
+@keyframes sx-issue-pulse{50%{box-shadow:0 0 0 10px #ff285711,0 0 24px #ff4269}}
+#personnel-widget #sx-issue-detail{margin-top:10px;border:1px solid #ff6288;border-radius:10px;padding:12px;background:linear-gradient(120deg,#431c38,#19213d);font:14px/1.5 system-ui,sans-serif}
+#personnel-widget #sx-issue-detail h3{font-size:16px;margin:0 0 8px;color:#fff}
+#personnel-widget #sx-issue-detail dl{display:grid;grid-template-columns:100px minmax(0,1fr);gap:6px 9px;margin:0}
+#personnel-widget #sx-issue-detail dt{color:#ffd1dc}
+#personnel-widget #sx-issue-detail dd{margin:0;color:#fff}
+#personnel-widget #sx-issue-detail p{margin:8px 0 0;font-size:12px;color:#ffd9e5}
+#crew-strip .crew-self-report,#crew-strip .crew-mood-label{font-size:10px;line-height:1.2}
+@media(max-width:600px){#mission-resources{grid-template-columns:repeat(2,minmax(0,1fr));width:min(270px,calc(100vw - 20px))}
+  #map-widget .map-views button{font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){#personnel-widget .sx-health-marker{animation:none}}
+
+/* Keep the portrait dock clear of the Flight playback controls.
+   This fixes the browser regression where portraits intercepted Next tick. */
+.stage .crew-strip{right:clamp(285px,27vw,470px);z-index:11}
+.stage .crew-strip .crew-portrait{position:relative}
+.stage .flight-controls{z-index:14}
+@media(max-width:1050px){
+  .stage .crew-strip{right:clamp(210px,27vw,320px);top:calc(100% + 12px)}
+}
+@media(max-width:680px){
+  .stage .crew-strip{left:8px;right:auto;top:calc(100% + 82px);transform:none}
+  .stage .flight-controls{right:8px}
+}
 </style>
 </head>
 <body>
@@ -1295,6 +1350,7 @@ __HUD_ICONS__
             <strong id="region-reading"></strong><p id="region-detail"></p><small id="region-time"></small>
           </div>
         </div>
+        <section id="sx-issue-detail" aria-label="Selected body concern" hidden><h3>Left-hand concern · training example</h3><dl><dt>Astronaut</dt><dd>Sana Kepler</dd><dt>Body region</dt><dd>Left wrist / hand</dd><dt>Status</dt><dd>Needs crew review · fictional drill</dd><dt>Symptoms</dt><dd>Hand discomfort and reduced grip — authored example, not an observed sensor result</dd><dt>Evidence</dt><dd>No local injury sensor; request an onboard assessment</dd><dt>Next action</dt><dd>Check with onboard responder; record symptoms and any relevant measurements</dd><dt>Ground</dt><dd>Private until separately approved for relay</dd></dl><p>Synthetic interaction demonstration. This is not a diagnosis, actual patient report, or medical advice.</p></section>
         <div class="device-links" aria-label="Crew wearable shortcuts">
           <button id="inspect-wristband" type="button">Wristband · left wrist</button>
           <button id="inspect-back-pod" type="button">Back pod · upper back</button>
@@ -1362,7 +1418,7 @@ __HUD_ICONS__
   <section class="panel" id="crew-widget" hidden aria-labelledby="crew-heading">
     <div class="widget-bar"><button class="move-widget widget-title" type="button" aria-label="Move crew with drag or arrow keys"><svg class="icon" aria-hidden="true"><use href="#hud-grip"/></svg></button><h2 id="crew-heading">Crew on board</h2><button class="widget-close" type="button" aria-label="Close crew"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button></div>
     <div class="roster" id="roster"></div>
-    <p>Simulation replay. Crew duties are scripted and cabin readings use the Python model.</p>
+    <p>Synthetic training replay · select an astronaut for health detail.</p>
   </section>
 </div>
 </div>
@@ -1373,7 +1429,7 @@ __HUD_ICONS__
     <button id="map-plan-open" type="button" aria-haspopup="dialog" aria-controls="mission-objectives">Open plan</button>
   </div>
   <div class="choices map-views" role="group" aria-label="Mission overview view">
-    <button type="button" data-map-view="route" aria-pressed="true">Plan</button>
+    <button type="button" data-map-view="route" aria-pressed="true" aria-label="Plan">Route</button>
     <button type="button" data-map-view="deck" aria-controls="map-deck" aria-pressed="false">Deck</button>
     <button type="button" data-map-view="systems" aria-controls="map-systems" aria-pressed="false">Systems</button>
     <button type="button" data-map-view="ground" aria-controls="map-ground" aria-pressed="false">Ground</button>
@@ -1452,11 +1508,11 @@ __HUD_ICONS__
     <p id="phase"></p>
     <div class="overview-time">
       <output class="clock" id="clock" for="timeline"></output>
-      <button id="next-event" type="button" title="Jump to the next scenario checkpoint">Next event</button>
-      <button id="reset" type="button" aria-label="Reset game" title="Reset game"><svg class="icon" aria-hidden="true"><use href="#hud-rotate-ccw"/></svg></button>
+      <button id="next-event" type="button" aria-label="Next event" title="Jump to the next scenario checkpoint">Next replay event</button>
+      <button id="reset" type="button" aria-label="Reset game" title="Reset replay"><svg class="icon" aria-hidden="true"><use href="#hud-rotate-ccw"/></svg></button>
     </div>
     <input id="timeline" type="range" min="0" value="0" aria-label="Mission time">
-    <button id="one-hour" type="button" aria-pressed="false" title="Scale the entire mission to one hour of playback">1-hour pacing</button>
+    <button id="one-hour" type="button" aria-label="1-hour pacing" aria-pressed="false" title="Scale the entire mission to one hour of playback">Replay pace · 1 hour</button>
   </div>
 </section>
 <section class="flight-corner" id="orbit-map-widget" aria-label="Orbital navigation" hidden>
@@ -2524,6 +2580,20 @@ function setupBodyMap() {
       bodyButtons.push(button);
     }
   }
+  // Explicitly fictional UX sample: not inferred from medical telemetry.
+  const issueMarker = document.createElement("button");
+  issueMarker.type = "button";
+  issueMarker.className = "sx-health-marker";
+  issueMarker.id = "sx-left-hand-marker";
+  issueMarker.setAttribute("aria-label","Review synthetic left hand concern for Sana Kepler");
+  issueMarker.title = "Training example: left-hand discomfort";
+  issueMarker.hidden = true;
+  issueMarker.addEventListener("click",()=>{
+    selectedRegion = "wrist";
+    element("sx-issue-detail").hidden = false;
+    render();
+  });
+  map.append(issueMarker);
   anatomyTabs.forEach((tab, index) => {
     tab.addEventListener("click",()=>{activeLayer=tab.dataset.layer;render();});
     tab.addEventListener("keydown",event=>{
@@ -2861,6 +2931,12 @@ function updateBodyMap(sample, member, frame) {
     map.dataset.view = state;
     renderAnatomyLayer();
   }
+  // The marker is a clearly labelled authored UI drill, not a live diagnosis.
+  const issueMarker = element("sx-left-hand-marker");
+  issueMarker.hidden = member !== 1 || activeLayer === "suit";
+  issueMarker.style.left = (bodyRegions.wrist[activeLayer === "suit" ? "suit" : "body"][0])+"%";
+  issueMarker.style.top = (bodyRegions.wrist[activeLayer === "suit" ? "suit" : "body"][1])+"%";
+  if (member !== 1) element("sx-issue-detail").hidden = true;
   map.style.setProperty("--profile-accent",duties[member].color);
   suitId.textContent = data.crew[member];
   const channel = activeLayer === "sensors" && selectedRegion === "torso" ? "back_pod"
@@ -4057,6 +4133,7 @@ function showSystemReading(id,current,unit,precision,status,values,attention) {
 
 function openDigitalTwin(member, trigger, channel) {
   selection = {crew:member};
+  element("sx-issue-detail").hidden = true;
   twinView = "body";
   activeLayer = channel ? "sensors" : activeEva(Math.floor(missionTime))?.member === member ? "suit" : "anatomy";
   selectedRegion = channel === "wristband" ? "wrist" : "torso";

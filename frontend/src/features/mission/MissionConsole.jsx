@@ -73,7 +73,7 @@ export default function MissionConsole({ role }) {
         </dl>
       </header>
 
-      <nav className="sx-page-nav" aria-label="Mission sections"><Link to="/">Mission</Link><Link to={`/runs/${encodeURIComponent(runId)}/crew`}>Health</Link><Link to={`/runs/${encodeURIComponent(runId)}/crew/measure`}>Measure</Link><Link to={`/runs/${encodeURIComponent(runId)}/crew/emergency`}>Emergency</Link><Link to={`/runs/${encodeURIComponent(runId)}/ground`}>Ground</Link></nav>
+      <nav className="sx-page-nav" aria-label="Mission sections"><Link to="/">Mission</Link>{role === "crew" ? <><Link to={`/runs/${encodeURIComponent(runId)}/crew`}>Health</Link><Link to={`/runs/${encodeURIComponent(runId)}/crew/measure`}>Measure</Link><Link to={`/runs/${encodeURIComponent(runId)}/crew/emergency`}>Emergency</Link><Link to={`/runs/${encodeURIComponent(runId)}/crew/medical`}>Medical</Link></> : <span className="rounded-lg border border-sky-400 px-4 py-2 text-sm">Ground · delayed operational view</span>}</nav>
       <p className="mt-3 text-xs text-slate-500">
         Synthetic fixture · scenario {snapshot.scenario_id} · seed {snapshot.seed}
       </p>
