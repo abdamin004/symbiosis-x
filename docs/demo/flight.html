@@ -2626,6 +2626,9 @@ const trainingBodyConcerns = Object.freeze({
 let activeTrainingConcern = "hand";
 function selectedBodyConcern(member) {
   // An actual Crew emergency report takes priority over the authored selector.
+  const emergency = typeof flightEmergency !== "undefined"
+    ? flightEmergency?.issueFor?.(data.crew[member]) : null;
+  if (emergency) return emergency;
   const live = typeof flightHealthStory !== "undefined"
     ? flightHealthStory?.issueFor?.(data.crew[member]) : null;
   if (live) return live;
