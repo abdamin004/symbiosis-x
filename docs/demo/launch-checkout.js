@@ -610,6 +610,7 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     overview.hidden = menu;
     find("map-plan-open").hidden = !launch;
     find("map-current").hidden = !launch;
+    find("map-route-summary").hidden = !launch;
     find("map-milestones").hidden = !launch;
     find("map-replay-route").hidden = view !== "replay";
     find("map-replay-controls").hidden = view !== "replay";
@@ -1287,8 +1288,31 @@ function bindLaunchCheckout(missions, replayVersion, {pauseReplay,onCanvas,onPla
     menuUI.setBriefing(view === "replay" ? null : config);
     find("mission-briefing").showModal();
   });
+  const orbitDialog = find("orbit-dialog");
+  const orbitTabs = [...orbitDialog.querySelectorAll('[role="tab"]')];
+  function selectOrbitTab(tab) {
+    for (const candidate of orbitTabs) {
+      const selected = candidate === tab;
+      candidate.setAttribute("aria-selected", String(selected));
+      candidate.tabIndex = selected ? 0 : -1;
+      find(candidate.getAttribute("aria-controls")).hidden = !selected;
+    }
+  }
+  orbitTabs.forEach((tab,index)=>{
+    tab.addEventListener("click",()=>selectOrbitTab(tab));
+    tab.addEventListener("keydown",event=>{
+      const nextIndex = {Home:0,End:orbitTabs.length-1,
+        ArrowLeft:(index+orbitTabs.length-1)%orbitTabs.length,ArrowRight:(index+1)%orbitTabs.length}[event.key];
+      if (nextIndex === undefined) return;
+      event.preventDefault();
+      const next = orbitTabs[nextIndex];
+      selectOrbitTab(next);
+      next.focus();
+    });
+  });
   function openNavigation() {
-    find("orbit-dialog").showModal();
+    selectOrbitTab(orbitTabs[0]);
+    orbitDialog.showModal();
     renderNavigation(flightState());
   }
   for (const id of ["show-orbit","open-orbit-minimap"]) find(id).addEventListener("click",openNavigation);
@@ -1851,6 +1875,16 @@ function createMissionPlan(find) {
   function render(objectives, flight) {
     const byId = new Map(objectives.map(objective=>[objective.id,objective]));
     const current = objectives.find(objective=>objective.status !== "verified");
+    const phase = stages.find(stage=>stage.objectives.some(objective=>objective.id === current?.id));
+    const verified = objectives.filter(objective=>objective.status === "verified").length;
+    const stageName = phase?.title ?? "Mission complete";
+    const progressLabel = verified+" / "+objectives.length+" objectives verified";
+    const objectiveLabel = current?.label ?? "Crew safely back on Earth";
+    setText(find("map-route-stage"),stageName);
+    setText(find("map-route-progress"),progressLabel);
+    setText(find("orbit-mission-stage"),stageName);
+    setText(find("orbit-mission-objective"),objectiveLabel);
+    setText(find("orbit-mission-progress"),progressLabel);
     for (const {id,status,actual,planned_s:planned} of objectives) {
       const {row,status:badge,segment} = rows.get(id);
       if (row.dataset.status !== status) row.dataset.status = status;
@@ -1875,7 +1909,7 @@ function createMissionPlan(find) {
       setIcon(marker,icon,"");
       marker.dataset.icon = icon;
     }
-    setText(find("map-current-objective"),current?.label ?? "Crew safely back on Earth");
+    setText(find("map-current-objective"),objectiveLabel);
     setText(find("map-current-state"),ship+" · "+(current ? labels[current.status] : "Complete"));
     setText(find("mission-objective-next"),flight.phase+" · "+flight.next);
   }
