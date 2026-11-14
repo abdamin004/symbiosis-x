@@ -39,7 +39,7 @@ test("local response remains available during blackout", async ({ page }) => {
   await expect(activeCase).toContainText("Ground link not required");
   await expect(activeCase).toContainText("Heart-rate data");
   await expect(activeCase).toContainText("unavailable");
-  await expect(activeCase).toContainText("TRAINING PLACEHOLDER");
+  await expect(page.getByRole("list",{name:"Onboard training steps"})).toContainText("check responsiveness and normal breathing");
   expect(openRequest.responsiveness).toBe("unknown");
   await page.getByRole("button", { name: "Acknowledge local response" }).click();
   await expect(activeCase).toContainText("Local responder acknowledged at 60s");
@@ -71,16 +71,16 @@ test("chest-pain drill acts onboard without a Ground acknowledgment", async ({ p
 
   await page.goto("/runs/run-001/crew/emergency");
   await page.locator("#emergency-drill").selectOption("drill-chest-pain-v1");
-  await expect(page.locator("#responsiveness")).toHaveCount(0);   // collapse-only field
+  await expect(page.getByLabel("Is the chest pain still present?")).toBeVisible();
   await page.getByRole("button", { name: "Raise local drill alert" }).click();
 
   const activeCase = page.getByTestId("emergency-case");
   await expect(activeCase.getByRole("heading")).toHaveText("Local alert · open");
   await expect(activeCase.getByTestId("emergency-ground-link")).toHaveText("Ground link not required");
   await expect(activeCase).toContainText("SIM-01 reports chest pain");
-  await expect(activeCase).toContainText("Assigned responderSIM-02");
+  await expect(activeCase).toContainText("Assigned responderSana Kepler");
   await expect(activeCase).toContainText("Escalationlocal_alert");
-  await expect(activeCase).toContainText("TRAINING PLACEHOLDER");
+  await expect(page.getByText(/Simulated training only · follow/)).toBeVisible();
   expect(openRequest).toMatchObject({ drill_id: "drill-chest-pain-v1", reported_by: "SIM-01", synthetic: true });
   expect(openRequest).not.toHaveProperty("responsiveness");
 

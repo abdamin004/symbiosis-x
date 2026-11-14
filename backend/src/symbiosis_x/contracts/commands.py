@@ -173,9 +173,12 @@ class PlanEvaluationReceipt(Contract):
     candidates: list[PlanCandidate]
 
 
+ActionCandidateId = CandidateId | Literal["defer_exercise"]
+
+
 class ActionRequest(Contract):
     operation_id: Identifier
-    candidate_id: CandidateId
+    candidate_id: ActionCandidateId
     basis_decision_rev: NonnegativeInt
     policy_version: Identifier = "demo-1"
     basis_snapshot_id: Identifier | None = None
@@ -197,9 +200,9 @@ class CrewActionReceipt(Contract):
     """SX-22D response contract; does not mutate the frozen kickoff example."""
 
     operation_id: Identifier
-    candidate_id: CandidateId
+    candidate_id: ActionCandidateId
     status: Literal["accepted", "rejected"]
-    reason_code: PlanReasonCode | Literal["STALE_DECISION_REV", "ACTION_EXPIRED", "POLICY_VERSION_MISMATCH", "BASIS_SNAPSHOT_MISMATCH"] | None = None
+    reason_code: PlanReasonCode | Literal["STALE_DECISION_REV", "ACTION_EXPIRED", "POLICY_VERSION_MISMATCH", "BASIS_SNAPSHOT_MISMATCH", "EXERCISE_UNAVAILABLE"] | None = None
     basis_decision_rev: NonnegativeInt
     current_decision_rev: NonnegativeInt
     applied: bool

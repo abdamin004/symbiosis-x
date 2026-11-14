@@ -112,3 +112,13 @@ def test_missing_context_and_empty_series_are_unknown_history():
 def test_real_measurements_are_not_admitted_to_the_synthetic_trend():
     with pytest.raises(ValueError, match="synthetic samples only"):
         evaluate_trend([replace(heart_rate("hr-real", 60, 80), synthetic=False)])
+
+
+def test_daily_trend_uses_distinct_days_and_review_threshold():
+    daily = [heart_rate(f"hr-{day}", day * 86400, value) for day, value in enumerate((72, 74, 77))]
+    assert evaluate_trend(daily).reason_code == "DAILY_CHANGE_BELOW_THRESHOLD"
+    assert evaluate_trend(daily).status == "steady"
+    trend = evaluate_trend([*daily, heart_rate("hr-3", 3 * 86400, 80)])
+    assert (trend.status, trend.direction, trend.reason_code, trend.sample_count, trend.window_s) == (
+        "review", "rising", "DAILY_TREND", 4, 4 * 86400,
+    )

@@ -42,7 +42,7 @@ def tangential_delta_v(altitude_km: float, before_other_apsis_km: float, after_o
     return round(1000 * (speed(after_other_apsis_km) - speed(before_other_apsis_km)), 1)
 
 
-def navigation_reference(ascent: dict) -> dict:
+def navigation_reference(ascent: dict, rcs_pulses: int = 12) -> dict:
     insertion = ascent["insertion_profile"]
     ap = insertion["apoapsis_km"]
     parking_pe = insertion["target_periapsis_km"]
@@ -67,5 +67,7 @@ def navigation_reference(ascent: dict) -> dict:
         "insertionDeltaV": tangential_delta_v(ap, insertion["initial_periapsis_km"], parking_pe),
         "transferDeltaV": tangential_delta_v(ap, parking_pe, station_altitude),
         "matchDeltaV": tangential_delta_v(station_altitude, ap, station_altitude),
-        "rcsPulses": 12,
+        "retrogradeDeltaV": abs(tangential_delta_v(station_altitude, station_altitude, 0)),
+        "checkoutRetrogradeDeltaV": abs(tangential_delta_v(ap, parking_pe, 0)),
+        "rcsPulses": rcs_pulses,
     }

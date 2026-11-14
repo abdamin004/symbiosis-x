@@ -70,7 +70,9 @@ def test_reminder_uses_personal_schedule(tmp_path):
         assert client.post(ack_url, headers=role("crew"),
                            json={"crew_id": "SIM-01", "acknowledged_by": "SIM-01"}).json() == acked.json()
         statuses = {r["metric"]: r["status"] for r in followup()["reminders"]}
-        assert statuses == {"heart_rate": "overdue", "blood_pressure": "acknowledged"}
+        assert statuses.pop("heart_rate") == "overdue"
+        assert statuses.pop("blood_pressure") == "acknowledged"
+        assert set(statuses.values()) == {"scheduled"}
 
         # A new accepted reading resets that metric's due time; an unassessable one asks for a repeat.
         advance_to(480)

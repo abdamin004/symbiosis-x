@@ -14,7 +14,7 @@ export default function HealthTrend({ trend }) {
   const status = !sufficient
     ? "Insufficient history"
     : trend.status === "steady"
-      ? "No directional change"
+      ? trend.reason_code === "DAILY_CHANGE_BELOW_THRESHOLD" ? "Within demo trend threshold" : "No directional change"
       : `${direction === "rising" ? "Rising" : "Falling"} trend · review with Crew`;
 
   return (
@@ -25,7 +25,7 @@ export default function HealthTrend({ trend }) {
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h3 id="health-trend-heading" className="text-sm font-semibold text-slate-800">
-          Health trend · {displayMetric(trend?.metric)}
+          Health trend · {trend?.metric === "blood_pressure" ? "systolic blood pressure" : displayMetric(trend?.metric)}
         </h3>
         <span className="text-xs font-semibold text-slate-600" data-testid="health-trend-status">
           {status}

@@ -24,9 +24,88 @@
       "symptom_report": "Fictional drill script: SIM-01 reports chest pain.",
       "responder_crew_id": "SIM-02",
       "procedure": {
-        "kind": "training_placeholder",
-        "ref": "training-placeholder-chest-pain-v1",
-        "label": "TRAINING PLACEHOLDER: not an approved medical procedure. Follow the mission's approved onboard medical procedure."
+        "kind": "training_guidance",
+        "ref": "red-cross-chest-pain-v1",
+        "label": "Simulated training only \u00b7 follow the approved onboard medical procedure.",
+        "questions": [
+          {
+            "id": "responsive",
+            "label": "Is the crew member responsive?"
+          },
+          {
+            "id": "breathing",
+            "label": "Are they breathing normally?"
+          },
+          {
+            "id": "pain_ongoing",
+            "label": "Is the chest pain still present?"
+          }
+        ],
+        "guidance": {
+          "check": [
+            "Activate the simulated onboard medical alert.",
+            "Confirm the scene is safe and check responsiveness and normal breathing promptly."
+          ],
+          "responsive": [
+            "Alert onboard medical and keep the crew member at rest.",
+            "Record what happened and monitor breathing and responsiveness."
+          ],
+          "breathing_concern": [
+            "Alert onboard medical immediately.",
+            "Observe breathing and responsiveness. Bring the AED and follow the onboard response plan."
+          ],
+          "unresponsive_breathing": [
+            "Alert onboard medical and request the first-aid kit.",
+            "If safe and appropriate under the onboard plan, protect the airway with the recovery position.",
+            "Keep watching breathing and responsiveness."
+          ],
+          "unresponsive_not_breathing": [
+            "Alert onboard medical and have a crew member bring the AED.",
+            "For an unresponsive adult who is not breathing normally or is only gasping, begin CPR and use an AED as soon as available, following training and the onboard plan."
+          ],
+          "chest_pain_ongoing": [
+            "Alert onboard medical and bring the AED.",
+            "Have the crew member stop work and rest comfortably.",
+            "Stay with them and monitor breathing and responsiveness."
+          ],
+          "chest_pain_resolved": [
+            "Alert onboard medical even if pain has eased.",
+            "Keep the crew member resting and document changes in symptoms.",
+            "Watch for changes in breathing or responsiveness."
+          ]
+        },
+        "sources": [
+          {
+            "title": "American Red Cross \u00b7 Heart Attack",
+            "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid/heart-attack",
+            "version": "Public web edition",
+            "accessed_on": "2026-11-14"
+          },
+          {
+            "title": "American Red Cross \u00b7 First Aid Steps",
+            "url": "https://www.redcross.org/take-a-class/first-aid/performing-first-aid/first-aid-steps",
+            "version": "Public web edition",
+            "accessed_on": "2026-11-14"
+          },
+          {
+            "title": "American Red Cross \u00b7 Unresponsive and Breathing Person",
+            "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid/unresponsive-and-breathing-person",
+            "version": "Public web edition",
+            "accessed_on": "2026-11-14"
+          },
+          {
+            "title": "American Red Cross \u00b7 Adult CPR Steps",
+            "url": "https://www.redcross.org/take-a-class/cpr/performing-cpr/cpr-steps",
+            "version": "Public web edition",
+            "accessed_on": "2026-11-14"
+          },
+          {
+            "title": "American Red Cross \u00b7 Respiratory Distress",
+            "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid/respiratory-distress-trouble-breathing",
+            "version": "Public web edition",
+            "accessed_on": "2026-11-14"
+          }
+        ]
       }
     },
     {
@@ -40,9 +119,68 @@
       "default_responsiveness": "unknown",
       "responder_crew_id": "SIM-04",
       "procedure": {
-        "kind": "training_placeholder",
-        "ref": "training-placeholder-collapse-v1",
-        "label": "TRAINING PLACEHOLDER: not an approved medical procedure. Follow the mission's approved onboard medical procedure."
+        "kind": "training_guidance",
+        "ref": "red-cross-collapse-v1",
+        "label": "Simulated training only \u00b7 follow the approved onboard medical procedure.",
+        "questions": [
+          {
+            "id": "responsive",
+            "label": "Is the crew member responsive?"
+          },
+          {
+            "id": "breathing",
+            "label": "Are they breathing normally?"
+          }
+        ],
+        "guidance": {
+          "check": [
+            "Activate the simulated onboard medical alert.",
+            "Confirm the scene is safe and check responsiveness and normal breathing promptly."
+          ],
+          "responsive": [
+            "Alert onboard medical and keep the crew member at rest.",
+            "Record what happened and monitor breathing and responsiveness."
+          ],
+          "breathing_concern": [
+            "Alert onboard medical immediately.",
+            "Observe breathing and responsiveness. Bring the AED and follow the onboard response plan."
+          ],
+          "unresponsive_breathing": [
+            "Alert onboard medical and request the first-aid kit.",
+            "If safe and appropriate under the onboard plan, protect the airway with the recovery position.",
+            "Keep watching breathing and responsiveness."
+          ],
+          "unresponsive_not_breathing": [
+            "Alert onboard medical and have a crew member bring the AED.",
+            "For an unresponsive adult who is not breathing normally or is only gasping, begin CPR and use an AED as soon as available, following training and the onboard plan."
+          ]
+        },
+        "sources": [
+          {
+            "title": "American Red Cross \u00b7 First Aid Steps",
+            "url": "https://www.redcross.org/take-a-class/first-aid/performing-first-aid/first-aid-steps",
+            "version": "Public web edition",
+            "accessed_on": "2026-11-14"
+          },
+          {
+            "title": "American Red Cross \u00b7 Unresponsive and Breathing Person",
+            "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid/unresponsive-and-breathing-person",
+            "version": "Public web edition",
+            "accessed_on": "2026-11-14"
+          },
+          {
+            "title": "American Red Cross \u00b7 Adult CPR Steps",
+            "url": "https://www.redcross.org/take-a-class/cpr/performing-cpr/cpr-steps",
+            "version": "Public web edition",
+            "accessed_on": "2026-11-14"
+          },
+          {
+            "title": "American Red Cross \u00b7 Respiratory Distress",
+            "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid/respiratory-distress-trouble-breathing",
+            "version": "Public web edition",
+            "accessed_on": "2026-11-14"
+          }
+        ]
       }
     }
   ]

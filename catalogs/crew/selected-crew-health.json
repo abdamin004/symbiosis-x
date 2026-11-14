@@ -1,12 +1,236 @@
 {
-  "SIM-02": [{
-    "metric": "heart_rate", "value": 68, "unit": "bpm",
-    "context": "Synthetic resting value during quiet seated activity",
-    "source_id": "synthetic.sim-02-health-baseline-v1"
-  }],
-  "SIM-03": [{
-    "metric": "heart_rate", "value": 76, "unit": "bpm",
-    "context": "Synthetic resting value during quiet seated activity",
-    "source_id": "synthetic.sim-03-health-baseline-v1"
-  }]
+  "SIM-02": {
+    "history": {
+      "status": "recorded",
+      "entries": [
+        {
+          "date": "2026-11-01",
+          "category": "allergy_note",
+          "note": "Adhesive sensitivity noted in a fictional preflight record.",
+          "fictional": true
+        },
+        {
+          "date": "2026-11-07",
+          "category": "preflight_followup",
+          "note": "Alternative wristband strap fitted and logged.",
+          "fictional": true
+        }
+      ]
+    },
+    "baselines": [
+      {
+        "metric": "heart_rate",
+        "value": 68,
+        "unit": "bpm",
+        "context": "Synthetic resting value during quiet seated activity",
+        "source_id": "synthetic.sim-02-health-baseline-v1"
+      },
+      {
+        "metric": "blood_pressure",
+        "value": 108,
+        "unit": "mmHg",
+        "context": "Synthetic automatic upper-arm cuff reading after seated rest",
+        "source_id": "synthetic.sim-02-health-baseline-v1",
+        "diastolic": 70
+      },
+      {
+        "metric": "glucose",
+        "value": 87,
+        "unit": "mg/dL",
+        "context": "Synthetic fasting laboratory plasma reading",
+        "source_id": "synthetic.sim-02-health-baseline-v1"
+      },
+      {
+        "metric": "temperature",
+        "value": 36.6,
+        "unit": "°C",
+        "context": "Synthetic oral temperature at rest",
+        "source_id": "synthetic.sim-02-health-baseline-v1"
+      },
+      {
+        "metric": "sleep",
+        "value": 440,
+        "unit": "min",
+        "context": "Fictional preflight nightly sleep log",
+        "source_id": "synthetic.sim-02-health-baseline-v1"
+      },
+      {
+        "metric": "sleep_quality",
+        "value": 4,
+        "unit": "score",
+        "context": "Fictional preflight self-report, 1–5 scale",
+        "source_id": "synthetic.sim-02-health-baseline-v1"
+      },
+      {
+        "metric": "mood",
+        "value": 4,
+        "unit": "score",
+        "context": "Fictional preflight self-report, 1–5 scale",
+        "source_id": "synthetic.sim-02-health-baseline-v1"
+      },
+      {
+        "metric": "symptoms",
+        "value": 0,
+        "unit": "count",
+        "context": "Fictional routine symptom check-in, count reported",
+        "source_id": "synthetic.sim-02-health-baseline-v1"
+      }
+    ]
+  },
+  "SIM-03": {
+    "history": {
+      "status": "recorded",
+      "entries": [
+        {
+          "date": "2026-11-01",
+          "category": "medical_history",
+          "note": "Shoulder stiffness noted after a fictional suit drill.",
+          "fictional": true
+        },
+        {
+          "date": "2026-11-07",
+          "category": "preflight_followup",
+          "note": "Suit reach checked at the next scheduled inspection.",
+          "fictional": true
+        }
+      ]
+    },
+    "baselines": [
+      {
+        "metric": "heart_rate",
+        "value": 76,
+        "unit": "bpm",
+        "context": "Synthetic resting value during quiet seated activity",
+        "source_id": "synthetic.sim-03-health-baseline-v1"
+      },
+      {
+        "metric": "blood_pressure",
+        "value": 116,
+        "unit": "mmHg",
+        "context": "Synthetic automatic upper-arm cuff reading after seated rest",
+        "source_id": "synthetic.sim-03-health-baseline-v1",
+        "diastolic": 74
+      },
+      {
+        "metric": "glucose",
+        "value": 93,
+        "unit": "mg/dL",
+        "context": "Synthetic fasting laboratory plasma reading",
+        "source_id": "synthetic.sim-03-health-baseline-v1"
+      },
+      {
+        "metric": "temperature",
+        "value": 36.8,
+        "unit": "°C",
+        "context": "Synthetic oral temperature at rest",
+        "source_id": "synthetic.sim-03-health-baseline-v1"
+      },
+      {
+        "metric": "sleep",
+        "value": 430,
+        "unit": "min",
+        "context": "Fictional preflight nightly sleep log",
+        "source_id": "synthetic.sim-03-health-baseline-v1"
+      },
+      {
+        "metric": "sleep_quality",
+        "value": 3,
+        "unit": "score",
+        "context": "Fictional preflight self-report, 1–5 scale",
+        "source_id": "synthetic.sim-03-health-baseline-v1"
+      },
+      {
+        "metric": "mood",
+        "value": 4,
+        "unit": "score",
+        "context": "Fictional preflight self-report, 1–5 scale",
+        "source_id": "synthetic.sim-03-health-baseline-v1"
+      },
+      {
+        "metric": "symptoms",
+        "value": 0,
+        "unit": "count",
+        "context": "Fictional routine symptom check-in, count reported",
+        "source_id": "synthetic.sim-03-health-baseline-v1"
+      }
+    ]
+  },
+  "SIM-04": {
+    "history": {
+      "status": "recorded",
+      "entries": [
+        {
+          "date": "2026-11-01",
+          "category": "medical_history",
+          "note": "A sleep timing adjustment was logged during preflight training.",
+          "fictional": true
+        },
+        {
+          "date": "2026-11-07",
+          "category": "preflight_followup",
+          "note": "Scheduled rest window reviewed with the watch lead.",
+          "fictional": true
+        }
+      ]
+    },
+    "baselines": [
+      {
+        "metric": "heart_rate",
+        "value": 71,
+        "unit": "bpm",
+        "context": "Synthetic resting value during quiet seated activity",
+        "source_id": "synthetic.sim-04-health-baseline-v1"
+      },
+      {
+        "metric": "blood_pressure",
+        "value": 110,
+        "unit": "mmHg",
+        "context": "Synthetic automatic upper-arm cuff reading after seated rest",
+        "source_id": "synthetic.sim-04-health-baseline-v1",
+        "diastolic": 72
+      },
+      {
+        "metric": "glucose",
+        "value": 90,
+        "unit": "mg/dL",
+        "context": "Synthetic fasting laboratory plasma reading",
+        "source_id": "synthetic.sim-04-health-baseline-v1"
+      },
+      {
+        "metric": "temperature",
+        "value": 36.7,
+        "unit": "°C",
+        "context": "Synthetic oral temperature at rest",
+        "source_id": "synthetic.sim-04-health-baseline-v1"
+      },
+      {
+        "metric": "sleep",
+        "value": 445,
+        "unit": "min",
+        "context": "Fictional preflight nightly sleep log",
+        "source_id": "synthetic.sim-04-health-baseline-v1"
+      },
+      {
+        "metric": "sleep_quality",
+        "value": 4,
+        "unit": "score",
+        "context": "Fictional preflight self-report, 1–5 scale",
+        "source_id": "synthetic.sim-04-health-baseline-v1"
+      },
+      {
+        "metric": "mood",
+        "value": 4,
+        "unit": "score",
+        "context": "Fictional preflight self-report, 1–5 scale",
+        "source_id": "synthetic.sim-04-health-baseline-v1"
+      },
+      {
+        "metric": "symptoms",
+        "value": 0,
+        "unit": "count",
+        "context": "Fictional routine symptom check-in, count reported",
+        "source_id": "synthetic.sim-04-health-baseline-v1"
+      }
+    ]
+  }
 }

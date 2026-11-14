@@ -232,23 +232,26 @@ def assess(
         "quality": measurement.quality,
         "context": dict(context),
     }
-    for key in ("value", "systolic", "diastolic", "unit"):
-        if getattr(measurement, key, None) is not None:
-            evidence[key] = getattr(measurement, key)
+    if measurement.quality != "unavailable":
+        for key in ("value", "systolic", "diastolic", "unit", "score", "symptoms", "duration_min"):
+            if getattr(measurement, key, None) is not None:
+                evidence[key] = getattr(measurement, key)
+        if measurement.metric == "sleep" and "duration_min" not in evidence and measurement.start_mission_s is not None:
+            evidence["duration_min"] = (measurement.end_mission_s - measurement.start_mission_s) / 60
 
     def build(personal: Comparison, reference: Comparison) -> Assessment:
         return Assessment(measurement.metric, profile.crew_id, measurement.observed_at_s,
                           version, personal, reference, evidence)
-
-    contextual = next((c for c in rules["contextual_metrics"] if c["metric"] == measurement.metric), None)
-    if contextual:
-        note = Comparison("contextual", "CONTEXT_ONLY", contextual["note"], rules_version=version)
-        return build(note, note)
 
     if measurement.quality != "valid":
         rejected = Comparison("unknown", "QUALITY_REJECTED",
                               f"The reading quality is {measurement.quality}, so it is not compared.",
                               rules_version=version)
         return build(rejected, rejected)
+
+    contextual = next((c for c in rules["contextual_metrics"] if c["metric"] == measurement.metric), None)
+    if contextual:
+        note = Comparison("contextual", "CONTEXT_ONLY", contextual["note"], rules_version=version)
+        return build(note, note)
 
     return build(_personal(measurement, context, profile, rules), _reference(measurement, context, rules))

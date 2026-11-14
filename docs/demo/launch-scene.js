@@ -143,13 +143,17 @@ function createLaunchScene(canvas) {
     rect("#273542",-91,-253,33,6);
     rect("#536674",-78,-274,3,21);
     ellipse("#ff9875",-76,-274,2,2);
-    const reach=36;
     for(const level of [-179,-103]) {
       ctx.save();
       ctx.translate(-65,level);
-      ctx.rotate(away*1.34);
-      rect("#344652",0,0,9+reach,8);
-      rect("#a4a19a",0,0,9+reach,1);
+      ctx.rotate(away*(level === -179 ? 1.45 : .80));
+      const length = level === -179 ? 54 : 49;
+      rect("#344652",0,0,length,8);
+      rect("#a4a19a",0,0,length,1);
+      if (level === -179) {
+        line("#99e5fa",2,[[5,4],[length-5,4],[length-2,7]]);
+        rect("#b8e5ed",length-4,1,6,9);
+      }
       ellipse("#ddc4a0",2,4,3,3);
       ctx.restore();
     }
@@ -284,18 +288,20 @@ function createLaunchScene(canvas) {
     const target=poseFor();
     const t=transition ? clamp((now-transition.start)/transition.duration) : 1;
     const liftoff = phase==="ascent" && elapsed===0;
-    const lift = clamp((t-.33)/.67);
+    const ignitionAge = ignition === null ? Infinity : (now-ignition)/1000;
+    const lift = clamp((ignitionAge-1.35)/1.25);
     const ease=liftoff ? lift*lift*(3-2*lift) : 1-(1-t)**3;
-    const ignitionProgress = ignition === null ? 1 : clamp((now-ignition)/1000);
-    const holdAtPad = phase === "ascent" && elapsed === 0 && ignitionProgress < .85;
-    const pose=Object.fromEntries(Object.keys(target).map(key=>[key,mix(transition?.from[key]??target[key],target[key],holdAtPad ? 0 : ease)]));
+    const release = ignition === null ? null : clamp((ignitionAge-.55)/.65);
+    canvas.dataset.padEvent = ignition !== null && ignitionAge < 1.35
+      ? release === 0 ? "ignition" : "umbilical-release" : phase === "ascent" ? "liftoff" : "";
+    const pose=Object.fromEntries(Object.keys(target).map(key=>[key,mix(transition?.from[key]??target[key],target[key],ease)]));
     previous=pose;
     const centered = canvas.closest(".launch-field")?.dataset.view === "launch";
     const shipX=w*(centered ? w<520 ? .34 : .5 : w<610 ? .63 : .66), ground=h*.79, s=Math.min(h/605,1.48);
     if (separation !== null) pose.booster = clamp((now-separation)/2800);
     const upperBurn = phase === "upper" && separation !== null && now-separation > 1000 && now-separation < 2700;
     const powered=phase==="ascent" && burning || upperBurn || orbitalBurn || phase==="orbital";
-    const thrust = powered ? engineThrottle : 0;
+    const thrust = powered ? engineThrottle * (ignition === null ? 1 : Math.max(.22,clamp(ignitionAge/.55))) : 0;
     if (!reduced.matches && (orbitalBurn || phase==="orbital")) {
       pose.drift += 18*Math.sin(now*.0011);
       pose.rise += 7*Math.sin(now*.0016);
@@ -305,8 +311,7 @@ function createLaunchScene(canvas) {
       ctx.save();
       ctx.globalAlpha=1-pose.space;
       terrain(w,h,ground+pose.camera,shipX);
-      const release = ignition === null ? clamp(pose.rise/60) : clamp((ignitionProgress-.38)/.47);
-      gantry(shipX,ground+pose.camera,s,release);
+      gantry(shipX,ground+pose.camera,s,release ?? clamp(pose.rise/60));
       if(daylight.light<1) rect("rgba(4,12,35,"+(1-daylight.light)*.35+")",0,ground+pose.camera-60,w,h-ground+60);
       ctx.restore();
     }
@@ -316,11 +321,11 @@ function createLaunchScene(canvas) {
       const age=(now-ignition)/1000;
       if(age<4) {
         for(let i=0;i<40;i++) {
-          const life=clamp((age-.85-rand(i+430)*.53)/3.35);
+          const life=clamp((age-.12-rand(i+430)*.53)/3.35);
           if(life===0 || life===1) continue;
           const x=shipX+(rand(i+315)-.5)*s*(32+life*358);
           const y=ground+pose.camera+s*(4-life*(9+rand(i+212)*58));
-          ellipse(`rgba(204,185,170,${Math.sin(life*Math.PI)*.2})`,x,y,s*(6+life*41),s*(3+life*23));
+          ellipse(`rgba(221,205,188,${Math.sin(life*Math.PI)*.29})`,x,y,s*(6+life*41),s*(3+life*23));
         }
       }
     }

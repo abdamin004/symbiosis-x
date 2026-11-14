@@ -8,6 +8,7 @@ assertion of feasibility, a claimed role, or an expired evidence basis.
 from hashlib import sha256
 import json
 
+from symbiosis_x.application.exercise_schedule import read_exercise_preview, record_deferral
 from symbiosis_x.contracts.commands import ActionRequest, CrewActionReceipt
 from symbiosis_x.storage.repository import Repository
 from symbiosis_x.workflows.planner import evaluate_run
@@ -76,7 +77,15 @@ def commit_command(repository: Repository, run_id: str,
         elif command.expires_at_s is not None and run["mission_s"] >= command.expires_at_s:
             reject_reason = "ACTION_EXPIRED"
 
-        if reject_reason is None:
+        exercise = None
+        if reject_reason is None and command.candidate_id == "defer_exercise":
+            try:
+                preview = read_exercise_preview(db, run_id)
+                exercise = next(option for option in preview["options"] if option["candidate_id"] == "defer_exercise")
+                reject_reason = exercise["reason_code"] if exercise["result"] != "feasible" else None
+            except (LookupError, StopIteration):
+                reject_reason = "EXERCISE_UNAVAILABLE"
+        elif reject_reason is None:
             plan = evaluate_run(db, run_id)
             candidate = next(
                 entry for entry in plan.candidates if entry.candidate_id == command.candidate_id
@@ -110,6 +119,8 @@ def commit_command(repository: Repository, run_id: str,
             "UPDATE runs SET decision_rev = decision_rev + 1 WHERE run_id = ?",
             (run_id,),
         )
+        if exercise is not None:
+            record_deferral(db, run_id, run["mission_s"], command.operation_id, exercise)
         event_id = f"action:{command.operation_id}"
         db.execute(
             """INSERT INTO events

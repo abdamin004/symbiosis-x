@@ -108,6 +108,9 @@ test("Horizon burns into orbit, reaches ISS and returns to Earth in one saved mi
   await button("Rotate +15°").click();
   await expect(navigation.locator("#navigation-attitude")).toContainText("15°");
   await expect(navigation.locator("#navigation-reserve")).toContainText("11 cold-gas pulses");
+  await expect(page.locator("#solid-propellant")).toHaveText("Stage detached");
+  await expect(page.locator("#orbital-propellant")).toHaveText("11.6 kg fuel / 17.4 kg oxidizer");
+  await expect(page.locator("#return-propellant")).toHaveText("8.8 kg fuel / 13.2 kg oxidizer");
   await button("Close").click();
   await expect(page).toHaveURL(missionUrl);
   const instrument = page.getByRole("button",{name:"Steer spacecraft"});
@@ -138,6 +141,21 @@ test("Horizon burns into orbit, reaches ISS and returns to Earth in one saved mi
   await button("Close orders").click();
   await twin.getByRole("button", { name:"Close Digital twin widget" }).click();
 
+  const groundTab = page.getByRole("button",{name:"Ground",exact:true});
+  await groundTab.click();
+  const ground = page.getByRole("region",{name:"Ground relay"});
+  await ground.getByRole("button",{name:"Simulate Ground direction"}).click();
+  await advance(3);
+  await button("Orders").click();
+  await button("Assign Ivo to readiness check").click();
+  const readiness = await page.evaluate(()=>
+    JSON.parse(localStorage.getItem("sx:launch-checkout:v1")));
+  await advance(Math.ceil((readiness.groundDirection.work.finishes-readiness.time)/15));
+  await button("Ivo · Send readiness report").click();
+  await advance(2);
+  await expect(ground).toContainText("Ground received readiness verified");
+  await button("Close orders").click();
+
   const command = page.getByRole("region", { name: "Flight command" });
   await guide.getByRole("button",{name:"Go to control"}).click();
   await expect(button("Coast to ISS departure window")).toBeFocused();
@@ -153,6 +171,7 @@ test("Horizon burns into orbit, reaches ISS and returns to Earth in one saved mi
   await expect(button("Coast to transfer apoapsis")).toBeEnabled({timeout:12_000});
   await page.reload();
   await expect(page.locator("#launch-status")).toHaveText("Transfer coast · engines off");
+  await expect(page.locator("#orbital-propellant")).toHaveText("8.0 kg fuel / 12.0 kg oxidizer");
   await expect(flightPlayback.getByRole("button",{name:"Play",exact:true})).toBeEnabled();
   await guide.getByRole("button",{name:"Go to control"}).click();
   await expect(button("Match station orbit")).toBeHidden();
@@ -187,8 +206,12 @@ test("Horizon burns into orbit, reaches ISS and returns to Earth in one saved mi
   await button("Verify and archive research").click();
   await expect(page.locator("#station-research-status")).toContainText("Paired sample archived");
   await button("Seal hatch and board return capsule").click();
+  await expect(page.locator("#orbital-propellant")).toHaveText("Stage left at station");
+  await expect(page.locator("#return-propellant")).toHaveText("7.2 kg fuel / 10.8 kg oxidizer");
+  await expect(page.locator("#maneuver-target")).toContainText("synthetic entry corridor");
   await expect(page.locator("#docking-caption")).toContainText("Undocking");
   await button("Commit deorbit").click();
+  await expect(page.locator("#return-propellant")).toHaveText("2.4 kg fuel / 3.6 kg oxidizer");
   const returnScene = page.getByRole("figure",{name:"Command pod Earth return"});
   await expect(returnScene).toHaveAttribute("data-phase","separation");
   await advance(2);
@@ -508,7 +531,7 @@ test("Flight Command shows guidance and stops three minutes before each coast ch
   await expect(resources).toContainText("Headroom");
   await expect(resources.locator("#command-phase")).toContainText("waiting for ISS window");
   await expect(resources.locator("#command-next")).toContainText("Coast to the departure point");
-  await expect(resources.locator("#command-reserve")).toHaveText("29 game units");
+  await expect(resources.locator("#command-reserve")).toHaveText("29 kg liquid propellant");
   const playbackBox = await transport.boundingBox();
   const resourceBox = await resources.boundingBox();
   const guideBox = await guide.boundingBox();
@@ -656,4 +679,162 @@ test("mission plan and orbit map stay in their own corners from checkout through
   await expect(overview).toContainText("Crew safely back on Earth");
   await expect(orbit).toContainText("Earth recovery");
   expect(errors).toEqual([]);
+});
+
+test("a low upper-stage reserve holds the ISS burn and preserves the independent return supply", async ({ page }) => {
+  await page.route(url=>url.pathname === "/flight",route=>route.fulfill({contentType:"text/html",body:flightHtml}));
+  await page.addInitScript(()=>{
+    localStorage.setItem("sx:launch-checkout:v1",JSON.stringify({
+      time:6000,jobs:{},ignition:60,separation:105,insertion:150,
+    }));
+  });
+  await page.goto("/flight?view=launch");
+  await page.getByRole("button",{name:"Flight command",exact:true}).click();
+  await expect(page.locator("#launch-status")).toHaveText("Stable orbit · ISS window open");
+  await expect(page.locator("#launch-next")).toContainText("reserve below minimum");
+  const transfer = page.getByRole("button",{name:"Commit ISS transfer burn"});
+  await expect(transfer).toBeDisabled();
+  const before = await page.locator("#orbital-propellant").textContent();
+  await transfer.dispatchEvent("click");
+  await expect(page.locator("#orbital-propellant")).toHaveText(before);
+  await expect(page.locator("#return-propellant")).toHaveText("8.8 kg fuel / 13.2 kg oxidizer");
+  expect(await page.evaluate(()=>JSON.parse(localStorage.getItem("sx:launch-checkout:v1")).phasing)).toBeUndefined();
+});
+
+test("saved vehicle provisions quarantine treated water and accept the station receipt once", async ({ page }) => {
+  await page.route(url=>url.pathname === "/flight",route=>route.fulfill({contentType:"text/html",body:flightHtml}));
+  await page.addInitScript(()=>{
+    if (sessionStorage.getItem("provisions-test")) return;
+    sessionStorage.setItem("provisions-test","yes");
+    localStorage.setItem("sx:launch-checkout:v1",JSON.stringify({
+      time:525,jobs:{},ignition:60,separation:105,insertion:135,phasing:150,matchedAt:180,
+      capture:210,hatchAt:225,
+    }));
+  });
+  await page.emulateMedia({reducedMotion:"reduce"});
+  await page.goto("/flight?view=launch");
+  const button = name => page.getByRole("button",{name,exact:true});
+  await button("Provisions").click();
+  const ledger = page.getByRole("dialog",{name:"Vehicle provisions"});
+  const value = label => ledger.locator("dt").filter({hasText:new RegExp("^"+label+"$")}).locator("xpath=following-sibling::dd[1]");
+  const step = page.getByRole("group",{name:"Flight playback"}).getByRole("button",{name:"Advance one mission tick"});
+  await expect(ledger).toContainText("Horizon · synthetic inventory");
+  await expect(value("Potable")).toHaveText(/2[0-3]\./);
+  await button("Conserve water").click();
+  await expect(ledger).toContainText("defer hygiene");
+  await button("Treat wastewater").click();
+  const held = await value("Awaiting quality verification").textContent();
+  expect(held, await ledger.locator("#provisions-receipt").textContent()).not.toBe("0.000 L");
+  await button("Verify treated water").click();
+  await expect(ledger).toContainText("Quality verification pending");
+  await expect(value("Awaiting quality verification")).toHaveText(held);
+  await expect(button("Accept station water receipt")).toBeDisabled();
+  await button("Close provisions").click();
+  await button("Flight command").click();
+  await button("Hand off research kit").click();
+  await button("Assign Sana to station research").click();
+  await button("Close flight command").click();
+  await button("Provisions").click();
+  await button("Accept station water receipt").click();
+  await expect(ledger).toContainText("Station water credited to the return capsule");
+  await expect(button("Accept station water receipt")).toBeDisabled();
+  await button("Close provisions").click();
+  await step.click();
+  await button("Provisions").click();
+  await button("Verify treated water").click();
+  await expect(value("Awaiting quality verification")).toHaveText("0.000 L");
+  await button("Accept station water receipt").click();
+  await expect(ledger).toContainText("Station receipt already used");
+  await button("Close provisions").click();
+  await page.reload();
+  await button("Provisions").click();
+  await expect(ledger).toContainText("defer hygiene");
+  await expect(value("Awaiting quality verification")).toHaveText("0.000 L");
+});
+
+test("Galley holds a meal lot and requires a separate safety verification", async ({page}) => {
+  await page.route(url=>url.pathname === "/flight",route=>route.fulfill({contentType:"text/html",body:flightHtml}));
+  await page.addInitScript(()=>{
+    if (sessionStorage.getItem("galley-safety-test")) return;
+    sessionStorage.setItem("galley-safety-test","yes");
+    localStorage.setItem("sx:launch-checkout:v1",JSON.stringify({
+      time:3900,jobs:{},ignition:60,separation:105,insertion:135,phasing:150,matchedAt:180,capture:210,
+    }));
+  });
+  await page.emulateMedia({reducedMotion:"reduce"});
+  await page.goto("/flight?view=launch");
+  const button = name=>page.getByRole("button",{name,exact:true});
+  const open = async ()=>button("Provisions").click();
+  const close = async ()=>button("Close provisions").click();
+  const step = page.getByRole("group",{name:"Flight playback"}).getByRole("button",{name:"Advance one mission tick"});
+  const status = page.locator("#galley-status");
+  await open();
+  await expect(status).toContainText("Cleanliness unknown");
+  await button("Isolate potable water lot").click();
+  await expect(page.locator("#galley-evidence")).toContainText("0.500 L held");
+  await expect(button("Verify and release water lot")).toBeDisabled();
+  await button("Report suspected food exposure").click();
+  await expect(status).toContainText("Horizon meal lot A on hold (2 packs)");
+  await button("Assign disinfection").click();
+  await expect(status).toContainText("disinfection in progress");
+  await close();
+  await step.click();
+  await step.click();
+  await open();
+  await expect(status).toContainText("verification due");
+  await expect(button("Verify and release surface")).toBeDisabled();
+  await page.getByLabel("Assigned astronaut").selectOption("1");
+  await button("Verify and release water lot").click();
+  await expect(page.locator("#galley-evidence")).toContainText("Verified and released at T+");
+  await button("Record failed verification").click();
+  await expect(status).toContainText("Held · disinfection due");
+  await button("Assign disinfection").click();
+  await close();
+  await step.click();
+  await step.click();
+  await open();
+  await page.getByLabel("Assigned astronaut").selectOption("0");
+  await button("Verify and release surface").click();
+  await expect(status).toContainText("Inspection recorded");
+  await expect(status).toContainText("meal lot A on hold");
+  await close();
+  await page.reload();
+  await open();
+  await expect(status).toContainText("Inspection recorded");
+  await expect(status).toContainText("meal lot A on hold (2 packs)");
+  await page.locator("#galley-hygiene summary").click();
+  await expect(page.locator("#galley-audit")).toContainText("Verification failed");
+  await expect(page.locator("#galley-audit")).toContainText("Verification passed");
+
+  await close();
+  await page.getByRole("button",{name:"Medical",exact:true}).click();
+  await button("Food exposure review").click();
+  const review = page.getByRole("dialog",{name:"Food exposure review"});
+  await expect(review.locator("#food-exposure-meals li").first()).not.toHaveText("No completed meal records for this lot");
+  const subjects = await review.locator("#food-exposure-meals li").allTextContents();
+  const options = await review.locator("#food-symptom-crew option").allTextContents();
+  const shared = options.filter(name=>subjects.some(meal=>meal.startsWith(name+" ·")));
+  expect(shared.length).toBeGreaterThanOrEqual(2);
+  for (const [index,name] of shared.slice(0,2).entries()) {
+    await review.getByLabel("Astronaut").selectOption({label:name});
+    await review.getByLabel("Observation").selectOption(index ? "stomach" : "nausea");
+    await button("Record private symptom report").click();
+  }
+  await expect(review.locator("#food-exposure-reports li")).toHaveCount(2);
+  await button("Review suspected case").click();
+  await expect(button("Record follow-up recheck")).toBeDisabled();
+  await button("Close review").click();
+  for (let count = 0; count < 4; count++) await step.click();
+  await button("Food exposure review").click();
+  await button("Record follow-up recheck").click();
+  await button("Share food safety status").click();
+  await expect(review).toContainText("Ground delivery pending");
+  await button("Close review").click();
+  await page.locator('[data-map-view="ground"]').dispatchEvent("click");
+  const delivered = page.locator("#ground-food-safety");
+  await expect(delivered).toBeHidden();
+  for (let count = 0; count < 20; count++) await step.click();
+  await expect(delivered).toContainText("Food safety review complete");
+  for (const name of shared) await expect(delivered).not.toContainText(name);
+  await expect(delivered).not.toContainText(/nausea|discomfort|meal lot A/i);
 });

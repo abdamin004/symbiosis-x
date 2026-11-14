@@ -136,7 +136,7 @@ def test_reference_rules_catalog_is_sourced_and_versioned():
     assert RULES["rules_version"] == VERSION
     metrics = {m["id"] for m in json.loads((ROOT / "catalogs/crew/health-metrics.json").read_text())["metrics"]}
     covered = {r["metric"] for r in RULES["reference_rules"]} | {c["metric"] for c in RULES["contextual_metrics"]}
-    assert covered == metrics
+    assert covered == metrics | {"sleep_quality"}
     for rule in RULES["reference_rules"]:
         assert rule["earth_based"] is True and rule["requires_context"]
         assert urlparse(rule["source"]["url"]).scheme == "https"

@@ -1,49 +1,42 @@
-// Presentation offsets use wall time. Flight commands still advance the mission clock
-// through the same checkout, maneuver and docking gates as a manual run.
+// A cue may wait for a mission milestone as well as its earliest presentation time.
 const flightDemoCues = [
-  [0, "Astronaut health · systems and crew checkout", "startup"],
-  [1, null, "assign-checks"],
-  [2, null, 1], [3, null, 1], [4, null, 1],
+  [0, "Astronaut health · systems and crew checkout", "startup", "assign-checks"],
   [5, "Range clear · countdown armed", "launch-arm"],
-  [7, null, 1],
   [8, "Horizon liftoff", "launch-go"],
   [14, "Booster separation", "launch-separate"],
   [19, "Orbital insertion", "launch-insert"],
   [29, "Stable orbit · cabin and Crew baseline", "crew-baseline"],
-  [36, "Suspected CO₂ exposure · check on Sana", 1],
-  [43, "Private Crew check · Noor checks on Sana", "crew-check"],
-  [51, "Ivo inspects the scrubber · Noor’s operational alert is in transit", 1],
-  [60, "Private Crew check · observation recorded", 1],
-  [68, "Ground receives scrubber status · Crew accepts repeat wristband sample", 1],
-  [74, "Scrubber repair · Ivo restores airflow", 1],
-  [81, "Crew verifies restored flow and watches the CO₂ trend", 1],
-  [85, "Crew confirms CO₂ is falling · recovery report in transit", 1],
-  [88, null, 1],
-  [94, "Scheduled spacewalk · Mara releases antenna inspection", 1, "start-demo-eva"],
-  [97, "Ground receives the cabin recovery report", 1],
-  [100, "Spacewalk · Ivo exits to service the antenna", 1],
-  [104, null, 1],
-  [107, null, 1],
-  [109, "Spacewalker returns through the airlock", 1],
-  [111, null, 1],
-  [114, "Mara verifies Ivo’s safe return", 1, "verify-demo-eva", "close-twin"],
-  [117, "Coast to the ISS window", "close-twin", "launch-coast"],
+  [32, null, "show-deck"],
+  [33, "Suspected CO₂ exposure · check on Sana", {orbit:15}],
+  [36, "Private Crew check · Noor checks on Sana", "crew-check"],
+  [38, "Ivo inspects the scrubber · operational alert in transit", {orbit:30}, "start-demo-scrubber"],
+  [41, null, "show-systems"],
+  [43, "Private Crew check · observation recorded", {orbit:45}],
+  [48, "Ground receives scrubber status · Crew accepts repeat wristband sample", {orbit:60}],
+  [54, "Scrubber repair · Ivo restores airflow", {orbit:75}],
+  [60, "Crew verifies restored flow and watches the CO₂ trend", {orbit:90}],
+  [65, "Crew confirms CO₂ is falling · recovery report in transit", {orbit:105}],
+  [73, null, "close-twin", "show-ground", "show-orders"],
+  [82, "Ground receives the cabin recovery report", {orbit:150}],
+  [87, null, "reset-panels"],
+  [90, "Scheduled spacewalk · Mara releases antenna inspection", {orbit:165}, "start-demo-eva"],
+  [96, "Spacewalk · Ivo exits to service the antenna", {eva:30}],
+  [105, "Spacewalker returns through the airlock", {eva:75}],
+  [112, "Mara verifies Ivo’s safe return", {eva:105}, "verify-demo-eva", "close-twin"],
+  [115, null, "show-workflows"],
+  [117, "Coast to the ISS window", "reset-panels", "close-twin", "launch-coast"],
   [122, "ISS transfer burn", "launch-phasing"],
   [132, "Transfer coast · engines off", "launch-coast"],
   [137, "Match station orbit", "launch-match"],
   [147, "ISS approach · closing range", "show-docking"],
-  [151, null, 1], [156, null, 1], [161, null, 1],
   [165, "Docking · mechanical capture", "launch-capture"],
   [171, "Docking · verify seal and pressure", "launch-check-seal", "launch-check-pressure"],
   [177, "Hatch clearance and cargo handoff", "launch-open-hatch", "launch-transfer"],
   [184, "Sana collects paired research samples", "hide-docking", "launch-research"],
-  [189, null, 1], [194, null, 1],
   [197, "Research archived", "launch-archive", "show-docking"],
   [203, "Undock and clear the ISS", "launch-depart"],
   [209, "Deorbit and atmospheric entry", "hide-docking", "launch-deorbit"],
-  [212, null, 1], [215, null, 1],
-  [216, "Capsule descent", 1],
-  [219, null, 1],
+  [214, "Capsule descent", {entry:30}],
   [220, "Capsule landed", "launch-land"],
   [223, "Crew recovered on Earth", "launch-recover"],
 ];
@@ -93,19 +86,32 @@ function flightDemoWristband(crewId, time, insertion) {
   }};
 }
 
-function createFlightDemo({banner, clock, status, pause}, {begin, run, busy, next, suspend, resume}) {
+function createFlightDemo({banner, clock, status, pause}, {begin, run, busy, ready, next, tickDelay, advance, suspend, resume, paintScene, soundCue}) {
   const format = seconds => Math.floor(seconds/60) + ":" + String(seconds%60).padStart(2,"0");
   const duration = flightDemoCues.at(-1)[0];
-  let started, pausedAt, cursor, frame;
+  let started, pausedAt, cursor, frame, tickStarted, interval;
   let active = false;
   function paint(now) {
     const seconds = Math.min(duration, Math.floor((now-started)/1000));
     const elapsed = format(seconds) + " / " + format(duration);
     if (clock.textContent !== elapsed) clock.textContent = elapsed;
+    const delay = tickDelay();
+    if (delay !== interval) {
+      interval = delay;
+      tickStarted = now;
+    }
+    // Apply every step through the authoritative flight gate. After a delayed
+    // frame, resume from the next step so intermediate work remains visible.
+    if (interval && now - tickStarted >= interval) {
+      advance();
+      tickStarted = now;
+    }
     const cue = flightDemoCues[cursor];
-    if (cue && seconds >= cue[0] && !busy()) {
-      const [, label, ...actions] = cue;
-      for (const action of actions) {
+    const milestone = cue && typeof cue[2] === "object" ? cue[2] : null;
+    if (cue && seconds >= cue[0] && !busy() && (!milestone || ready(milestone))) {
+      const [, label] = cue;
+      const steps = cue.slice(milestone ? 3 : 2);
+      for (const action of steps) {
         if (run(action)) continue;
         status.textContent = "Demo stopped · " + next();
         status.dataset.stopped = "";
@@ -113,8 +119,10 @@ function createFlightDemo({banner, clock, status, pause}, {begin, run, busy, nex
         return;
       }
       if (label) status.textContent = label;
+      soundCue(cue[0]);
       cursor++;
     }
+    paintScene(now,tickDelay() === interval && interval ? (now-tickStarted)/interval : 0);
     if (cursor < flightDemoCues.length) frame = requestAnimationFrame(paint);
     else pause.hidden = true;
   }
@@ -122,6 +130,8 @@ function createFlightDemo({banner, clock, status, pause}, {begin, run, busy, nex
     active = true;
     pausedAt = null;
     cursor = 0;
+    interval = 0;
+    tickStarted = 0;
     banner.hidden = false;
     pause.hidden = false;
     pause.textContent = "Pause demo";
@@ -147,6 +157,7 @@ function createFlightDemo({banner, clock, status, pause}, {begin, run, busy, nex
     } else {
       const pausedFor = now-pausedAt;
       started += pausedFor;
+      tickStarted += pausedFor;
       pausedAt = null;
       resume(pausedFor);
       frame = requestAnimationFrame(paint);

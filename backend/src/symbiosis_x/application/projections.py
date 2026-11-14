@@ -6,6 +6,7 @@ from sqlite3 import Connection, Row
 
 from symbiosis_x.application.runs import RunNotFound
 from symbiosis_x.crew.profile import profile_for_crew
+from symbiosis_x.crew.submission_cabin import cabin_exposure, RECOVERY_S
 from symbiosis_x.crew.followup import compute_followup
 from symbiosis_x.crew.measurements import latest_crew_assessment
 from symbiosis_x.crew.trends import TrendSample, evaluate_trend
@@ -14,6 +15,10 @@ from symbiosis_x.contracts.projections import (
     TraceRecord,
 )
 from symbiosis_x.workflows.relay import ground_case_statuses
+from symbiosis_x.application.exercise_schedule import EXERCISE_RELAY_PREFIX, EXERCISE_SCENARIO, load_exercise_fixture
+from symbiosis_x.crew.wearable_series import load_wearable_fixture
+from symbiosis_x.application.wearables import FIXTURE_CREW_ID
+from symbiosis_x.workflows.monitor import read_wearable_recheck
 
 # Operational journal events that may appear in a role trace, and who recorded them.
 # Everything else (crew-visibility events, observations, run control) never enters a trace.
@@ -36,37 +41,54 @@ def read_run(db: Connection, run_id: str) -> Row:
     return run
 
 
-def latest_crew_trend(db: Connection, run_id: str, crew_id: str) -> dict | None:
-    """Describe the comparable trend of the crew member's latest scalar metric (Crew-only)."""
+def latest_crew_trend(db: Connection, run_id: str, crew_id: str, metric: str | None = None) -> dict | None:
+    """Describe a comparable trend in the private Crew series."""
     latest = db.execute(
         """SELECT h.metric FROM health_observations h
            JOIN events e ON e.run_id = h.run_id AND e.event_id = h.event_id
            WHERE h.run_id = ? AND h.crew_id = ? AND e.event_type = 'crew.health_measurement'
+             AND e.visibility = 'crew'
            ORDER BY h.observed_at_s DESC, h.received_at_s DESC, h.event_id DESC LIMIT 1""",
         (run_id, crew_id),
     ).fetchone()
-    if latest is None:
+    if latest is None and metric is None:
         return None
     rows = db.execute(
         """SELECT h.event_id, h.metric, h.numeric_value, h.unit, h.observed_at_s, h.quality,
-                  h.source_id, h.context_json
+                  h.source_id, h.context_json, e.payload_json
            FROM health_observations h
            JOIN events e ON e.run_id = h.run_id AND e.event_id = h.event_id
-           WHERE h.run_id = ? AND h.crew_id = ? AND h.metric = ? AND h.unit IS NOT NULL
-             AND e.event_type = 'crew.health_measurement'""",
-        (run_id, crew_id, latest["metric"]),
+           WHERE h.run_id = ? AND h.crew_id = ? AND h.metric = ?
+             AND e.event_type = 'crew.health_measurement' AND e.visibility = 'crew'""",
+        (run_id, crew_id, metric if metric is not None else latest["metric"]),
     ).fetchall()
-    if not rows:
-        return None  # Structured metrics (for example blood pressure) have no scalar trend here.
-    samples = [
-        TrendSample(
-            sample_id=row["event_id"], crew_id=crew_id, metric=row["metric"], value=row["numeric_value"],
-            unit=row["unit"], observed_at_s=row["observed_at_s"], quality=row["quality"],
-            source_id=row["source_id"], context=json.loads(row["context_json"]),
-        )
-        for row in rows
-    ]
-    return asdict(evaluate_trend(samples))
+    samples = []
+    for row in rows:
+        measurement = json.loads(row["payload_json"])["receipt"]["measurement"]
+        context = json.loads(row["context_json"])
+        for key in ("method", "meal_context", "site", "scale_id"):
+            if key in measurement:
+                context[key] = measurement[key]
+        value, unit = row["numeric_value"], measurement.get("unit")
+        if row["metric"] == "blood_pressure":
+            value, unit = measurement.get("systolic"), "mmHg"
+        elif row["metric"] == "symptoms":
+            # The reporting form supplies symptom labels, with 'none' reserved for no symptoms.
+            value = len({item.strip().casefold() for item in measurement["symptoms"]} - {"", "none"})
+            unit = "reported symptoms"
+        elif row["metric"] == "sleep":
+            value = measurement.get("duration_min")
+            if value is None:
+                value = (measurement["end_mission_s"] - measurement["start_mission_s"]) / 60
+            unit = "min"
+        elif row["metric"] in ("mood", "sleep_quality"):
+            value = measurement.get("score")
+        samples.append(TrendSample(
+            sample_id=row["event_id"], crew_id=crew_id, metric=row["metric"], value=value,
+            unit=unit, observed_at_s=row["observed_at_s"], quality=row["quality"],
+            source_id=row["source_id"], context=context,
+        ))
+    return asdict(evaluate_trend(samples)) if samples else None
 
 
 def read_crew(db: Connection, run_id: str, crew_id: str = "SIM-01") -> CurrentCrewView:
@@ -83,6 +105,7 @@ def read_crew(db: Connection, run_id: str, crew_id: str = "SIM-01") -> CurrentCr
         (run_id, run["mission_s"]),
     ).fetchone()
     assessment = latest_crew_assessment(db, run_id, profile)
+    exposure = cabin_exposure(crew_id, min(run["mission_s"], RECOVERY_S)) if run["scenario_id"] == "health-story" else None
     return CurrentCrewView(
         **dict(run),
         co2=AcceptedCO2(**dict(co2)) if co2 else None,
@@ -90,6 +113,7 @@ def read_crew(db: Connection, run_id: str, crew_id: str = "SIM-01") -> CurrentCr
         health_assessment=assessment,
         health_followup=compute_followup(db, run_id, crew_id, run["mission_s"], assessment),
         health_trend=latest_crew_trend(db, run_id, crew_id),
+        cabin_exposure=exposure,
         trace=read_trace(db, run_id, run["mission_s"]),
     )
 
@@ -177,3 +201,40 @@ def read_ground(db: Connection, run_id: str) -> CurrentGroundView:
         trace=read_trace(db, run_id, run["mission_s"], onboard_until_s=onboard_until_s),
         health_cases=ground_case_statuses(db, run_id, run["mission_s"]),
     )
+
+
+
+def read_wearable_debrief(db: Connection, run_id: str) -> dict:
+    """Read the private timeline and the actual receipt of the final operational packet."""
+    run = read_run(db, run_id)
+    if (run["scenario_id"], run["scenario_version"]) != EXERCISE_SCENARIO:
+        raise LookupError("DEBRIEF_NOT_FOUND")
+    mission_s = run["mission_s"]
+    task = read_wearable_recheck(db, run_id, FIXTURE_CREW_ID, mission_s, load_wearable_fixture())
+    events = {}
+    for row in db.execute(
+        """SELECT event_type, mission_s, payload_json FROM events
+           WHERE run_id = ? AND mission_s <= ? AND event_type IN (
+               'crew.exercise_deferred', 'exercise.outcome_recorded')
+           ORDER BY event_seq""",
+        (run_id, mission_s),
+    ):
+        events[row["event_type"]] = (row["mission_s"], json.loads(row["payload_json"]))
+    outcome_s = load_exercise_fixture()["outcome_at_s"]
+    delivery = db.execute(
+        """SELECT s.decision_rev, s.observed_at_s, m.deliver_at_s, m.delivered_at_s
+           FROM messages m JOIN snapshots s ON s.run_id = m.run_id AND s.snapshot_id = m.ground_snapshot_id
+           WHERE m.run_id = ? AND m.ground_snapshot_id = ? AND m.issued_at_s <= ?""",
+        (run_id, f"{EXERCISE_RELAY_PREFIX}{outcome_s}", mission_s),
+    ).fetchone()
+    report = dict(delivery) if delivery is not None else None
+    return {
+        "run_id":run_id, "mission_s":mission_s, "synthetic":True,
+        "recheck":task.model_dump() if task else None,
+        "time_to_verified_s":task.completed_at_s-task.opened_at_s if task and task.completed_at_s is not None else None,
+        "decision_at_s":events.get("crew.exercise_deferred", (None,))[0],
+        "outcome":events.get("exercise.outcome_recorded", (None, None))[1],
+        "ground_report":report,
+        "ground_delivery_lag_s":report["delivered_at_s"]-report["observed_at_s"]
+        if report and report["delivered_at_s"] is not None else None,
+    }

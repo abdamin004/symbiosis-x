@@ -1,0 +1,77 @@
+body.health30-active{overflow:hidden}
+body.health30-active>main{visibility:hidden}
+#health30[hidden]{display:none}
+#health30{position:fixed;inset:0;z-index:10000;isolation:isolate;color:var(--ink,#eef0ff);font:18px/1.36 system-ui;
+  background:radial-gradient(ellipse at 28% 45%,#1b2752,#0a1028 53%,#050711 84%);overflow:hidden}
+#health30::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.75;
+  background-image:radial-gradient(1px 1px at 31px 22px,#9bdcff,transparent),radial-gradient(1px 1px at 82px 63px,#eef0ff,transparent),radial-gradient(1px 1px at 140px 93px,#bdabff,transparent);background-size:151px 113px,191px 158px,237px 174px}
+.health30-brand{position:absolute;top:5%;left:5%;display:grid;letter-spacing:.12em;gap:4px;z-index:2;text-shadow:0 2px 18px #080b22}
+.health30-brand span,.health30-end>span{color:#9bdcff;font-size:15px;font-weight:700;letter-spacing:.25em}
+.health30-brand strong{font-size:31px}
+.health30-crew{position:absolute;left:5%;top:15%;display:flex;gap:9px;flex-wrap:wrap;z-index:2}
+.health30-crew span{border:1px solid #9d9fff66;border-radius:7px;background:#101934dc;padding:7px 11px;font-size:15px}
+[data-beat=astronaut] .health30-crew [data-crew=SIM-02],[data-beat=fault] .health30-crew [data-crew=SIM-02]{border-color:#ffc18f;color:#ffc18f}
+.health30-hull{position:absolute;width:min(69vw,1150px);left:-1.5%;top:29%;opacity:.82;filter:drop-shadow(0 10px 35px #6472e862)}
+.health30-hull img{display:block;width:100%}
+.health30-room-tag{position:absolute;left:var(--x);top:var(--y);translate:-50% -50%;white-space:nowrap;padding:3px 7px;border:1px solid #9cebd088;border-radius:6px;background:#090e22f5;color:#9cebd0;font-size:14px;font-weight:700;animation:health30-reveal .23s var(--reveal) both}
+.health30-launch,.health30-docking,.health30-recovery{position:absolute;width:100%;height:100%;inset:0;display:none}
+.health30-docking{height:auto;top:12%;width:min(90vw,1440px);left:5%}
+[data-beat=launch] .health30-launch,[data-beat=dock] .health30-docking,[data-beat=land] .health30-recovery{display:block}
+[data-beat=launch] .health30-hull,[data-beat=dock] .health30-hull,[data-beat=end] .health30-hull,[data-beat=land] .health30-hull,
+:is([data-beat=launch],[data-beat=end],[data-beat=dock],[data-beat=land]) .health30-crew,[data-beat=end] .health30-brand{display:none}
+.health30-panel{position:absolute;top:14%;right:4.5%;width:clamp(420px,35%,550px);max-height:73%;overflow:auto;box-sizing:border-box;
+  border:1px solid #9d9fff70;background:#090e22f5;box-shadow:0 16px 45px #02041185;border-radius:12px;padding:19px 23px}
+.health30-panel>small{font-size:14px;font-weight:750;letter-spacing:.12em;color:#9bdcff}
+.health30-panel h2{font-size:clamp(28px,2.5vw,42px);margin:4px 0 9px;line-height:1.08}
+.health30-panel p{font-size:17px;margin:9px 0}
+.health30-panel footer{font-size:14px;color:#bac8e3;margin-top:11px}
+.health30-panel a{color:#9bdcff}
+.health30-readings{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.health30-readings>div{min-width:0;border:1px solid #9d9fff35;border-radius:7px;background:#141f39;padding:6px;display:grid;align-content:start}
+.health30-readings span{font-size:14px;color:#c9d6f0}
+.health30-readings strong{font-size:clamp(22px,1.8vw,30px);font-variant-numeric:tabular-nums;color:#9cebd0;white-space:nowrap}
+.health30-readings strong small{font-size:12px;display:block;line-height:1.15}
+.health30-readings strong small:empty{display:none}
+.health30-history{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:12px;margin:9px 0;color:#bdd6ef;font-size:15px}
+.health30-history svg{width:100%;height:39px}
+.health30-deck{display:grid;gap:5px}
+.health30-deck>div{display:grid;grid-template-columns:1fr 1.2fr;gap:0 6px;padding:4px 9px;border-radius:7px;background:#111c35;
+  border-left:3px solid #9cebd0;animation:health30-reveal .23s both;animation-delay:var(--reveal)}
+.health30-deck span,.health30-deck small{font-size:14px;color:#c9d6f0}
+.health30-deck strong{color:#9cebd0}
+@keyframes health30-reveal{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.health30-hero-value{font:700 61px/1.08 ui-monospace,monospace;color:#9bdcff}
+.health30-panel[data-alert=true]{border-color:#ff9d9c}
+.health30-panel[data-alert=true] .health30-hero-value{color:#ff9d9c}
+.health30-panel[data-alert=true] .health30-exposure{padding:8px;border-left:4px solid #ff9d9c;background:#712f4155;color:#ffd0d0}
+.health30-plot{position:relative}
+.health30-plot span{position:absolute;right:6px;top:3px;color:#ffc18f;background:#090e22;padding:0 4px;font-size:16px}
+.health30-plot svg{width:100%;height:auto;display:block;margin-top:7px}
+.health30-air-status,.health30-relay-status{color:#9cebd0;font-size:23px;font-weight:700}
+[data-beat=fault] .health30-air-status{color:#ffc18f}
+.health30-callout{display:grid;padding:9px 13px;background:#712f4155;border-left:4px solid #ff9d9c}
+.health30-callout strong{font-size:30px}
+.health30-callout span{color:#ffcccb}
+.health30-panel ol{margin:9px 0;padding-left:23px;font-size:17px}
+.health30-panel li+li{margin-top:5px}
+.health30-link{display:flex;align-items:center;gap:14px;margin:23px 0}
+.health30-link span{height:3px;background:#bdabff88;flex:1;position:relative}
+.health30-link i{color:#9bdcff;font-size:24px;position:absolute;left:var(--packet-progress,0%);top:50%;transform:translate(-50%,-50%);text-shadow:0 0 15px #9bdcff}
+.health30-chips{display:flex;flex-wrap:wrap;gap:6px}
+.health30-chips span{padding:3px 8px;border-radius:5px;border:1px solid #9d9fff77;color:#d4d9ed;font-size:15px}
+.health30-caption{position:absolute;z-index:3;left:4.5%;right:4.5%;bottom:7%;margin:0;padding:11px 18px;text-align:center;font-size:clamp(19px,1.9vw,30px);
+  font-weight:660;background:#070a16ed;border:1px solid #9d9fff55;border-radius:8px}
+.health30-caption:empty{display:none}
+.health30-synthetic{position:absolute;right:4.5%;bottom:2.2%;z-index:3;margin:0;color:#d6def6;font-size:13px}
+.health30-end{display:none;place-content:center;position:absolute;inset:0;text-align:center}
+[data-beat=end] .health30-end{display:grid}
+.health30-end h1{font-size:clamp(60px,8vw,130px);line-height:1.04;letter-spacing:.035em;margin:18px 0;color:#eef0ff}
+.health30-end p{font-size:clamp(26px,3vw,47px);margin:0 0 30px}
+.health30-end small{font-size:17px;color:#9bdcff}
+.health30-recovery{margin:0;max-width:none}
+.health30-recovery #return-sea-backdrop{display:block}
+.health30-recovery #return-art{position:absolute;left:38%;top:23%;width:24%;z-index:1}
+@media(max-width:900px){.health30-panel{width:min(490px,90%);min-width:0;top:23%;padding:12px}.health30-hull{width:100%;opacity:.45;left:0}.health30-crew{top:12%}.health30-caption{bottom:5%;padding:8px}}
+@media(prefers-reduced-motion:reduce){.health30-deck>div,.health30-room-tag{animation:none}}
+[data-beat=launch][data-liftoff=false] .health30-launch{display:none}
+[data-beat=launch][data-liftoff=false] .health30-hull{display:block;left:14%;top:24%;width:72%;opacity:1}

@@ -77,6 +77,9 @@ button[aria-pressed=true]{background:#3d315e}
 .crew-mood i{display:block;height:100%;width:var(--mood-fill,100%);background:var(--mood-color,#7de0b8)}
 .crew-portrait[data-mood="Under pressure"]{--mood-color:#ffd08c}
 .crew-portrait[data-mood="Strained"]{--mood-color:#ff949e}
+.crew-portrait .crew-self-report{font-size:.53rem;line-height:1;color:#c7d6f0}
+#crew-mood-dialog select{color:var(--ink);background:#1b2744;padding:.3rem;border-radius:5px}
+#personnel-private-mood{font-size:.75rem;color:var(--muted);margin:.25rem 0}
 .crew-portrait .crew-mood-label{font-size:.54rem;line-height:1;color:var(--mood-color,#9eeac9)}
 .overview-time{display:flex;align-items:center;justify-content:space-between;gap:.35rem}
 #timeline{width:100%;accent-color:var(--violet)}
@@ -155,6 +158,11 @@ button[aria-pressed=true]{background:#3d315e}
 .crew-sprite .arm{width:4px;height:11px;top:12px;background:var(--suit);border-radius:3px;transform-origin:center top}
 .crew-sprite .arm-left{left:3px;rotate:12deg}
 .crew-sprite .arm-right{right:2px;rotate:-12deg}
+.crew-device{position:absolute;display:grid;place-items:center;width:22px;height:22px;padding:0;transform:translate(-50%,-50%);z-index:3;border:1px solid #92d9ef9c;border-radius:5px;background:#14253ee8;color:#acdef4}
+.crew-device .icon{width:.72rem;height:.72rem}
+.crew-device:focus-visible{outline:2px solid white;outline-offset:2px}
+.crew-device[data-quality=held],.crew-device[data-quality=stale]{color:#ffd198;border-color:#ffcf829c}
+.crew-device[data-quality=accepted]{color:#9ae4c2;border-color:#9ae4c29c}
 [data-pose=move] .leg-left{transform:translateY(calc(2px * var(--stride,0)))}
 [data-pose=move] .leg-right{transform:translateY(calc(-2px * var(--stride,0)))}
 [data-pose=move] .arm-left{rotate:calc(22deg * var(--stride,0))}
@@ -164,11 +172,6 @@ button[aria-pressed=true]{background:#3d315e}
 @media(max-width:720px){.ship{margin-inline:0;width:100%}}
 .minimap-screen{background:radial-gradient(ellipse at 50% 0,#22294f,#0c1329 75%);border-radius:9px;min-height:84px;display:grid;align-items:center;padding:.25rem}
 .map-views button{flex:1}
-#deck-map{width:100%;height:79px;display:block}
-.map-systems{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.35rem}
-.map-systems div{padding:.35rem .25rem;background:#1d2646;border-radius:5px}
-.map-systems small{display:block;font-size:.65rem;color:var(--muted)}
-.map-systems strong{font:600 .75rem ui-monospace,monospace;color:var(--blue)}
 .panel{background:linear-gradient(150deg,#141c36f5,#090e22f7 72%);box-shadow:0 12px 34px #0008,inset 0 1px #788ac04d}
 .widget-bar{padding-bottom:.36rem;border-bottom:1px solid #828fc12c}
 .profile-data{grid-template-columns:minmax(0,1fr) minmax(0,1.08fr)}
@@ -222,11 +225,6 @@ button[aria-pressed=true]{background:#3d315e}
 @media(max-width:720px){.ship{margin-inline:0;width:100%}}
 .minimap-screen{background:radial-gradient(ellipse at 50% 0,#22294f,#0c1329 75%);border-radius:9px;min-height:84px;display:grid;align-items:center;padding:.25rem}
 .map-views button{flex:1}
-#deck-map{width:100%;height:79px;display:block}
-.map-systems{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.35rem}
-.map-systems div{padding:.35rem .25rem;background:#1d2646;border-radius:5px}
-.map-systems small{display:block;font-size:.65rem;color:var(--muted)}
-.map-systems strong{font:600 .75rem ui-monospace,monospace;color:var(--blue)}
 .panel{background:linear-gradient(150deg,#141c36f5,#090e22f7 72%);box-shadow:0 12px 34px #0008,inset 0 1px #788ac04d}
 .widget-bar{padding-bottom:.36rem;border-bottom:1px solid #828fc12c}
 .profile-data{grid-template-columns:minmax(0,1fr) minmax(0,1.08fr)}
@@ -431,16 +429,38 @@ button[aria-pressed=true]{background:#3d315e}
 .crew-portrait[data-exposure=true]{outline:2px solid #ff9d9c;outline-offset:1px}
 .crew-portrait[data-exposure=true] .crew-status{background:#712f41;color:#fff}
 #crew-exposure{margin:.15rem 0 .35rem;padding:.2rem .35rem;border-left:3px solid #ff9d9c;color:#ffc6c5;font-size:.7rem}
+#live-health-story{display:grid;gap:.45rem;margin:.4rem 0;font-size:.76rem}
+#live-health-story .body-layout{align-items:start}
+#health-story-pin{position:absolute;bottom:.35rem;left:50%;transform:translateX(-50%);background:#101b31;
+  color:#dceaff;border:1px solid #73839f;border-radius:6px;padding:.15rem .3rem;white-space:nowrap;font-size:.67rem}
+#live-health-story[data-state=review] #health-story-pin{color:#ffe0a5;border-color:#bc9353}
+#live-health-story[data-state=emergency] #health-story-pin{color:#ffd0d0;border-color:#dd7f86}
+#health-story-indicators{list-style:none;display:flex;flex-wrap:wrap;gap:.3rem;margin:0;padding:0}
+#health-story-indicators li{background:#182641;border-radius:4px;padding:.2rem .35rem}
+#health-story-indicators output{color:#c6e8ff;font-weight:700}
+#live-health-story p{margin:.3rem 0}
+#health-story-gravity{background:#14213a;border-radius:6px;padding:.4rem .55rem}
+#health-story-gravity summary{cursor:pointer;color:#c6e8ff}
+#health-story-gravity table{width:100%;table-layout:fixed;text-align:left;font-size:.7rem}
+#health-story-gravity th,#health-story-gravity td{padding:.16rem .25rem;vertical-align:top;overflow-wrap:anywhere}
+.health-story-actions{display:flex;flex-wrap:wrap;gap:.3rem}
+#health-story-error{color:#ffd0d0}
+#ground-health-story{padding:.35rem .5rem;border-left:2px solid var(--blue);font-size:.74rem}
+#flight-emergency{width:min(580px,calc(100vw - 30px));font-size:1rem}
+#flight-emergency [data-emergency=questions]{display:grid;gap:.55rem;margin:1rem 0}
+#flight-emergency [data-emergency=questions] label{display:flex;align-items:center;justify-content:space-between;gap:1rem}
+#flight-emergency [data-emergency=source]{display:flex;flex-wrap:wrap;gap:.5rem;font-size:.75rem}
+#flight-emergency [data-emergency=source] a{color:var(--blue)}
 #eva-tether{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
 #return-scene{position:relative;display:grid;justify-items:center;max-width:660px;margin:0 auto;color:#deefff;pointer-events:none}
 #return-art{width:min(100%,570px);height:min(48dvh,370px);overflow:visible}
 #return-sea-backdrop{display:none}
-.stage[data-vehicle=landed]::before,.stage[data-vehicle=landed]::after{display:none}
-.stage[data-vehicle=landed]{background:linear-gradient(#244964 2%,#7c9aaa 39%,#91b2bd 49%,#2e7296 50%,#102e42 100%)}
+.stage:is([data-vehicle=landed],[data-return=chutes])::before,.stage:is([data-vehicle=landed],[data-return=chutes])::after{display:none}
+.stage:is([data-vehicle=landed],[data-return=chutes]){background:linear-gradient(#244964 2%,#7c9aaa 39%,#91b2bd 49%,#2e7296 50%,#102e42 100%)}
 .stage[data-vehicle=landed] .viewport{max-width:none;overflow:visible}
 .stage[data-vehicle=landed] #return-scene{max-width:none}
-.stage[data-vehicle=landed] #return-sea-backdrop{display:block;position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
-.stage[data-vehicle=landed] #return-art .return-environment{display:none}
+.stage:is([data-vehicle=landed],[data-return=chutes]) #return-sea-backdrop{display:block;position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
+.stage:is([data-vehicle=landed],[data-return=chutes]) #return-art .return-environment{display:none}
 .stage[data-vehicle=landed] #return-art{filter:drop-shadow(0 12px 20px #031a2d88)}
 #return-scene .return-piece{display:none}
 #return-scene[data-phase=separation] #return-module,#return-scene[data-phase=entry] #return-heat,
@@ -464,6 +484,9 @@ button[aria-pressed=true]{background:#3d315e}
 @media(max-width:850px){.launch-field[data-view=launch] .pad-checkout .launch-board{max-height:none}}
 #orbit-dialog{width:min(680px,calc(100% - 1.5rem))}
 #process-dialog{width:min(670px,calc(100% - 1.5rem))}
+#process-dialog[data-demo-dock]{position:fixed;inset:auto auto max(.65rem,env(safe-area-inset-bottom)) max(.65rem,env(safe-area-inset-left));width:min(345px,calc(100vw - 1.3rem));max-height:43dvh;margin:0;z-index:11}
+#process-dialog[data-demo-dock] :is(#process-settings,#process-release,#process-recall,#process-verify,#process-comm-check,#process-list){display:none}
+@media(min-width:681px){.stage[data-demo-crew] #personnel-widget .body-layout{grid-template-columns:82px minmax(0,1fr)}}
 #airlock-dialog{width:min(620px,calc(100% - 1.5rem))}
 #airlock-particles{width:100%;height:auto;display:block;background:#0b1329;border-radius:8px;margin:.6rem 0}
 #airlock-gases{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem;margin:.6rem 0}
@@ -781,9 +804,20 @@ ul.tutorial-startup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));g
 @media(max-width:430px){
   .mission-guide{width:min(11.6rem,49vw)}
   .stage[data-demo-crew] #personnel-widget{width:min(180px,calc(51vw - 22px))}
+  /* The stage overlay can extend below the phone viewport. Keep the demo's
+     evidence card pinned onscreen while its contents remain independently
+     scrollable; never make the wristband reading scroll off the mobile view. */
+  .stage[data-timed-demo][data-demo-crew] #personnel-widget{
+    position:fixed;
+    top:clamp(9rem,24dvh,13rem)!important;
+    left:max(.55rem,env(safe-area-inset-left))!important;
+    max-height:min(46dvh,370px)!important;
+  }
   .stage[data-demo-crew] #personnel-widget .body-layout{grid-template-columns:34px minmax(0,1fr);gap:.23rem}
   .stage[data-demo-crew] #personnel-widget .region-card strong{font-size:.74rem}
   .stage[data-demo-crew] #personnel-widget .widget-bar h2{font-size:.8rem}
+  .stage[data-demo-crew] #personnel-widget #region-reading{display:block;line-height:1.15}
+  .stage[data-demo-crew] #personnel-widget :is(#twin-layer-label,#region-source){display:none}
   .stage[data-asteria=true] .mission-resources{font-size:.61rem;gap:.08rem .3rem}
   .mission-resources .command-resource{grid-template-columns:2.55rem minmax(0,1fr)}
   #flight-playback:has(#checkpoint-control:not([hidden])){max-width:calc(100vw - 1.2rem)}
@@ -815,18 +849,59 @@ ul.tutorial-startup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));g
 #map-widget .map-views{margin:.28rem 0}
 #map-widget .map-views button{flex:0 1 auto;min-height:1.5rem;padding:.12rem .32rem}
 #map-widget .minimap-screen{min-height:0;background:none;padding:0}
-#map-widget #deck-map{height:clamp(2.6rem,9dvh,4.6rem)}
-#map-widget .map-systems{grid-template-columns:repeat(auto-fit,minmax(3rem,1fr))}
+#map-deck,#map-systems{max-height:min(35dvh,20rem);overflow:auto;overscroll-behavior:contain;
+  scrollbar-width:thin;border-block:1px solid #8aa6d232;padding:.3rem .22rem .3rem 0}
+#map-deck:focus-visible,#map-systems:focus-visible{outline:2px solid var(--blue);outline-offset:-2px}
+#deck-map{width:100%;height:auto;display:block}
+#deck-map text{font-family:system-ui,sans-serif;text-anchor:middle;pointer-events:none}
+.deck-rooms-mobile{display:none;padding:0;margin:.25rem 0;list-style:none}
+.deck-crew{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.25rem;list-style:none;padding:0;margin:.32rem 0 0}
+.deck-crew li,.system-card{min-width:0;background:#23304c;border-radius:5px;padding:.3rem .4rem}
+.deck-crew strong,.deck-crew small,.system-card small{display:block;line-height:1.25}
+.deck-crew strong,.system-card dt{font-size:.74rem}
+.deck-crew small,.system-card small,.systems-source{font-size:.69rem;color:var(--muted)}
+.deck-crew .deck-room{color:#c3d9f7;margin-bottom:.1rem}
+.deck-crew meter{width:100%;height:.45rem;accent-color:#a3e8c8}
+.systems-source{line-height:1.28;margin-bottom:.28rem}
+.systems-readings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.25rem;margin:0}
+.system-card dd{margin:0;display:grid;gap:.16rem}
+.system-card output{font:650 .84rem ui-monospace,monospace;color:var(--blue)}
+.system-card svg{width:100%;height:1.15rem;display:block;color:#a1dcce}
+.system-card[data-status=attention] output,.system-card[data-status=attention] svg{color:#ffca95}
+.system-card svg path{fill:none;stroke:currentColor;stroke-width:1.5;vector-effect:non-scaling-stroke}
+@media(max-width:680px){
+  #map-deck,#map-systems{max-height:24dvh}
+  main:has(.stage[data-demo-crew]) :is(#map-deck,#map-systems){max-height:4.6rem}
+  .deck-crew,.systems-readings{grid-template-columns:1fr}
+  .deck-room-label{display:none}
+  .deck-rooms-mobile{display:grid;gap:.12rem;grid-template-columns:repeat(2,minmax(0,1fr));color:#dbe5fc;font-size:.63rem;line-height:1.2}
+}
 #map-widget[data-view=launch] :is([data-map-view=deck],[data-map-view=systems]){display:none}
 #map-widget[data-view=launch] .map-views:not(:has([data-map-view]:not([data-map-view=route],[data-map-view=deck],[data-map-view=systems]))){display:none}
-#map-ground{padding:.35rem .25rem;font-size:.75rem;overflow-wrap:anywhere;max-height:28dvh;overflow:auto}
-#map-ground p,#map-ground dl{margin:.3rem 0}
-#map-ground dl{display:grid;grid-template-columns:auto 1fr;gap:.12rem .5rem}
-#map-ground dt,#map-ground [data-ground=source]{color:var(--muted)}
-#map-ground dd{margin:0;color:var(--blue)}
+#map-ground{display:grid;gap:.48rem;padding:.3rem 0;font-size:.74rem;line-height:1.35;overflow-wrap:anywhere}
+#map-ground :is(p,dl,dd,h3,ol){margin:0}
+#map-ground h3{font-size:.72rem;font-weight:700;color:var(--ink)}
+#map-ground .ground-header{display:flex;align-items:baseline;flex-wrap:wrap;gap:.22rem .5rem}
+#map-ground [data-ground=clock],#map-ground .ground-time{font:600 .72rem ui-monospace,monospace;color:var(--blue)}
+#map-ground [data-ground=source],#map-ground dt,#map-ground .ground-detail{color:var(--muted);font-size:.68rem}
+#map-ground .ground-status{width:fit-content;max-width:100%;padding:.12rem .38rem;border:1px solid #8ca2c25e;border-radius:.28rem}
+#map-ground[data-state=received] [data-ground=link]{color:#a4e3d3}
+#map-ground[data-state=unavailable] [data-ground=link],
+#map-ground :is([data-state=stale],[data-state=expired],[data-state=held],[data-state=pending],[role=alert]){color:#ffd49d}
+#map-ground .ground-packet{min-width:0;padding:.4rem .48rem;background:#0b172bbd;border:1px solid #7790b64f;border-radius:7px}
+#map-ground .ground-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(5.5rem,100%),1fr));gap:.24rem .5rem;margin:.28rem 0}
+#map-ground .ground-metrics dd{color:var(--blue);font:650 .8rem ui-monospace,monospace}
+#map-ground .ground-packet-meta{display:grid;grid-template-columns:max-content 1fr;gap:.12rem .42rem}
+#map-ground .ground-case{margin-top:.26rem}
+#map-ground .ground-timeline{list-style:none;margin-top:.22rem;padding:0 0 0 .46rem;border-left:1px solid #789aca66}
+#map-ground .ground-timeline li{padding:.21rem 0 .28rem}
+#map-ground .ground-timeline li + li{border-top:1px solid #789aca2b}
+#map-ground .ground-event{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:.08rem .35rem}
+#map-ground .ground-event .ground-time{white-space:nowrap}
+#map-ground .ground-detail{display:block}
+#map-ground form{display:flex;align-items:center;flex-wrap:wrap;gap:.2rem .4rem}
 #map-ground form select{max-width:100%;color:inherit;background:#1b2744;border:1px solid #526585;padding:.24rem;border-radius:4px}
-#map-ground form button{margin:.3rem 0 0}
-#map-ground [data-state=stale],#map-ground [data-state=pending],#map-ground [role=alert]{color:#ffd49d}
+#map-ground :is(button,select){min-height:28px}
 #map-widget[data-view=replay] #phase{margin-bottom:.25rem}
 #orbit-map-widget{right:max(.55rem,env(safe-area-inset-right));width:min(12.75rem,calc((100vw - 15.5rem)/2));padding:.4rem .48rem}
 #orbit-map-widget button{display:grid;gap:.18rem;width:100%;min-height:44px;text-align:left;padding:.22rem .3rem;background:transparent}
@@ -885,8 +960,6 @@ ul.tutorial-startup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));g
   #map-current{font-size:.68rem}
   #map-current-objective{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
   #map-plan-open{min-height:28px}
-  main:has(.stage[data-timed-demo]) #map-widget :is([data-map-view=deck],[data-map-view=systems]){display:none}
-  main:has(.stage[data-timed-demo]) #map-widget .map-views:not(:has([data-map-view]:not([data-map-view=route],[data-map-view=deck],[data-map-view=systems]))){display:none}
   .plan-milestones{gap:1px;margin-top:.35rem}
   .plan-milestones li{font-size:.56rem}
   .plan-milestones li + li::before{top:.53rem}
@@ -904,6 +977,60 @@ ul.tutorial-startup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));g
 @media(max-width:375px){
   .plan-milestones li{font-size:.52rem}
 }
+
+@media(max-width:520px){
+  #personnel-widget.profile-window{
+    top:8px!important;left:8px!important;right:8px!important;bottom:auto!important;
+    width:auto!important;max-height:calc(100dvh - 118px);
+  }
+  #personnel-widget #twin-layer .body-layout{display:flex;flex-direction:column;gap:.35rem}
+  #personnel-widget #twin-layer .region-card{order:-1;padding:.4rem .5rem}
+  #personnel-widget #twin-layer .body-map{width:128px;max-width:128px;aspect-ratio:2/3}
+}
+
+/* Keep all four interactive astronaut portraits visible, but dock them away
+   from the left-side Crew / Orders popovers and the ship's centerline. */
+.stage .crew-strip {
+  left:auto;
+  right:clamp(156px,13vw,232px);
+  transform:none;
+  top:calc(100% + 12px);
+  padding:6px;
+  gap:6px;
+  background:#0a1022d9;
+  border:1px solid #8a99d333;
+  border-radius:12px;
+  box-shadow:0 8px 26px #0006;
+  max-width:calc(100vw - 20px);
+  z-index:12;
+}
+.stage .crew-strip .crew-portrait {
+  width:clamp(59px,4.4vw,72px);
+  min-height:85px;
+  padding:5px 3px;
+}
+.stage .crew-strip .crew-face { width:32px; height:32px; }
+.stage .crew-strip .crew-name { font-size:12px; }
+@media (max-width:1050px) {
+  .stage .crew-strip {
+    right:10px;
+    top:calc(100% + 70px);
+    gap:4px;
+  }
+}
+@media (max-width:520px) {
+  .stage .crew-strip {
+    top:calc(100% + 12px);
+    left:8px;
+    right:8px;
+    justify-content:center;
+    gap:4px;
+    width:max-content;
+    max-width:calc(100vw - 16px);
+    margin-inline:auto;
+  }
+  .stage .crew-strip .crew-portrait { width:clamp(56px,20vw,72px); }
+}
 </style>
 </head>
 <body>
@@ -920,7 +1047,9 @@ __HUD_ICONS__
     <button type="button" id="show-orbit" hidden>Orbit map</button>
     <button type="button" id="show-briefing">Briefing</button>
     <button type="button" id="show-command" hidden>Flight command</button>
+    <button type="button" id="show-flight-emergency" hidden>Emergency Assist</button>
     <button type="button" id="show-missions"></button>
+    <button type="button" id="flight-audio" aria-pressed="true" hidden>Mission audio</button>
     <button type="button" id="end-mission" class="end-mission"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg>End mission</button>
     <a href="/mission">Mission control</a>
   </div>
@@ -930,7 +1059,7 @@ __HUD_ICONS__
     <span><svg class="icon" aria-hidden="true"><use href="#hud-zap"/></svg><output id="resource-power"></output></span>
     <span><svg class="icon" aria-hidden="true"><use href="#hud-users"/></svg><output id="resource-crew"></output></span>
     <span><svg class="icon" aria-hidden="true"><use href="#hud-package"/></svg><output id="resource-meals"></output></span>
-    <span><svg class="icon" aria-hidden="true"><use href="#hud-droplets"/></svg><output id="resource-water"></output></span>
+    <span><svg class="icon" aria-hidden="true"><use href="#hud-droplets"/></svg><output id="resource-water"></output><button id="show-provisions" type="button" hidden>Provisions</button></span>
     <span class="command-resource" id="command-phase-readout" hidden><strong>Phase</strong><output id="command-phase" aria-label="Flight phase"></output></span>
     <span class="command-resource" id="command-next-readout" hidden><strong>Next</strong><output id="command-next" aria-label="Next action"></output></span>
     <span class="command-resource" id="command-reserve-readout" hidden><strong>Reserve</strong><output id="command-reserve" aria-label="Maneuver reserve"></output></span>
@@ -1026,6 +1155,16 @@ __HUD_ICONS__
     <div class="order-card">
       <strong id="ground-order-heading">Ground · Fault inspection</strong>
       <p id="flight-crew-receipt" role="status" hidden></p>
+      <div id="campaign-ground-order" hidden>
+        <p id="campaign-ground-receipt" role="status"></p>
+        <button id="campaign-ground-ack" type="button">Acknowledge direction</button>
+        <button id="campaign-ground-assign" type="button">Assign Ivo to readiness check</button>
+        <label id="campaign-ground-hold-label">Reason for holding
+          <select id="campaign-ground-hold-reason"></select>
+        </label>
+        <button id="campaign-ground-hold" type="button">Hold direction</button>
+        <button id="campaign-ground-report" type="button">Ivo · Send readiness report</button>
+      </div>
       <div id="replay-ground-order">
         <p id="workflow-state"></p>
         <p id="monitor-state"></p>
@@ -1070,6 +1209,9 @@ __HUD_ICONS__
       <div id="personnel-art"></div>
       <div><span id="personnel-role"></span><strong id="personnel-name"></strong><span id="personnel-location"></span></div>
     </div>
+    <meter id="personnel-duty-progress" class="duty-progress" min="0" max="1" aria-label="Current task progress" hidden></meter>
+    <p id="personnel-private-mood" hidden></p>
+    <button type="button" id="open-mood-report" hidden>Report mood privately</button>
     <a id="personnel-health" hidden>Open private health record</a>
     <p id="crew-exposure" hidden>Suspected CO₂ exposure · simulated risk. Crew check requested.</p>
     <div class="twin-peer" id="wearable-recheck" hidden>
@@ -1090,6 +1232,49 @@ __HUD_ICONS__
       <button type="button" data-personnel-view="duty">Duty</button><button type="button" data-personnel-view="needs">Needs</button>
       <button type="button" data-personnel-view="vitals">Vitals</button><button type="button" data-personnel-view="devices">Gear</button>
     </div>
+    <section id="live-health-story" aria-label="Mara’s private health story" hidden>
+      <div class="body-layout">
+        <div class="body-map" aria-hidden="true">
+          <svg viewBox="0 0 90 140" focusable="false">
+            <circle cx="45" cy="20" r="11" fill="#647897"/>
+            <path d="M45 37v43M44 43l-25 35m27-35 25 35M41 78l-13 42m21-42 13 42"
+                  fill="none" stroke="#647897" stroke-width="13" stroke-linecap="round"/>
+            <circle cx="45" cy="52" r="5" fill="#ffc6bb"/>
+          </svg>
+          <span id="health-story-pin"></span>
+        </div>
+        <div class="region-card">
+          <small>Synthetic Crew health · private</small>
+          <h3 id="health-story-state" role="status"></h3>
+          <small id="health-story-time"></small>
+          <p id="health-story-reason"></p>
+          <p id="health-story-trend"></p>
+        </div>
+      </div>
+      <ul id="health-story-indicators" aria-label="Health indicators"></ul>
+      <details id="health-story-gravity" hidden>
+        <summary>Gravity and adaptation</summary>
+        <p id="gravity-summary"></p>
+        <table aria-label="Simulated gravity observations">
+          <thead><tr><td></td><th scope="col">Preflight</th><th scope="col">Current phase</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Mobility</th><td id="gravity-baseline-mobility"></td><td id="gravity-current-mobility"></td></tr>
+            <tr><th scope="row">Orientation</th><td id="gravity-baseline-orientation"></td><td id="gravity-current-orientation"></td></tr>
+            <tr><th scope="row">Rest</th><td id="gravity-baseline-rest"></td><td id="gravity-current-rest"></td></tr>
+          </tbody>
+        </table>
+        <small>Scripted observations · simulated health story clock</small>
+      </details>
+      <p id="health-story-case" role="status"></p>
+      <p id="health-story-delivery" aria-live="polite"></p>
+      <div class="health-story-actions">
+        <button id="open-health-drill" type="button" hidden>Raise chest-pain training alert</button>
+        <button id="ack-health-drill" type="button" hidden>Acknowledge local response</button>
+        <button id="share-health-drill" type="button" hidden>Share case status with Ground</button>
+        <button id="advance-health-relay" type="button" hidden>Advance story to relay delivery</button>
+      </div>
+      <output id="health-story-error" role="alert"></output>
+    </section>
     <div id="twin-body">
       <div class="choices anatomy-tabs" role="tablist" aria-label="Anatomy layers">
         <button type="button" role="tab" id="layer-anatomy" aria-controls="twin-layer" aria-selected="true" data-layer="anatomy">Anatomy</button>
@@ -1148,6 +1333,12 @@ __HUD_ICONS__
       <button class="widget-close" type="button" aria-label="Close Needs widget"><svg class="icon" aria-hidden="true"><use href="#hud-x"/></svg></button>
     </div>
     <dl class="profile-data" id="needs-data"></dl>
+    <div id="crew-duty-handoff" class="twin-peer" hidden>
+      <label for="crew-duty-replacement">Qualified replacement</label>
+      <select id="crew-duty-replacement"></select>
+      <button type="button" id="confirm-duty-handoff">Commander · Transfer scrubber duty</button>
+      <output id="crew-duty-handoff-result" aria-live="polite"></output>
+    </div>
   </section>
   <section class="panel profile-window" id="vitals-widget" hidden aria-labelledby="vitals-title">
     <div class="widget-bar">
@@ -1183,8 +1374,8 @@ __HUD_ICONS__
   </div>
   <div class="choices map-views" role="group" aria-label="Mission overview view">
     <button type="button" data-map-view="route" aria-pressed="true">Plan</button>
-    <button type="button" data-map-view="deck" aria-pressed="false">Deck</button>
-    <button type="button" data-map-view="systems" aria-pressed="false">Systems</button>
+    <button type="button" data-map-view="deck" aria-controls="map-deck" aria-pressed="false">Deck</button>
+    <button type="button" data-map-view="systems" aria-controls="map-systems" aria-pressed="false">Systems</button>
     <button type="button" data-map-view="ground" aria-controls="map-ground" aria-pressed="false">Ground</button>
   </div>
   <div class="minimap-screen">
@@ -1199,25 +1390,38 @@ __HUD_ICONS__
         </svg>
       </div>
     </div>
-    <div id="map-deck" hidden><svg id="deck-map" viewBox="170 106 782 270" role="img" aria-label="Ship rooms and crew positions"></svg></div>
-    <div id="map-systems" class="map-systems" hidden>
-      <div><small>Cabin CO₂</small><strong id="map-air"></strong></div>
-      <div><small>Power reserve</small><strong id="map-power"></strong></div>
-      <div><small>Onboard jobs</small><strong id="map-jobs"></strong></div>
-    </div>
+    <section id="map-deck" aria-label="Deck and crew jobs" tabindex="0" hidden>
+      <svg id="deck-map" viewBox="194 110 740 257" role="img" aria-label="Ship rooms and crew positions"></svg>
+      <ul id="map-deck-rooms" class="deck-rooms-mobile" aria-label="Ship rooms"></ul>
+      <ul id="map-deck-crew" class="deck-crew" aria-label="Crew positions and jobs"></ul>
+    </section>
+    <section id="map-systems" aria-label="Ship systems" tabindex="0" hidden>
+      <p id="map-systems-source" class="systems-source"></p>
+      <dl id="map-systems-readings" class="systems-readings"></dl>
+    </section>
     <section id="map-ground" aria-label="Ground relay" hidden>
-      <p data-ground="source"></p>
-      <p>Mission clock <strong data-ground="clock"></strong></p>
-      <p data-ground="link"></p>
-      <dl data-ground="telemetry" hidden>
-        <dt>Basis</dt><dd data-ground="basis"></dd>
-        <dt>Cabin CO₂</dt><dd data-ground="co2"></dd>
-        <dt>Power reserve</dt><dd data-ground="power"></dd>
-        <dt>Observed</dt><dd data-ground="observed"></dd>
-        <dt>Received</dt><dd data-ground="received"></dd>
-        <dt>Sample age</dt><dd data-ground="age"></dd>
-      </dl>
-      <p>Case · <span data-ground="case"></span></p>
+      <div class="ground-header">
+        <span>Mission clock <strong data-ground="clock"></strong></span>
+        <span class="ground-status" data-ground="link"></span>
+      </div>
+      <p class="ground-detail"><span data-ground="live-source" hidden>Synthetic run · Ground projection · </span><span data-ground="source"></span></p>
+      <section class="ground-packet" data-ground="telemetry" aria-label="Delivered telemetry" hidden>
+        <h3>Last delivered packet</h3>
+        <dl class="ground-metrics">
+          <div><dt>Cabin CO₂</dt><dd data-ground="co2"></dd></div>
+          <div data-ground="power-row"><dt>Power reserve</dt><dd data-ground="power"></dd></div>
+        </dl>
+        <dl class="ground-packet-meta">
+          <dt>Observed</dt><dd data-ground="observed"></dd>
+          <dt>Received</dt><dd data-ground="received"></dd>
+          <dt>Sample age</dt><dd data-ground="age"></dd>
+          <dt>Basis</dt><dd data-ground="basis"></dd>
+        </dl>
+        <p class="ground-case" data-ground="case-inline">Case · <span data-ground="case"></span></p>
+      </section>
+      <p data-ground="case-outside" hidden></p>
+      <p id="ground-health-story" role="status" hidden></p>
+      <p id="ground-food-safety" role="status" hidden></p>
       <p data-ground="advice" role="status"></p>
       <form>
         <label for="map-ground-candidate" data-ground="candidate-label">Candidate</label>
@@ -1229,6 +1433,15 @@ __HUD_ICONS__
         <button type="submit">Queue advice</button>
       </form>
       <p data-ground="send-error" role="alert"></p>
+      <div id="campaign-ground-relay" hidden>
+        <p id="campaign-ground-status" role="status"></p>
+        <button id="campaign-ground-issue" type="button">Simulate Ground direction</button>
+      </div>
+      <section aria-labelledby="ground-timeline-heading">
+        <h3 id="ground-timeline-heading">Relay timeline</h3>
+        <p class="ground-detail" data-ground="timeline-empty">No relay events yet.</p>
+        <ol class="ground-timeline" data-ground="timeline" hidden></ol>
+      </section>
     </section>
   </div>
   <p id="map-current"><span id="map-current-icon"></span><span id="map-current-copy">
@@ -1286,7 +1499,23 @@ __HUD_ICONS__
   <button id="process-recall" type="button" hidden>Recall spacewalker</button>
   <button id="process-verify" type="button" hidden>Verify safe return</button>
   <button id="process-comm-check" type="button" hidden>Toggle suit link fault</button>
+  <p id="eva-readiness" hidden></p>
+  <p id="eva-antenna-reading" hidden></p>
   <p id="process-config" role="status"></p>
+  <section id="wearable-debrief" hidden aria-labelledby="wearable-debrief-title">
+    <h3 id="wearable-debrief-title">Private wearable debrief</h3>
+    <p id="wearable-debrief-delays"></p>
+    <ol id="wearable-debrief-events"></ol>
+  </section>
+  <section id="exercise-preview" hidden aria-labelledby="exercise-preview-title">
+    <h3 id="exercise-preview-title">Exercise schedule · synthetic</h3>
+    <p id="exercise-preview-basis"></p>
+    <ul id="exercise-preview-options"></ul>
+    <p id="exercise-preview-outcome"></p>
+    <p id="exercise-preview-status" role="status"></p>
+    <button id="exercise-preview-refresh" type="button">Refresh schedule evidence</button>
+    <button id="exercise-preview-commit" type="button" hidden>Commander · Defer exercise</button>
+  </section>
   <section id="process-trace" aria-label="Process event log">
     <h3>Process event log</h3>
     <p id="process-summary"></p>
@@ -1304,6 +1533,79 @@ __HUD_ICONS__
   </dl>
   <h3>Crew</h3><ul id="briefing-crew"></ul>
   <h3>Flight plan</h3><ol id="briefing-steps"></ol>
+</dialog>
+<dialog id="provisions-dialog" class="mission-dialog" aria-labelledby="provisions-title">
+  <div class="dialog-top"><h2 id="provisions-title">Vehicle provisions</h2><form method="dialog"><button>Close provisions</button></form></div>
+  <p id="provisions-vehicle"></p>
+  <dl id="provisions-stock" class="campaign-facts"></dl>
+  <p id="provisions-ration"></p>
+  <div class="choices" aria-label="Commander provisions controls">
+    <button type="button" data-provision="standard">Standard ration</button>
+    <button type="button" data-provision="conserve">Conserve water</button>
+    <button type="button" data-provision="release_reserve">Release reserve water</button>
+    <button type="button" data-provision="oxygen_generation">Allocate water to oxygen generation</button>
+    <button type="button" data-provision="treat">Treat wastewater</button>
+    <button type="button" data-provision="verify">Verify treated water</button>
+    <button type="button" data-provision="reject">Reject treated water</button>
+    <button type="button" data-provision="replenish">Accept station water receipt</button>
+  </div>
+  <output id="provisions-receipt" role="status"></output>
+  <section id="galley-hygiene" aria-labelledby="galley-hygiene-title" hidden>
+    <h3 id="galley-hygiene-title">Galley hygiene</h3>
+    <div class="choices">
+      <label>Inspection area <select id="galley-target">
+        <option value="worktop">Galley work surfaces</option><option value="utensils">Shared eating tools</option>
+        <option value="latches">High-touch storage latches</option>
+      </select></label>
+      <label>Assigned astronaut <select id="galley-crew"></select></label>
+    </div>
+    <p id="galley-status" role="status"></p>
+    <dl id="galley-evidence" class="campaign-facts"></dl>
+    <div class="choices" aria-label="Galley safety actions">
+      <button type="button" data-galley="inspect">Record inspection</button>
+      <button type="button" data-galley="clean">Assign routine cleaning</button>
+      <button type="button" data-galley="suspect">Report suspected food exposure</button>
+      <button type="button" data-galley="disinfect">Assign disinfection</button>
+      <button type="button" data-galley="fail">Record failed verification</button>
+      <button type="button" data-galley="pass">Verify and release surface</button>
+      <button type="button" data-galley="hold-water">Isolate potable water lot</button>
+      <button type="button" data-galley="clear-water">Verify and release water lot</button>
+    </div>
+    <details><summary>Hygiene log</summary><ol id="galley-audit"></ol></details>
+  </section>
+</dialog>
+<dialog id="food-safety-medical" class="mission-dialog" aria-labelledby="food-safety-medical-title">
+  <div class="dialog-top"><h2 id="food-safety-medical-title">Food exposure review</h2><form method="dialog"><button>Close review</button></form></div>
+  <p id="food-exposure-inventory"></p>
+  <h3>Shared meal history</h3><ul id="food-exposure-meals"></ul>
+  <h3>Crew symptom reports</h3><ul id="food-exposure-reports"></ul>
+  <div class="choices">
+    <label>Astronaut <select id="food-symptom-crew"></select></label>
+    <label>Observation <select id="food-symptom-choice"><option value="nausea">Nausea</option><option value="stomach">Stomach discomfort</option><option value="none">No symptoms reported</option></select></label>
+    <button type="button" data-food-review="report">Record private symptom report</button>
+    <button type="button" data-food-review="review">Review suspected case</button>
+    <button type="button" data-food-review="recheck">Record follow-up recheck</button>
+    <button type="button" data-food-review="share">Share food safety status</button>
+  </div>
+  <p id="food-exposure-status" role="status"></p>
+</dialog>
+<dialog id="flight-emergency" class="mission-dialog" aria-labelledby="flight-emergency-title">
+  <div class="dialog-top">
+    <h2 id="flight-emergency-title">Emergency Assist</h2>
+    <form method="dialog"><button>Close</button></form>
+  </div>
+  <p>Onboard response · Ground link optional</p>
+  <label>Choose scripted drill <select data-emergency="drill"></select></label>
+  <div data-emergency="questions"></div>
+  <ol data-emergency="guidance" aria-label="Onboard training steps"></ol>
+  <p data-emergency="source"></p>
+  <small>Simulated training only · follow the approved onboard medical procedure.</small>
+  <p data-emergency="status" role="status"></p>
+  <p data-emergency="error" role="alert"></p>
+  <div class="choices">
+    <button type="button" data-emergency="alert">Raise local drill alert</button>
+    <button type="button" data-emergency="acknowledge" hidden>Acknowledge local response</button>
+  </div>
 </dialog>
 <dialog id="replace-campaign" class="mission-dialog" aria-labelledby="replace-campaign-title">
   <div class="dialog-top"><h2 id="replace-campaign-title">Start a new run?</h2></div>
@@ -1346,6 +1648,22 @@ __HUD_ICONS__
     <path d="M3 10a9 9 0 0 1 18 0H3Zm0 0 8 8m10-8-8 8m-5-8 3 8m5-8-3 8m-3 0h4l2 4H8l2-4Z"/>
   </symbol>
 </svg>
+<dialog id="crew-mood-dialog" class="mission-dialog" aria-labelledby="crew-mood-title">
+  <h2 id="crew-mood-title">Private mood report</h2>
+  <p>Crew only · optional synthetic self-report for <strong id="mood-report-name"></strong></p>
+  <form id="crew-mood-form">
+    <label for="crew-mood-score">Mood score (1–5)</label>
+    <select id="crew-mood-score" required>
+      <option value="">Choose a score</option>
+      <option value="1">1 · Very low</option><option value="2">2 · Low</option>
+      <option value="3">3 · Neutral</option><option value="4">4 · Good</option>
+      <option value="5">5 · Very good</option>
+    </select>
+    <button type="submit" id="save-mood-report">Save private check-in</button>
+    <button type="button" id="cancel-mood-report">Cancel</button>
+    <p id="mood-report-error" role="alert"></p>
+  </form>
+</dialog>
 <dialog id="end-mission-dialog" class="mission-dialog" aria-labelledby="end-mission-title">
   <div class="dialog-top"><h2 id="end-mission-title">End this mission?</h2></div>
   <div id="end-mission-confirm">
@@ -1474,10 +1792,11 @@ __HUD_ICONS__
   </div>
   <div id="demo-banner" role="group" aria-label="Timed mission demo" hidden>
     <output id="demo-time" aria-label="Demo elapsed time" aria-live="off"></output>
-    <small>Offline synthetic playback · no clinical diagnosis</small>
+    <small>Synthetic training playback · no clinical diagnosis</small>
     <output id="demo-scenario" aria-live="off" hidden></output>
     <span id="demo-status" role="status"></span>
     <output id="demo-evidence" aria-live="off" hidden></output>
+    <button type="button" id="show-health-story" hidden></button>
     <button type="button" id="demo-pause">Pause demo</button>
     <button type="button" id="demo-exit">Exit demo</button>
   </div>
@@ -1491,7 +1810,7 @@ __HUD_ICONS__
       <button id="launch-open-missions" type="button" hidden>Save and exit</button>
       <button id="launch-open-objectives" type="button" hidden>Objectives</button>
       <button id="launch-show-processes" type="button" hidden>Workflows</button>
-      <button id="pad-audio" type="button" aria-pressed="true">Voice cues</button>
+      <button id="pad-audio" type="button" aria-pressed="true">Mission audio</button>
       <a href="/mission">Mission control · golden run</a>
     </div>
   </nav>
@@ -1565,6 +1884,10 @@ __HUD_ICONS__
         <div><dt>Flight phase</dt><dd id="launch-status" role="status"></dd></div>
         <div><dt>Next action</dt><dd id="launch-next"></dd></div>
         <div><dt>Maneuver reserve</dt><dd id="launch-reserve"></dd></div>
+        <div><dt>Solid booster</dt><dd id="solid-propellant"></dd></div>
+        <div><dt>Orbital stage</dt><dd id="orbital-propellant"></dd></div>
+        <div id="return-propellant-row"><dt>Return capsule</dt><dd id="return-propellant"></dd></div>
+        <div><dt>Cold-gas steering</dt><dd id="steering-propellant"></dd></div>
       </dl>
       <section id="flight-guidance" aria-label="Flight guidance" hidden>
         <h3 class="guidance-heading"><span id="guidance-mode"></span><strong id="maneuver-title"></strong></h3>
@@ -1573,6 +1896,7 @@ __HUD_ICONS__
           <figcaption id="docking-caption"></figcaption>
         </figure>
         <p id="maneuver-target"></p>
+        <p id="maneuver-budget" hidden></p>
         <canvas id="maneuver-track" width="440" height="170" role="img" aria-label="Spacecraft trajectory" hidden></canvas>
         <progress id="maneuver-progress" max="1" value="0" aria-label="Engine burn progress" hidden></progress>
       </section>
@@ -1646,6 +1970,8 @@ __HUD_ICONS__
   </div>
 </section>
 </main>
+<style>__HEALTH30_STYLE__</style>
+<section id="health30" aria-label="30-second astronaut health demonstration" hidden></section>
 <script type="application/json" id="flight-data">__FLIGHT_DATA__</script>
 <script>
 __FLIGHT_WORKFLOW__
@@ -1655,8 +1981,12 @@ __FLIGHT_STATIONS__
 __LAUNCH_SCENE__
 __FLIGHT_MISSIONS__
 __FLIGHT_DEMO__
+__FLIGHT_HEALTH_STORY__
+__FLIGHT_HEALTH30__
+__FLIGHT_EMERGENCY__
 __LAUNCH_CHECKOUT__
 __FLIGHT_CREW__
+__FLIGHT_GALLEY__
 __DOCKING_SCENE__
 __FLIGHT_NAVIGATION__
 __FLIGHT_PROCESSES__
@@ -1737,7 +2067,8 @@ function station(duty, member) {
   const check = peerWork(member,time);
   if (check) return [check.room, time < check.arrival ? "Heading to a crew check" : "Checking in with " + characters[check.member].short];
   const task = activeTask(member, time);
-  if (task && time >= task.assigned) {
+  if (task && time < task.assigned) return [task.origin.room,task.action];
+  if (task) {
     if (task.procedure === "eva") return ["cargo-01", task.support === member
       ? "Airlock watch for "+characters[task.member].short : evaStage(task,time)];
     const asset = equipment.get(task.asset);
@@ -1752,6 +2083,10 @@ function station(duty, member) {
   if (waiting) return [waiting.room,"Available for crew observation"];
   const job = crewRoutine(member);
   if (job) return [equipment.get(job.asset).room, time < job.arrival ? "Heading to " + equipment.get(job.asset).name : job.action];
+  if (crewSession?.crew[member]?.reliefAt != null) {
+    const previous = equipment.get(crewSession.crew[member].previous);
+    return [previous?.room ?? duty.stations[0][0],"Available for relief or a Crew check"];
+  }
   return duty.stations[index] ?? stationDuties[member][index - duty.stations.length];
 }
 
@@ -1770,19 +2105,29 @@ const fixtures = [
 const equipment = new Map(fixtures.map(asset => [asset.id, asset]));
 const allocator = createFlightAllocator({
   tick:TICK_SECONDS,
+  evaScenario:data.eva,
   position(member) { return crewPositions.get(pawns.get(member)); },
-  booked(job) {
+  booked(job, replaced) {
     if (!job.origin || !equipment.has(job.asset)) return "The assignee or station is unavailable.";
     if (job.procedure === "eva") {
-      if (!connectedFlight?.evaEligible) return "Spacewalk requires Horizon in parking orbit or secured at the station.";
-      if (!job.supportOrigin) return "No airlock support astronaut is available.";
+      if (!connectedFlight?.evaEligible || job.mode !== data.eva.mission_id) {
+        return "Spacewalk requires Horizon in parking orbit or secured at the station.";
+      }
+      if (!data.eva.qualified_crew.includes(job.member) || !job.supportOrigin) return "A qualified spacewalker and airlock watch must be available.";
       if (evaLinkFault()) return "Suit link offline. Restore communications before release.";
+      if (!data.eva.tether_ready) return "Check the tether before releasing the spacewalk.";
+      const suit = allocator.suit(job,job.assigned);
+      if (!suit.inner || suit.outer) return "The airlock must be available before release.";
+      if (suit.oxygen < data.eva.minimum_release_oxygen_pct || suit.battery < data.eva.minimum_release_battery_pct ||
+          job.deadline-job.finishes < data.eva.minimum_return_margin_s) {
+        return "Suit reserve or return margin is below the release limit.";
+      }
     }
-    if (tasks.some(other => other.mode === job.mode && other.queued <= job.queued && other.finishes > job.queued &&
+    if (tasks.some(other => other !== replaced && other.mode === job.mode && other.queued <= job.queued && other.finishes > job.queued &&
       (jobOwns(other,job.member) || (job.support != null && jobOwns(other,job.support)) || other.asset === job.asset))) return "The assignee or station already has a job.";
     if ([job.member,job.support].some(member=>member != null && peerWork(member,job.queued))) return "The assignee is performing a crew observation.";
     if (job.member === 1 && connectedFlight?.stationWork) return "The assignee is collecting station research samples.";
-    const ground = !connectedFlight && groundInspection(currentFrame());
+    const ground = groundInspection(currentFrame());
     if (ground && (job.member === 2 || job.asset === "scrubber")) return "The Ground inspection occupies this assignee or station.";
     return "";
   },
@@ -1790,7 +2135,18 @@ const allocator = createFlightAllocator({
 const tasks = allocator.tasks;
 let crewSession;
 const crewRoutines = createCrewRoutines({
+  rules:data.provisions,
   count:duties.length,tick:TICK_SECONDS,
+  underCabinAlert(time) {
+    if (connectedFlight?.timedDemo) {
+      const step = Math.floor((time-connectedFlight.crewStarted)/TICK_SECONDS);
+      const drill = data.health_drill.frames[step];
+      return Boolean(drill && drill.flow_m3_h < data.health_drill.frames[0].flow_m3_h);
+    }
+    if (connectedFlight) return false;
+    const frame = checkpoints.findLast(point=>point.time<=time);
+    return frame?.removal != null && frame.removal < checkpoints[0].removal;
+  },
   occupied(member,asset,time) {
     const frame = {...checkpoints[checkpoints.findLastIndex(point=>point.time<=time)],time};
     const order = groundInspection(frame);
@@ -1805,6 +2161,9 @@ const crewRoutines = createCrewRoutines({
   },
 });
 function crewRoutine(member) {
+  const work = connectedFlight?.provisions && missionTime < (connectedFlight.provisions.departure ?? Infinity)
+    ? crewSession?.galley?.activeJob(member,missionTime) : null;
+  if (work) return work;
   const ownJob = crewSession?.crew[member]?.active;
   if (ownJob) return ownJob;
   const visit = crewSession?.crew.find(person=>person.active?.checkup === member)?.active;
@@ -1819,8 +2178,16 @@ function updateCrewRoutines(frame) {
   const mode = crewMode();
   const revision = JSON.stringify([tasks.filter(task=>task.mode === mode),
     peerChecks.filter(check=>check.mode === mode).map(({observer,requested,due})=>[observer,requested,due]),
-    mode === "replay" ? flightWorkflow.read() : connectedFlight?.stationWork]);
-  crewSession = crewRoutines.update(mode,connectedFlight?.crewStarted ?? 0,frame.time,revision);
+    mode === "replay" ? flightWorkflow.read() : connectedFlight?.stationWork, connectedFlight?.provisions]);
+  const campaign = connectedFlight?.provisions;
+  const powerAt = time => {
+    const checkpoint = time >= (campaign?.departure ?? Infinity) ? 9 : time >= (campaign?.transferAt ?? Infinity) ? 6 : 0;
+    return Math.max(0,data.frames[""][checkpoint].power ?? 0);
+  };
+  crewSession = crewRoutines.update(mode,connectedFlight?.crewStarted ?? 0,frame.time,revision,
+    campaign ? {...campaign,powerAt} : null);
+  if (campaign && element("provisions-dialog").open) renderProvisions(campaign);
+  if (campaign && foodDialog.open) renderFoodReview();
 }
 const equipmentButtons = new Map();
 const fixtureFootprints = {
@@ -1839,7 +2206,10 @@ function taskAt(asset, time) {
 }
 
 function groundInspection(frame) {
-  if (connectedFlight) return null;
+  if (connectedFlight) {
+    const job = campaignGround.job(groundFlightContext?.campaign?.order,frame.time);
+    return job && {...job,asset:"scrubber",member:2};
+  }
   const job = flightWorkflow.job(frame);
   if (!["Queued","Travelling","Inspecting","Ready to report"].includes(job?.state)) return null;
   const origin = job.work.origin ?? stationPoint("engineering-01",2);
@@ -1850,8 +2220,7 @@ function activeTask(member, time) {
   return tasks.find(task => task.mode === crewMode() && jobOwns(task,member) && task.queued <= time && time < task.finishes);
 }
 const jobOwns = (job,member)=>job.member===member || job.support===member;
-const evaFaults = new Set();
-const evaLinkFault = ()=>evaFaults.has(crewMode());
+const evaLinkFault = ()=>allocator.linkFault(crewMode());
 function activeEva(time) {
   return tasks.find(job=>job.mode===crewMode() && job.procedure==="eva" && job.queued<=time && time<job.finishes);
 }
@@ -1874,6 +2243,7 @@ function reducedActivity() {
 }
 const roomButtons = new Map();
 const pawns = new Map();
+const crewDevices = new Map();
 const roster = new Map();
 const portraits = new Map();
 const ctx = element("hull").getContext("2d");
@@ -2243,6 +2613,104 @@ function regionTelemetry(sample) {
   return unobserved;
 }
 const missionWearables = new Map();
+const privateMoods = new Map();
+let moodReportsReady = false;
+let moodReportsFailed = false;
+let moodMember, moodAttempt, moodRequest, moodSavePending = false;
+
+function moodEndpoint() {
+  return "/api/v1/runs/"+encodeURIComponent(flightHealthRun)+"/crew/check-ins";
+}
+
+function rememberMood(report) {
+  const prior = privateMoods.get(report.crew_id);
+  if (!prior || report.mission_s >= prior.mission_s) privateMoods.set(report.crew_id,report);
+}
+
+function hasMoodRun() {
+  return Boolean(flightHealthRun && groundFlightContext?.mode === "replay");
+}
+
+function hasVisibleCrewProfile() {
+  return ["personnel","needs"].some(kind=>!element(kind+"-widget").closest("[hidden]"));
+}
+
+function refreshMoodReports() {
+  if (!hasMoodRun() || !hasVisibleCrewProfile() || moodRequest || moodSavePending) return;
+  moodRequest = crewWearableSession().then(async ({crew})=>{
+    const response = await fetch(moodEndpoint(),{headers:{Authorization:"Bearer "+crew},cache:"no-store"});
+    if (!response.ok) throw new Error("Mood reports unavailable");
+    const reports = await response.json();
+    if (!Array.isArray(reports)) throw new Error("Invalid mood report list");
+    for (const report of reports) rememberMood(report);
+    moodReportsReady = true;
+    moodReportsFailed = false;
+  }).catch(()=>{
+    wearableSession = undefined;
+    moodReportsFailed = true;
+  }).finally(()=>{
+    moodRequest = undefined;
+    render();
+  });
+}
+
+function reportedMood(member, timed) {
+  if (timed || !hasMoodRun()) return "Mood unreported";
+  const report = privateMoods.get(data.crew[member]);
+  return report ? "Self-report "+report.mood_score+"/5 · T+"+clock(report.mission_s)
+    : moodReportsFailed ? "Mood report unavailable"
+    : moodReportsReady ? "Mood unreported" : "Mood not loaded";
+}
+
+const moodDialog = element("crew-mood-dialog");
+element("open-mood-report").addEventListener("click",()=>{
+  if (!hasMoodRun() || moodSavePending) return;
+  moodMember = profileMembers.get("personnel");
+  element("mood-report-name").textContent = characters[moodMember].name;
+  element("crew-mood-form").reset();
+  element("mood-report-error").textContent = "";
+  moodDialog.showModal();
+});
+element("cancel-mood-report").addEventListener("click",()=>moodDialog.close());
+moodDialog.addEventListener("cancel",event=>{ if (moodSavePending) event.preventDefault(); });
+element("crew-mood-form").addEventListener("submit",async event=>{
+  event.preventDefault();
+  if (moodSavePending || !hasMoodRun()) return;
+  const crewId = data.crew[moodMember];
+  const score = Number(element("crew-mood-score").value);
+  if (!Number.isInteger(score) || score < 1 || score > 5) return;
+  if (moodAttempt?.crew_id !== crewId || moodAttempt.mood_score !== score) {
+    moodAttempt = {check_in_id:"flight-mood-"+crypto.randomUUID(),crew_id:crewId,note:"",mood_score:score,synthetic:true};
+  }
+  moodSavePending = true;
+  const controls = [element("save-mood-report"),element("crew-mood-score"),element("cancel-mood-report")];
+  for (const control of controls) control.disabled = true;
+  element("mood-report-error").textContent = "";
+  try {
+    // Finish any earlier read before applying the write receipt at the same mission tick.
+    await moodRequest;
+    const {crew} = await crewWearableSession();
+    const response = await fetch(moodEndpoint(),{method:"POST",cache:"no-store",
+      headers:{Authorization:"Bearer "+crew,"Content-Type":"application/json"},
+      body:JSON.stringify(moodAttempt),
+    });
+    if (response.status === 401) wearableSession = undefined;
+    if (!response.ok) throw new Error("Could not save the private check-in.");
+    const report = await response.json();
+    if (report.run_id !== flightHealthRun || report.crew_id !== crewId || report.mood_score !== score) {
+      throw new Error("Could not confirm the private check-in.");
+    }
+    rememberMood(report);
+    moodAttempt = undefined;
+    moodDialog.close();
+  } catch (error) {
+    element("mood-report-error").textContent = error.message;
+  } finally {
+    moodSavePending = false;
+    for (const control of controls) control.disabled = false;
+    render();
+  }
+});
 const pendingWearables = new Set();
 let wearableSession;
 
@@ -2425,7 +2893,7 @@ function updateBodyMap(sample, member, frame) {
   element("region-detail").textContent = detail;
   element("region-time").textContent = suited ? "Observed T+"+clock(frame.time)+" · synthetic suit state"
     : timed || flightHealthRun ? "" : observed ? "Observed T+" + clock(sample.time) +
-    (connectedFlight ? " · synthetic phase reference" : " · synthetic replay sample") : "";
+    (connectedFlight ? " · synthetic phase reference" : " · synthetic replay sample · age "+Math.max(0,frame.time-sample.time)+" s") : "";
   element("wrist-readout").hidden = Boolean(timed || flightHealthRun) || activeLayer !== "sensors" || selectedRegion !== "wrist";
   element("wrist-bpm").textContent = sample.heart_rate + " bpm";
   element("wrist-sample").textContent = (connectedFlight ? "Synthetic phase reference" : "Latest simulated sample") +
@@ -2537,6 +3005,34 @@ function drawHistory(series, field, time) {
     + latest.map(row => clock(row.time) + " " + row[field] + " " + signals[field][1]).join(", "));
 }
 
+let dutyHandoffJob;
+let dutyHandoffMember;
+function renderDutyHandoff(member,frame) {
+  const handoff = element("crew-duty-handoff");
+  const job = activeTask(member,frame.time);
+  const canTransfer = !connectedFlight?.timedDemo && crewSession.crew[member].reliefAt !== null &&
+    job?.asset === "scrubber" && job.assigned <= frame.time;
+  handoff.hidden = !canTransfer;
+  if (!canTransfer || dutyHandoffJob === job && dutyHandoffMember === member) return;
+  dutyHandoffJob = job;
+  dutyHandoffMember = member;
+  element("crew-duty-replacement").replaceChildren(...flightProcedures.shift.members
+    .filter(candidate=>candidate!==member).map(candidate=>new Option(characters[candidate].name,candidate)));
+  element("crew-duty-handoff-result").textContent = "";
+}
+element("confirm-duty-handoff").addEventListener("click",()=>{
+  const frame = currentFrame();
+  const member = profileMembers.get("needs");
+  const job = activeTask(member,frame.time);
+  if (connectedFlight?.timedDemo || !job || job !== dutyHandoffJob ||
+      crewSession.crew[member].reliefAt === null || job.assigned > frame.time) return;
+  const replacement = Number(element("crew-duty-replacement").value);
+  if (replacement === member || !flightProcedures.shift.members.includes(replacement)) return;
+  const reason = allocator.handoff(job,replacement,frame.time);
+  element("crew-duty-handoff-result").textContent = reason;
+  if (!reason) render();
+});
+
 function renderProfiles(frame) {
   const timed = connectedFlight?.timedDemo;
   for (const [kind, member] of profileMembers) {
@@ -2559,11 +3055,22 @@ function renderProfiles(frame) {
       }
       element("personnel-name").textContent = persona.name;
       element("personnel-role").textContent = duties[member].role + " · " + id;
-      element("personnel-location").textContent = roomById.get(zone).name + " · " + task;
+      const state = pawns.get(member).dataset.dutyState;
+      element("personnel-location").textContent = roomById.get(zone).name+" · "+task+
+        (timed ? "" : " · "+state);
+      const progress = pawns.get(member).querySelector("meter");
+      element("personnel-duty-progress").hidden = Boolean(timed || progress.hidden);
+      element("personnel-duty-progress").value = progress.value;
+      const privateMood = element("personnel-private-mood");
+      privateMood.hidden = Boolean(timed);
+      privateMood.textContent = reportedMood(member,timed) + " · Crew only";
+      element("open-mood-report").hidden = !hasMoodRun();
       const health = element("personnel-health");
       health.hidden = timed || !flightHealthRun;
       if (flightHealthRun) health.href = "/runs/" + encodeURIComponent(flightHealthRun) + "/crew?crew_id=" + encodeURIComponent(id);
-      element("twin-body").hidden = twinView !== "body";
+      const showHealthStory = flightHealthStory.visibleFor(id,timed) && twinView === "body";
+      element("live-health-story").hidden = !showHealthStory;
+      element("twin-body").hidden = twinView !== "body" || showHealthStory;
       element("personnel-data").hidden = twinView === "body";
       for (const button of document.querySelectorAll("[data-twin-view]"))
         button.setAttribute("aria-pressed",String(button.dataset.twinView===twinView));
@@ -2577,15 +3084,23 @@ function renderProfiles(frame) {
         ["Traits and specialties",persona.traits + " · " + persona.strength,"zap"],
         ["Apparel",frame.phase==="Return transit" || frame.phase==="Departure"
           ? "Flight suit · phase wardrobe preview" : "Cabin wear · phase wardrobe preview","package"],
-        ["Private check-in",reports.mood || "Mood not reported","activity"],
+        ["Private check-in",reportedMood(member,timed),"activity"],
       ];
     } else if (kind === "needs") {
       const person = crewSession.crew[member];
       const mood = crewWellbeing(member,frame);
+      renderDutyHandoff(member,frame);
       rows = [["Simulated mood",mood.state+" · "+mood.value+"%"],["Main influence",mood.driver],
+        ["Relief",mood.reliefAt === null ? "No modeled relief request" :
+          "Requested at T+"+clock(mood.reliefAt)+" after "+mood.strainThreshold+" s of cabin alert"],
+        ["Recovery",mood.reliefAt === null ? "Available for routine duty" :
+          mood.recoveryRemaining+" s of clear cabin conditions remaining"],
+        ...(mood.reliefAt !== null && (activeTask(member,frame.time) || member === 2 && groundInspection(frame) ||
+          connectedFlight?.stationWork?.member === member) ?
+          [["Commander handoff","Assigned duty continues until Commander handoff"]] : []),
         ...crewRoutines.meters(person,frame.time),["Current activity",task],["Needs queue",person.blocked || "Clear"],
         ["Crew checkup",person.checkup ? "Last T+" + clock(person.checkup.time) : "Every 24 mission hours"],
-        ["Private mood",reports.mood || "No report"],["Symptoms",reports.symptoms || "No report"]];
+        ["Private mood",reportedMood(member,timed)],["Symptoms",reports.symptoms || "No report"]];
     } else if (timed && ["devices","vitals"].includes(kind)) {
       const demoSignal = flightDemoWristband(id,frame.time,connectedFlight.crewStarted);
       rows = [["Synthetic demo · optical wristband",demoSignal ? wearableSummary(demoSignal) : "Unobserved"]];
@@ -2661,10 +3176,12 @@ function renderProfiles(frame) {
 if (flightHealthRun) {
   setInterval(()=>{
     if (document.hidden) return;
+    refreshMoodReports();
     const visibleCrew = new Set();
     for (const kind of ["personnel","devices","vitals"]) {
       if (!element(kind+"-widget").hidden && profileMembers.has(kind)) visibleCrew.add(data.crew[profileMembers.get(kind)]);
     }
+    if (hasMoodRun() && hasVisibleCrewProfile() && selection.crew !== undefined) visibleCrew.add(data.crew[selection.crew]);
     for (const crewId of visibleCrew) refreshWearables(crewId);
   },3000);
 }
@@ -2701,6 +3218,8 @@ function renderStation(roomId,frame) {
   station.hidden = !advisor;
   if (!advisor) {stationContext.key=null;return;}
   const medical = roomId === "medical-01";
+  const foodReviewAvailable = medical && Boolean(crewSession?.galley?.incident());
+  const medicalRun = medical && (flightHealthStory.runId() ?? flightHealthRun);
   element("medical-crew").hidden = !medical;
   const sample = data.history[data.crew[medicalCrew]][index];
   if (medical) setChoices("medical-crew",medicalCrew);
@@ -2710,7 +3229,7 @@ function renderStation(roomId,frame) {
     const run = taskAt("bench",frame.time);
     if (run) rows.push(["Latest experiment",frame.time<run.finishes ? run.action + " · in progress" : run.result]);
   }
-  const key = JSON.stringify([roomId,rows]);
+  const key = JSON.stringify([roomId,rows,foodReviewAvailable,medicalRun,medicalCrew]);
   if (key === stationContext.key) return;
   stationContext.key = key;
   const dl = element("station-evidence");
@@ -2719,8 +3238,9 @@ function renderStation(roomId,frame) {
     dt.textContent = label; dd.textContent = value;
     return [dt,dd];
   }));
-  if (stationActions.dataset.room === roomId) return;
-  stationActions.dataset.room = roomId;
+  const stationActionKey = JSON.stringify([roomId,foodReviewAvailable,medicalRun,medical ? medicalCrew : null]);
+  if (stationActions.dataset.room === stationActionKey) return;
+  stationActions.dataset.room = stationActionKey;
   stationActions.replaceChildren();
   function action(icon,label,handler) {
     const button = document.createElement("button");
@@ -2735,6 +3255,15 @@ function renderStation(roomId,frame) {
     render();
   }
   if (medical) {
+    if (foodReviewAvailable) action("clipboard-list","Food exposure review",openFoodReview);
+    if (medicalRun) {
+      const link = document.createElement("a");
+      link.href = "/runs/" + encodeURIComponent(medicalRun) + "/crew/medical?crew_id=" + encodeURIComponent(data.crew[medicalCrew]);
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.textContent = "Open private Medical record";
+      stationActions.append(link);
+    }
     action("activity","Review vitals",event=>profile("vitals",event.currentTarget));
     action("clipboard-list","Record crew check-in",event=>profile("needs",event.currentTarget));
     action("flask-conical","Research workbench",()=>openFixture(equipment.get("lab")));
@@ -2860,12 +3389,24 @@ function routineDraft(frame, procedure="shift") {
 function canReleaseRoutine(job, frame) {
   return !job || frame.time >= job.finishes && (job.procedure !== "eva" || job.verifiedAt != null || job.recalledAt != null);
 }
+function evaDue(mode,orbitStart,time) {
+  const last = tasks.findLast(job=>job.mode===mode && job.procedure==="eva" && job.queued<=time);
+  const {repeat} = allocator.settings(mode,"eva");
+  return repeat && canReleaseRoutine(last,{time})
+    ? (last?.verifiedAt ?? last?.finishes ?? orbitStart)+repeat : Infinity;
+}
 function updateProcedureQueue(frame) {
   if (!connectedFlight || crewMode().endsWith("-timed-demo")) return;
   const eva = activeEva(frame.time);
-  if (eva && (evaLinkFault() || allocator.suit(eva,frame.time).oxygen <= 25)) allocator.recall(eva,frame.time);
+  if (eva && eva.recalledAt == null) {
+    const {oxygen,battery} = allocator.suit(eva,frame.time);
+    if (evaLinkFault()) allocator.recall(eva,frame.time,"Suit link lost");
+    else if (oxygen <= data.eva.oxygen_reserve_pct || battery <= data.eva.battery_reserve_pct) {
+      allocator.recall(eva,frame.time,"Suit reserve at return limit");
+    }
+  }
   for (const [id, procedure] of Object.entries(flightProcedures)) {
-    if (!procedure.asset) continue;
+    if (!procedure.asset || id === "eva") continue;
     const {repeat} = allocator.settings(crewMode(),id);
     const previous = routineJob(frame,id);
     if (!repeat || !canReleaseRoutine(previous,frame)) continue;
@@ -2891,9 +3432,19 @@ function renderProcess(frame) {
   const exterior = selectedProcess === "eva";
   const evaActive = exterior && routine && frame.time < routine.finishes;
   element("process-recall").hidden = !evaActive || routine.recalledAt != null;
-  element("process-verify").hidden = !exterior || !routine || Boolean(evaActive) || routine.recalledAt != null || routine.verifiedAt != null;
+  element("process-verify").hidden = !exterior || !routine || !allocator.canVerify(routine,frame.time);
   element("process-comm-check").hidden = !exterior || !connectedFlight || !configurable;
   element("process-comm-check").textContent = evaLinkFault() ? "Restore suit link" : "Simulate suit link loss";
+  const showEva = exterior && Boolean(connectedFlight) && configurable;
+  const receipt = showEva ? allocator.antennaReceipt(crewMode(),frame.time) : null;
+  const readiness = element("eva-readiness");
+  readiness.hidden = !showEva || !canRelease;
+  readiness.textContent = reason ? "Release held · "+reason
+    : "Release checks passed · suited operator and airlock watch · pressure matched · comms and tether ready · suitable reserve and return margin";
+  const antennaReading = element("eva-antenna-reading");
+  antennaReading.hidden = !showEva;
+  antennaReading.textContent = receipt ? "Antenna link margin · "+receipt.before_db+" → "+receipt.after_db+
+    " dB · receipt "+receipt.id : "Antenna link margin · "+data.eva.antenna_before_db+" dB · synthetic baseline";
   const crewBoard = duties.map((duty,member)=>station(duty,member)[1]);
   const key = JSON.stringify([processMode,selectedProcess,settings,routine?.caseId,events,reason,crewBoard,evaLinkFault()]);
   if (lastProcessRender === key) return;
@@ -2901,6 +3452,7 @@ function renderProcess(frame) {
   processExport = configurable && routine ? events.map(([mission_s,event],sequence)=>({
     case_id:routine.caseId,procedure:selectedProcess === "shift" ? "life-support-watch" : selectedProcess,version:routine.version,station:routine.asset,
     assignee:data.crew[routine.member],mission_s,event,sequence:sequence+1,
+    ...(routine.receipt && event === "Commander verified antenna service" ? {receipt:routine.receipt} : {}),
   })) : [];
   element("process-export").hidden = !processExport.length;
   element("process-source").textContent = process.source;
@@ -2968,12 +3520,14 @@ function render() {
   evidence.textContent = frame.healthDrill ? frame.healthDrill.co2.value.toFixed(2) +
     " ppm cabin CO₂ · T+" + clock(frame.healthDrill.co2.observed_at_s) + " · scrubber " +
     frame.healthDrill.flow_m3_h + " m³/h · " + frame.healthDrill.source : "";
-  updateGround(frame);
   updateProcedureQueue(frame);
   updateCrewRoutines(frame);
+  updateGround(frame);
   const antenna = element("eva-antenna");
   const exterior = routineJob(frame,"eva");
-  const repaired = tasks.some(job=>job.mode===crewMode() && job.procedure==="eva" && job.verifiedAt != null && job.verifiedAt<=frame.time);
+  const repaired = connectedFlight?.timedDemo
+    ? exterior?.verifiedAt != null && exterior.verifiedAt <= frame.time
+    : Boolean(allocator.antennaReceipt(crewMode(),frame.time));
   antenna.hidden = !connectedFlight || !exterior;
   antenna.dataset.repaired = repaired;
   antenna.textContent = repaired ? "Antenna · link verified" : "Antenna · inspection due";
@@ -3025,14 +3579,12 @@ function render() {
   element("resource-crew").textContent = "Crew " + data.crew.length;
   element("resource-meals").textContent = crewSession.supplies.meals + " meals";
   element("resource-water").textContent = crewSession.supplies.water.toFixed(2) + " L water";
+  element("show-provisions").hidden = !connectedFlight?.provisions;
   const routePoints = [[18,35],[33,27],[47,23],[62,20],[80,18],[102,16],[130,17],[188,18],[242,35]];
   const [mx,my] = routePoints[frame.route];
   element("ship-position").setAttribute("cx",mx);
   element("ship-position").setAttribute("cy",my);
-  element("map-air").textContent = frame.co2.toFixed(0) + " ppm";
-  element("map-power").textContent = frame.power == null ? "Unavailable" : frame.power.toFixed(2) + " kW";
-  element("map-jobs").textContent = tasks.filter(task=>task.mode === crewMode() && task.queued<=frame.time && task.finishes>frame.time).length
-    + Number(Boolean(groundInspection(frame)));
+  renderSystemOverview(frame);
   element("map-location").textContent = frame.site + " · " + clock(frame.time);
   element("timeline").value = Math.floor(missionTime);
   element("timeline").setAttribute("aria-valuetext", clock(frame.time) + " " + frame.label);
@@ -3087,21 +3639,34 @@ function render() {
       setIcon(marker.querySelector("i"),statusIcon,""); setIcon(badge,statusIcon,"");
       badge.dataset.icon = statusIcon;
     }
+    const blocked = !work && !crewCheck && !flightWork && !routine && crewSession.crew[i].blocked;
+    const moving = travelling || crewCheck && frame.time < crewCheck.arrival ||
+      flightWork && frame.time < flightWork.arrival || routine && frame.time < routine.arrival;
     const state = work?.procedure === "eva" ? work.support === i ? "Airlock watch" : evaStage(work,frame.time)
       : work && frame.time < work.assigned ? "Assigned"
-      : travelling ? "Travelling" : routine?.need?.id === "rest" ? "Resting"
-      : work || routine || crewCheck || flightWork ? "Working" : "On watch";
+      : moving ? "Travelling" : routine?.need?.id === "rest" || blocked && crewSession.crew[i].reliefAt !== null ? "Resting"
+      : blocked ? "Blocked" : work || routine || crewCheck || flightWork ? "Working" : frame.phase === "Station rest" ? "Resting" : "On watch";
     label.textContent = state;
     marker.hidden = false;
     marker.querySelector("meter").hidden = !work && !routine && !crewCheck && !flightWork;
     button.dataset.suited = work?.procedure === "eva" && work.member === i;
     marker.style.color = travelling || sharedWork ? "#bed6ff" : "";
-    button.setAttribute("aria-label", characters[i].name + " " + duty.role + " · " + task);
+    button.dataset.dutyState = state;
+    button.setAttribute("aria-label", characters[i].name + " " + duty.role + " · " + state + " · " + task);
     button.title = "Open digital twin · " + task;
     button.dataset.working = Boolean(work || routine || crewCheck || flightWork);
     button.setAttribute("aria-pressed", selection.crew === i);
     roster.get(i).setAttribute("aria-pressed", selection.crew === i);
     const portrait = portraits.get(i);
+    for (const [channel,device] of crewDevices.get(i)) {
+      const reading = missionWearables.get(data.crew[i])?.channels[channel]?.reading;
+      device.hidden = selection.crew !== i || Boolean(connectedFlight?.timedDemo);
+      const status = reading?.status ?? (flightHealthRun ? "unobserved" : "synthetic reference");
+      const label = channel === "wristband" ? "wristband" : "back pod";
+      device.dataset.quality = status;
+      device.title = label+" · "+status;
+      device.setAttribute("aria-label","Open "+characters[i].name+"’s "+label+" sensors · "+status);
+    }
     const exposure = Boolean(frame.healthDrill?.exposureRisk && data.crew[i] === flightDemoCrew);
     portrait.dataset.exposure = exposure;
     portrait.setAttribute("aria-pressed", selection.crew === i);
@@ -3110,11 +3675,16 @@ function render() {
     const mood = crewWellbeing(i,frame);
     portrait.dataset.mood = mood.state;
     portrait.style.setProperty("--mood-fill",mood.value+"%");
-    portrait.querySelector(".crew-mood-label").textContent = mood.state;
-    portrait.title = characters[i].name+" · "+task+" · Simulated mood "+mood.value+"%: "+mood.driver+
-      " · "+mood.need+" "+mood.reserve+"%";
+    portrait.querySelector(".crew-mood-label").textContent = connectedFlight?.timedDemo ? mood.state : "Model · "+mood.state;
+    const selfReport = portrait.querySelector(".crew-self-report");
+    selfReport.hidden = Boolean(connectedFlight?.timedDemo);
+    const reported = reportedMood(i,connectedFlight?.timedDemo);
+    selfReport.textContent = reported.startsWith("Self-report") ? reported.split(" · ")[0] : reported;
+    portrait.title = characters[i].name+" · "+task+" · Simulated mood "+mood.value+"%: "+mood.driver+" · "+reported+
+      " · "+mood.need+" "+mood.reserve+"%"+(mood.reliefAt === null ? "" :
+        " · Relief requested at T+"+clock(mood.reliefAt)+" · "+mood.recoveryRemaining+" s clear to recover");
     portrait.setAttribute("aria-label","Inspect "+characters[i].name+" "+duty.role+" · "+task+
-      " · Simulated mood: "+mood.state+(exposure ? " · Suspected CO₂ exposure" : ""));
+      " · "+state+" · Simulated mood: "+mood.state+(mood.reliefAt === null ? "" : " · Relief requested")+(selfReport.hidden ? "" : " · "+reported)+(exposure ? " · Suspected CO₂ exposure" : ""));
   });
   element("crew-exposure").hidden = !(frame.healthDrill?.exposureRisk &&
     data.crew[profileMembers.get("personnel")] === flightDemoCrew);
@@ -3169,7 +3739,9 @@ function crewMotion(member, frame) {
   if (check) return {origin:check.origin,destination:stationPoint(room,member),
     start:check.arrival - TICK_SECONDS,end:check.arrival,activity:frame.time < check.arrival ? "move" : "work"};
   const task = activeTask(member,frame.time) || (member === 2 && groundInspection(frame));
-  if (task && frame.time >= task.assigned) {
+  if (task && frame.time < task.assigned) return {origin:task.origin,destination:task.origin,
+    start:frame.time,end:task.assigned,activity:"idle"};
+  if (task) {
     const asset = equipment.get(task.asset);
     return {origin:task.origin,destination:stationPoint(room,member,asset),
       start:task.assigned,end:task.arrival,activity:frame.time >= task.arrival ? "work" : "move"};
@@ -3202,6 +3774,7 @@ function doorClearance(x,y) {
 function paintFlight(frame, sceneTime = missionTime) {
   const returnScene = element("return-scene");
   const recovery = connectedFlight?.recovery;
+  element("stage").dataset.return = recovery?.phase ?? "";
   returnScene.hidden = !recovery;
   if (recovery) {
     returnScene.dataset.phase = recovery.phase;
@@ -3224,6 +3797,8 @@ function paintFlight(frame, sceneTime = missionTime) {
   }
   const inspection = groundInspection(frame);
   const eva = activeEva(frame.time);
+  const deckVisible = !element("map-deck").hidden;
+  if (deckVisible) element("deck-map").setAttribute("viewBox",eva ? "194 15 740 352" : "194 110 740 257");
   const tether = element("eva-tether");
   tether.toggleAttribute("hidden",true);
   for (const [member,button] of pawns) {
@@ -3236,12 +3811,15 @@ function paintFlight(frame, sceneTime = missionTime) {
       const elapsed = sceneTime-eva.assigned;
       const tick = TICK_SECONDS;
       const outbound = Math.max(0,Math.min(1,(elapsed-2*tick)/tick));
-      const returned = Math.max(0,Math.min(1,(elapsed-5*tick)/(2*tick)));
+      const returned = Math.max(0,Math.min(1,(elapsed-5*tick)/(connectedFlight?.timedDemo ? 2*tick : tick)));
       let exterior = Math.min(outbound,1-returned);
       if (eva.recalledAt != null) {
         const beforeRecall = Math.max(0,Math.min(1,(eva.recalledAt-eva.assigned-2*tick)/tick));
-        exterior = beforeRecall*Math.max(0,(eva.finishes-sceneTime)/(eva.finishes-eva.recalledAt));
+        const returnEnd = Math.min(eva.finishes,eva.recalledAt+tick,eva.assigned+6*tick);
+        const returnLeft = Math.max(0,returnEnd-sceneTime);
+        exterior = beforeRecall*returnLeft/Math.max(1,returnEnd-eva.recalledAt);
       }
+      if (!connectedFlight?.timedDemo && !allocator.suit(eva,sceneTime).outer) exterior = 0;
       if (elapsed >= tick) [x,y] = [281+110*exterior,145-118*exterior];
     }
     const outside = eva?.member === member && y < 100;
@@ -3252,7 +3830,11 @@ function paintFlight(frame, sceneTime = missionTime) {
     }
     const facing = pointAlong(route,Math.min(1,progress+.02))[0] < x ? -1 : 1;
     const pose = reducedMotion.matches ? 0 : Math.sin(sceneTime*(motion.activity==="move" ? 2.5 : 1.3));
-    place(button,...(motion.activity === "move" && reducedMotion.matches && eva?.member !== member ? route[0] : [x,y]));
+    const [deviceX,deviceY] = motion.activity === "move" && reducedMotion.matches && eva?.member !== member ? route[0] : [x,y];
+    place(button,deviceX,deviceY);
+    for (const [channel,marker] of crewDevices.get(member)) {
+      place(marker,deviceX+(channel === "wristband" ? -26 : 26),deviceY+15);
+    }
     button.dataset.pose = motion.activity;
     button.style.setProperty("--stride",pose.toFixed(2));
     button.style.setProperty("--facing",facing);
@@ -3265,10 +3847,7 @@ function paintFlight(frame, sceneTime = missionTime) {
     } else button.querySelector("meter").value = 0;
     crewPositions.set(button,{room:progress < .5 ? motion.origin.room : motion.destination.room,x,y});
     paintedPositions.set(member,{x,y,activity:motion.activity});
-    if (!element("map-deck").hidden) {
-      miniCrew.get(member).setAttribute("cx",x);
-      miniCrew.get(member).setAttribute("cy",y);
-    }
+    if (deckVisible) paintDeckOccupant(member,outside,button.querySelector("meter").value,Boolean(job));
   }
   const occupiedCameras = new Set(duties.map((_,member)=>trackingRoom(member)));
   for (const [room,camera] of deckCameras) camera.dataset.tracking = occupiedCameras.has(room);
@@ -3332,23 +3911,68 @@ function crewSprite(member) {
 
 const svgNS = "http://www.w3.org/2000/svg";
 const miniCrew = new Map();
+const systemCards = new Map();
+
+function svgGlyph(parent,tag,attributes) {
+  const node = document.createElementNS(svgNS,tag);
+  for (const [key,value] of Object.entries(attributes)) node.setAttribute(key,value);
+  parent.append(node);
+  return node;
+}
+
+function setOverviewText(node,value) {
+  if (node.textContent !== value) node.textContent = value;
+}
+
 function setupMinimap() {
   const deck = element("deck-map");
-  function glyph(tag,attributes) {
-    const node = document.createElementNS(svgNS,tag);
-    for (const [key,value] of Object.entries(attributes)) node.setAttribute(key,value);
-    deck.append(node);
-    return node;
-  }
-  glyph("rect",{x:198,y:224,width:620,height:34,fill:"#334265"});
+  svgGlyph(deck,"rect",{x:198,y:224,width:620,height:34,rx:7,fill:"#334265"});
   for (const [id,zone] of Object.entries(zones)) {
-    const box = glyph("rect",{x:zone.x+2,y:zone.y+2,width:zone.w-4,height:zone.h-4,
-      rx:5,fill:zone.color,stroke:zone.accent,"stroke-width":3});
-    const title = document.createElementNS(svgNS,"title");
-    title.textContent = roomById.get(id).name;
-    box.append(title);
+    svgGlyph(deck,"rect",{x:zone.x+2,y:zone.y+2,width:zone.w-4,height:zone.h-4,
+      rx:8,fill:zone.color,stroke:zone.accent,"stroke-width":3});
+    const name = roomById.get(id).name;
+    const mapName = {"cargo-01":"Cargo","comms-01":"Comms"}[id] ?? name;
+    svgGlyph(deck,"text",{x:zone.x+zone.w/2,y:zone.y+32,fill:"#f2f4ff","font-size":25,
+      "font-weight":650,class:"deck-room-label"}).textContent = mapName;
+    const item = document.createElement("li");
+    item.textContent = name;
+    element("map-deck-rooms").append(item);
   }
-  duties.forEach((duty,i)=>miniCrew.set(i,glyph("circle",{r:11,fill:duty.color,stroke:"#101528","stroke-width":4})));
+  duties.forEach((duty,member)=>{
+    const marker = svgGlyph(deck,"g",{"aria-hidden":"true"});
+    svgGlyph(marker,"circle",{r:15,fill:duty.color,stroke:"#101528","stroke-width":3});
+    const character = characters[member];
+    svgGlyph(marker,"text",{y:6,fill:"#101528","font-size":18,"font-weight":800}).textContent = character.short[0];
+    const row = document.createElement("li");
+    const name = document.createElement("strong");
+    name.textContent = character.short;
+    name.style.color = duty.color;
+    const room = document.createElement("small");
+    room.className = "deck-room";
+    const task = document.createElement("small");
+    const progress = document.createElement("meter");
+    progress.max = 1;
+    progress.setAttribute("aria-label",character.short+" job progress");
+    row.append(name,room,task,progress);
+    element("map-deck-crew").append(row);
+    miniCrew.set(member,{marker,room,task,progress});
+  });
+  for (const [id,label] of [["co2","Cabin CO₂"],["flow","Scrubber flow"],["power","Power headroom"],["jobs","Assigned jobs"]]) {
+    const card = document.createElement("div");
+    card.className = "system-card";
+    card.dataset.system = id;
+    const title = document.createElement("dt");
+    title.textContent = label;
+    const detail = document.createElement("dd");
+    const value = document.createElement("output");
+    const note = document.createElement("small");
+    detail.append(value,note);
+    const graph = id === "jobs" ? null : svgGlyph(detail,"svg",{viewBox:"0 0 100 20",preserveAspectRatio:"none","aria-hidden":"true"});
+    const line = graph ? svgGlyph(graph,"path",{}) : null;
+    card.append(title,detail);
+    element("map-systems-readings").append(card);
+    systemCards.set(id,{card,value,note,graph,line});
+  }
   element("map-widget").addEventListener("click",event=>{
     const button = event.target.closest("[data-map-view]");
     if (button) selectOverviewTab(button);
@@ -3364,16 +3988,84 @@ function selectOverviewTab(button) {
   }
   const frame = currentFrame();
   updateGround(frame);
+  renderSystemOverview(frame);
   paintFlight(frame);
 }
-function openDigitalTwin(member, trigger) {
+function paintDeckOccupant(member,outside,value,working) {
+  const {marker,room,task,progress} = miniCrew.get(member);
+  const [destination,action] = station(duties[member],member);
+  const position = crewPositions.get(pawns.get(member));
+  const location = outside ? "Exterior" : roomById.get(position.room).name;
+  const target = roomById.get(destination).name;
+  marker.setAttribute("transform","translate("+position.x+" "+Math.max(32,position.y)+")");
+  setOverviewText(room,location === target || outside ? location : location+" → "+target);
+  setOverviewText(task,action);
+  progress.hidden = !working;
+  if (working) progress.value = Number.isFinite(value) ? value : 0;
+}
+
+function renderSystemOverview(frame) {
+  if (element("map-systems").hidden) return;
+  const selected = data.crew.filter(id=>reducedActivity().has(id)).join(",");
+  const samples = data.frames[selected].slice(0,index+1);
+  const sourceSample = samples.at(-1);
+  const series = samples.filter(sample=>sample.air_source === sourceSample.air_source && !sample.air_source.startsWith("Scripted"));
+  const drill = frame.healthDrill;
+  const drillSamples = drill && data.health_drill.frames.filter(sample=>sample.co2.observed_at_s <= frame.time-connectedFlight.crewStarted);
+  const provenance = sourceSample.air_source.startsWith("Scripted") ? sourceSample.air_source : "Modeled outbound cabin";
+  setOverviewText(element("map-systems-source"),drill
+    ? drill.source+" · Sample T+"+clock(drill.co2.observed_at_s)+" · Power from replay"
+    : provenance+" · Replay sample T+"+clock(sourceSample.time));
+
+  const active = tasks.filter(task=>task.mode === crewMode() && task.queued<=frame.time && task.finishes>frame.time).length
+    + peerChecks.filter(check=>check.mode === crewMode() && check.requested<=frame.time && frame.time<check.due).length
+    + Number(Boolean(groundInspection(frame))) + Number(Boolean(connectedFlight?.stationWork));
+  const nominalFlow = drill ? data.health_drill.frames[0].flow_m3_h : data.frames[selected][0].removal;
+  const reducedFlow = frame.removal != null && frame.removal < nominalFlow;
+  const lowPower = frame.power != null && frame.power < .40;
+  showSystemReading("co2",frame.co2,"ppm",2,drill?.exposureRisk ? "Exposure drill active" : "",
+    drillSamples ? drillSamples.map(sample=>sample.co2.value) : series.map(sample=>sample.co2), Boolean(drill?.exposureRisk));
+  showSystemReading("flow",frame.removal,"m³/h",0,frame.removal == null ? "Unavailable" : reducedFlow ? "Degraded" : "Nominal",
+    drillSamples ? drillSamples.map(sample=>sample.flow_m3_h) : series.map(sample=>sample.removal),reducedFlow);
+  showSystemReading("power",frame.power,"kW",2,frame.power == null ? "Unavailable" : lowPower ? "Low headroom" : "Available",
+    series.map(sample=>sample.power),lowPower);
+  showSystemReading("jobs",active,"",0,active ? "Active or queued" : "None active or queued",[],false);
+}
+
+function showSystemReading(id,current,unit,precision,status,values,attention) {
+  const {card,value,note,graph,line} = systemCards.get(id);
+  const available = Number.isFinite(current);
+  const samples = values.filter(Number.isFinite).slice(-8);
+  const hasTrend = Boolean(graph && available && samples.length > 1);
+  const change = hasTrend ? Number((samples.at(-1)-samples.at(-2)).toFixed(precision)) : 0;
+  const trend = !hasTrend ? "" : change === 0 ? "Steady"
+    : (change > 0 ? "+" : "−")+Math.abs(change).toFixed(precision)+" "+unit+" vs prior";
+  card.dataset.status = attention ? "attention" : "";
+  setOverviewText(value,available ? [current.toFixed(precision),unit].filter(Boolean).join(" ") : "—");
+  setOverviewText(note,[status,trend].filter(Boolean).join(" · ") || "Latest sample");
+  if (!graph) return;
+  graph.toggleAttribute("hidden",!hasTrend);
+  if (!hasTrend) return;
+  const low = Math.min(...samples);
+  const high = Math.max(...samples);
+  const points = samples.map((reading,i)=>{
+    const y = high === low ? 10 : 17-14*(reading-low)/(high-low);
+    return (1+98*i/(samples.length-1)).toFixed(1)+" "+y.toFixed(1);
+  });
+  line.setAttribute("d","M"+points.join(" L"));
+}
+
+function openDigitalTwin(member, trigger, channel) {
   selection = {crew:member};
   twinView = "body";
-  activeLayer = activeEva(Math.floor(missionTime))?.member === member ? "suit" : "anatomy";
-  selectedRegion = "torso";
+  activeLayer = channel ? "sensors" : activeEva(Math.floor(missionTime))?.member === member ? "suit" : "anatomy";
+  selectedRegion = channel === "wristband" ? "wrist" : "torso";
   profileMembers.set("personnel",member);
   render();
   profileWindows.get("personnel").open(trigger);
+  if (hasMoodRun() && !missionWearables.has(data.crew[member])) refreshWearables(data.crew[member]);
+  if (!moodReportsReady) refreshMoodReports();
+  if (channel && !element("personnel-widget").hidden) element("layer-sensors").focus({preventScroll:true});
 }
 
 function crewFace(member) {
@@ -3441,7 +4133,9 @@ duties.forEach((duty,i) => {
   moodBar.append(document.createElement("i"));
   const moodLabel = document.createElement("small");
   moodLabel.className = "crew-mood-label";
-  portrait.append(moodBar,moodLabel);
+  const selfReport = document.createElement("small");
+  selfReport.className = "crew-self-report";
+  portrait.append(moodBar,moodLabel,selfReport);
   portrait.setAttribute("aria-controls","personnel-widget");
   portrait.addEventListener("click",()=>openDigitalTwin(i,portrait));
   portraits.set(i,portrait);
@@ -3449,6 +4143,19 @@ duties.forEach((duty,i) => {
   pawns.set(i,pawn);
   roster.set(i,member);
   element("ship").append(pawn);
+  const devices = new Map();
+  for (const [channel,icon] of [["wristband","activity"],["back_pod","package"]]) {
+    const device = document.createElement("button");
+    device.className = "crew-device";
+    device.type = "button";
+    device.hidden = true;
+    device.setAttribute("aria-controls","personnel-widget");
+    setIcon(device,icon,"");
+    device.addEventListener("click",()=>openDigitalTwin(i,device,channel));
+    devices.set(channel,device);
+    element("ship").append(device);
+  }
+  crewDevices.set(i,devices);
   element("roster").append(member);
 });
 for (const asset of fixtures) {
@@ -3580,8 +4287,7 @@ element("process-verify").addEventListener("click",()=>{
   render();
 });
 element("process-comm-check").addEventListener("click",()=>{
-  if (evaLinkFault()) evaFaults.delete(crewMode());
-  else evaFaults.add(crewMode());
+  allocator.setLinkFault(crewMode(),!evaLinkFault());
   render();
 });
 function loadProcessSettings() {
@@ -3600,16 +4306,170 @@ choices("process-list",Object.entries(flightProcedures).map(([id,process])=>[id,
   setChoices("process-list",id);
   loadProcessSettings();
 });
-function openProcesses(mode) {
+const exerciseInspector = bindExerciseInspector({find:element, runId:flightHealthRun, clock, session:crewWearableSession});
+function openProcesses(mode, modal = true) {
+  exerciseInspector.open(mode === "replay");
   processMode = mode;
   if (mode === "pad") selectedProcess = "checkout";
   loadProcessSettings();
   setChoices("process-list",selectedProcess);
   lastProcessRender = "";
-  element("process-dialog").showModal();
+  const dialog = element("process-dialog");
+  dialog.toggleAttribute("data-demo-dock",!modal);
+  if (!dialog.open) modal ? dialog.showModal() : dialog.show();
   renderProcess(currentFrame());
 }
 element("show-processes").addEventListener("click",()=>openProcesses(crewMode()));
+const provisionsDialog = element("provisions-dialog");
+const provisionActions = [...document.querySelectorAll("[data-provision]")];
+const galleyActions = [...document.querySelectorAll("[data-galley]")];
+const galleyTarget = element("galley-target");
+const galleyCrew = element("galley-crew");
+const foodDialog = element("food-safety-medical");
+const foodCrew = element("food-symptom-crew");
+const foodActions = [...document.querySelectorAll("[data-food-review]")];
+for (const [member, character] of characters.entries()) {
+  galleyCrew.add(new Option(character.name, String(member)));
+  foodCrew.add(new Option(character.name, String(member)));
+}
+
+function renderFoodReview() {
+  const incident = crewSession?.galley?.incident();
+  if (!incident) return;
+  const member = Number(foodCrew.value);
+  const review = incident.review;
+  element("food-exposure-inventory").textContent = "Suspected food exposure · " + incident.batch + " isolated at T+" + clock(incident.time);
+  for (const [id, entries, empty] of [
+    ["food-exposure-meals",incident.meals,"No completed meal records for this lot"],
+    ["food-exposure-reports",incident.reports,"No symptoms recorded"],
+  ]) {
+    const rows = entries.map(entry=>characters[entry.member].name + " · T+" + clock(entry.time) + (entry.symptom ? " · " + entry.symptom : ""));
+    element(id).replaceChildren(...(rows.length ? rows : [empty]).map(line=>{
+      const li = document.createElement("li"); li.textContent = line; return li;
+    }));
+  }
+  const relay = incident.relay;
+  element("food-exposure-status").textContent = relay ? (missionTime >= relay.deliverAt ? "Ground received operational status" : "Ground delivery pending · T+" + clock(relay.deliverAt))
+    : review?.rechecked != null ? "Follow-up recorded · T+" + clock(review.rechecked)
+    : review ? "Onboard review assigned to " + characters[review.member].name + " · Recheck due at T+" + clock(review.recheckDue)
+    : "Awaiting onboard review";
+  const available = {
+    report:review?.rechecked == null && incident.meals.some(entry=>entry.member === member) && !incident.reports.some(entry=>entry.member === member),
+    review:!review && incident.reports.length > 0,
+    recheck:review && review.rechecked == null && missionTime >= review.recheckDue,
+    share:review?.rechecked != null && !relay,
+  };
+  for (const button of foodActions) button.disabled = !available[button.dataset.foodReview];
+}
+
+function openFoodReview() {
+  launchMission.stopForProvisions();
+  renderFoodReview();
+  foodDialog.showModal();
+}
+
+foodCrew.addEventListener("change",renderFoodReview);
+for (const button of foodActions) button.addEventListener("click",() => {
+  launchMission.orderProvision("galley-" + button.dataset.foodReview, {
+    target:"worktop",member:Number(foodCrew.value),symptom:element("food-symptom-choice").value,
+  });
+});
+
+function renderGalley(galley) {
+  element("galley-hygiene").hidden = !galley;
+  if (!galley) return;
+  const target = galleyTarget.value;
+  const surface = galley.surfaces.get(target);
+  const member = Number(galleyCrew.value);
+  const incident = galley.incident();
+  element("galley-status").textContent = galley.status(surface,missionTime) +
+    (incident ? " · Suspected exposure, " + incident.batch + " on hold (" + incident.heldPacks + " packs)" : "");
+  const facts = [
+    ["Last cleaning", surface.completed == null ? "No completed record" : "T+" + clock(surface.completed)],
+    ["Next inspection due", "T+" + clock(surface.due)],
+    ["Next routine cleaning", "T+" + clock(surface.nextCleaning)],
+    ["Assigned astronaut", surface.job ? characters[surface.job.member].name : "None"],
+    ["Verification", surface.verification ? "Requires a second astronaut" : surface.verified == null ? "No result" : surface.verified],
+  ];
+  if (incident && target === "worktop") facts.push(["Incident observation",incident.observation]);
+  const waterLot = galley.waterLot();
+  if (waterLot) facts.push(["Potable water lot A",waterLot.releasedAt == null
+    ? (waterLot.heldMl / 1000).toFixed(3) + " L held · independent check due"
+    : "Verified and released at T+" + clock(waterLot.releasedAt)]);
+  element("galley-evidence").replaceChildren(...facts.flatMap(([label,value]) => {
+    const dt = document.createElement("dt"), dd = document.createElement("dd");
+    dt.textContent = label;
+    dd.textContent = value;
+    return [dt,dd];
+  }));
+  const verificationReady = surface.verification && surface.verification.member !== member;
+  const available = {
+    inspect:!surface.job && !surface.verification && !surface.held,
+    clean:!surface.job && !surface.verification && !surface.held && !galley.activeJob(member,missionTime),
+    suspect:target === "worktop" && !incident && !surface.job && !surface.verification,
+    disinfect:surface.held && !surface.job && !surface.verification && !galley.activeJob(member,missionTime),
+    fail:verificationReady,
+    pass:verificationReady,
+    "hold-water":!waterLot && crewSession.provisions.stock.potable > 0,
+    "clear-water":galley.canClearWater(member,missionTime),
+  };
+  for (const button of galleyActions) button.disabled = !available[button.dataset.galley];
+  element("galley-audit").replaceChildren(...galley.audit.slice(-20).reverse().map(entry => {
+    const li = document.createElement("li");
+    li.textContent = "T+" + clock(entry.time) + " · " + characters[entry.member].short + " · " + entry.event + " · " + entry.detail;
+    return li;
+  }));
+}
+
+for (const control of [galleyTarget,galleyCrew]) {
+  control.addEventListener("change",() => renderGalley(crewSession?.galley));
+}
+for (const button of galleyActions) button.addEventListener("click",() => {
+  launchMission.orderProvision("galley-" + button.dataset.galley, {target:galleyTarget.value,member:Number(galleyCrew.value)});
+});
+
+function renderProvisions(campaign) {
+  const ledger = crewSession.provisions;
+  if (!ledger) return;
+  const stock = ledger.stock;
+  const returned = campaign.departure != null && missionTime>=campaign.departure;
+  const vehicle = returned ? "Return capsule" : campaign.vehicle === "asteria" ? "Horizon" : "Kestrel";
+  element("provisions-vehicle").textContent = vehicle+" · synthetic inventory";
+  const liters = ml => (ml/1000).toFixed(3)+" L";
+  const quantities = [
+    ["Potable",liters(stock.potable)],["Reserve",liters(stock.reserve)],["Wastewater",liters(stock.waste)],
+    ["Awaiting quality verification",liters(stock.held)],["Rejected flow",liters(stock.rejected)],
+    ["Consumed",liters(stock.used)],["Meal packs",String(stock.meals)],
+  ];
+  element("provisions-stock").replaceChildren(...quantities.flatMap(([label,value])=>{
+    const dt = document.createElement("dt"), dd = document.createElement("dd");
+    dt.textContent = label;
+    dd.textContent = value;
+    return [dt,dd];
+  }));
+  element("provisions-ration").textContent = ledger.ration === "conserve"
+    ? "Conservation · reduce meal preparation water and defer hygiene" : "Standard ration";
+  const latest = campaign.commands.at(-1);
+  const target = latest?.action === "replenish" || latest?.time >= (campaign.departure ?? Infinity)
+    ? crewSession.ledgers.returned : crewSession.ledgers.outbound;
+  const receipt = target.receipts.get(latest?.id);
+  element("provisions-receipt").textContent = receipt ? receipt.reason ??
+    (latest.action === "replenish" ? "Station water credited to the return capsule" : "Provision action recorded") : "";
+  renderGalley(returned ? null : crewSession.galley);
+  for (const button of provisionActions) {
+    button.disabled = Boolean(campaign.commands.some(order=>order.time === Math.floor(missionTime) && order.action === button.dataset.provision));
+    if (button.dataset.provision === "replenish") button.disabled ||= campaign.transferAt == null || returned;
+  }
+}
+
+element("show-provisions").addEventListener("click",()=>{
+  if (!connectedFlight?.provisions) return;
+  launchMission.stopForProvisions();
+  renderProvisions(connectedFlight.provisions);
+  provisionsDialog.showModal();
+});
+for (const button of provisionActions) button.addEventListener("click",()=>launchMission.orderProvision(button.dataset.provision));
+
 const airlockDialog = element("airlock-dialog");
 const airlockCycle = element("airlock-cycle");
 const airlockFrames = data.airlock;
@@ -3756,22 +4616,38 @@ hudSize.observe(document.querySelector(".hud"));
 hudSize.observe(shelf);
 hudSize.observe(element("mission-resources"));
 let groundFlightContext;
+const campaignRelay = bindCampaignGround({
+  find:element, clock,
+  act:(...args)=>launchMission.updateGroundDirection(...args),
+  inspectionReady:(time)=>!activeTask(2,time) && !peerWork(2,time) &&
+    !tasks.some(job=>job.mode===crewMode() && job.asset==="scrubber" && job.queued<=time && time<job.finishes),
+  origin:()=>crewPositions.get(pawns.get(2)),
+});
 const groundPanel = bindFlightGround({
   panel:element("map-ground"), crewReceipt:element("flight-crew-receipt"),
-  clock, workflow:flightWorkflow, replayPacket:data.replay_ground, redraw:render,
+  clock, workflow:flightWorkflow, replayPacket:data.replay_ground, rehearsal:data.health_drill, redraw:render,
 });
 function updateGround(frame) {
+  const foodStatus = element("ground-food-safety");
+  const foodRelay = connectedFlight?.provisions && crewSession?.galley?.incident()?.relay;
+  const foodDelivered = foodRelay && frame.time >= foodRelay.deliverAt;
+  foodStatus.hidden = !foodDelivered;
+  foodStatus.textContent = foodDelivered ? foodRelay.status + " · Received T+" + clock(foodRelay.deliverAt) : "";
   const mode = groundFlightContext?.mode ?? "menu";
   const relayRunId = mode === "replay" ? flightHealthRun : null;
-  element("ground-order-heading").textContent = relayRunId ? "Ground · Advisory receipt" : "Ground · Fault inspection";
-  element("replay-ground-order").hidden = Boolean(relayRunId);
+  const campaign = groundFlightContext?.campaign;
+  element("ground-order-heading").textContent = campaign ? "Ground · ISS departure readiness"
+    : relayRunId ? "Ground · Advisory receipt" : "Ground · Fault inspection";
+  element("replay-ground-order").hidden = Boolean(relayRunId || campaign);
   groundPanel.update({
-    mode, relayRunId, frame:groundFlightContext?.time == null ? frame : {...frame,time:groundFlightContext.time},
+    mode, relayRunId, campaign, rehearsalStart:connectedFlight?.timedDemo ? connectedFlight.crewStarted : null,
+    frame:groundFlightContext?.time == null ? frame : {...frame,time:groundFlightContext.time},
     groundVisible:!element("map-ground").closest("[hidden]"),
     crewVisible:!element("workflow-widget").closest("[hidden]"),
   });
+  campaignRelay.update(campaign,groundFlightContext?.time);
 }
-const ordersWindow = widgets.register(element("workflow-widget"), element("show-workflow"), () => ({x:14,y:35}));
+const ordersWindow = widgets.register(element("workflow-widget"), element("show-workflow"), () => ({x:14,y:35}), {compactPriority:true});
 const groundVisibility = new MutationObserver(() => updateGround(currentFrame()));
 groundVisibility.observe(element("workflow-widget"), {attributes:true, attributeFilter:["hidden"]});
 groundVisibility.observe(element("map-widget"), {attributes:true, attributeFilter:["hidden"]});
@@ -3804,15 +4680,63 @@ const commandPanel = widgets.register(element("mission-command-widget"),element(
   y:Math.max(12,missionGuide.getBoundingClientRect().bottom-overlay.getBoundingClientRect().top+12),
 }),{compactPriority:true});
 let replayTime = 0;
+const flightHealthStory = bindFlightHealthStory({
+  find:element, clock, metrics:data.metrics, onUpdate:render,
+  openTwin(crewId,trigger) {
+    const member = data.crew.indexOf(crewId);
+    element("stage").setAttribute("data-demo-crew","");
+    openDigitalTwin(member,trigger);
+  },
+});
+const flightEmergency = bindFlightEmergency({
+  host:element("flight-emergency"), drills:data.emergency_drills,
+  crewNames:Object.fromEntries(data.crew.map((id,index) => [id,characters[index].name])),
+  getRunId:() => flightHealthStory.runId() || flightHealthRun,
+  session:crewWearableSession, clock,
+});
+element("show-flight-emergency").addEventListener("click",flightEmergency.show);
+element("show-flight-emergency").hidden = !flightHealthRun;
 const launchMission = bindLaunchCheckout(data.missions,data.replay_version,{
   crew: characters.map((character,index)=>({name:character.name,role:duties[index].role,portrait:()=>crewFace(index)})),
   pauseReplay:stop,
   openCommand:trigger=>commandPanel.open(trigger),
   closeCommand:()=>commandPanel.close(),
   onDemoCrew(action) {
+    if (action === "health-story-start" || action === "health-story-stop") {
+      if (action === "health-story-start") flightHealthStory.start();
+      else flightHealthStory.stop();
+      return true;
+    }
+    if (action === "reset-panels") {
+      if (element("process-dialog").open) element("process-dialog").close();
+      if (!element("workflow-widget").hidden) ordersWindow.close();
+      selectOverviewTab(document.querySelector('[data-map-view="route"]'));
+      return true;
+    }
+    if (["show-deck","show-systems","show-ground"].includes(action)) {
+      const tab = document.querySelector('[data-map-view="'+action.slice(5)+'"]');
+      if (getComputedStyle(tab).display !== "none") selectOverviewTab(tab);
+      return true;
+    }
+    if (action === "show-orders") {
+      ordersWindow.open(element("demo-pause"));
+      return true;
+    }
+    if (action === "show-workflows") {
+      selectedProcess = "eva";
+      openProcesses(crewMode(),false);
+      return true;
+    }
     if (action === "close-twin") {
       element("stage").removeAttribute("data-demo-crew");
       for (const panel of profileWindows.values()) { panel.close(); panel.resetPosition(); }
+      return true;
+    }
+    if (action === "start-demo-scrubber") {
+      const job = allocator.routine(crewMode(),missionTime,missionTime,"shift");
+      if (allocator.problem(job)) return false;
+      tasks.push(job);
+      render();
       return true;
     }
     if (action === "start-demo-eva") {
@@ -3843,17 +4767,19 @@ const launchMission = bindLaunchCheckout(data.missions,data.replay_version,{
     render();
     return true;
   },
+  onDemoFrame(now, tickProgress) {
+    if (!connectedFlight?.timedDemo || now-lastPaintAt < 48 || connectedFlight.recovery?.phase === "recovered") return;
+    const visualTime = Math.min(missionTime+TICK_SECONDS*tickProgress,connectedFlight.playbackLimit ?? Infinity);
+    if (!reducedMotion.matches) paintFlight(currentFrame(),visualTime);
+    lastPaintAt = now;
+  },
   exteriorBusy:(mode,time)=>tasks.some(job=>job.mode===mode && job.procedure==="eva" &&
     job.queued<=time && time<job.finishes),
   nextExteriorHold:(mode,time,orbitStart,canReleaseExterior)=>{
+    if (!canReleaseExterior) return Infinity;
     const exterior = tasks.filter(job=>job.mode===mode && job.procedure==="eva");
     const queued = Math.min(Infinity,...exterior.filter(job=>job.queued>time).map(job=>job.queued));
-    const {repeat} = allocator.settings(mode,"eva");
-    const last = exterior.findLast(job=>job.queued<=time);
-    // A repeat can release once the latest inspection is complete and cleared.
-    const repeatDue = canReleaseExterior && repeat && canReleaseRoutine(last,{time})
-      ? (last?.verifiedAt ?? last?.finishes ?? orbitStart) + repeat : Infinity;
-    return Math.min(queued,repeatDue);
+    return Math.min(queued,evaDue(mode,orbitStart,time));
   },
   antennaUnverified:(mode,time)=>{
     const last = tasks.findLast(job=>job.mode===mode && job.procedure==="eva" && job.queued<=time);
@@ -3870,6 +4796,7 @@ const launchMission = bindLaunchCheckout(data.missions,data.replay_version,{
       setMissionTime(replayTime);
     }
     connectedFlight = flight;
+    flightHealthStory.update(flight);
     if (flight) {
       if (missionTime !== flight.time) canvasTickStarted = performance.now();
       missionTime = flight.time;
@@ -3902,7 +4829,7 @@ const launchMission = bindLaunchCheckout(data.missions,data.replay_version,{
   resetCrew(missionId) {
     for (let i = peerChecks.length-1; i >= 0; i--) if (peerChecks[i].mode === missionId) peerChecks.splice(i,1);
     allocator.clear(missionId,-1,{save:!missionId.endsWith("-timed-demo")});
-    evaFaults.delete(missionId);
+    if (!missionId.endsWith("-timed-demo")) allocator.setLinkFault(missionId,false);
     activityModes.delete(missionId);
   },
 });
@@ -3934,6 +4861,9 @@ element("end-mission-go").addEventListener("click", () => {
     ["Power headroom", frame.power == null ? "Unmodeled" : frame.power.toFixed(2) + " kW"],
     ["Crew aboard", String(data.crew.length)],
   ];
+  const antenna = connectedFlight && !connectedFlight.timedDemo && allocator.antennaReceipt(crewMode(),frame.time);
+  if (antenna) facts.push(["Exterior antenna",antenna.before_db+" → "+antenna.after_db+
+    " dB · "+antenna.id+" · T+"+clock(antenna.mission_s)]);
   element("end-mission-facts").replaceChildren(...facts.flatMap(([label, value]) => {
     const term = document.createElement("dt");
     const detail = document.createElement("dd");
@@ -3960,6 +4890,10 @@ element("end-mission-menu").addEventListener("click", () => {
 });
 widgets.layout();
 render();
+const submissionQuery = new URLSearchParams(location.search);
+if (submissionQuery.get("demo") === "health30") bindHealth30({
+  host:element("health30"), data, zones, hull:element("hull"), query:submissionQuery,
+});
 </script>
 </body>
 </html>

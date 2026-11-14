@@ -1,7 +1,7 @@
 """Comparable synthetic Crew health trends for onboard review."""
 
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from math import isfinite
 from pathlib import Path
 from typing import Literal, Mapping, Sequence
@@ -25,6 +25,8 @@ class TrendRules:
     minimum_samples: int
     comparability_context: Mapping[str, tuple[str, ...]]
     disclaimer: str
+    daily_window_s: int = 0
+    daily_thresholds: Mapping[str, float] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -84,12 +86,22 @@ def load_trend_rules(path: str | Path | None = None) -> TrendRules:
     disclaimer = payload.get("disclaimer")
     if not isinstance(disclaimer, str) or not disclaimer.strip():
         raise ValueError("health trend disclaimer is required")
+    daily = payload.get("daily", {})
+    daily_window_s = daily.get("window_s", 0)
+    daily_thresholds = daily.get("minimum_change", {})
+    if (type(daily_window_s) is not int or daily_window_s < 0
+        or not isinstance(daily_thresholds, dict)
+        or any(metric not in groups or type(value) not in (int, float) or not isfinite(value) or value <= 0
+               for metric, value in daily_thresholds.items())):
+        raise ValueError("invalid daily trend rules")
     return TrendRules(
         rules_version=payload.get("rules_version", "health-trends-v1"),
         window_s=window_s,
         minimum_samples=minimum_samples,
         comparability_context={metric: tuple(keys) for metric, keys in groups.items()},
         disclaimer=disclaimer,
+        daily_window_s=daily_window_s,
+        daily_thresholds=daily_thresholds,
     )
 
 
@@ -181,18 +193,27 @@ def evaluate_trend(
             rules=rules,
         )
 
-    window_start_s = max(0, anchor.observed_at_s - rules.window_s)
-    comparable = [
+    compatible = [
         sample
         for sample in ordered
         if sample.crew_id == anchor.crew_id
         and sample.metric == anchor.metric
         and sample.unit == anchor.unit
-        and window_start_s <= sample.observed_at_s <= anchor.observed_at_s
         and sample.quality == "valid"
         and sample.value is not None
         and all(sample.context.get(key) == anchor.context.get(key) for key in keys)
     ]
+    comparable = [sample for sample in compatible if sample.observed_at_s >= anchor.observed_at_s - rules.window_s]
+    daily_threshold = rules.daily_thresholds.get(anchor.metric)
+    daily = False
+    if len(comparable) < rules.minimum_samples and rules.daily_window_s and daily_threshold:
+        # One observation per mission day. Multiple captures of one day do not constitute a drift.
+        by_day = {sample.observed_at_s // 86400: sample for sample in compatible
+                  if sample.observed_at_s >= anchor.observed_at_s - rules.daily_window_s}
+        if len(by_day) >= rules.minimum_samples:
+            daily = True
+            rules = replace(rules, window_s=rules.daily_window_s)
+            comparable = list(by_day.values())
     evidence_ids = tuple(sample.sample_id for sample in comparable)
     if len(comparable) < rules.minimum_samples:
         return _insufficient(
@@ -210,16 +231,20 @@ def evaluate_trend(
     first, latest = comparable[0], comparable[-1]
     change = latest.value - first.value
     direction: TrendDirection = "rising" if change > 0 else "falling" if change < 0 else "steady"
-    status: TrendStatus = "steady" if direction == "steady" else "review"
+    meets_threshold = not daily or abs(change) >= daily_threshold
+    status: TrendStatus = "review" if direction != "steady" and meets_threshold else "steady"
     reason = (
         f"{anchor.metric.replace('_', ' ').capitalize()} {direction} from "
         f"{first.value:g} to {latest.value:g} {anchor.unit} across {len(comparable)} "
         f"comparable synthetic samples. {rules.disclaimer}"
     )
+    if daily:
+        reason += f" The {rules.window_s // 86400}-day demo rule uses a {daily_threshold:g} {anchor.unit} review threshold."
     return HealthTrend(
         status=status,
         direction=direction,
-        reason_code="NO_DIRECTIONAL_CHANGE" if direction == "steady" else "COMPARABLE_TREND",
+        reason_code=("DAILY_TREND" if status == "review" else "DAILY_CHANGE_BELOW_THRESHOLD") if daily
+        else "NO_DIRECTIONAL_CHANGE" if status == "steady" else "COMPARABLE_TREND",
         reason=reason,
         crew_id=anchor.crew_id,
         metric=anchor.metric,

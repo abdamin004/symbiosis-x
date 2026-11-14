@@ -168,3 +168,56 @@ Three tabs were used: facilitator (launcher), Crew and Ground. The health run wa
 ```sh
 python -m pytest backend/tests/unit/test_radiation.py backend/tests/integration/test_emergency.py backend/tests/integration/test_health_relay.py -q
 ```
+
+## Gravity context in the Crew health story
+
+The `health-story` v1 fixture compares Mara's preflight mobility, orientation and rest with scripted observations in orbit, reentry and Earth recovery. The authored health story clock starts at T+0. It enters orbit at T+60, reentry at T+900 and recovery at T+960. Flight triggers the last two transitions at the corresponding mission milestones. Orbital exposure accrues while in orbit and remains visible after recovery. The Crew projection owns this context.
+
+NASA's study uses consistent measurements to characterize adaptation across multiple systems. The fixture uses this as research context for comparisons across phases. The observations and times are synthetic training data displayed in the private Crew twin alongside the separate health assessment. [NASA Spaceflight Standard Measures](https://www.nasa.gov/humans-in-space/spaceflight-standard-measures-characterizing-how-humans-adapt-in-space/)
+## Food safety in Horizon
+
+The Horizon training campaign records meal lot usage and surface inspections on its mission clock. A suspected exposure removes held packs from available provisions. A second astronaut verifies cleanup or records a failed check. A failed check keeps the surface on hold. The scenario uses fictional observations and a generic contamination flag.
+
+Medical shows the meal history and each astronaut's reported symptoms in the local Crew campaign. The Ground tab reveals the approved action status after 300 simulated seconds. This campaign uses browser-local saves and a simulated Ground relay. [NASA human-system standards](https://standards.nasa.gov/standard/NASA/NASA-STD-3001-VOL-2)
+## Medical training timeline
+
+Medical shows a versioned fictional record of suspected local inflammation, sensitivity and illness for Mara in the `health-story` training run. Each case separates reported symptoms, peer observations, suspected findings and reassessment. The Crew projection reveals entries through the current mission time and preserves missing or conflicting evidence. The existing chest-pain and collapse drills open with their own responders and follow-up.
+
+The NASA immune risk summary supplies spaceflight research context. The three Medical histories, observed changes and review times are authored training examples. [NASA risk of altered immune system responses](https://www.nasa.gov/reference/risk-of-altered-immune-system-responses/)
+
+## OSDR and genetics context
+
+Medical shows an educational genetics note only for the selected fictional Crew subject. It explains an inherited trait with a fictional family history and gives the status of the subject's expression evidence. [NHGRI inheritance glossary](https://www.genome.gov/genetics-glossary/Inherited) · [NHGRI gene expression glossary](https://www.genome.gov/genetics-glossary/Gene-Expression)
+
+| Source | Population and time basis | Assay and units | Product use and limits |
+| --- | --- | --- | --- |
+| [NASA OSDR OSD-575 v3](https://osdr.nasa.gov/bio/repo/data/studies/OSD-575), DOI `10.26030/mc5d-p710`, first released 2024-05-14 | Four private astronauts on a three-day low Earth orbit mission. The overview lists L−92, L−44, L−3, R+1, R+45 and R+82. The public comprehensive metabolic panel also includes R+194. L and R are days relative to launch and return. | Comprehensive metabolic panel with glucose in mg/dL and sodium in mmol/L. Multiplex results include Eve concentrations in pg/mL and Alamar NPQ. Units were verified in the [OSD-575 file inventory](https://osdr.nasa.gov/osdr/data/osd/files/575) and its transformed tables. | Medical displays study metadata, the observation schedule and assay examples. The small observational cohort and assay differences limit comparisons. Crew assessment derives from the run's accepted observations, personal baselines and applicable references. |
+| [NASA OSDR OSD-570](https://osdr.nasa.gov/bio/repo/data/studies/OSD-570/) | Inspiration4 blood-cell research with mission-relative sample tags. | Includes single-nucleus RNA sequencing of peripheral blood mononuclear cells. | Explains how a research assay can observe gene expression. The product carries the citation and a fictional profile note. |
+| [NASA immune system risk summary](https://www.nasa.gov/reference/risk-of-altered-immune-system-responses/) | Research program risk overview. | Descriptive source. | Frames why immune changes are studied and why mission context matters. |
+| [NASA Microbial Tracking-2](https://www.nasa.gov/ames/space-biosciences/microbial-tracking-2/) | ISS environmental air and surface observations across multiple increments, with crew observations tracked on their own timeline. | Study description. | Informed the Galley log's location, time and observation quality. Galley contamination flags are fictional. |
+
+### Submission research sources
+
+Checked 2026-11-14. The [data intake log](data/intake.md#inspiration4-research-evidence) records public ISA ZIP filenames, sizes, SHA-256 hashes and the OSD-575 timepoint discrepancy. The released product carries study metadata. Its Crew assessments use current fictional observations, authored personal baselines and applicable Earth-based references.
+
+| Source | Evidence reviewed | Supports this visible feature |
+| --- | --- | --- |
+| [NASA Inspiration4 mission datasets](https://www.nasa.gov/osdr-latest-news-i4-mission-datasets/) · [OSDR mission index](https://osdr.nasa.gov/bio/repo/data/missions/SpaceX%20Inspiration4) | The NASA mission catalog lists the tissue collections and distinguishes public processed materials from controlled raw data. | The NASA research card identifies the mission, population and source links. |
+| [NASA OSDR OSD-569](https://osdr.nasa.gov/bio/repo/data/studies/OSD-569) | Whole blood. Public ISA metadata lists CBC, RNA sequencing, whole-genome sequencing and targeted sequencing. L−92, L−44, L−3 and R+1, R+45, R+82, R+194 occur across assays. | Whole-blood sample and assay row in Medical. |
+| [NASA OSDR OSD-571](https://osdr.nasa.gov/bio/repo/data/studies/OSD-571) | Plasma. The study lists proteomics, extracellular vesicles and particles, metabolomics, and cell-free DNA and RNA sequencing. L−92, L−44, L−3 and R+1, R+45, R+82, R+194 occur across assays. | Plasma sample and assay row in Medical. |
+| [NASA OSDR OSD-575](https://osdr.nasa.gov/bio/repo/data/studies/OSD-575) | Serum. The study lists the metabolic panel and multiplex protein measurements. The public submitted metabolic panel and ISA sample table include R+194, which the overview omits. | Serum sample, assay, schedule and units in Medical. |
+| [Jones et al., *Nature* 632, 1155–1164 (2024)](https://pmc.ncbi.nlm.nih.gov/articles/PMC11357997/) | Cardiovascular results and Fig. 5f report a positive in-flight association between cabin CO₂ and higher HRV in 3 of 4 people. Extended Data Fig. 10 identifies sleep timing and quality as self-reported in the alertness and mood survey. | The captioned association adds research context to the ship/Crew comparison. The paper’s HRV in milliseconds and the simulated heart rate in bpm represent different measurements. The study does not establish the demo limit or causality. |
+| [NASA Spaceflight Standard Measures](https://www.nasa.gov/directorates/smd/space-life-physical-sciences-research-applications-division/human-research-program/spaceflight-standard-measures-characterizing-how-humans-adapt-in-space/) | The actigraphy and questionnaire entries describe complementary objective and self-reported sleep measures and mood. The sensorimotor entry describes preflight and postflight heart-rate and blood-pressure measures. | Choice of indicators and separation of duration from reported quality in the Crew twin. |
+| [NASA Flight Crew Physiological Data for Crew State Monitoring](https://catalog.data.gov/dataset/flight-crew-physiological-data-for-crew-state-monitoring) | An aviation pilot/copilot simulator study with attentive-state labels. Reviewed for scope and excluded from detection validation. | The validation report uses the synthetic astronaut dataset. This comparator supports no product claim. |
+
+Medical’s sleep archive reads each selected astronaut’s before-, during- and after-flight summary from `scenarios/mission-30d-v1.json`. The Crew route serves only phase means and sample counts for that subject. The archive labels duration and self-reported quality separately and displays unavailable observations as unobserved. It stays independent of the current mission clock.
+
+## Mission brief verification for the judging demo
+
+| Challenge requirement | Live verification |
+| --- | --- |
+| Enter and explain all seven indicators with provenance | `frontend/tests/crew-seven-metrics.spec.js` saves each synthetic reading through the Crew form, reads the persisted receipt and verifies its presentation under the selected astronaut. It exercises method and posture for blood pressure, the fasting laboratory context for glucose, and the self-report and sleep context displays. |
+| Explain an abnormal trend and choose a follow-up | `frontend/tests/flight-health-story.spec.js` shows Mara's accepted synthetic resting heart rate rising from 76 to 95 bpm, explains the comparison with her personal range, and verifies the local review cue. `frontend/tests/health-demo.spec.js` covers the reminder and follow-up flow. |
+| Respond onboard to both emergency examples | `frontend/tests/health-demo.spec.js` verifies the chest-pain training path and a separate collapse drill. Those cases are simulated Emergency Assist records. |
+| Keep Crew details private and show authorized Ground receipts | `frontend/tests/flight-health-story.spec.js` checks that Ground cannot read the private twin and sees only the approved case after the delay. The seven-metric test checks that values and symptom notes stay onboard. |
+| Show ship context and explain source limitations | The Flight health story runs alongside the cabin and scrubber replay. The Medical panel and this register describe OSDR study scope, assay context, and synthetic profile evidence. |

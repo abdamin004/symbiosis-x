@@ -4,7 +4,7 @@
   "schema_version": 1,
   "profile_id": "sim-01-health-v1",
   "crew_id": "SIM-01",
-  "display_name": "SIM-01 (fictional)",
+  "display_name": "Mara Vale",
   "simulated": true,
   "history": {
    "status": "unknown",

@@ -134,8 +134,12 @@ const COMPARISON_LABELS = {
 };
 
 function readingText(evidence) {
+  if (evidence?.quality === "unavailable") return "Unavailable";
   if (evidence?.systolic != null) return `${evidence.systolic}/${evidence.diastolic} ${evidence.unit ?? "mmHg"}`;
   if (evidence?.value != null) return `${formatValue(evidence.value)} ${evidence.unit ?? ""}`.trim();
+  if (evidence?.duration_min != null) return `${evidence.duration_min} min`;
+  if (evidence?.score != null) return `${evidence.score}/5`;
+  if (evidence?.symptoms?.length) return evidence.symptoms.join(", ");
   return "Recorded (no numeric value)";
 }
 
@@ -184,7 +188,8 @@ export function CrewHealthDashboard({ profile, assessment, metrics, measureHref,
         </div>
         <span data-testid="crew-health-flag" className={`rounded-full px-3 py-1 text-sm font-semibold ${
           flagged ? "bg-amber-100 text-amber-900" : "bg-slate-100 text-slate-700"}`}>
-          {!assessment ? "No reading yet" : flagged ? "Flagged for review" : "Not flagged"}
+          {!assessment ? "No reading yet" : flagged ? "Flagged for review"
+            : assessment.evidence?.quality === "unavailable" ? "Reading unavailable" : "Not flagged"}
         </span>
       </header>
 
@@ -196,17 +201,26 @@ export function CrewHealthDashboard({ profile, assessment, metrics, measureHref,
             <li key={metric.id} data-testid={"indicator-" + metric.id} aria-current={isSelected ? "true" : undefined}
               className={`rounded-md border p-2 text-sm ${isSelected ? "border-selection bg-sky-50" : "border-slate-200"}`}>
               <p className="font-medium text-slate-900">{metric.label}</p>
-              <p className="text-xs text-slate-600">{baseline ? `Baseline ${formatValue(baseline.value)} ${baseline.unit}` : "No personal baseline"}</p>
+              <p className="text-xs text-slate-600">{baseline
+                ? `Baseline ${formatValue(baseline.value)}${baseline.diastolic == null ? "" : "/" + formatValue(baseline.diastolic)} ${baseline.unit}`
+                : "No personal baseline"}</p>
               {isSelected && <p className="mt-1 text-xs font-semibold text-selection">Latest reading</p>}
             </li>
           );
         })}
       </ul>
+      {profile?.history?.entries?.length > 0 && <details className="mt-3 rounded-md border border-slate-200 p-3 text-sm">
+        <summary className="cursor-pointer font-semibold">Fictional medical history</summary>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-700">
+          {profile.history.entries.map((entry,index) =>
+            <li key={entry.date + entry.category + index}><time dateTime={entry.date}>{entry.date}</time> · {entry.note}</li>)}
+        </ul>
+      </details>}
 
       {assessment ? <div className="mt-4" data-testid="crew-health-assessment">
         <p className="text-sm text-slate-800">
           <strong>{selected?.label ?? assessment.metric}</strong>: <span data-testid="crew-health-reading">{readingText(assessment.evidence)}</span>
-          <span className="text-slate-600"> · observed {missionTime(assessment.observed_at_s)} · quality <span data-testid="crew-health-quality">{assessment.evidence?.quality ?? "unknown"}</span> · {contextText(assessment.evidence?.context)}</span>
+          <span className="text-slate-600"> · observed {missionTime(assessment.observed_at_s)} · quality <span data-testid="crew-health-quality">{assessment.evidence?.quality ?? "unknown"}</span> · {contextText(assessment.evidence?.context)}{assessment.evidence?.source_id && <> · source {assessment.evidence.source_id}</>}</span>
         </p>
         <div className="mt-3 grid gap-3 md:grid-cols-2">
           <Comparison title="Personal baseline" comparison={assessment.personal} testId="comparison-personal" />

@@ -30,10 +30,16 @@ class BloodPressureMeasurement(MeasurementBase):
 
 class GlucoseMeasurement(MeasurementBase):
     metric: Literal["glucose"]
-    value: float = Field(ge=0)
+    value: float | None = Field(ge=0)
     unit: Literal["mg/dL"]
     method: str = Field(min_length=1)
     meal_context: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def require_value_for_available_reading(self):
+        if self.value is None and self.quality != "unavailable":
+            raise ValueError("an available glucose measurement requires a value")
+        return self
 
 
 class TemperatureMeasurement(MeasurementBase):
@@ -78,6 +84,13 @@ class MoodMeasurement(MeasurementBase):
     unit: Literal["score"]
 
 
+class SleepQualityMeasurement(MeasurementBase):
+    metric: Literal["sleep_quality"]
+    score: int = Field(ge=1, le=5)
+    scale_id: Literal["sleep-quality-1-to-5-v1"]
+    unit: Literal["score"]
+
+
 class SymptomsMeasurement(MeasurementBase):
     metric: Literal["symptoms"]
     symptoms: list[str] = Field(min_length=1)
@@ -90,6 +103,7 @@ HealthMeasurement = Annotated[
     | GlucoseMeasurement
     | TemperatureMeasurement
     | SleepMeasurement
+    | SleepQualityMeasurement
     | MoodMeasurement
     | SymptomsMeasurement,
     Field(discriminator="metric"),

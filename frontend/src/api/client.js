@@ -98,6 +98,10 @@ export function readRunView(runId, role, crewId) {
   const query = role === "crew" && crewId ? "?crew_id=" + encodeURIComponent(crewId) : "";
   return jsonRequest("/runs/" + encodeURIComponent(runId) + "/" + role + query, role);
 }
+
+export function readCrewHealthTwin(runId, crewId) {
+  return jsonRequest("/runs/" + encodeURIComponent(runId) + "/crew/health-twin?" + new URLSearchParams({crew_id:crewId}), "crew");
+}
 export function createPrivateCheckIn(runId, command) {
   return jsonRequest("/runs/" + encodeURIComponent(runId) + "/crew/check-ins", "crew", { method: "POST", body: JSON.stringify(command) });
 }

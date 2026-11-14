@@ -4,7 +4,7 @@ import json
 from hashlib import sha256
 from pathlib import Path
 
-from symbiosis_x.contracts.checkins import PrivateCheckInReceipt, PrivateCheckInRequest
+from symbiosis_x.contracts.checkins import PrivateCheckInReceipt, PrivateCheckInRequest, PrivateMoodReport
 from symbiosis_x.storage.repository import Repository
 
 
@@ -30,12 +30,12 @@ def create_check_in(
 ) -> PrivateCheckInReceipt:
     if command.synthetic is not True:
         raise CheckInConflict("SYNTHETIC_CHECK_IN_REQUIRED")
-    if not command.note.strip():
+    if not command.note.strip() and command.mood_score is None:
         raise CheckInConflict("CHECK_IN_NOTE_REQUIRED")
     if command.crew_id not in _synthetic_roster_ids():
         raise CheckInConflict("CREW_NOT_ON_ROSTER")
 
-    digest = sha256(command.model_dump_json().encode()).hexdigest()
+    digest = sha256(command.model_dump_json(exclude_none=True).encode()).hexdigest()
     with repository.write() as db:
         run = db.execute(
             "SELECT status, mission_s FROM runs WHERE run_id = ?", (run_id,)
@@ -71,12 +71,13 @@ def create_check_in(
             run_id=run_id,
             crew_id=command.crew_id,
             note=command.note,
+            mood_score=command.mood_score,
             synthetic=True,
             mission_s=run["mission_s"],
         )
         payload = {
             "request_digest": digest,
-            "receipt": receipt.model_dump(mode="json"),
+            "receipt": receipt.model_dump(mode="json", exclude_none=True),
         }
         event_seq = db.execute(
             "SELECT COALESCE(MAX(event_seq), 0) + 1 FROM events WHERE run_id = ?",
@@ -112,3 +113,25 @@ def read_check_in(
     return PrivateCheckInReceipt.model_validate(
         json.loads(row["payload_json"])["receipt"]
     )
+
+
+def read_mood_reports(repository: Repository, run_id: str) -> list[PrivateMoodReport]:
+    with repository.read() as db:
+        if db.execute("SELECT 1 FROM runs WHERE run_id = ?", (run_id,)).fetchone() is None:
+            raise CheckInNotFound("RUN_NOT_FOUND")
+        rows = db.execute(
+            """SELECT
+                   json_extract(payload_json, '$.receipt.crew_id') AS crew_id,
+                   json_extract(payload_json, '$.receipt.mood_score') AS mood_score,
+                   mission_s
+               FROM events
+               WHERE run_id = ? AND event_type = 'crew.check_in' AND visibility = 'crew'
+                 AND json_type(payload_json, '$.receipt.mood_score') = 'integer'
+               ORDER BY event_seq DESC""",
+            (run_id,),
+        )
+        latest = {}
+        for row in rows:
+            if row["crew_id"] not in latest:
+                latest[row["crew_id"]] = PrivateMoodReport.model_validate(dict(row))
+        return list(latest.values())

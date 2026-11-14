@@ -34,6 +34,69 @@
       "name": "Power bus",
       "kind": "electrical_bus",
       "subsystem": "electrical"
+    },
+    {
+      "entity_id": "mission-clock-01",
+      "name": "Mission clock",
+      "kind": "equipment",
+      "subsystem": "command-01",
+      "room_id": "command-01"
+    },
+    {
+      "entity_id": "crew-bunks-01",
+      "name": "Bunks occupied",
+      "kind": "equipment",
+      "subsystem": "habitat-01",
+      "room_id": "habitat-01"
+    },
+    {
+      "entity_id": "galley-01",
+      "name": "Galley meal packs",
+      "kind": "equipment",
+      "subsystem": "habitat-01",
+      "room_id": "habitat-01"
+    },
+    {
+      "entity_id": "potable-store-01",
+      "name": "Potable water",
+      "kind": "equipment",
+      "subsystem": "habitat-01",
+      "room_id": "habitat-01"
+    },
+    {
+      "entity_id": "wc-01",
+      "name": "Waste station",
+      "kind": "equipment",
+      "subsystem": "habitat-01",
+      "room_id": "habitat-01"
+    },
+    {
+      "entity_id": "exercise-rig-01",
+      "name": "Exercise rig",
+      "kind": "equipment",
+      "subsystem": "habitat-01",
+      "room_id": "habitat-01"
+    },
+    {
+      "entity_id": "medical-kit-01",
+      "name": "Cuff, meter, thermometer",
+      "kind": "equipment",
+      "subsystem": "medical-01",
+      "room_id": "medical-01"
+    },
+    {
+      "entity_id": "relay-console-01",
+      "name": "Relay queue",
+      "kind": "equipment",
+      "subsystem": "comms-01",
+      "room_id": "comms-01"
+    },
+    {
+      "entity_id": "airlock-bulkhead-01",
+      "name": "Airlock pressure",
+      "kind": "equipment",
+      "subsystem": "cargo-01",
+      "room_id": "cargo-01"
     }
   ]
 }

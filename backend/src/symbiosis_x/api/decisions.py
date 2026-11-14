@@ -2,6 +2,9 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 
+from symbiosis_x.application.exercise_schedule import read_exercise_preview
+from symbiosis_x.application.projections import read_wearable_debrief
+from symbiosis_x.application.runs import RunNotFound
 from symbiosis_x.api.roles import require_role
 from symbiosis_x.contracts.commands import (
     CrewActionReceipt, ActionRequest, PlanCandidate, PlanEvaluationReceipt,
@@ -43,6 +46,26 @@ def evaluate_plan(run_id: str, request: Request, response: Response) -> PlanEval
         with request.app.state.repository.read() as db:
             return _plan_receipt(evaluate_run(db, run_id))
     except LookupError as error:
+        raise HTTPException(404, str(error)) from error
+
+
+@router.get("/{run_id}/crew/exercise-preview", dependencies=[Depends(require_crew)])
+def exercise_preview(run_id: str, request: Request, response: Response) -> dict:
+    response.headers["Cache-Control"] = "no-store"
+    try:
+        with request.app.state.repository.read() as db:
+            return read_exercise_preview(db, run_id)
+    except LookupError as error:
+        raise HTTPException(404, str(error)) from error
+
+
+@router.get("/{run_id}/crew/wearable-debrief", dependencies=[Depends(require_crew)])
+def wearable_debrief(run_id: str, request: Request, response: Response) -> dict:
+    response.headers["Cache-Control"] = "no-store"
+    try:
+        with request.app.state.repository.read() as db:
+            return read_wearable_debrief(db, run_id)
+    except (LookupError, RunNotFound) as error:
         raise HTTPException(404, str(error)) from error
 
 

@@ -92,7 +92,7 @@ test("health demo passes across Crew and Ground", async ({ browser, baseURL }, t
     await crew.getByRole("button", { name: "Raise local drill alert" }).click();
     const localCase = crew.getByTestId("emergency-case");
     await expect(localCase).toContainText(`${caseExpected.opened_at_s}s mission time`);
-    await expect(localCase).toContainText(caseExpected.owner);
+    await expect(localCase.getByTestId("emergency-responder")).toHaveAttribute("data-crew-id", caseExpected.owner);
     await expect(localCase).toContainText(caseExpected.escalation);
     await expect(localCase).toContainText("Ground link not required");
     await crew.getByRole("button", { name: "Acknowledge local response" }).click();
@@ -159,12 +159,12 @@ test("collapse drill runs as a separate replay", async ({ browser, baseURL }, te
     const runId = await startRun(facilitator);
     await crew.goto(`/runs/${runId}/crew/emergency`);
     await crew.locator("#emergency-drill").selectOption("drill-collapse-v1");
-    await crew.locator("#responsiveness").selectOption(collapse.responsiveness);
+    await crew.locator("#responsiveness").selectOption({responsive:"yes",unresponsive:"no",unknown:"unknown"}[collapse.responsiveness]);
     await crew.getByRole("button", { name: "Raise local drill alert" }).click();
     const localCase = crew.getByTestId("emergency-case");
     await expect(localCase).toContainText("Responsiveness");
     await expect(localCase).toContainText(collapse.responsiveness);
-    await expect(localCase).toContainText(collapse.owner);
+    await expect(localCase.getByTestId("emergency-responder")).toHaveAttribute("data-crew-id", collapse.owner);
     await expect(localCase).toContainText(collapse.escalation);
     await crew.getByRole("button", { name: "Acknowledge local response" }).click();
     await expect(localCase).toContainText("Local responder acknowledged at 0s");
