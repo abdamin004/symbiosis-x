@@ -1429,7 +1429,7 @@ __HUD_ICONS__
     <button id="map-plan-open" type="button" aria-haspopup="dialog" aria-controls="mission-objectives">Open plan</button>
   </div>
   <div class="choices map-views" role="group" aria-label="Mission overview view">
-    <button type="button" data-map-view="route" aria-pressed="true">Route</button>
+    <button type="button" data-map-view="route" aria-pressed="true" aria-label="Plan">Route</button>
     <button type="button" data-map-view="deck" aria-controls="map-deck" aria-pressed="false">Deck</button>
     <button type="button" data-map-view="systems" aria-controls="map-systems" aria-pressed="false">Systems</button>
     <button type="button" data-map-view="ground" aria-controls="map-ground" aria-pressed="false">Ground</button>
@@ -1508,11 +1508,11 @@ __HUD_ICONS__
     <p id="phase"></p>
     <div class="overview-time">
       <output class="clock" id="clock" for="timeline"></output>
-      <button id="next-event" type="button" title="Jump to the next scenario checkpoint">Next replay event</button>
-      <button id="reset" type="button" aria-label="Reset replay" title="Reset replay"><svg class="icon" aria-hidden="true"><use href="#hud-rotate-ccw"/></svg></button>
+      <button id="next-event" type="button" aria-label="Next event" title="Jump to the next scenario checkpoint">Next replay event</button>
+      <button id="reset" type="button" aria-label="Reset game" title="Reset replay"><svg class="icon" aria-hidden="true"><use href="#hud-rotate-ccw"/></svg></button>
     </div>
     <input id="timeline" type="range" min="0" value="0" aria-label="Mission time">
-    <button id="one-hour" type="button" aria-pressed="false" title="Scale the entire mission to one hour of playback">Replay pace · 1 hour</button>
+    <button id="one-hour" type="button" aria-label="1-hour pacing" aria-pressed="false" title="Scale the entire mission to one hour of playback">Replay pace · 1 hour</button>
   </div>
 </section>
 <section class="flight-corner" id="orbit-map-widget" aria-label="Orbital navigation" hidden>
